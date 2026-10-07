@@ -1,0 +1,53 @@
+<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+# Architecture diagram: alerts
+
+[alerts](../../README.md) · [context](context.md) · [component](component.md)
+
+`alerts` next to its siblings in `cloud`, opened up to 3 level(s) down. Arrows point from the side that needs something to the side that provides it. Rounded nodes are ports the framing unit provides, hexagons are its needs. Dashed arrows are alternative providers; dashed borders mark planned units.
+
+```mermaid
+flowchart LR
+  subgraph u_cloud["cloud"]
+    u_cloud_platform["platform"]
+    subgraph u_cloud_services_alerts["alerts"]
+      u_cloud_services_alerts_notifier["notifier"]
+      u_cloud_services_alerts_rules["rules"]
+      u_cloud_services_alerts_server["server"]
+    end
+    u_cloud_services_gateway["gateway"]
+    u_cloud_services_ingest["ingest"]
+    u_cloud_services_plants["plants"]
+  end
+  n_cloud_push_service{{"push-service"}}
+  u_cloud_services_gateway -->|"alerts-api"| u_cloud_services_alerts_server
+  u_cloud_services_alerts_server -->|"reading-events"| u_cloud_services_ingest
+  u_cloud_services_alerts_rules -->|"plants-api"| u_cloud_services_plants
+  u_cloud_services_alerts_notifier -->|"push → push-service"| n_cloud_push_service
+  u_cloud_services_alerts_server -->|"sql-db"| u_cloud_platform
+  u_cloud_services_alerts_server -->|"event-bus"| u_cloud_platform
+  u_cloud_services_alerts_server -->|"evaluation"| u_cloud_services_alerts_rules
+  u_cloud_services_alerts_server -->|"notification"| u_cloud_services_alerts_notifier
+  click u_cloud_platform href "../../../../platform/README.md"
+  click u_cloud_services_alerts_notifier href "../../notifier/README.md"
+  click u_cloud_services_alerts_rules href "../../rules/README.md"
+  click u_cloud_services_alerts_server href "../../server/README.md"
+  click u_cloud_services_gateway href "../../../gateway/README.md"
+  click u_cloud_services_ingest href "../../../ingest/README.md"
+  click u_cloud_services_plants href "../../../plants/README.md"
+  classDef focus stroke-width:4px
+  classDef planned stroke-dasharray:6 4
+  class u_cloud,u_cloud_platform,u_cloud_services_alerts,u_cloud_services_alerts_notifier,u_cloud_services_alerts_rules,u_cloud_services_alerts_server,u_cloud_services_gateway,u_cloud_services_ingest,u_cloud_services_plants planned
+  class u_cloud_services_alerts focus
+```
+
+| Unit | Summary | Status | Diagram |
+|---|---|---|---|
+| [cloud](../../../../README.md) | Server side that stores readings, keeps the plant registry and raises alerts | planned | [component](../../../../doc/diagrams/component.md) |
+| [platform](../../../../platform/README.md) | Shared infrastructure of the services - message bus and database | planned | [context](../../../../platform/doc/diagrams/context.md) |
+| [alerts](../../README.md) | Decides when a plant needs attention and notifies its owner once | planned | [component](component.md) |
+| [notifier](../../notifier/README.md) | Turns an opened alert into one notification to the owner | planned | [context](../../notifier/doc/diagrams/context.md) |
+| [rules](../../rules/README.md) | Evaluates readings against the thresholds of a plant | planned | [context](../../rules/doc/diagrams/context.md) |
+| [server](../../server/README.md) | Process of the alerts service - consumes readings, stores alerts and answers queries | planned | [context](../../server/doc/diagrams/context.md) |
+| [gateway](../../../gateway/README.md) | Single entry point of the server side that authenticates callers and routes requests | planned | [context](../../../gateway/doc/diagrams/context.md) |
+| [ingest](../../../ingest/README.md) | Accepts uploaded readings, validates them and publishes each one once | planned | [context](../../../ingest/doc/diagrams/context.md) |
+| [plants](../../../plants/README.md) | Registry of plants with their sensors, thresholds and reading history | planned | [context](../../../plants/doc/diagrams/context.md) |

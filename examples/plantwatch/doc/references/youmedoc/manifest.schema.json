@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://youmedoc.example/0.1/manifest.schema.json",
+  "title": "youmedoc unit manifest",
+  "description": "YAML front matter of a unit's README.md. See manifest.md and wiring.md.",
+  "type": "object",
+  "required": ["unit", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "unit": {
+      "description": "Name of the unit. Equals the folder name, except for the root unit.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    },
+    "summary": {
+      "description": "What the unit is, in one line.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]+$"
+    },
+    "youmedoc": {
+      "description": "Version of the standard. Present only in the root unit.",
+      "type": ["string", "number"]
+    },
+    "kind": {
+      "description": "What sort of thing the unit is. Free vocabulary.",
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "active", "deprecated"],
+      "default": "active"
+    },
+    "provides": {
+      "description": "Provided ports, keyed by port name.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/portName" },
+      "additionalProperties": { "$ref": "#/$defs/providedPort" }
+    },
+    "needs": {
+      "description": "Needs, keyed by port name.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/portName" },
+      "additionalProperties": { "$ref": "#/$defs/need" }
+    },
+    "wiring": {
+      "description": "Need (key) to provider (value). A list of providers means alternatives.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/endpoint" },
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/$defs/endpoint" },
+          { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/endpoint" } }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "portName": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "endpoint": {
+      "description": "An own port (bare name) or a port of a direct child (child.port).",
+      "type": "string",
+      "pattern": "^([A-Za-z0-9][A-Za-z0-9_-]*\\.)?[a-z0-9][a-z0-9-]*$"
+    },
+    "providedPort": {
+      "type": "object",
+      "required": ["summary"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string" },
+        "contract": {
+          "description": "Path inside the unit, or a URL.",
+          "type": "string"
+        }
+      }
+    },
+    "need": {
+      "type": "object",
+      "required": ["summary"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string" },
+        "optional": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}
