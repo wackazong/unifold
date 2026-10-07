@@ -1,11 +1,11 @@
 # AGENTS.md: <unit-name>
 
-This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+This folder is a [unifold](https://unifold.md) unit. The standard and
 its skills `read-docs`, `write-docs` and `check-docs` are in the project
-root, the nearest folder above whose manifest contains `youmedoc`. From
-there, `python3 doc/skills/check-docs/scripts/youmedoc.py show <path of this folder>`
+root, the nearest folder above whose manifest contains `unifold`. From
+there, `python3 doc/skills/check-docs/scripts/unifold.py show <path of this folder>`
 prints this unit with its neighbours.
-<!-- Root unit instead: "This folder is a youmedoc unit and the root of the project.
+<!-- Root unit instead: "This folder is a unifold unit and the root of the project.
      Use the [read-docs](doc/skills/read-docs/SKILL.md) skill before anything else." -->
 
 ## Why

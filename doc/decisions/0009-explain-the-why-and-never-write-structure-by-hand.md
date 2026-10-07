@@ -36,6 +36,6 @@ and must not restate the structure of interfaces.
 - Bad: an agent must open a second file, the manifest or a diagram, to see
   the structure.
 - Bad: an agent that wants the structure as text finds it in the generated
-  `doc/diagrams/context.md` or through `youmedoc show`, not in `AGENTS.md`.
+  `doc/diagrams/context.md` or through `unifold show`, not in `AGENTS.md`.
 - A short `## Commands` section is allowed, because agents and people expect
   build and test commands in this file. Longer procedures are skills.

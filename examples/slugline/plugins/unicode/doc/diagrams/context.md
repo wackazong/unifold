@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Context diagram: unicode
 
 [slugline](../../../../doc/diagrams/component.md) / **unicode** · [README](../../README.md)

@@ -1,6 +1,6 @@
 # Contributing to plantwatch
 
-plantwatch is documented with [youmedoc](https://youmedoc.example). Some
+plantwatch is documented with [unifold](https://unifold.md). Some
 folders are units: they have a `unit.yaml` that says what the unit provides
 and needs, a `README.md` that describes it from outside, and an `AGENTS.md`
 that says why it is built the way it is.
@@ -21,8 +21,8 @@ that says why it is built the way it is.
    your change:
 
    ```sh
-   python3 doc/skills/check-docs/scripts/youmedoc.py generate
-   python3 doc/skills/check-docs/scripts/youmedoc.py check
+   python3 doc/skills/check-docs/scripts/unifold.py generate
+   python3 doc/skills/check-docs/scripts/unifold.py check
    ```
 
    The tool needs Python 3.9 or newer with PyYAML. `uv run` instead of
@@ -44,4 +44,4 @@ example is still `proposed`.
   edit them.
 
 The rules are explained in
-[doc/references/youmedoc/index.md](doc/references/youmedoc/index.md).
+[doc/references/unifold/index.md](doc/references/unifold/index.md).

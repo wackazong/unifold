@@ -1,7 +1,8 @@
-# youmedoc
+# unifold
 
-Say "you, me, doc": documents for the people who read them and the agents who
-write them.
+The name: a part of a repository is a unit in a folder. It stays folded until
+you need it, and it unfolds into further units. One form serves the people
+who read the documents and the agents who write them.
 
 **A README per folder, plus a map that cannot go stale.** Each part of a
 repository says in a few lines of YAML what it provides and what it needs.
@@ -37,15 +38,15 @@ with one folder. Most folders never need it.
 **Try it.** From a copy of this repository:
 
 ```sh
-python3 doc/skills/check-docs/scripts/youmedoc.py init --level core /path/to/your/repo
-python3 doc/skills/check-docs/scripts/youmedoc.py check /path/to/your/repo
+python3 doc/skills/check-docs/scripts/unifold.py init --level core /path/to/your/repo
+python3 doc/skills/check-docs/scripts/unifold.py check /path/to/your/repo
 ```
 
 The tool needs Python 3.9 or newer with PyYAML; `uv run` instead of `python3`
 fetches PyYAML by itself.
 
-- **The rules on one page:** [core.md](doc/references/youmedoc/core.md).
-- **The full standard:** [index.md](doc/references/youmedoc/index.md). It adds
+- **The rules on one page:** [core.md](doc/references/unifold/core.md).
+- **The full standard:** [index.md](doc/references/unifold/index.md). It adds
   an `AGENTS.md` per unit, decisions, references, skills and a ruleset.
 - **A small example:** [examples/slugline](examples/slugline/README.md), a
   library with three units at level `core`.
@@ -66,27 +67,27 @@ Agents benefit because each folder tells them what they need and nothing
 else.
 
 **Does it fit a library with one package?** Hardly. A project of one unit
-gets a one-box diagram. youmedoc pays off when there are several parts with
+gets a one-box diagram. unifold pays off when there are several parts with
 interfaces between them.
 
-**What about my docs site and my `docs/` folder?** They stay. youmedoc uses a
+**What about my docs site and my `docs/` folder?** They stay. unifold uses a
 folder named `doc/` for the people and agents who work on the code
-([coexistence.md](doc/references/youmedoc/coexistence.md)).
+([coexistence.md](doc/references/unifold/coexistence.md)).
 
 **Does it check my code?** Only if you give it the dependencies your build
 system knows: `check --deps` compares them with the wiring
-([checker.md](doc/references/youmedoc/checker.md)).
+([checker.md](doc/references/unifold/checker.md)).
 
 ## Use the full standard in your repository
 
 ```sh
-python3 doc/skills/check-docs/scripts/youmedoc.py init /path/to/your/repo
+python3 doc/skills/check-docs/scripts/unifold.py init /path/to/your/repo
 ```
 
 This copies the chapters and the three skills into the repository, writes
 `unit.yaml`, `README.md` and `AGENTS.md` where they are missing, and
 generates the first diagram. Then follow
-[workflow.md](doc/references/youmedoc/workflow.md). Adoption can proceed one
+[workflow.md](doc/references/unifold/workflow.md). Adoption can proceed one
 folder at a time.
 
 ## Provides
@@ -95,7 +96,7 @@ folder at a time.
 
 The standard: an overview, the core on one page, fourteen further chapters
 and a JSON Schema, in
-[doc/references/youmedoc/](doc/references/youmedoc/index.md). It defines the
+[doc/references/unifold/](doc/references/unifold/index.md). It defines the
 files of a unit, the manifest, the wiring, the generated diagrams, the
 writing rules and the ruleset, and says which design principles the rules
 come from.
@@ -107,17 +108,17 @@ format, with file templates:
 
 | Skill | Purpose |
 |---|---|
-| [read-docs](doc/skills/read-docs/SKILL.md) | Find your way through a youmedoc project |
+| [read-docs](doc/skills/read-docs/SKILL.md) | Find your way through a unifold project |
 | [write-docs](doc/skills/write-docs/SKILL.md) | Create and change units, decisions, references and skills |
 | [check-docs](doc/skills/check-docs/SKILL.md) | Enforce the ruleset with the checker and by review |
 
 ### `checker`
 
 One Python file,
-[youmedoc.py](doc/skills/check-docs/scripts/youmedoc.py). It checks the
+[unifold.py](doc/skills/check-docs/scripts/unifold.py). It checks the
 mechanical rules, generates diagrams and indexes, describes a unit with its
 resolved neighbours, and writes a clickable HTML explorer of a project. It is
-described in [checker.md](doc/references/youmedoc/checker.md) and tested by
+described in [checker.md](doc/references/unifold/checker.md) and tested by
 [tests/conformance.py](tests/conformance.py). It compares documents with each
 other. It does not read code.
 

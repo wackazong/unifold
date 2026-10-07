@@ -34,6 +34,6 @@ apart from its status.
 - Bad: two branches that add a decision to the same unit pick the same
   number and must renumber on merge.
 - Bad: each unit has a generated index of its own decisions only. The
-  project-wide list is a command, `youmedoc decisions`, not a file.
+  project-wide list is a command, `unifold decisions`, not a file.
 - Bad: nothing stops an agent from writing names into `decision-makers`.
   The rule makes the act visible in review; it does not prevent it.

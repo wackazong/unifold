@@ -47,7 +47,7 @@ keeps the rules that make services independent of each other.
    run" in [architecture.md](../../architecture.md). If the service changes
    the path of an upload, record a decision first.
 9. **Regenerate and check.** Run the generator and the checker of
-   [youmedoc](https://youmedoc.example) and fix what they report for
+   [unifold](https://unifold.md) and fix what they report for
    `cloud` and the new unit.
 
 ## Checks

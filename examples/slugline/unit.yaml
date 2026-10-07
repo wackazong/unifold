@@ -1,5 +1,5 @@
 unit: slugline
-youmedoc: "0.1"
+unifold: "0.1"
 level: core
 summary: Turns any string into a URL slug, as a library and on the command line
 kind: library

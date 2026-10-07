@@ -14,7 +14,7 @@ documentation site, sometimes served directly by the code host.
 
 - `docs/`
 - `doc/`
-- A hidden folder such as `.youmedoc/`
+- A hidden folder such as `.unifold/`
 - A name the project chooses
 
 ## Decision Outcome

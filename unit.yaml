@@ -1,24 +1,24 @@
-unit: youmedoc
-youmedoc: "0.1"
+unit: unifold
+unifold: "0.1"
 summary: A convention for keeping project knowledge in Markdown next to the code, written by AI and corrected by humans
 kind: specification
 status: active
-owner: the youmedoc authors
+owner: the unifold authors
 provides:
   specification:
     kind: specification
     summary: The text of the standard, in chapters of at most 200 lines
-    contract: doc/references/youmedoc/index.md
+    contract: doc/references/unifold/index.md
     verified-by: examples/plantwatch
   skills:
     kind: skill
-    summary: Three skills that teach an agent to read, write and check a youmedoc project
+    summary: Three skills that teach an agent to read, write and check a unifold project
     contract: doc/skills
     verified-by: examples/plantwatch
   checker:
     kind: cli
     summary: Reference tool that checks the mechanical rules, describes units and generates diagrams
-    contract: doc/references/youmedoc/checker.md
+    contract: doc/references/unifold/checker.md
     verified-by: tests/conformance.py
 needs:
   python:

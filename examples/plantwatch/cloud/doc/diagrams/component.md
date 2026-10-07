@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Component diagram: cloud
 
 [plantwatch](../../../doc/diagrams/component.md) / **cloud** · [README](../../README.md) · [context](context.md) · [architecture](architecture.md)

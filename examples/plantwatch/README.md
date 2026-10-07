@@ -8,15 +8,15 @@ a plant needs attention.
 
 **Status:** design. Every unit has `status: planned`; the documents are the
 design and no product code exists yet. This project is the worked example of
-the youmedoc standard.
+the unifold standard.
 
 **Map:** the [architecture diagram](doc/diagrams/architecture.md) shows all
 parts and how they depend on each other. Each part is a folder with its own
 `README.md`.
-[youmedoc.html](youmedoc.html) is the same map as a page in which every box can
-be clicked; `youmedoc site` writes it.
+[unifold.html](unifold.html) is the same map as a page in which every box can
+be clicked; `unifold site` writes it.
 
-This repository is documented with [youmedoc](https://youmedoc.example): some
+This repository is documented with [unifold](https://unifold.md): some
 folders are units with a declared interface. The interface of the project as
 a whole is in [unit.yaml](unit.yaml) and described below. Why the project is
 cut the way it is, is in [AGENTS.md](AGENTS.md).
@@ -98,10 +98,10 @@ your change, and how to run the generator and the checker.
 
 ## Licence
 
-The example is part of the youmedoc repository and under its licence: MIT or
+The example is part of the unifold repository and under its licence: MIT or
 Apache-2.0, at your option
-([LICENSE-MIT](doc/references/youmedoc/LICENSE-MIT),
-[LICENSE-APACHE](doc/references/youmedoc/LICENSE-APACHE)).
+([LICENSE-MIT](doc/references/unifold/LICENSE-MIT),
+[LICENSE-APACHE](doc/references/unifold/LICENSE-APACHE)).
 
 ## More
 

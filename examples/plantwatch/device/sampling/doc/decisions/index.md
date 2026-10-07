@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Decisions of sampling
 
 [README](../../README.md) · [AGENTS.md](../../AGENTS.md)

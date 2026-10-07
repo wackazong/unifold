@@ -46,7 +46,7 @@ the next one starts.
 9. **Update the documents**: the limits in
    [README.md](../../../README.md) if a guarantee changed, and
    [architecture.md](../../architecture.md) if a duration in its table
-   changed. Run the youmedoc generator and checker.
+   changed. Run the unifold generator and checker.
 
 ## Checks
 

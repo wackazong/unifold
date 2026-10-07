@@ -1,15 +1,15 @@
 ---
 name: write-docs
-description: Create or change the documents of a youmedoc project - units, ports, wiring, decisions, references, skills. Use it when you design a new part, change an interface, record a decision, or document a folder that has no documents yet.
+description: Create or change the documents of a unifold project - units, ports, wiring, decisions, references, skills. Use it when you design a new part, change an interface, record a decision, or document a folder that has no documents yet.
 license: MIT OR Apache-2.0
 ---
-# Write the docs of a youmedoc project
+# Write the docs of a unifold project
 
 Use [read-docs](../read-docs/SKILL.md) first, so that you know the unit you
 are working in. If the `AGENTS.md` of that unit lists a skill for your task,
 follow that skill; this one supplies the templates and the finish. The
 reasons behind these procedures are in
-[workflow.md](../../references/youmedoc/workflow.md).
+[workflow.md](../../references/unifold/workflow.md).
 
 ## Templates
 
@@ -30,12 +30,12 @@ Copy a template, fill it in, delete the comments.
 ## Add a unit
 
 1. Check that the folder deserves to be a unit
-   ([concepts.md](../../references/youmedoc/concepts.md), last section).
+   ([concepts.md](../../references/unifold/concepts.md), last section).
    The folder name is the unit name. Prefer a name that is not an everyday
    word.
 2. Write the manifest and `README.md` from the template. Set
    `status: planned` if the code does not exist. Declare provided ports and
-   needs ([manifest.md](../../references/youmedoc/manifest.md)). Write needs
+   needs ([manifest.md](../../references/unifold/manifest.md)). Write needs
    without looking at the siblings: say what is needed, in this unit's words,
    not who has it. Do not declare the runtime, the standard library or
    logging as needs.
@@ -49,7 +49,7 @@ Copy a template, fill it in, delete the comments.
    two lines.
 6. In the parent's manifest, add wiring lines: one for every need of the new
    unit, and one for every port of it that a sibling or the parent uses
-   ([wiring.md](../../references/youmedoc/wiring.md)). If the kinds of a
+   ([wiring.md](../../references/unifold/wiring.md)). If the kinds of a
    need and its provider differ, add an adapter unit; do not change the kind.
 7. For every wiring line you added, read both ends and make sure the need is
    covered by what the provider's `README.md` offers.
@@ -103,7 +103,7 @@ Copy a template, fill it in, delete the comments.
 - At most 200 lines per file; no line over 400 characters.
 - Link every mention of another file. Within the unit freely; down only to
   a child's `README.md`; up only from `doc/context.md`; never sideways
-  ([rules.md](../../references/youmedoc/rules.md)).
+  ([rules.md](../../references/unifold/rules.md)).
 - Write the names of units and ports in code font. Never write the name of a
   sibling or ancestor outside `doc/context.md`.
 - One home for every fact. Link instead of repeating.
@@ -113,7 +113,7 @@ Copy a template, fill it in, delete the comments.
 - Never weaken a document to make the checker pass: do not mark a need
   `optional`, delete a port or drop an alternative unless that is the change
   you were asked to make.
-- Style: [markdown.md](../../references/youmedoc/markdown.md).
+- Style: [markdown.md](../../references/unifold/markdown.md).
 
 ## Finish
 

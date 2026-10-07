@@ -1,8 +1,8 @@
-# yaml-language-server: $schema=https://youmedoc.example/0.1/manifest.schema.json
+# yaml-language-server: $schema=https://unifold.md/0.1/manifest.schema.json
 # Manifest of the unit. Delete what is empty; 'wiring' only if the unit has children.
 unit: <folder-name>
 summary: <what the unit is, one line, no full stop>
-# youmedoc: "0.1"          # root unit only
+# unifold: "0.1"          # root unit only
 # level: core              # root unit only: follow only the core rules
 # diagram-links: none      # root unit only: none | relative | base URL of the file view
 # ignore: [third-party]    # root unit only: folders that are not scanned

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slugline · unifold</title>
+<style>
+:root{--bg:#fff;--fg:#1c1e21;--mute:#667;--line:#d6d9de;--hi:#0b62d6;--panel:#f6f7f9}
+@media(prefers-color-scheme:dark){:root{--bg:#16181c;--fg:#e6e8eb;--mute:#9aa3ad;--line:#333a44;--hi:#6cb0ff;--panel:#1e2228}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;min-height:100vh}
+nav{width:250px;flex:none;border-right:1px solid var(--line);background:var(--panel);padding:12px;overflow:auto;max-height:100vh;position:sticky;top:0}
+nav ul{list-style:none;margin:0;padding-left:14px}nav>ul{padding-left:0}
+nav a{display:block;padding:2px 6px;border-radius:4px;color:var(--fg);text-decoration:none;cursor:pointer}
+nav a.on{background:var(--hi);color:#fff}nav a:hover{outline:1px solid var(--line)}
+main{flex:1;min-width:0;padding:16px 24px}a{color:var(--hi)}
+h1{font-size:22px;margin:.2em 0}.mute{color:var(--mute)}.crumbs a{cursor:pointer}
+.tabs button{font:inherit;padding:4px 12px;margin-right:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
+.tabs button.on{background:var(--hi);color:#fff;border-color:var(--hi)}
+#diagram{border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0;overflow:auto;background:var(--bg)}
+#diagram svg{max-width:none;height:auto}#diagram .pick{cursor:pointer}
+table{border-collapse:collapse;margin:8px 0;width:100%}th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}code{background:var(--panel);padding:0 4px;border-radius:3px}
+@media(max-width:800px){body{display:block}nav{width:auto;max-height:none;position:static}}
+</style></head><body>
+<nav id="tree"></nav>
+<main>
+<div class="crumbs mute" id="crumbs"></div>
+<h1 id="title"></h1><p id="summary"></p><p class="mute" id="meta"></p>
+<div class="tabs" id="tabs"></div>
+<div id="diagram">Loading the diagram renderer…</div>
+<p class="mute">Click a box to open that unit. Arrows point from a need to its provider.</p>
+<div id="info"></div>
+</main>
+<script type="module">
+const model = {"name": "slugline", "units": [{"unit": "slugline", "path": ".", "summary": "Turns any string into a URL slug, as a library and on the command line", "kind": "library", "status": "active", "owner": "", "manifest": "unit.yaml", "parent": null, "children": ["cli", "core", "plugins/unicode"], "provides": {"slugify": {"kind": "library", "summary": "Turn a string into a slug", "contract": null, "verified-by": "core/tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slugify"}]}, "slug-cli": {"kind": "cli", "summary": "Slugs on the command line", "contract": null, "verified-by": "cli/tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slug-cli"}]}}, "needs": {}, "skills": [], "decisions": [], "files": ["README.md"], "readme": "README.md", "agents": "AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  u_root[\"slugline\"]\n  p_root___slugify([\"slugify\"])\n  p_root___slugify --> u_root\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slug_dcli --> u_root\n  classDef focus stroke-width:4px\n  class u_root focus", "nodes": {"u_root": "."}}, "component": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slugify --> u_core\n  p_root___slug_dcli --> u_cli\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}, "architecture": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slugify --> u_core\n  p_root___slug_dcli --> u_cli\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}, {"unit": "cli", "path": "cli", "summary": "The slugline command", "kind": "app", "status": "active", "owner": "", "manifest": "cli/unit.yaml", "parent": ".", "children": [], "provides": {"slug-cli": {"kind": "cli", "summary": "Reads lines on standard input and writes slugs on standard output", "contract": null, "verified-by": "tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slug-cli"}]}}, "needs": {"slugify": {"kind": "library", "summary": "A function that turns one string into one slug", "optional": false, "contract": null, "provided-by": [{"unit": "core", "port": "slugify", "contract": "core/src/lib.rs", "config": null}]}, "transliteration": {"kind": "library", "summary": "Maps characters outside ASCII to ASCII before a slug is made", "optional": true, "contract": null, "provided-by": [{"unit": "plugins/unicode", "port": "transliteration", "contract": null, "config": null}]}}, "skills": [], "decisions": [], "files": ["cli/README.md"], "readme": "cli/README.md", "agents": "cli/AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slug_dcli --> u_cli\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3\n  class u_cli focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}, {"unit": "core", "path": "core", "summary": "Makes slugs and defines what a transliteration plug-in must offer", "kind": "library", "status": "active", "owner": "", "manifest": "core/unit.yaml", "parent": ".", "children": [], "provides": {"slugify": {"kind": "library", "summary": "Turn a string into a slug with a chosen separator and length", "contract": "src/lib.rs", "verified-by": "tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slugify"}, {"unit": "cli", "need": "slugify", "contract": null}]}, "plugin-api": {"kind": "specification", "summary": "The interface a transliteration plug-in implements", "contract": "src/lib.rs", "verified-by": "tests", "conforms-to": null, "used-by": [{"unit": "plugins/unicode", "need": "plugin-api", "contract": null}]}}, "needs": {}, "skills": [], "decisions": [], "files": ["core/README.md"], "readme": "core/README.md", "agents": "core/AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___slugify --> u_core\n  u_cli -->|\"slugify\"| u_core\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3\n  class u_core focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}, {"unit": "unicode", "path": "plugins/unicode", "summary": "Transliterates Latin characters with diacritics to ASCII", "kind": "library", "status": "active", "owner": "", "manifest": "plugins/unicode/unit.yaml", "parent": ".", "children": [], "provides": {"transliteration": {"kind": "library", "summary": "Maps characters outside ASCII to ASCII before a slug is made", "contract": null, "verified-by": "tests", "conforms-to": "plugin-api", "used-by": [{"unit": "cli", "need": "transliteration", "contract": null}]}}, "needs": {"plugin-api": {"kind": "specification", "summary": "The interface a transliteration plug-in implements", "optional": false, "contract": null, "provided-by": [{"unit": "core", "port": "plugin-api", "contract": "core/src/lib.rs", "config": null}]}}, "skills": [], "decisions": [], "files": ["plugins/unicode/README.md"], "readme": "plugins/unicode/README.md", "agents": "plugins/unicode/AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3\n  class u_plugins__unicode focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}], "base": "", "up": ""};
+const units = model.units, byPath = Object.fromEntries(units.map(u => [u.path, u]));
+const el = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const file = p => model.base ? model.base + "/" + p : model.up + p;
+const pick = (p, t) => `<a class="go" data-path="${esc(p)}">${esc(t ?? (p === "." ? model.name : p))}</a>`;
+let mermaid = null, state = {path: ".", kind: null};
+function fromHash(){const h = decodeURIComponent(location.hash.slice(1)); const [p, k] = h.split("@");
+  state = {path: byPath[p] ? p : ".", kind: k || null};}
+function go(path, kind){location.hash = encodeURIComponent(path + (kind ? "@" + kind : ""));}
+function tree(path){const u = byPath[path]; const kids = u.children.map(tree).join("");
+  return `<li><a data-path="${esc(path)}" class="go${path === state.path ? " on" : ""}">${esc(u.unit)}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
+function who(list, key){return list.map(i => i.outside ? "outside the project"
+  : i["plain-folder"] ? "folder <code>" + esc(i["plain-folder"]) + "</code>"
+  : pick(i.unit) + " · <code>" + esc(i[key]) + "</code>" + (i.config ? " (" + esc(i.config) + ")" : "")).join("<br>") || "–";}
+async function render(){
+  const u = byPath[state.path]; const kinds = Object.keys(u.diagrams);
+  const kind = kinds.includes(state.kind) ? state.kind : (kinds.includes("component") ? "component" : "context");
+  document.title = u.unit + " · " + model.name;
+  el("tree").innerHTML = "<ul>" + tree(".") + "</ul>";
+  const chain = []; for (let p = u.parent; p !== null; p = byPath[p].parent) chain.unshift(p);
+  el("crumbs").innerHTML = chain.map(p => pick(p, byPath[p].unit)).concat(esc(u.unit)).join(" / ");
+  el("title").textContent = u.unit; el("summary").textContent = u.summary;
+  el("meta").innerHTML = [u.status, u.kind, u.owner && "owner " + u.owner].filter(Boolean).map(esc).join(" · ")
+    + ` · <a href="${esc(file(u.readme))}">README</a> · <a href="${esc(file(u.agents))}">AGENTS.md</a>`;
+  el("tabs").innerHTML = kinds.map(k => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${k}</button>`).join("");
+  let html = "";
+  const p = Object.entries(u.provides), n = Object.entries(u.needs);
+  if (p.length) html += "<h2>Provides</h2><table><tr><th>Port</th><th>Kind</th><th>Summary</th><th>Used by</th></tr>"
+    + p.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
+  if (n.length) html += "<h2>Needs</h2><table><tr><th>Need</th><th>Kind</th><th>Summary</th><th>Provided by</th></tr>"
+    + n.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["provided-by"], "port")}</td></tr>`).join("") + "</table>";
+  if (u.skills.length) html += "<h2>Skills</h2><ul>" + u.skills.map(s => `<li><a href="${esc(file(s.path))}">${esc(s.name)}</a>: ${esc(s.description)}</li>`).join("") + "</ul>";
+  if (u.decisions.length) html += "<h2>Decisions</h2><ul>" + u.decisions.map(d => `<li><a href="${esc(file(d.path))}">${esc(d.title)}</a> <span class="mute">${esc(d.status)}</span></li>`).join("") + "</ul>";
+  el("info").innerHTML = html;
+  if (!mermaid) return;
+  const d = u.diagrams[kind];
+  try {
+    const {svg} = await mermaid.render("g" + Date.now(), d.source);
+    el("diagram").innerHTML = svg;
+    for (const node of el("diagram").querySelectorAll("[id]")) {
+      const hit = Object.keys(d.nodes).find(id => node.id === id || new RegExp("(^|-)" + id + "(-\\d+)?$").test(node.id));
+      if (hit && (node.classList.contains("node") || node.classList.contains("cluster"))) {
+        node.classList.add("pick"); node.addEventListener("click", ev => {ev.stopPropagation(); go(d.nodes[hit]);});
+      }
+    }
+  } catch (err) { el("diagram").textContent = "The diagram could not be drawn: " + err; }
+}
+document.addEventListener("click", ev => {
+  const a = ev.target.closest(".go"); if (a) { go(a.dataset.path); return; }
+  const b = ev.target.closest("button[data-kind]"); if (b) go(state.path, b.dataset.kind);
+});
+addEventListener("hashchange", () => { fromHash(); render(); });
+fromHash(); render();
+try {
+  mermaid = (await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs")).default;
+  mermaid.initialize({startOnLoad: false, securityLevel: "loose",
+    theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default"});
+  render();
+} catch (err) { el("diagram").textContent = "The diagram renderer could not be loaded (" + err + "). The tables below still work."; }
+</script></body></html>

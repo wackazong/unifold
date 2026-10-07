@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Decisions of plantwatch
 
 [README](../../README.md) · [AGENTS.md](../../AGENTS.md)

@@ -27,7 +27,7 @@ The line for all descendants was rejected: a unit in between would depend on
 something its manifest does not show. Its `README.md` would no longer
 describe it as a closed box, and a copy of the folder would hide a
 dependency. What every unit needs, such as logging, is not a need at all
-([manifest.md](../references/youmedoc/manifest.md)).
+([manifest.md](../references/unifold/manifest.md)).
 
 ### Consequences
 

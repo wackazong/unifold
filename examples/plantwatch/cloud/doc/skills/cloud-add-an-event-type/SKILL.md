@@ -35,7 +35,7 @@ changes.
    event bus; add that line if it is missing. Compare the contract of each
    need with the contract of the publisher's port.
 8. **Regenerate and check** with the generator and the checker of
-   [youmedoc](https://youmedoc.example).
+   [unifold](https://unifold.md).
 
 ## Checks
 

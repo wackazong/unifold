@@ -1,4 +1,4 @@
-# Architecture of youmedoc
+# Architecture of unifold
 
 Why the standard looks the way it does, where its parts come from, and what
 it knowingly leaves out. The decisions are listed in
@@ -6,9 +6,9 @@ it knowingly leaves out. The decisions are listed in
 
 ## Reasoning
 
-youmedoc combines existing practices and adds one mechanism of its own.
+unifold combines existing practices and adds one mechanism of its own.
 
-| Part | Taken from | What youmedoc changes |
+| Part | Taken from | What unifold changes |
 |---|---|---|
 | A unit described from outside (`README.md`) and from inside (`doc/`) | The blackbox and whitebox of the [arc42](https://docs.arc42.org/section-5/) building block view | The description is cut up and stored in the folder of each building block. The building block is the folder. |
 | Provided ports, needs, wiring in the parent | Ports and adapters; component models with imports and exports, for example the [WebAssembly Component Model](https://component-model.bytecodealliance.org/) | Only names, kinds and summaries are declared. The precise contract stays in whatever format the code uses. |
@@ -22,7 +22,7 @@ The mechanism of its own is the pair of **context file and direction rules**
 ([0003](decisions/0003-allow-upward-links-only-in-context.md)). Hierarchical
 documentation normally lets children inherit silently from parents, which
 makes a child impossible to understand alone. Self-contained units normally
-are flat. youmedoc keeps the hierarchy and makes the inheritance explicit in
+are flat. unifold keeps the hierarchy and makes the inheritance explicit in
 one file per unit.
 
 The second deliberate choice is the split between declared and written
@@ -34,7 +34,7 @@ reasons, guarantees, facts and procedures.
 
 ## Invariants
 
-- The four folders that are copied into projects (`references/youmedoc/` and
+- The four folders that are copied into projects (`references/unifold/` and
   the three skills) form a closed set under links.
 - Every tool rule in the text has the same ID and meaning in the tool, and a
   test case.

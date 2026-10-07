@@ -42,5 +42,5 @@ should start with its title.
 - Good: with `unit.yaml`, an agent that resolves wiring reads a small YAML
   file instead of a whole `README.md`, and editors can apply the JSON Schema.
 - Bad: two places to look. The tool accepts both; a unit must not use both.
-- Bad: units cannot be seen in a plain directory listing. `youmedoc tree`
+- Bad: units cannot be seen in a plain directory listing. `unifold tree`
   lists them.

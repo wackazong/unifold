@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Context diagram: device
 
 [plantwatch](../../../doc/diagrams/component.md) / **device** · [README](../../README.md) · [component](component.md) · [architecture](architecture.md)

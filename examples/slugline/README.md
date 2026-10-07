@@ -3,7 +3,7 @@
 Turns any string into a URL slug: `Hello World` becomes `hello-world`. A
 library, a command, and a way to plug in transliteration.
 
-This is the small example of the [youmedoc](https://youmedoc.example)
+This is the small example of the [unifold](https://unifold.md)
 standard, at level `core`: three units, each with a `unit.yaml` and a
 `README.md`, wired in [unit.yaml](unit.yaml). The source files are
 placeholders. The map of the project is the
@@ -24,4 +24,4 @@ per line on standard output.
 ## Checking the wiring against the code
 
 `deps.json` lists which source file depends on which, as a build tool would
-report it. `youmedoc check --deps deps.json` compares it with the wiring.
+report it. `unifold check --deps deps.json` compares it with the wiring.

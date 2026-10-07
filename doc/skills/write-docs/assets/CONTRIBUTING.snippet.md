@@ -1,6 +1,6 @@
 ## Documentation
 
-This repository is documented with [youmedoc](https://youmedoc.example). Some
+This repository is documented with [unifold](https://unifold.md). Some
 folders are units: they have a manifest (`unit.yaml` or the front matter of
 `README.md`), a `README.md` that describes what the folder provides and needs,
 and an `AGENTS.md` that says why it is built as it is.
@@ -15,8 +15,8 @@ When you change code:
 4. Run the generator and the checker and commit the regenerated files:
 
    ```sh
-   uv run doc/skills/check-docs/scripts/youmedoc.py generate
-   uv run doc/skills/check-docs/scripts/youmedoc.py check
+   uv run doc/skills/check-docs/scripts/unifold.py generate
+   uv run doc/skills/check-docs/scripts/unifold.py check
    ```
 
 5. Do not edit files in `doc/diagrams/` or any `doc/decisions/index.md`; they

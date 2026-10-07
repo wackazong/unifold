@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Context diagram: cli
 
 [slugline](../../../doc/diagrams/component.md) / **cli** · [README](../../README.md)

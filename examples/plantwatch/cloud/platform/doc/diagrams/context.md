@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Context diagram: platform
 
 [plantwatch](../../../../doc/diagrams/component.md) / [cloud](../../../doc/diagrams/component.md) / **platform** · [README](../../README.md)

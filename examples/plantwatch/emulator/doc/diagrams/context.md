@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Context diagram: emulator
 
 [plantwatch](../../../doc/diagrams/component.md) / **emulator** · [README](../../README.md)

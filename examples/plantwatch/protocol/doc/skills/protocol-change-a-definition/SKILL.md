@@ -40,7 +40,7 @@ because the implementations are updated one after the other, not together.
 8. **Check the inherited ranges.** If a unit, range or identifier form
    changes, it must first change at its source, cited in
    [context](../../context.md). Update the restatement there.
-9. Run the youmedoc generator and checker and fix what they report.
+9. Run the unifold generator and checker and fix what they report.
 
 ## Checks
 

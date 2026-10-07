@@ -30,7 +30,7 @@ most widely supported mechanism.
 - Good: one vendor's evaluation found that agents used an index in
   `AGENTS.md` more reliably than skills they had to discover themselves
   ([Vercel, 2026](https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals)).
-- Good: `youmedoc skills` lists every skill of a project in one call.
+- Good: `unifold skills` lists every skill of a project in one call.
 - Bad: an agent that does not read `AGENTS.md` in a folder never learns of
   the skills there. Automatic skill loading by description does not happen.
 - Bad: projects that want native discovery must add links or copies for

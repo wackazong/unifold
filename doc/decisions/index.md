@@ -1,5 +1,5 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
-# Decisions of youmedoc
+<!-- unifold:generated - do not edit; run `unifold generate` -->
+# Decisions of unifold
 
 [README](../../README.md) · [AGENTS.md](../../AGENTS.md)
 
@@ -25,3 +25,4 @@
 | 0018 | [Allow one wiring line for several children, but not for deeper levels](0018-allow-one-wiring-line-for-several-children.md) | proposed | 2026-10-07 |
 | 0019 | [Compare the wiring with dependencies observed in code](0019-compare-the-wiring-with-dependencies-observed-in-code.md) | proposed | 2026-10-07 |
 | 0020 | [Keep the manifest in unit.yaml by default](0020-keep-the-manifest-in-unit-yaml-by-default.md) | proposed | 2026-10-07 |
+| 0021 | [Name the standard unifold](0021-name-the-standard-unifold.md) | proposed | 2026-10-07 |

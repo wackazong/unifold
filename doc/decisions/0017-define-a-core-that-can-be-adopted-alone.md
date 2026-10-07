@@ -25,11 +25,11 @@ Chosen option: "two levels", because the step from "structure only" to
 "structure plus written knowledge" is the one real threshold, and a third
 level would be a claim nobody can verify.
 
-- [core.md](../references/youmedoc/core.md) states ten rules on one page.
+- [core.md](../references/unifold/core.md) states ten rules on one page.
 - At level `core` nothing is copied into the repository, no `AGENTS.md` is
   required, and the tool applies only the structure, manifest, wiring and
   generation rules.
-- `youmedoc init --level core` starts such a project with two files.
+- `unifold init --level core` starts such a project with two files.
 
 ### Consequences
 

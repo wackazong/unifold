@@ -1,4 +1,4 @@
-<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # Context diagram: sampling
 
 [plantwatch](../../../../doc/diagrams/component.md) / [device](../../../doc/diagrams/component.md) / **sampling** · [README](../../README.md)

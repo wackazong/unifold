@@ -1,5 +1,5 @@
 unit: plantwatch
-youmedoc: "0.1"
+unifold: "0.1"
 summary: Tells people when their house plants need water, using a sensor in the pot, a phone app and cloud services
 kind: system
 status: planned

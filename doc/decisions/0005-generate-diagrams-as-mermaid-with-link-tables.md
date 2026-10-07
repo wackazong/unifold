@@ -38,7 +38,7 @@ Chosen option: "generated Mermaid, tables, and an explorer".
   tables work on every host and are what an agent reads.
 - Whether boxes carry links is a setting of the project (`diagram-links`):
   none, relative, or full URLs from a base address.
-- `youmedoc site` writes one HTML file in which every box, frame and table
+- `unifold site` writes one HTML file in which every box, frame and table
   entry is clickable.
 
 ### Consequences

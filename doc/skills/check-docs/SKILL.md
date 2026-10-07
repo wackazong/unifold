@@ -1,9 +1,9 @@
 ---
 name: check-docs
-description: Check a youmedoc project against the ruleset - run the checker, fix what it reports, then review meaning by hand. Use it after every change to documents or folder structure, before a commit, and when asked to review or enforce youmedoc.
+description: Check a unifold project against the ruleset - run the checker, fix what it reports, then review meaning by hand. Use it after every change to documents or folder structure, before a commit, and when asked to review or enforce unifold.
 license: MIT OR Apache-2.0
 ---
-# Check the docs of a youmedoc project
+# Check the docs of a unifold project
 
 The ruleset has two parts. A tool checks the mechanical part. You check the
 part that concerns meaning. Both are required. A run of the tool without
@@ -14,16 +14,16 @@ findings means the documents agree with each other, not that they are right.
 1. **Generate, then check.** From anywhere in the project:
 
    ```sh
-   uv run <root>/doc/skills/check-docs/scripts/youmedoc.py generate
-   uv run <root>/doc/skills/check-docs/scripts/youmedoc.py check
+   uv run <root>/doc/skills/check-docs/scripts/unifold.py generate
+   uv run <root>/doc/skills/check-docs/scripts/unifold.py check
    ```
 
    `<root>` is the project root. Without `uv`, use `python3` with PyYAML
-   installed. Details: [checker.md](../../references/youmedoc/checker.md).
+   installed. Details: [checker.md](../../references/unifold/checker.md).
 
 2. **Fix every error** (lines that start with `E`). The second word is the
    rule ID. Look it up in
-   [rules-tool.md](../../references/youmedoc/rules-tool.md); the table at its
+   [rules-tool.md](../../references/unifold/rules-tool.md); the table at its
    end lists the usual fixes. Fix the cause, not the symptom:
    - Do not delete a need, or mark it `optional`, to silence `W2`. Wire it,
      or pass it up.
@@ -38,7 +38,7 @@ findings means the documents agree with each other, not that they are right.
 4. **Repeat** steps 1 to 3 until no errors remain.
 
 5. **Review meaning.** Apply the review rules in
-   [rules-review.md](../../references/youmedoc/rules-review.md) that belong
+   [rules-review.md](../../references/unifold/rules-review.md) that belong
    to what changed:
 
    | What changed | Rules to apply |
@@ -61,7 +61,7 @@ findings means the documents agree with each other, not that they are right.
    - `C7`: compare changed decision files with version control, for example
      `git diff -- '*/doc/decisions/*'`. No change may set `accepted` unless a
      human asked for exactly that.
-   - `C13`: for each changed wiring line, run `youmedoc port <unit folder>
+   - `C13`: for each changed wiring line, run `unifold port <unit folder>
      <port>`. It prints the need's text and the provider's text with their
      contracts, side by side.
 
@@ -84,5 +84,5 @@ Check by hand, in this order: every unit has a manifest, `README.md` and
 ## Reference
 
 - Overview of the ruleset and the direction rules:
-  [rules.md](../../references/youmedoc/rules.md)
-- The tool: [youmedoc.py](scripts/youmedoc.py)
+  [rules.md](../../references/unifold/rules.md)
+- The tool: [unifold.py](scripts/unifold.py)

@@ -20,7 +20,7 @@ every mention of a file must be a link.
 
 ## Decision Outcome
 
-Chosen option: "by name", because the three skills exist in every youmedoc
+Chosen option: "by name", because the three skills exist in every unifold
 project at the same place, an agent learns of them from the root `AGENTS.md`,
 and a name does not break when a unit is copied.
 

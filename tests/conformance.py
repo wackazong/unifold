@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT OR Apache-2.0
-"""Conformance cases for youmedoc checkers.
+"""Conformance cases for unifold checkers.
 
 Each case is a small project (a mapping of file path to content) and the
 findings a checker must report for it, as "SEVERITY RULE file". The cases are
@@ -20,8 +20,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-TOOL = Path(__file__).resolve().parents[1] / "doc/skills/check-docs/scripts/youmedoc.py"
-MARK = "<!-- youmedoc:generated - do not edit; run `youmedoc generate` -->"
+TOOL = Path(__file__).resolve().parents[1] / "doc/skills/check-docs/scripts/unifold.py"
+MARK = "<!-- unifold:generated - do not edit; run `unifold generate` -->"
 
 
 def readme(manifest: str, extra: str = "", sidecar: bool = False) -> str:
@@ -37,14 +37,14 @@ def agents(extra: str = "") -> str:
 def project(root_manifest: str = "", units: dict | None = None, files: dict | None = None,
             root_extra: str = "", sidecar: bool = False) -> dict:
     """A root unit with the files the standard requires, plus child units."""
-    manifest = 'unit: demo\nyoumedoc: "0.1"\nsummary: A demo\nstatus: planned\n' + root_manifest
+    manifest = 'unit: demo\nunifold: "0.1"\nsummary: A demo\nstatus: planned\n' + root_manifest
     out = {
         "README.md": readme(manifest, root_extra, sidecar),
         "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"),
         "doc/skills/read-docs/SKILL.md":
             "---\nname: read-docs\ndescription: Read.\n---\n# Read\n\n"
-            "[standard](../../references/youmedoc/index.md)\n",
-        "doc/references/youmedoc/index.md": "# youmedoc\n",
+            "[standard](../../references/unifold/index.md)\n",
+        "doc/references/unifold/index.md": "# unifold\n",
     }
     if sidecar:
         out["unit.yaml"] = manifest
@@ -93,10 +93,10 @@ CASES = [
         {"a": "provides:\n  p: {kind: http, summary: s}\nneeds:\n  n: {kind: http, summary: s}\n"}),
      []),
     ("unknown-key", project("colour: blue\nx-team: red\n"), ["E M5 README.md"]),
-    ("manifest-in-two-places", project(files={"unit.yaml": 'unit: demo\nyoumedoc: "0.1"\nsummary: s\n'}),
+    ("manifest-in-two-places", project(files={"unit.yaml": 'unit: demo\nunifold: "0.1"\nsummary: s\n'}),
      ["E M1 unit.yaml", "E S1 ."]),
     ("unsupported-version", {**project(), "README.md": readme(
-        'unit: demo\nyoumedoc: "9.9"\nsummary: A demo\nstatus: planned\n')}, ["E S1 README.md"]),
+        'unit: demo\nunifold: "9.9"\nsummary: A demo\nstatus: planned\n')}, ["E S1 README.md"]),
     ("name-differs-from-folder", project("", {"a": ""}, {"a/README.md": readme(
         "unit: other\nsummary: s\nstatus: planned\n")}), ["E S2 a/README.md"]),
     ("no-agents-file", project("", {"a": ""}, {"a/AGENTS.md": None}), ["E S11 a"]),
@@ -104,7 +104,7 @@ CASES = [
         "doc/skills/do-it/SKILL.md": "---\nname: do-it\ndescription: Does it.\n---\n# Do it\n"}),
      ["E S8 AGENTS.md"]),
     ("active-without-verification",
-     {**project(), "README.md": readme('unit: demo\nyoumedoc: "0.1"\nsummary: A demo\n'
+     {**project(), "README.md": readme('unit: demo\nunifold: "0.1"\nsummary: A demo\n'
                                        "provides:\n  p: {kind: cli, summary: s}\n")},
      ["W M8 README.md"]),
     ("link-up-outside-context", project("", {"a": ""}, {"a/README.md": readme(
@@ -172,7 +172,7 @@ CASES = [
     ("hand-written-file-among-diagrams", project(files={"doc/diagrams/mine.md": "# Mine\n"}),
      ["E G2 doc/diagrams/mine.md", "E L5 doc/diagrams/mine.md"]),
     ("core-level-needs-no-agents-file-and-no-copy", {
-        "unit.yaml": 'unit: demo\nyoumedoc: "0.1"\nlevel: core\nsummary: A demo\n'
+        "unit.yaml": 'unit: demo\nunifold: "0.1"\nlevel: core\nsummary: A demo\n'
                      "status: planned\nwiring:\n  a.x: b.x\n",
         "README.md": "# demo\n",
         "a/unit.yaml": "unit: a\nsummary: s\nstatus: planned\n" + A_NEEDS_X,
@@ -180,7 +180,7 @@ CASES = [
         "b/unit.yaml": "unit: b\nsummary: s\nstatus: planned\n" + B_PROVIDES_X,
         "b/README.md": "# b\n"}, []),
     ("core-level-still-checks-wiring", {
-        "unit.yaml": 'unit: demo\nyoumedoc: "0.1"\nlevel: core\nsummary: A demo\n'
+        "unit.yaml": 'unit: demo\nunifold: "0.1"\nlevel: core\nsummary: A demo\n'
                      "status: planned\n",
         "README.md": "# demo\n",
         "a/unit.yaml": "unit: a\nsummary: s\nstatus: planned\n" + A_NEEDS_X,

@@ -1,6 +1,6 @@
 # AGENTS.md: plantwatch
 
-This folder is a [youmedoc](https://youmedoc.example) unit and the root of the
+This folder is a [unifold](https://unifold.md) unit and the root of the
 project. Use the [read-docs](doc/skills/read-docs/SKILL.md) skill before
 anything else.
 
@@ -47,10 +47,10 @@ to a phone ([0001](doc/decisions/0001-the-phone-relays-between-sensor-and-server
 ## Commands
 
 ```sh
-python3 doc/skills/check-docs/scripts/youmedoc.py show PATH        # a unit and its neighbours
-python3 doc/skills/check-docs/scripts/youmedoc.py port PATH NAME   # both ends of a port
-python3 doc/skills/check-docs/scripts/youmedoc.py generate         # diagrams and indexes
-python3 doc/skills/check-docs/scripts/youmedoc.py check            # the tool rules
+python3 doc/skills/check-docs/scripts/unifold.py show PATH        # a unit and its neighbours
+python3 doc/skills/check-docs/scripts/unifold.py port PATH NAME   # both ends of a port
+python3 doc/skills/check-docs/scripts/unifold.py generate         # diagrams and indexes
+python3 doc/skills/check-docs/scripts/unifold.py check            # the tool rules
 ```
 
 ## Rules for work here
@@ -62,5 +62,5 @@ python3 doc/skills/check-docs/scripts/youmedoc.py check            # the tool ru
   [conventions](doc/references/conventions.md).
 - Use the terms of the [glossary](doc/references/glossary.md) unchanged.
   In particular: a "reading" is one measurement set, never a single value.
-- Do not edit `doc/references/youmedoc/` or the three skills of the
-  standard. They are a copy of youmedoc 0.1.
+- Do not edit `doc/references/unifold/` or the three skills of the
+  standard. They are a copy of unifold 0.1.
