@@ -41,7 +41,7 @@ server accepts readings it already has. The values are in
 
 Within an exchange, waiting changes of plants go first and readings
 directly after them. The server puts a reading into the history of the
-plant its sensor stick is bound to when the reading arrives, so the binding
+plant its sensor stick is attached to when the reading arrives, so the binding
 has to be there first. Everything the phone only downloads comes after the
 readings, because only readings can lead to an alert. A batch the server
 rejects as a whole is kept and tried again, because a reading is not

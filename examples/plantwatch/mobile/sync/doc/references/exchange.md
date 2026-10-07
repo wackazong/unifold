@@ -2,7 +2,8 @@
 
 The steps, sizes and pauses of one exchange between the
 [local store](local-store.md) and the server behind `cloud-api`. The
-reasons are in the [decisions](../decisions/index.md).
+reasons are in the [decisions](../decisions/index.md), the terms in the
+[glossary](glossary.md).
 
 ## What starts an exchange
 
@@ -24,7 +25,7 @@ more exchange directly after it.
 |---|---|---|
 | 1 | Lets the server create the owner if it has not done so. Renews the token if it is valid for less than 30 days. | Yes |
 | 2 | Sends the waiting changes of plants, oldest first, and takes each answer as the new state of the plant | Yes, on "try again later"; a refusal marks the plant and the exchange goes on |
-| 3 | Uploads `fetched` readings in batches, oldest first, for every sensor stick the server knows as bound to a plant | Yes |
+| 3 | Uploads `fetched` readings in batches, oldest first, for every sensor stick the server knows as attached to a plant | Yes |
 | 4 | Asks for the owner's plants and replaces every plant that has no waiting change | Yes |
 | 5 | Asks for the alerts and replaces the alerts in the store | Yes |
 | 6 | Asks for the history of each plant for the part of the last 90 days the store does not hold | No |
@@ -80,6 +81,22 @@ batch counts as "try again later".
 | The pause is reset to 30 seconds by | A successful exchange |
 
 During a pause, triggers are remembered and no request is sent.
+
+## Examples
+
+Each case starts with a session that is `active` and a network connection.
+
+| Case | Given | Expected |
+|---|---|---|
+| Backlog | 1 200 `fetched` readings of one sensor stick that is attached to a plant | Three requests with 500, 500 and 200 readings, oldest first; all 1 200 `confirmed` |
+| Known already | The server answers "known already" for every reading of a batch | All of them `confirmed`; no further request for them |
+| One refused | The server answers "refused" for 1 of 500 readings | 499 `confirmed`, 1 `refused`; neither is sent again |
+| Incomplete answer | The answer covers 499 of 500 readings | Nothing marked; the exchange ends; the same batch goes out after the pause |
+| Server down | "Try again later" on five exchanges in a row | Pauses of about 30 seconds, 1, 2, 4 and 8 minutes, each within 20 percent |
+| Pause cut short | A 30-minute pause runs; the program comes onto the screen | An exchange starts at once |
+| Unbound sensor stick | 96 `fetched` readings of a sensor stick that is attached to no plant | No upload request for them; they stay `fetched` |
+| Two phones | This phone changed the name offline; another phone changed a limit meanwhile | The server's plant after the exchange has the new name and the new limit |
+| Token not accepted | The server answers that the token is not accepted | The session is `lost`; no further request until "join" |
 
 ## In the background
 

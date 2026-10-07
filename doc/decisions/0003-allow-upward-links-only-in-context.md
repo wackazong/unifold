@@ -32,7 +32,12 @@ unit readable when the links are dead.
   known file.
 - Good: after a move or copy, the broken links in this one file are the
   exact list of things to re-establish.
-- Bad: a restatement can fall out of step with its source. Only review
-  (`C5`) finds that.
+- Bad: a restatement can fall out of step with its source. The tool lists
+  the files that cite a source (`cited-by`) and warns when a cited decision
+  is no longer in force (`L7`); whether the text still matches is a matter
+  of review (`C5`).
+- Bad: context files grow. In the first version of the example they held an
+  eighth of all hand-written words, in table rows of up to 790 characters.
+  Items are now short sections with a restatement of at most two lines.
 - Bad: sideways references stay forbidden without exception, which sometimes
   forces a shared thing into a unit of its own or up into the parent.

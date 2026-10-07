@@ -48,9 +48,10 @@ The state of the sensor stick at the moment it sends the value.
 | 14 | 2 | `count` | Number of stored readings |
 | 16 | 1 | `flags` | Bit 0 `overflow`, bit 1 `bonding-open`, bit 2 `fetch-active`, bits 3 to 7 reserved |
 
-"Stored" means: taken and not yet covered by a confirm. `overflow` is 1
-when the sensor stick has discarded at least one stored reading to make
-room, since the last successful confirm or since its start.
+"Stored" is used as the [glossary](../glossary.md) defines it. `overflow`
+is 1 when the sensor stick has discarded at least one stored reading to
+make room, since the last successful confirm or since its start. It
+discards the oldest stored readings first.
 
 A sensor stick notifies Status after it has taken a reading and after it
 has carried out a confirm. The tick count in a value is never older than
@@ -132,3 +133,19 @@ starts with its own length.
 - Records of one fetch arrive in ascending order of sequence number.
 - A sensor stick sends Transfer data only between a `fetch` request and its
   result.
+
+## Examples
+
+Info of a sensor stick with the sensor id `00a1b2c3d4e5f607`, all three
+quantities, an interval of 900 s, a capacity of 2 880 and build 1.0.0;
+then its Status at tick count 12 / 87 305 with the 96 stored readings
+4711 to 4806 and no flag set:
+
+```text
+01 00 00 A1 B2 C3 D4 E5 F6 07 07 84 03 40 0B 01 00 00
+0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
+```
+
+Requests and results on Transfer control, as bytes, are in the
+[procedures](procedures.md).
+

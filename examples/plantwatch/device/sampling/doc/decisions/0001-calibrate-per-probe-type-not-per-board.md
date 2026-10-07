@@ -10,7 +10,7 @@ Soil moisture is a percentage of the calibrated range: 0 for the probe in
 dry air, 100 for the probe in water. Capacitive probes of one type differ
 from each other by a few percent of that range. The two end points can be
 fixed once for the type, or measured for every single board. Measured
-values would have to be stored on the board, and sampling has no memory
+values would have to be stored on the board, and `sampling` has no memory
 that survives a start.
 
 ## Considered Options

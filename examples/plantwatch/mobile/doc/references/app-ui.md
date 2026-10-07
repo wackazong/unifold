@@ -16,7 +16,7 @@ The screens and the way between them are defined by
 | Put a sensor stick to a plant | Pairing with a sensor stick in range and binding it to one plant; needs Bluetooth, no network connection. A sensor stick is open for pairing only for a few minutes after its cell has been put in, as `link-profile` defines; the app tells the owner to do that. |
 | Change or remove a plant | Possible without a network connection; the change is marked until the server has it |
 | React to a notification | A tap opens the plant the notification is about |
-| Start without an account | The app asks for no name and no password and works at once, also without a network connection. The server creates the owner at the first exchange. |
+| Start without an account | The app asks for no name and no password and works from the first start, also without a network connection. The server creates the owner at the first exchange. |
 | Use the app on a second phone | The first phone shows a code, the second phone scans it; from then on it shows the same plants, history and alerts |
 
 ## What happens without the owner
@@ -27,7 +27,24 @@ The screens and the way between them are defined by
 | The owner opens the app near a paired sensor stick | A fetch starts within 5 seconds and runs to the end while the app stays open |
 | Readings are on the phone, a network connection exists | The app uploads them without being asked |
 | Readings are on the phone, no network connection | They stay on the phone and are visible in the history |
-| The owner has allowed notifications | The app registers the phone with the push service of the platform for its owner, and again whenever the platform changes the phone's address |
+| The owner has allowed notifications and the server has created the owner | The app registers the phone through `push-service` for its owner, and again whenever the platform changes the phone's address |
+| The phone leaves its owner | The app ends that registration |
+
+## Examples
+
+Each case starts from a phone with one plant, "Monstera", whose sensor stick
+is paired, lower limit for soil moisture 30 %.
+
+| Case | Given | Expected |
+|---|---|---|
+| Offline view | Flight mode; newest reading 2 days old | The plant with that reading and "2 days ago"; no error, no loading state |
+| Fetch on opening | Sensor stick in range holds 96 unconfirmed readings; no network | A fetch starts within 5 seconds; afterwards the history holds the 96 readings |
+| Low value, no alert yet | A fetched reading of 23 %, not uploaded | 23 % in the history; the plant is not marked "needs water" |
+| Alert arrives | After the upload the server reports an open alert | The plant is first in the list with "needs water" |
+| Change offline | Flight mode; the owner sets the limit to 25 % | 25 % within 1 second, marked "not yet sent"; the mark goes after the next exchange |
+| Tap on a notification | A notification about the alert of "Monstera" | The app opens the screen of "Monstera" |
+| 21st sensor stick | 20 sensor sticks are paired | Pairing is refused with the reason; the 20 stay paired |
+| No notifications | The owner has not allowed notifications | No registration; the alert shows in the app |
 
 ## What the app does not promise
 

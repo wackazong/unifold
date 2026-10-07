@@ -20,8 +20,8 @@ happens in two children; this procedure gives the order.
 
 ## Steps
 
-1. **Cite the quantity** in the row on measured quantities in
-   [context](../../context.md).
+1. **Check the contract.** The item on the public API in
+   [context](../../context.md) must name the quantity. Add it there.
 2. **Word the notification first.** In
    [notifier](../../../notifier/README.md), add the texts for the new
    quantity, one for each bound, with the skill of that unit. Until this
@@ -29,9 +29,11 @@ happens in two children; this procedure gives the order.
 3. **Then judge it.** In [rules](../../../rules/README.md), add the
    quantity with its margin, with the skill of that unit. From the
    release that contains this step on, alerts of the new quantity open.
-4. **Check the process.** [server](../../../server/README.md) stores and
-   returns any quantity name it is given. Confirm that with a test; no
-   change is expected there.
+4. **Check the rest.** [server](../../../server/README.md) stores and
+   returns any quantity name it is given, and
+   [plant-lookup](../../../plant-lookup/README.md) passes on thresholds
+   for any quantity name. Confirm both with a test; no change is expected
+   there.
 5. **Release** the service as a whole.
 
 ## Checks

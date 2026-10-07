@@ -1,6 +1,6 @@
 # Board
 
-The pins, peripherals and memory regions of the sensor stick board that hal
+The pins, peripherals and memory regions of the sensor stick board that `hal`
 uses. All values are planned values for board revision A; no board exists
 yet.
 
@@ -38,9 +38,9 @@ All other pins are unconnected and configured as disconnected inputs.
 | SAADC | Soil value of `sensor-io` | 12 bit, input AIN0, reference VDD/4, gain 1/4, 8 times oversampling. The result is the ratio to the supply voltage. |
 | TWIM0 | Ambient sensor of `sensor-io` | 100 kHz, address `0x44`. Enabled only during a measurement. |
 | RTC1 | Seconds and alarms of `timer` | Low-frequency clock, prescaler for 8 Hz, 4 compare channels |
-| RTC0, TIMER0, RADIO | Owned by the radio stack | Not touched by hal directly |
+| RTC0, TIMER0, RADIO | Owned by the radio stack | Not touched by `hal` directly |
 | NVMC, through the radio stack | `flash`, boot counter, bonds | The stack schedules writes and erases between radio events |
-| POWER | Supply supervision | Power-fail warning at 2.1 V. Below it hal starts no write and no erase. |
+| POWER | Supply supervision | Power-fail warning at 2.1 V. Below it `hal` starts no write and no erase. |
 | GPIO | Supply switches, test pad | |
 
 ## Sequence of one measurement
@@ -57,9 +57,9 @@ The processor sleeps during both waits.
 
 ## Ambient sensor
 
-The part is not selected yet. hal assumes: one I2C device at address
+The part is not selected yet. `hal` assumes: one I2C device at address
 `0x44`, a single-shot command that measures light and temperature, light
-as a mantissa and an exponent that hal combines into counts of 0.01 lux,
+as a mantissa and an exponent that `hal` combines into counts of 0.01 lux,
 temperature as a signed number in steps of 1/16 °C.
 
 ## Memory map

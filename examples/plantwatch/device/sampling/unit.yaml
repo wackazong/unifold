@@ -1,0 +1,17 @@
+unit: sampling
+summary: Takes a calibrated reading at every sampling interval
+kind: library
+status: planned
+provides:
+  readings:
+    kind: library
+    summary: Calibrated readings, one per sampling interval, delivered to subscribers
+needs:
+  sensor-io:
+    kind: library
+    summary: Raw sensor values on request
+    contract: doc/references/sensor-io.md
+  timer:
+    kind: library
+    summary: Calls back at the next sampling time and counts ticks across sleep
+    contract: doc/references/timer.md

@@ -1,0 +1,14 @@
+unit: core
+summary: Makes slugs and defines what a transliteration plug-in must offer
+kind: library
+provides:
+  slugify:
+    kind: library
+    summary: Turn a string into a slug with a chosen separator and length
+    contract: src/lib.rs
+    verified-by: tests
+  plugin-api:
+    kind: specification
+    summary: The interface a transliteration plug-in implements
+    contract: src/lib.rs
+    verified-by: tests

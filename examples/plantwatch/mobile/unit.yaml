@@ -1,0 +1,36 @@
+unit: mobile
+summary: Phone app that collects readings from sensor sticks, shows the plants and relays data to the server
+kind: app
+status: planned
+owner: app team
+provides:
+  app-ui:
+    kind: ui
+    summary: Shows the state of each plant and tells the user when to water it
+    contract: doc/references/app-ui.md
+needs:
+  sensor-link:
+    kind: protocol
+    summary: A sensor stick in radio range that serves its readings over BLE
+  cloud-api:
+    kind: http
+    summary: Stores readings and returns plants, history and alerts
+  link-profile:
+    kind: specification
+    summary: The definition of the BLE services of a sensor stick
+  reading-format:
+    kind: specification
+    summary: The format in which readings are stored and uploaded
+  push-service:
+    kind: http
+    summary: Registers this phone for the notifications of an owner and delivers them to it
+wiring:
+  app-ui: ui.app-ui
+  ble-client.sensor-link: sensor-link
+  ble-client.link-profile: link-profile
+  sync.sensor-readings: ble-client.sensor-readings
+  sync.cloud-api: cloud-api
+  sync.reading-format: reading-format
+  ui.plant-data: sync.plant-data
+  ui.pairing: ble-client.pairing
+  ui.push-service: push-service

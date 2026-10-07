@@ -63,7 +63,7 @@ stick restarts after two days.
 | `sampling_interval_s` | integer | no | 900 | Sampling interval in simulated seconds, 300 to 3600 |
 | `quantities` | array of strings | no | all three | Quantities the simulated sensor stick can measure |
 | `start` | object | no | see below | Counters at the start of the scenario |
-| `bonding` | string | no | `always` | `always`: a new bond is accepted at any time. `after-start`: only in the first 300 simulated seconds after each start. |
+| `bonding` | string | no | `after-start` | `after-start`: a new bond is accepted only in the first 300 simulated seconds after each start, as on a sensor stick. `always`: at any time, for work by hand. |
 | `tracks` | object | yes | | One member per quantity, see below |
 | `events` | array | no | empty | Things that happen at a given time, see below |
 
@@ -107,6 +107,7 @@ The value between two points:
 |---|---|
 | Before the first point | The value of the first point |
 | Between two points with numbers | On the straight line between them |
+| Between a point with a number and a point with `null` | The value of the first point |
 | After a point with `step` | The value of that point, until the next point |
 | After a point with `null` | Absent, until the next point |
 | After the last point, without `repeat_s` | The value of the last point |
@@ -132,7 +133,25 @@ in the order of the array, before the reading of that time is taken.
 
 | `type` | Further members | Effect |
 |---|---|---|
-| `restart` | `skip_sequence_numbers`: integer, default 0 | The simulated sensor stick restarts: the boot counter rises by one, seconds since boot start at 0, a connection is dropped. Stored readings and delivered marks stay. The next reading gets the next sequence number plus `skip_sequence_numbers`. |
+| `restart` | `skip_sequence_numbers`: integer, default 0 | The simulated sensor stick restarts: the boot counter rises by one, seconds since boot start at 0, a connection is dropped. Stored readings, delivered marks and bonds stay. The next reading gets the next sequence number plus `skip_sequence_numbers`. |
+
+## Readings of the example
+
+What the program makes of the example above. These rows are the first test
+of an implementation.
+
+| At `at_s` | Sequence number | Tick count | Soil moisture | Light | Temperature |
+|---|---|---|---|---|---|
+| 0 | 1 | 1 / 0 | 60.0 | 0 | 21.4 |
+| 32 400 | 37 | 1 / 32 400 | 54.8 | 6 000 | 21.4 |
+| 43 200 | 49 | 1 / 43 200 | 53.0 | 12 000 | 21.4 |
+| 75 600 | 85 | 1 / 75 600 | 47.8 | 0 | 21.4 |
+| 172 800 | 193 | 2 / 0 | 32.0 | 0 | 21.4 |
+| 259 200 | 289 | 2 / 86 400 | 18.0 | 0 | 21.4 |
+
+With `{"at_s": 86400, "value": null}` added to the temperature track,
+reading 97 and all later ones have no temperature. With
+`"skip_sequence_numbers": 1000` in the restart, reading 193 becomes 1193.
 
 ## When the program rejects a scenario
 

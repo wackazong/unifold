@@ -1,6 +1,10 @@
 # AGENTS.md: platform
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show cloud/platform`
+prints this unit with its neighbours.
 
 ## Why
 
@@ -8,7 +12,9 @@ A message bus and a database are used by several services and belong to
 none of them. If each service configured its share, no one could say what
 the bus guarantees, who may read which schema, or what is backed up. This
 unit is the one place where the infrastructure is chosen, configured and
-operated, and where its guarantees are written down.
+operated, and where its guarantees are written down. It changes when a
+guarantee of the bus or the database changes, when a service needs a new
+topic or schema, or when a product behind a port is replaced.
 
 Bus and database stay in one unit because they share their operator, their
 host and their backup routine. Two units would hold the same reasons twice.

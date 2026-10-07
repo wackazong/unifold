@@ -32,10 +32,17 @@ the only things that iOS and Android do in truly different ways. Everything
 else is written once
 ([0004](decisions/0004-one-codebase-for-both-platforms.md)).
 
+**A notification is a pointer, not data.** Registering the phone for
+notifications belongs to the screens, because the owner grants the
+permission on a screen and a tap leads into the navigation. A notification
+names a plant; what the screen then shows comes from the store like
+everything else.
+
 ## Invariants
 
-- The screens never talk to the radio or to the network. They read from the
-  store on the phone and write to it.
+- The screens take no data from the radio or from the network. They read
+  from the store on the phone and write to it. Their one contact with the
+  outside is `push-service`: registering the phone and receiving a tap.
 - No part waits for another rhythm. A fetch does not wait for an upload, an
   upload does not wait for a fetch, a screen waits for neither.
 - A reading is confirmed to the sensor stick only after it is stored durably

@@ -1,31 +1,3 @@
----
-unit: test-rig
-summary: Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware
-kind: test
-status: planned
-provides:
-  test-report:
-    kind: file
-    summary: JUnit XML report of an end-to-end test run
-    contract: doc/references/test-report.md
-needs:
-  device-under-test:
-    kind: protocol
-    summary: Something that speaks the sensor stick's BLE protocol, real or simulated
-  scenario-control:
-    kind: http
-    summary: Lets a test set sensor values and advance time; exists only with a simulated device
-    optional: true
-  cloud-api:
-    kind: http
-    summary: The public API, to check that readings arrive and alerts are raised
-  link-profile:
-    kind: specification
-    summary: The definition of the BLE services, to drive the device under test
-  reading-format:
-    kind: specification
-    summary: The format of a reading, to build the batches the tests upload
----
 # test-rig
 
 test-rig checks the promises that no single part can check alone: a
@@ -47,37 +19,42 @@ One JUnit XML file per run.
 - A skipped test names the reason, for example that the configuration
   cannot control sensor values.
 - A failed test names the promise, what was expected and what was observed.
-- The report states the configuration of the run: whether the device under
-  test was real or simulated, its sensor id and the versions involved.
+- The report states the configuration of the run, `real` or `simulated`,
+  the sensor id of the device under test and the versions involved.
 - The exit status of the run is 0 exactly when no test failed or ended in
   error and at least one test passed.
 
 Limits: a report says what the rig observed at the public interfaces. It
 does not say why a test failed inside the device under test or behind the
-API. A run against a real sensor stick covers fewer promises than a run
-against a simulated one; the report shows which.
+API. A run in `real` covers fewer promises than a run in `simulated`; the
+report shows which.
 
-Example: a run against a simulated device reports 16 passed tests. The
-same commit against a real sensor stick reports 9 passed and 7 skipped with
-the reason "needs scenario-control".
+Example: a run in `simulated` reports 16 passed tests. The same commit in
+`real` reports 9 passed and 7 skipped with the reason "needs
+scenario-control".
 
 Contract: [test-report](doc/references/test-report.md).
 
 ## Needs
 
+The rig defines none of these interfaces. It takes each as its provider
+defines it and states here what it relies on.
+
 ### `device-under-test`
 
 Exactly one device in radio range of the machine that runs the rig, real
 or simulated, that behaves as `link-profile` defines for a sensor stick.
-The rig expects that it
+The rig relies on that it
 
 - can be found by the rig as by any central and is open for pairing when
-  the run starts,
+  the rig looks for it,
 - is connected to nothing else during the run,
 - states its sensor id, its sampling interval and how many readings it
   keeps,
-- takes readings by itself and serves the stored ones with tick counts,
-- deletes readings only up to the sequence number the rig confirms.
+- takes one reading per sampling interval of its own time and serves the
+  stored ones with tick counts, and
+- deletes readings only up to the sequence number the rig confirms or, when
+  its memory is full, the oldest ones, and reports that it did.
 
 The machine that runs the rig needs a BLE adapter that the rig may use
 alone.
@@ -85,15 +62,17 @@ alone.
 ### `scenario-control`
 
 Optional. A way to script the device under test instead of waiting for the
-world. Where it exists, the rig expects that it
+world. Where it exists, the rig relies on that it
 
-- loads a scenario: a course of values for soil moisture, light and
-  temperature over simulated time, which states the sensor id of the
-  simulated device and may contain a restart of the device,
+- loads a scenario: values for soil moisture, light and temperature over
+  simulated time, the sensor id of the simulated device, and optionally a
+  restart of the device,
 - puts the device into its initial state whenever a scenario is loaded: no
-  stored readings, not paired, open for pairing, and
+  reading from before, not paired, open for pairing,
 - moves simulated time forward to a stated point and answers when the
-  device has taken every reading that is due by then.
+  device has taken every reading that is due by then, and
+- makes the device report, for a moment at which the scenario states a
+  value, exactly that value at the resolution of its quantity.
 
 Without it the rig runs in the configuration `real`: it skips every test
 that needs a scenario and reports it as skipped, it waits in real time for
@@ -103,8 +82,8 @@ which values they are.
 ### `cloud-api`
 
 The public API under test, reachable from the machine that runs the rig,
-with a token of an owner that exists for testing only. The rig expects that
-the API
+with a token of an owner that exists for testing only. The rig relies on
+that the API
 
 - lets this owner create and remove plants with thresholds and bind a
   sensor id to a plant,
@@ -112,8 +91,9 @@ the API
   known already or refused, and why,
 - returns the history of a plant and its alerts, open and closed, and says
   for each alert whether its notification has been handed on,
-- states how long it may take until a reading shows in the history, until
-  an alert shows, and until a changed threshold applies, and
+- shows an accepted reading in the history within 10 seconds and an alert
+  within 60 seconds after the upload, and applies a changed threshold to
+  readings uploaded 60 seconds or more after the change, and
 - answers errors with a code and a message.
 
 The rig removes every plant of this owner at the start of a run, creates
@@ -129,9 +109,9 @@ from it as a failed test.
 ### `reading-format`
 
 The definition of the fields, units and identity of a reading, with a
-version. The rig builds the batches it uploads from this definition and
-compares the readings it fetches from the device under test with what the
-public API returns.
+version. The rig builds the readings it uploads from this definition alone
+and compares the readings it fetched from the device under test with what
+the public API returns.
 
 ## Out of scope
 
@@ -148,6 +128,7 @@ public API returns.
 - [doc/context.md](doc/context.md): what the rig inherits from above
 - [Test catalogue](doc/references/test-catalogue.md): the promises under
   test
-- [Configurations](doc/references/configurations.md): `simulated` and
-  `real`, and the settings of a run
+- [Configurations](doc/references/configurations.md): `real` and
+  `simulated`, and the settings of a run
+- [Glossary](doc/references/glossary.md): the rig's own terms
 - [Decisions](doc/decisions/index.md)

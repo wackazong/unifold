@@ -77,6 +77,20 @@ provider.
 | `POST /v1/owners` | Generates a random UUID as owner id and issues a token for it. Nothing is stored. |
 | `POST /v1/tokens` | Issues a new token for the owner of the verified token |
 
+## Examples
+
+| Case | Request | What `gateway` does |
+|---|---|---|
+| No token | `GET /v1/plants` without `Authorization` | Answers `401` `unauthenticated`; calls no provider |
+| Valid token of owner A | `GET /v1/plants` | Calls `plants-api` with `X-Owner-Id` A and without `Authorization`; returns status and body unchanged |
+| Forged owner | A valid token of owner A and the header `X-Owner-Id: B` | Calls the provider with `X-Owner-Id` A |
+| Internal path | `GET /internal/v1/anything` with a valid token | Answers `404` `not_found`; calls no provider |
+| Body too large | A body of 1 MB and 1 byte, without token | Answers `413`; step 1 comes before the token check |
+| Rate limit | The 121st request with one token within a minute, at one instance | Answers `429` with `Retry-After` |
+| Provider down | `ingest-api` refuses connections | Tries 3 times, answers `503` `unavailable` after about 1.2 seconds |
+| Provider hangs | `alerts-api` never answers | Answers `503` `unavailable` after at most 17 seconds |
+| Providers down | `POST /v1/tokens` while all three providers are down | Answers `201` with a new token |
+
 ## Health
 
 `GET /healthz` answers `200` when the instance has a signing key and can

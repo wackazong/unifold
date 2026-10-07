@@ -1,24 +1,3 @@
----
-unit: plants
-summary: Registry of plants with their sensors, thresholds and reading history
-kind: service
-status: planned
-provides:
-  plants-api:
-    kind: http
-    summary: Plants with their sensors, thresholds and history
-    contract: doc/references/plants-api.md
-needs:
-  reading-events:
-    kind: events
-    summary: Accepted readings, to build the history of each plant
-  sql-db:
-    kind: db
-    summary: Relational database with transactions
-  event-bus:
-    kind: queue
-    summary: Durable subscription with at-least-once delivery
----
 # plants
 
 `plants` is the service that knows the plants. It keeps for every owner
@@ -49,7 +28,7 @@ A caller can rely on this:
 - Creating and replacing use an identifier that the caller chooses. Every
   operation can be repeated with the same result.
 - A change to a plant is visible to the next request, also to the lookup
-  by sensor id. Answers are never served from a cache.
+  by sensor id.
 - A reading counts once in the history, however often its event arrives.
 - A reading is in the history within 5 seconds after its event reaches
   `plants`, while `plants` and its database are healthy.
@@ -94,14 +73,17 @@ flag for an estimated time, the measured values under the names
 uploaded. It expects every value to lie within the range of its quantity.
 
 `plants` copes with repeated events and with events in any order. It
-expects that no accepted reading is missing from the stream.
+expects that every accepted reading appears on the stream and stays there
+for at least 7 days.
+
+Contract: [reading events as plants expects them](doc/references/reading-events.md).
 
 ### `sql-db`
 
 A relational database with a schema that only `plants` uses, and with
 transactions. `plants` expects a committed transaction to survive a
-restart. It plans with about 26 000 raw readings and 17 520 hourly
-aggregates per plant.
+restart, and a column type for JSON documents. It plans with at most
+25 920 raw readings and 17 520 hourly aggregates per plant.
 
 ### `event-bus`
 
@@ -126,4 +108,5 @@ All instances of `plants` share one subscription.
 - [Context diagram](doc/diagrams/context.md)
 - [Decisions](doc/decisions/index.md)
 - References: [plants API](doc/references/plants-api.md),
+  [reading events as plants expects them](doc/references/reading-events.md),
   [data model](doc/references/data-model.md)

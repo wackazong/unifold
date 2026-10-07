@@ -16,15 +16,15 @@ A new operation below an existing prefix needs no change here.
    that this unit inherits ([context](../../context.md)). If they are not
    there yet, the change starts above this unit, not here.
 3. **Declare the need**, if the paths are served by something `gateway`
-   does not call yet. Add a need of kind `http` to the manifest in
-   [README.md](../../../README.md), named after what is served, and
+   does not call yet. Add a need of kind `http` to the manifest,
+   [unit.yaml](../../../unit.yaml), named after what is served, and
    describe the expectation in the `## Needs` section. The need is wired
    outside this unit.
 4. **Add the route** to the table in
    [public API](../../references/public-api.md): the prefix and the need.
    The prefix is a complete path segment below `/v1`.
-5. **Cite the new part** of the public API in
-   [context](../../context.md) with the prefix it stands for.
+5. **Cite the new prefix** in the item on the public API in
+   [context](../../context.md).
 6. **Add the route to the code**, as a prefix and a target, with a test
    for each of the checks below.
 

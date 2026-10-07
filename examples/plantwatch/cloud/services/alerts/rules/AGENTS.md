@@ -1,20 +1,24 @@
 # AGENTS.md: rules
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show cloud/services/alerts/rules`
+prints this unit with its neighbours.
 
 ## Why
 
 When an alert opens and closes is the part of the product that owners
-feel and that changes most: a new quantity, a different margin, another
-way to look at light. This unit holds exactly that logic and nothing
-else, so that it can be read in one sitting and tested with a table of
-readings and expected alerts.
+feel and that changes most. This unit holds exactly that logic and
+nothing else, so that it can be read in one sitting and tested with a
+table of readings and expected alerts. It changes when the rules of
+judging change: a new quantity, a different margin, another way to look
+at light.
 
-To stay testable it has no state of its own. Everything it concluded from
-earlier readings travels in a value that the caller keeps
-([context](doc/context.md)). The one thing it fetches itself is the
-thresholds, because the plant of a reading is unknown before that lookup
-and the caller has no reason to know it.
+To stay testable it has no state and knows no technology. What it
+concluded from earlier readings travels in a value that the caller keeps.
+Plant and thresholds come through a need that it states in its own words;
+a test meets that need with a table ([context](doc/context.md)).
 
 An alert must not flap when a value hovers at its threshold, and it must
 not wait when a plant runs dry. Both are met by opening at the threshold
@@ -36,6 +40,8 @@ open what is open.
 4. [doc/decisions/index.md](doc/decisions/index.md): decisions
 5. [doc/references/evaluation.md](doc/references/evaluation.md): the
    function, the rules, the margins, the state
+6. [doc/references/thresholds.md](doc/references/thresholds.md): the
+   lookup that the unit expects to be given
 
 ## Skills
 
@@ -47,9 +53,11 @@ open what is open.
 
 - No clock. "Now" does not exist in this unit; the only times are those
   of readings. A rule that needs the current time belongs to the caller.
-- No storage and no globals. The cache of thresholds is the one
-  exception; it only saves lookups and must never change a result by more
-  than the 60 seconds it may be stale.
+- No storage, no globals and no network. Nothing is remembered between
+  two calls; not even an answer of `thresholds`.
+- The need `thresholds` is of kind `library` on purpose. If judging needs
+  something that lives behind a network, state it as a function in the
+  words of this unit and leave the fetching to whoever provides it.
 - The state has a version field. A change of its form keeps reading the
   old form, or the alerts that were open are forgotten at the next
   release.

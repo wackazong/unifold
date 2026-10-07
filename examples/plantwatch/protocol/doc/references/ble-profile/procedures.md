@@ -39,10 +39,17 @@ The central takes the time reference in the same connection as the fetch,
 before the fetch. It keeps the newest reference per sensor stick and boot
 counter.
 
+| Case | Status read at `T` | Reading | Expected |
+|---|---|---|---|
+| Same boot | `T` 2026-10-06T07:30:05Z, `B` 12, `S` 87 305 | 12 / 86 400 | `taken_at` 2026-10-06T07:15:00Z, `time_estimated` `false` |
+| Earlier boot, reference kept | as above | 11 / 500, reference for boot 11 exists | Computed from that reference, `false` |
+| Earlier boot, no reference | as above | 11 / 500 | `time_estimated` `true`, `taken_at` not after 2026-10-05T07:15:00Z |
+
 ## Fetch stored readings and confirm
 
-The sensor stick keeps every reading until a central confirms it. A fetch
-changes nothing on the sensor stick. Only a confirm does.
+The sensor stick keeps every reading until a central confirms it, unless
+an overflow discards it first. A fetch changes nothing on the sensor stick.
+Only a confirm does.
 
 ```mermaid
 sequenceDiagram
@@ -124,3 +131,24 @@ A central that keeps live readings still confirms them only through
 A reading can reach a central more than once: after a lost connection,
 after a lost confirm, as a live reading and in a fetch. The central
 recognises it by the sequence number and keeps one copy. This is intended.
+
+## Examples
+
+A sensor stick stores the 96 readings 4711 to 4806 and has taken none
+after them. Each case starts from this state. Values are bytes on Transfer
+control, in hexadecimal.
+
+| Case | Central writes | Sensor stick answers |
+|---|---|---|
+| Fetch everything | `01 00 00 00 00 00 00` | 96 records, then `80 01 00 60 00 C6 12 00 00 00` |
+| Fetch with a limit of 10 | `01 00 00 00 00 0A 00` | Records 4711 to 4720, then `80 01 00 0A 00 70 12 00 00 01` |
+| Fetch above the newest | `01 C7 12 00 00 00 00` | No record, `80 01 00 00 00 00 00 00 00 00` |
+| Confirm up to 4720 | `02 70 12 00 00` | `80 02 00 56 00 71 12 00 00`: 86 stored, oldest 4721 |
+| The same confirm again | `02 70 12 00 00` | The same result. Nothing changes. |
+| Confirm everything | `02 C6 12 00 00` | `80 02 00 00 00 00 00 00 00` |
+| Confirm above the newest | `02 C7 12 00 00` | `80 02 03 00 00 00 00 00 00`. Nothing changes. |
+| Request too short | `01 00 00` | `80 01 02 00 00 00 00 00 00 00` |
+| Unknown op code | `7F` | `80 7F 01` |
+| Abort without a fetch | `03` | `80 03 00` |
+| Fetch during a fetch | `01 00 00 00 00 00 00` | ATT error `0xFE`, no indication |
+| Fetch, Transfer data not enabled | `01 00 00 00 00 00 00` | ATT error `0xFD`, no indication |

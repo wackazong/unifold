@@ -1,27 +1,29 @@
 # Writing rules for Markdown files
 
 These rules apply to every Markdown file that youmedoc manages: `README.md`
-and `AGENTS.md` of each unit and every `.md` file below a unit's `doc/`
-folder. They do not apply to resources inside a skill's `assets/` and
-`scripts/` folders, and not to other Markdown files in the repository.
+and `AGENTS.md` of each unit and the `.md` files in the entries of a unit's
+`doc/` folder that [doc-folder.md](doc-folder.md) defines. They do not apply
+to resources inside a skill's `assets/` and `scripts/` folders, and not to
+other Markdown files in the repository.
 
 ## Length
 
-A file has at most **200 lines**, front matter included.
+A file has at most **200 lines**, front matter included (`T1`).
 
 The limit keeps every file small enough for a human to review in one sitting
 and for an agent to read as a whole. When a file would grow beyond it:
 
 - Split a reference into a folder with an `index.md` and parts
-  ([doc-folder.md](doc-folder.md)). The index links to every part and says
-  what each part contains.
+  ([doc-folder.md](doc-folder.md)).
 - Move the long form of the why from `AGENTS.md` to `doc/architecture.md`.
 - Move a procedure out of any other file into a skill.
 - Ask whether the unit is too big. A `README.md` that does not fit usually
   describes a unit that should have children.
 
 Do not get under the limit by making lines longer. Wrap prose at about 80
-characters. Tables and links may exceed that.
+characters. A line of more than 400 characters is reported (`T3`); it is hard
+to review and hides in a line-based comparison. Long table cells are the
+usual cause: turn the table into short sections.
 
 ## Links
 
@@ -34,14 +36,23 @@ Links are the connective tissue of a youmedoc project. Use them extensively.
   standard by its URL.
 - Links between files are relative. Absolute paths and links that start with
   `/` are not allowed. Links to the outside world are full URLs.
-- Every file below `doc/` MUST be reachable by links from the unit's
-  `README.md` or `AGENTS.md`. A file nobody links to is lost.
+- Every managed file MUST be reachable by links from the unit's `README.md`
+  or `AGENTS.md` (`L5`). A file nobody links to is lost.
 - Where a link may point is restricted by the reference-direction rules in
   [rules.md](rules.md). In short: within the unit freely; down only to a
   direct child's `README.md`; up only from `doc/context.md`; never sideways.
 - Link text says what the target is. Do not write "click here".
-- Refer to units and ports of the same unit by name in `code font`. They need
-  no link, because the manifest is in the same folder.
+
+## Names of units and ports
+
+- The name of a unit or port in running text is written in `code font`. The
+  everyday word that happens to be the same is not. This is how a reader, and
+  the checker, tells "the `store` unit" from "a store of readings".
+- A unit's files use in code font only the names of the unit itself, its
+  ports and its children. The name of a sibling or an ancestor in code font
+  outside `doc/context.md` is reported (`L6`).
+- Ports and children of the same unit need no link; the manifest is in the
+  same folder.
 
 ## Structure
 
@@ -51,8 +62,8 @@ Links are the connective tissue of a youmedoc project. Use them extensively.
 - Use the section names that [unit-files.md](unit-files.md) and
   [doc-folder.md](doc-folder.md) give, in the given order. Readers and tools
   rely on them.
-- Use tables for things with the same attributes and lists for sequences and
-  enumerations. Use prose for reasons.
+- Use tables for things with the same short attributes and lists for
+  sequences and enumerations. Use prose for reasons.
 - Code blocks state their language.
 
 ## Style
@@ -62,8 +73,10 @@ The files are read by people and by models. The same style serves both.
 - State facts. Write "The gateway rejects uploads larger than 1 MB", not
   "Uploads should probably be kept small".
 - Put the main statement first, then the reason, then the detail.
-- One term for one thing. Define project terms once, in a glossary reference,
-  and use them unchanged.
+- One term for one thing within a unit. Define the terms of a unit once, in
+  its glossary, and use them unchanged
+  ([principles.md](principles.md)).
+- Write guarantees so that they can be checked: a value, a limit, an order.
 - Present tense for what is, also for a unit with `status: planned`. The
   status field says that it is a plan.
 - No history. A document describes the current state. What changed and why is
@@ -72,12 +85,12 @@ The files are read by people and by models. The same style serves both.
   the body.
 - Name the actor. "The ingest service validates the payload", not "The
   payload is validated".
-- Write so that a reader who opens only this file can follow it. Do not write
-  "as described above in another file"; link.
+- Write so that a reader who opens only this file can follow it.
 
 ## Front matter
 
-- `README.md` of a unit carries the [manifest](manifest.md).
+- `README.md` of a unit carries the [manifest](manifest.md), unless the unit
+  has a `unit.yaml`.
 - Decision records and `SKILL.md` files carry the front matter that
   [doc-folder.md](doc-folder.md) defines.
 - Other files have no front matter.
@@ -85,7 +98,8 @@ The files are read by people and by models. The same style serves both.
 ## File names
 
 - Fixed names are given by the standard: `README.md`, `AGENTS.md`,
-  `context.md`, `architecture.md`, `index.md`, `SKILL.md`.
+  `unit.yaml`, `context.md`, `architecture.md`, `index.md`, `glossary.md`,
+  `SKILL.md`.
 - All other file and folder names use lower-case letters, digits and `-`.
 - Name a file after its content: `ble-profile.md`, not `notes.md`.
 

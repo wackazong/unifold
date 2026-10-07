@@ -1,21 +1,6 @@
----
-unit: protocol
-summary: Defines the BLE profile of the sensor stick and the format of a reading
-kind: specification
-status: planned
-provides:
-  ble-profile:
-    kind: specification
-    summary: GATT services, characteristics and procedures of the sensor stick
-    contract: doc/references/ble-profile/index.md
-  reading-schema:
-    kind: specification
-    summary: Fields, units and identity of a reading as it is stored and uploaded
-    contract: doc/references/reading-schema.md
----
 # protocol
 
-protocol is the written definition of two things that several independently
+`protocol` is the written definition of two things that several independently
 built parts have to agree on: how a sensor stick offers its readings to a
 central over Bluetooth Low Energy, and what a reading is once it has left
 the sensor stick. The unit contains documents and no code. Whoever
@@ -29,30 +14,35 @@ builds against these documents.
 The profile says what a sensor stick advertises, which GATT service and
 characteristics it has, how every value is laid out byte by byte, and which
 procedures a central runs: open a session, take a time reference, fetch
-stored readings and confirm them, receive live readings.
+stored readings and confirm them, receive live readings. The record that
+carries a reading over the radio link is the binary form of
+`reading-schema`; the profile includes it.
 
 What an implementer can rely on:
 
-- The text is complete for both roles. A sensor stick and a central that
-  are each built from it alone work together.
-- The current version is 1.0. Within major version 1, a part built for a
-  later version works with a part built for an earlier one. The profile
-  states what each side has to tolerate for that.
-- A fetch deletes nothing. A sensor stick releases a reading only after a
-  central has confirmed it, so a transfer can break at any point and be
+- **One answer per request.** For every request a central can write, the
+  profile names the response of the sensor stick: a result code, an ATT
+  error, or the behaviour when something fails.
+- **Version.** The current version is 1.0. Within major version 1, a part
+  built for a later version works with a part built for an earlier one.
+  The profile lists what each side has to ignore for that.
+- **A fetch deletes nothing.** A sensor stick releases a reading only
+  after a central has confirmed it, or to make room when its memory is
+  full, which it reports. A transfer can break at any point and be
   repeated.
-- Every procedure works with the default ATT MTU.
+- **Default MTU.** Every procedure works with an ATT MTU of 23 bytes.
 
 Limits: one central per sensor stick at a time. Version 1.0 has no way to
-set the sampling interval, to read a battery level or to update firmware.
-The UUIDs and the company identifier are placeholders until release.
+set the sampling interval, to read a battery level or to update the
+program of a sensor stick. The UUIDs and the company identifier are
+placeholders until release.
 
 A fetch of 96 readings and its confirm, as bytes:
 
 ```text
 central → sensor stick  Transfer control  01 00 00 00 00 60 00
 sensor stick → central  Transfer data     12 07 67 12 00 00 0C 00 ...  (96 times)
-sensor stick → central  Transfer control  80 01 00 60 00 C6 12 00 00 01
+sensor stick → central  Transfer control  80 01 00 60 00 C6 12 00 00 00
 central → sensor stick  Transfer control  02 C6 12 00 00
 sensor stick → central  Transfer control  80 02 00 00 00 00 00 00 00
 ```
@@ -67,13 +57,14 @@ uploading, and a 19-byte binary record for the radio link.
 
 What an implementer can rely on:
 
-- Sensor id and sequence number together identify a reading. No holder
-  changes a reading.
-- A quantity that was not measured is absent in both encodings. It is never
-  zero and never `null`.
-- The two encodings convert into each other without loss.
-- Within major version 1, fields are only added, and only as optional
-  ones. A receiver built for 1.0 reads every 1.x reading.
+- **Identity.** Sensor id and sequence number together identify a reading.
+  No holder changes a reading.
+- **Absent, not zero.** A quantity that was not measured is absent in both
+  encodings. It is never zero and never `null`.
+- **Exact conversion.** A value converted from one encoding to the other
+  and back is the same value.
+- **Version.** Within major version 1, fields are only added, and only as
+  optional ones. A receiver built for 1.0 reads every 1.x reading.
 
 ```json
 {
@@ -103,6 +94,8 @@ Contract: [reading schema](doc/references/reading-schema.md).
 ## More
 
 - [AGENTS.md](AGENTS.md): why the definitions are a unit of their own
+- [doc/context.md](doc/context.md): what the definitions inherit
 - [Context diagram](doc/diagrams/context.md)
 - [Decisions](doc/decisions/index.md)
+- [Glossary](doc/references/glossary.md): the terms of both contracts
 - [Changing a definition](doc/skills/protocol-change-a-definition/SKILL.md)

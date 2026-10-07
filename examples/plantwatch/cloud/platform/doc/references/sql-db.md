@@ -27,6 +27,9 @@ skill [platform-add-a-schema](../skills/platform-add-a-schema/SKILL.md).
 | Create schemas, roles, databases or extensions | no |
 
 - The search path of a role is its own schema.
+- A service may rely on these features of the dialect: unique indexes that
+  are limited by a condition, row locks that a second reader can skip, and
+  columns of the type `jsonb`.
 - The schema is empty when the service gets it. The service creates its
   tables and applies its own migrations.
 - All instances of a service use the same role.
@@ -59,6 +62,16 @@ skill [platform-add-a-schema](../skills/platform-add-a-schema/SKILL.md).
 - A restore brings back all schemas to the same moment. A single schema
   cannot be restored alone.
 - Backups are kept for 14 days.
+
+## Examples
+
+| Case | Action | Result |
+|---|---|---|
+| Own schema | The role `greenhouse` creates the table `greenhouse.pot` | Success |
+| Foreign schema | The role `greenhouse` reads a table of another schema | Permission error |
+| Too many connections | The role opens a 21st connection | The connection is refused |
+| Long statement | A statement runs for 31 seconds | The database cancels it; the transaction fails |
+| Restart | A transaction is committed, then the database restarts | The change is there after the restart |
 
 ## What can go wrong
 

@@ -45,8 +45,8 @@ last and smallest step.
 
 - The new row in [app-ui.md](../../references/app-ui.md) is true with the
   phone in flight mode.
-- No manifest of a child gained a need that points at the network or the
-  radio from the screens.
+- The screens gained no need through which data would reach them from the
+  server or from a sensor stick.
 - Every new thing in the data model has one origin.
 - The checker reports no error and no new warning.
 

@@ -1,6 +1,10 @@
 # AGENTS.md: ble-client
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show mobile/ble-client`
+prints this unit with its neighbours.
 
 ## Why
 
@@ -11,9 +15,9 @@ owner switches Bluetooth off. This library exists so that all of that stays
 in one place. Its consumer gets a plain promise: here is a batch of
 readings, tell me when you have stored it.
 
-Everything that belongs to BLE ends here: services and characteristics,
-connection states, the arithmetic on tick counts, the two platforms' ways
-of waking a program. A consumer needs to understand none of it.
+The unit changes for two reasons that both come from the radio:
+`link-profile` gets a new version, or iOS or Android change what a program
+may do with BLE in the background. Nothing else should reach it.
 
 The main trade-off: the client stores no readings. A reading exists on the
 sensor stick until the consumer has acknowledged it, so there is no third
@@ -36,6 +40,8 @@ before the consumer has acknowledged it.
    fetch as a state machine, with sizes and timeouts
 6. [doc/references/sensor-readings.md](doc/references/sensor-readings.md)
    and [doc/references/pairing.md](doc/references/pairing.md): the contracts
+7. [doc/references/glossary.md](doc/references/glossary.md): acknowledge
+   and confirm, chunk, session, anchor
 
 ## Skills
 

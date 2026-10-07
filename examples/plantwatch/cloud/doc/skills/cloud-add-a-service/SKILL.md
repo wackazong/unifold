@@ -14,7 +14,7 @@ keeps the rules that make services independent of each other.
    has its own load, its own failure behaviour or its own data. Otherwise
    extend an existing service inside that service.
 2. **Create the unit.** Add the folder below the plain folder `services/`
-   of this unit, with a `README.md` that carries the manifest and an
+   of this unit, with a manifest `unit.yaml`, a `README.md` and an
    `AGENTS.md`. The folder name is the unit name and becomes the `source`
    of its events and the prefix of its topics
    ([events](../../references/events.md)).
@@ -25,7 +25,10 @@ keeps the rules that make services independent of each other.
 4. **Wire it.** Add one line per need to `wiring` in
    [README.md](../../../README.md). If no child provides what is needed,
    either add a port to the child that should provide it, using that
-   child's own skills, or add a need to `cloud` and pass it up.
+   child's own skills, or add a need to `cloud` and pass it up. If the
+   kinds of a need and its provider differ, an adapter is missing. Read
+   both ends of every line you add: what the need expects must be covered
+   by what the provider's `README.md` offers.
 5. **Make it reachable, if clients shall use it.** Describe the new
    operations in the [public API](../../references/public-api/index.md)
    first. Then let [gateway](../../../services/gateway/README.md) state a

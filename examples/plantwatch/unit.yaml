@@ -1,0 +1,46 @@
+unit: plantwatch
+youmedoc: "0.1"
+summary: Tells people when their house plants need water, using a sensor in the pot, a phone app and cloud services
+kind: system
+status: planned
+owner: plantwatch maintainers
+provides:
+  app-ui:
+    kind: ui
+    summary: Shows the state of each plant and tells the user when to water it
+    verified-by: test-rig/doc/references/test-catalogue.md
+  test-report:
+    kind: file
+    summary: Result of the automated end-to-end tests, for developers and CI
+needs:
+  soil-probe:
+    kind: hardware
+    summary: Capacitive soil moisture probe with an analogue output
+  ambient-sensor:
+    kind: hardware
+    summary: Light and temperature sensor on an I2C bus
+  push-service:
+    kind: http
+    summary: Registers phones for an owner and delivers a notification to them, for example APNs or FCM
+  container-host:
+    kind: infrastructure
+    summary: Runs containers, gives them a private network and persistent volumes
+wiring:
+  "*.link-profile": protocol.ble-profile
+  "*.reading-format": protocol.reading-schema
+  app-ui: mobile.app-ui
+  test-report: test-rig.test-report
+  device.soil-probe: soil-probe
+  device.ambient-sensor: ambient-sensor
+  mobile.sensor-link:
+    real: device.ble-link
+    simulated: emulator.ble-link
+  mobile.cloud-api: cloud.public-api
+  mobile.push-service: push-service
+  cloud.push-service: push-service
+  cloud.container-host: container-host
+  test-rig.device-under-test:
+    real: device.ble-link
+    simulated: emulator.ble-link
+  test-rig.scenario-control: emulator.scenario-control
+  test-rig.cloud-api: cloud.public-api

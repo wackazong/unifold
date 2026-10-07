@@ -1,13 +1,18 @@
 # AGENTS.md: ingest
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show cloud/services/ingest`
+prints this unit with its neighbours.
 
 ## Why
 
 The moment a client uploads is the only chance to take its readings. This
 unit exists to make that moment as hard to fail as possible: it does the
 least that makes a reading safe, which is to check it, to store it durably
-as an event, and to say so.
+as an event, and to say so. It changes when the checks on an uploaded
+reading change or when readings carry a new quantity.
 
 Everything else is left out on purpose. `ingest` has no database, calls
 no other service and does not know what a plant is. Its only dependency is

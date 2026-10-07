@@ -1,9 +1,9 @@
 <!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
 # Architecture diagram: mobile
 
-[mobile](../../README.md) · [context](context.md) · [component](component.md)
+[plantwatch](../../../doc/diagrams/component.md) / **mobile** · [README](../../README.md) · [context](context.md) · [component](component.md)
 
-`mobile` next to its siblings in `plantwatch`, opened up to 3 level(s) down. Arrows point from the side that needs something to the side that provides it. Rounded nodes are ports the framing unit provides, hexagons are its needs. Dashed arrows are alternative providers; dashed borders mark planned units.
+`mobile` next to its siblings in `plantwatch`, opened up 3 level(s) down. Arrows point from the side that needs something to the side that provides it. Rounded nodes are ports the framing unit provides, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a planned unit.
 
 ```mermaid
 flowchart LR
@@ -12,48 +12,41 @@ flowchart LR
     u_device["device"]
     u_emulator["emulator"]
     subgraph u_mobile["mobile"]
-      u_mobile_ble_client["ble-client"]
-      u_mobile_sync["sync"]
-      u_mobile_ui["ui"]
+      u_mobile__ble_dclient["ble-client"]
+      u_mobile__sync["sync"]
+      u_mobile__ui["ui"]
     end
     u_protocol["protocol"]
-    u_test_rig["test-rig"]
+    u_test_drig["test-rig"]
   end
-  p_root_app_ui(["app-ui"])
-  n_root_push_service{{"push-service"}}
-  p_root_app_ui --> u_mobile_ui
-  u_mobile_ble_client -->|"link-profile → ble-profile"| u_protocol
-  u_mobile_sync -->|"reading-format → reading-schema"| u_protocol
-  u_mobile_ble_client -.->|"sensor-link → ble-link"| u_device
-  u_mobile_ble_client -.->|"sensor-link → ble-link"| u_emulator
-  u_mobile_sync -->|"cloud-api → public-api"| u_cloud
-  u_mobile_ui -->|"push-service"| n_root_push_service
-  u_mobile_sync -->|"sensor-readings"| u_mobile_ble_client
-  u_mobile_ui -->|"plant-data"| u_mobile_sync
-  u_mobile_ui -->|"pairing"| u_mobile_ble_client
-  click u_cloud href "../../../cloud/README.md"
-  click u_device href "../../../device/README.md"
-  click u_emulator href "../../../emulator/README.md"
-  click u_mobile_ble_client href "../../ble-client/README.md"
-  click u_mobile_sync href "../../sync/README.md"
-  click u_mobile_ui href "../../ui/README.md"
-  click u_protocol href "../../../protocol/README.md"
-  click u_test_rig href "../../../test-rig/README.md"
+  p_root___app_dui(["app-ui"])
+  n_root___push_dservice{{"push-service"}}
+  p_root___app_dui --> u_mobile__ui
+  u_mobile__ble_dclient -->|"sensor-link → ble-link (real)"| u_device
+  u_mobile__ble_dclient -.->|"sensor-link → ble-link (simulated)"| u_emulator
+  u_mobile__sync -->|"cloud-api → public-api"| u_cloud
+  u_mobile__ui -->|"push-service"| n_root___push_dservice
+  u_mobile__ble_dclient -->|"link-profile → ble-profile"| u_protocol
+  u_mobile__sync -->|"reading-format → reading-schema"| u_protocol
+  u_mobile__sync -->|"sensor-readings"| u_mobile__ble_dclient
+  u_mobile__ui -->|"plant-data"| u_mobile__sync
+  u_mobile__ui -->|"pairing"| u_mobile__ble_dclient
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
-  class u_root,u_cloud,u_device,u_emulator,u_mobile,u_mobile_ble_client,u_mobile_sync,u_mobile_ui,u_protocol,u_test_rig planned
+  classDef plain stroke-dasharray:2 3
+  class u_root,u_cloud,u_device,u_emulator,u_mobile,u_mobile__ble_dclient,u_mobile__sync,u_mobile__ui,u_protocol,u_test_drig planned
   class u_mobile focus
 ```
 
-| Unit | Summary | Status | Diagram |
-|---|---|---|---|
-| [plantwatch](../../../README.md) | Tells people when their house plants need water, using a sensor in the pot, a phone app and cloud services | planned | [component](../../../doc/diagrams/component.md) |
-| [cloud](../../../cloud/README.md) | Server side that stores readings, keeps the plant registry and raises alerts | planned | [component](../../../cloud/doc/diagrams/component.md) |
-| [device](../../../device/README.md) | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | planned | [component](../../../device/doc/diagrams/component.md) |
-| [emulator](../../../emulator/README.md) | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | planned | [context](../../../emulator/doc/diagrams/context.md) |
-| [mobile](../../README.md) | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | planned | [component](component.md) |
-| [ble-client](../../ble-client/README.md) | Finds sensor sticks and fetches their readings over BLE | planned | [context](../../ble-client/doc/diagrams/context.md) |
-| [sync](../../sync/README.md) | Keeps plants, history and alerts on the phone and in step with the server | planned | [context](../../sync/doc/diagrams/context.md) |
-| [ui](../../ui/README.md) | Screens of the phone app | planned | [context](../../ui/doc/diagrams/context.md) |
-| [protocol](../../../protocol/README.md) | Defines the BLE profile of the sensor stick and the format of a reading | planned | [context](../../../protocol/doc/diagrams/context.md) |
-| [test-rig](../../../test-rig/README.md) | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | planned | [context](../../../test-rig/doc/diagrams/context.md) |
+| Unit | Kind | Diagram |
+|---|---|---|
+| [plantwatch](../../../README.md) | system | [component](../../../doc/diagrams/component.md) |
+| [cloud](../../../cloud/README.md) | system | [component](../../../cloud/doc/diagrams/component.md) |
+| [device](../../../device/README.md) | firmware | [component](../../../device/doc/diagrams/component.md) |
+| [emulator](../../../emulator/README.md) | tool | [context](../../../emulator/doc/diagrams/context.md) |
+| [mobile](../../README.md) | app | [component](component.md) |
+| [ble-client](../../ble-client/README.md) | library | [context](../../ble-client/doc/diagrams/context.md) |
+| [sync](../../sync/README.md) | library | [context](../../sync/doc/diagrams/context.md) |
+| [ui](../../ui/README.md) | library | [context](../../ui/doc/diagrams/context.md) |
+| [protocol](../../../protocol/README.md) | specification | [context](../../../protocol/doc/diagrams/context.md) |
+| [test-rig](../../../test-rig/README.md) | test | [context](../../../test-rig/doc/diagrams/context.md) |

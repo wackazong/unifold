@@ -14,13 +14,14 @@ text. Version 1.0.
 | [procedures.md](procedures.md) | Open a session, take a time reference, fetch stored readings and confirm, live readings, behaviour on errors |
 
 A reading travels over the radio link as a record. The record is the binary
-form of the [reading schema](../reading-schema.md).
+form of the [reading schema](../reading-schema.md) and is part of this
+profile. The terms are defined in the [glossary](../glossary.md).
 
 ## Roles
 
 | Role | BLE roles | Task |
 |---|---|---|
-| Sensor stick | Peripheral, GATT server | Advertises, accepts one connection, serves its readings, deletes a reading only after a confirm |
+| Sensor stick | Peripheral, GATT server | Advertises, accepts one connection, serves its readings, releases a reading only after a confirm or on overflow |
 | Central | Central, GATT client | Scans, connects, fetches readings, stores them durably, confirms them |
 
 ## General rules
@@ -99,6 +100,6 @@ is a permission; every other statement is a requirement.
 - Setting the sampling interval over the radio link. The Info characteristic
   reports it.
 - Battery level.
-- Firmware update.
+- Updating the program of a sensor stick.
 - Binding a sensor stick to a plant. The profile ends at the bond between a
   sensor stick and a central.

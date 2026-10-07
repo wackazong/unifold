@@ -1,18 +1,23 @@
 # AGENTS.md: gateway
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show cloud/services/gateway`
+prints this unit with its neighbours.
 
 ## Why
 
 Clients need one address and one way to prove for which owner they act.
 `gateway` exists so that this is solved once: it is the only code that
 understands tokens, and everything it passes a request to may trust the
-owner it is told.
+owner it is told. It changes when the way a client proves its owner
+changes, or when the public API gets a new group of paths.
 
 It is cut as thin as possible. It routes by path prefix and does not look
-into bodies, so a change to a resource never needs a change here; only a
-new group of paths does. It keeps no data, so any number of instances can
-run and none of them is a reason for an upload to fail. That is why tokens
+into bodies, so a change to a resource never needs a change here. It keeps
+no data, so any number of instances can run and none of them is a reason
+for an upload to fail. That is why tokens
 are self-contained and signed instead of looked up
 ([0001](doc/decisions/0001-self-contained-signed-tokens.md)), and why rate
 limits are counted in memory

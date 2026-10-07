@@ -85,5 +85,18 @@ A subscription is a consumer group with a name.
 
 ## Sizing
 
-The bus is planned for 200 messages per second over all topics and for
-10 GB of stored messages.
+The bus is planned for 200 messages per second over all topics, averaged
+over a minute, and for 10 GB of stored messages. It acknowledges a burst of
+1 000 messages of one publisher within 1 second.
+
+## Examples
+
+| Case | Action | Result |
+|---|---|---|
+| Undeclared topic | Publish to `greenhouse.pots.v1`, which is not declared | The publish fails. No topic is created. |
+| Order within a key | Publish A, then B, both with key `k`, each after the acknowledgement of the one before | Every subscription receives A before B |
+| Repeat after a restart | A subscriber handles a message, does not confirm it and reconnects | It receives the same message again |
+| Two instances | Two instances use the subscription `greenhouse` | Each message of key `k` goes to one of them; both never read the same partition at once |
+| New subscription | A subscription is used for the first time on a topic with messages of the last 3 days | It receives all of them, oldest first |
+| Long absence | A subscriber returns after 8 days | Messages older than 7 days are gone; delivery starts with the oldest one kept |
+| Keep-latest | Publish `v1`, then `v2` with key `k` to a keep-latest topic; read from the beginning a day later | The reader gets `v2` for `k`, and possibly `v1` before it |

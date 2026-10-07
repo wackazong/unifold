@@ -49,6 +49,22 @@ part.
 | No connection, or no answer within 5 seconds | `retry` |
 | An answer `notifier` does not understand | `retry` |
 
+## Examples
+
+The alert `7d2c1c1e-…` of the plant "Monstera in the hall".
+
+| Case | Call and answer of the push service | Outcome and request |
+|---|---|---|
+| Dry soil | `soil_moisture`/`min`, value 28.4, threshold 30.0; taken | `sent`; body "Needs water. Soil moisture is 28.4 %, below 30.0 %." |
+| Dark | `light`/`min`, value 640, threshold 800; taken | `sent`; body "Needs more light. The brightest reading of the last day was 640 lux, below 800 lux." |
+| Frost | `temperature`/`min`, value -3.5, threshold 5.0; taken | `sent`; body "Too cold. It is -3.5 °C, below 5.0 °C." |
+| Called again | The first case once more | `sent`; a request equal to the first in every part, collapse identifier `7d2c1c1e-…` |
+| Busy | Any alert; refused with "too many requests" | `retry` |
+| Silence | Any alert; no answer within 5 seconds | `retry`, returned within 6 seconds |
+| Nobody registered | Any alert; refused, no phone for the owner | `failed` |
+| Long name | A plant name of 80 characters; taken | `sent`; the title is its first 60 characters |
+| Unknown quantity | `soil_ph`/`min`; taken | `sent`; body "Needs attention." |
+
 ## Texts
 
 The title is the name of the plant. The body is chosen by quantity and

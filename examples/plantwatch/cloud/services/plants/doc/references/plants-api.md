@@ -69,12 +69,30 @@ lookup arrived.
 ## History and events
 
 - `plants` adds a reading to the history when it handles the event for
-  it, normally within 5 seconds after the event is published.
+  it, within 5 seconds after the event reaches `plants` while `plants`
+  and its database are healthy.
 - A history request sees every reading whose event was handled before the
   request arrived.
 - While `plants` is behind on the event stream, history is incomplete at
   its newest end and complete again once it has caught up. Nothing is
   skipped.
+
+## Examples
+
+The plant P of owner A has the sensor stick `00a1b2c3d4e5f607` attached.
+
+| Case | Request | Answer |
+|---|---|---|
+| No owner header | `GET /v1/plants` without `X-Owner-Id` | `400` `invalid_request` |
+| Other owner | `GET /v1/plants/{P}` with `X-Owner-Id` B | `404` `not_found` |
+| Lookup | `GET /internal/v1/sensors/00a1b2c3d4e5f607/plant` | `200` with `plant_id` P and `owner_id` A |
+| Lookup after detaching | The same, after a `PUT` of P without `sensor_id` was answered | `404` `not_found` |
+| Lookup with a bad id | `GET /internal/v1/sensors/00A1/plant` | `400` `invalid_request` |
+| Race for a sensor stick | Two `PUT` requests attach one free sensor stick to two plants | One `200`, one `409` `sensor_already_attached` |
+| Event twice | The event of reading 4711 of the sensor stick arrives twice | The hour of the reading has `count` 1 |
+| Late event | Events arrive for 14:30, then for 14:15 | `hour` history has one item for 14:00 with `count` 2 |
+| Unattached | An event arrives for a sensor stick that is attached to no plant | No history changes |
+| Database down | Any operation | `503` `unavailable` |
 
 ## Timing
 

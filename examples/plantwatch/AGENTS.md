@@ -44,6 +44,15 @@ to a phone ([0001](doc/decisions/0001-the-phone-relays-between-sensor-and-server
 | [check-docs](doc/skills/check-docs/SKILL.md) | You have changed documents, or review a change |
 | [add-a-measured-quantity](doc/skills/add-a-measured-quantity/SKILL.md) | The sensor stick shall measure something new, end to end |
 
+## Commands
+
+```sh
+python3 doc/skills/check-docs/scripts/youmedoc.py show PATH        # a unit and its neighbours
+python3 doc/skills/check-docs/scripts/youmedoc.py port PATH NAME   # both ends of a port
+python3 doc/skills/check-docs/scripts/youmedoc.py generate         # diagrams and indexes
+python3 doc/skills/check-docs/scripts/youmedoc.py check            # the tool rules
+```
+
 ## Rules for work here
 
 - The project is in its design phase. Do not write product code for a unit

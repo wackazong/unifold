@@ -1,40 +1,3 @@
----
-unit: cloud
-summary: Server side that stores readings, keeps the plant registry and raises alerts
-kind: system
-status: planned
-provides:
-  public-api:
-    kind: http
-    summary: Upload readings and query plants, history and alerts
-    contract: doc/references/public-api/index.md
-needs:
-  push-service:
-    kind: http
-    summary: Delivers a notification to a phone
-  reading-format:
-    kind: specification
-    summary: The format in which readings are uploaded
-  container-host:
-    kind: infrastructure
-    summary: Runs containers, gives them a private network and persistent volumes
-wiring:
-  public-api: gateway.public-api
-  gateway.ingest-api: ingest.ingest-api
-  gateway.plants-api: plants.plants-api
-  gateway.alerts-api: alerts.alerts-api
-  ingest.event-bus: platform.event-bus
-  ingest.reading-format: reading-format
-  plants.reading-events: ingest.reading-events
-  plants.sql-db: platform.sql-db
-  plants.event-bus: platform.event-bus
-  alerts.reading-events: ingest.reading-events
-  alerts.plants-api: plants.plants-api
-  alerts.push: push-service
-  alerts.sql-db: platform.sql-db
-  alerts.event-bus: platform.event-bus
-  platform.container-host: container-host
----
 # cloud
 
 `cloud` is the server side. It accepts uploaded readings, keeps the registry
@@ -53,22 +16,25 @@ sensor sticks and thresholds, and queries history and alerts.
 A client can rely on this:
 
 - **An upload is safe to repeat.** The response says for every reading
-  whether it is new, a duplicate or rejected. A reading reported as new or
-  duplicate is kept; the client may delete its copy.
-- **Every other request is safe to repeat too.** Plants are created with an
-  identifier the client chooses, so a repeated request changes nothing.
+  whether it is `new`, `duplicate` or `rejected`. A reading reported as
+  `new` or `duplicate` is kept; the client may delete its copy.
+- **Every other request is safe to repeat too.** A plant is created under an
+  identifier the client chooses; the same `PUT` sent twice leaves one plant.
 - **An alert follows a reading within 1 minute.** When an accepted reading
   makes a plant need attention, the alert is visible in the API and one
   notification is handed to the push service within 1 minute after the
-  upload. An alert that stays open produces no further notification.
+  upload response. An alert that stays open produces no further
+  notification.
 - **History is kept for 2 years per plant**, at full resolution for the last
   90 days and as hourly and daily aggregates for the rest.
-- **An owner sees only what belongs to that owner.**
+- **An owner sees only what belongs to that owner.** A request for a plant
+  or an alert of another owner answers `404`.
 
 Limits:
 
-- Queries lag behind uploads. A reading reported as new appears in history
-  and in alerts within seconds, not within the upload request.
+- Queries lag behind uploads. A reading reported as `new` appears in the
+  history within 10 seconds after the upload response, not within the
+  upload request.
 - `cloud` judges readings by the time they carry, not by the time they
   arrive. A batch that arrives days late opens and closes alerts late.
 - `cloud` does not check that the caller owns the sensor stick whose
@@ -93,12 +59,20 @@ Contract: [public API](doc/references/public-api/index.md).
 
 ### `push-service`
 
-`cloud` hands over a notification addressed to an owner id. It expects the
-provider to deliver it to every phone that has registered with the provider
-for that owner. It expects the provider to accept a collapse identifier: two
-notifications with the same identifier appear on a phone as one. Delivery may
-be delayed and may fail; `cloud` does not learn whether a phone showed the
-notification.
+`cloud` hands over one notification per request: an owner id as addressee,
+a title of up to 60 characters, a body of up to 120 characters, five short
+data fields, a collapse identifier and a time to live of 24 hours. It
+expects the provider
+
+- to deliver the notification to every phone that has registered with the
+  provider for that owner, and to stop trying when the time to live is over,
+- to show two notifications with the same collapse identifier on a phone as
+  one,
+- to answer every request with one of three results: taken, refused for
+  good, or failed for now.
+
+Delivery may be late and may fail; `cloud` does not learn whether a phone
+showed the notification.
 
 ### `reading-format`
 
@@ -109,11 +83,16 @@ optional fields.
 
 ### `container-host`
 
-Something that runs the containers of `cloud`, restarts one that stops,
-connects them with a private network in which they find each other by name,
-and gives a container that asks for one a volume that survives restarts.
-Exactly one port is reachable from outside the private network. Whoever
-publishes that port terminates TLS.
+Something that runs the containers of `cloud`, restarts one that stops, and
+connects them with a private network in which they find each other by name.
+`cloud` expects that it
+
+- gives a container that asks for one a volume that survives restart and
+  replacement of the container, and can place two volumes on separate
+  storage,
+- keeps the clock of every container within 10 seconds of UTC,
+- makes exactly one port reachable from outside the private network.
+  Whoever publishes that port terminates TLS.
 
 ## Out of scope
 
@@ -129,6 +108,7 @@ publishes that port terminates TLS.
 ## More
 
 - [AGENTS.md](AGENTS.md): why the server side is cut this way
+- [doc/context.md](doc/context.md): what it inherits from the project
 - [doc/architecture.md](doc/architecture.md): invariants, the path of an
   upload, where things run
 - [Context diagram](doc/diagrams/context.md),
@@ -137,4 +117,5 @@ publishes that port terminates TLS.
 - [Decisions](doc/decisions/index.md)
 - References: [public API](doc/references/public-api/index.md),
   [events](doc/references/events.md),
-  [calls between services](doc/references/service-calls.md)
+  [calls between services](doc/references/service-calls.md),
+  [glossary](doc/references/glossary.md)

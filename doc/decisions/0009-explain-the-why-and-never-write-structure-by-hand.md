@@ -10,7 +10,8 @@ date: 2026-10-06
 overview of folders, children and dependencies. Such overviews duplicate the
 manifests, go stale, and a controlled study of agent context files found
 that structural overviews did not help agents find relevant files while
-raising cost.
+raising cost
+([Gloaguen et al., 2026](https://arxiv.org/abs/2602.11988)).
 
 ## Considered Options
 
@@ -34,5 +35,7 @@ and must not restate the structure of interfaces.
   "about 15 lines, then overflow" is a matter of judgement.
 - Bad: an agent must open a second file, the manifest or a diagram, to see
   the structure.
-- Bad: build and test commands, which many projects keep in `AGENTS.md`,
-  move into skills.
+- Bad: an agent that wants the structure as text finds it in the generated
+  `doc/diagrams/context.md` or through `youmedoc show`, not in `AGENTS.md`.
+- A short `## Commands` section is allowed, because agents and people expect
+  build and test commands in this file. Longer procedures are skills.

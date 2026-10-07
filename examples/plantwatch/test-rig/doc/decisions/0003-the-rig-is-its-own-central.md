@@ -32,7 +32,7 @@ test ([0002](0002-tests-observe-only-public-interfaces.md)).
 
 The rig's central does what `link-profile` asks of a central and nothing
 more: find, pair, fetch, confirm, read the tick count, convert to UTC. It
-uploads what it fetched, unchanged, in the form the public API documents.
+uploads what it fetched, unchanged, as readings in the `reading-format`.
 
 ### Consequences
 

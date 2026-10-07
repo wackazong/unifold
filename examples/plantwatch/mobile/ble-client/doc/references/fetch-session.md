@@ -2,9 +2,9 @@
 
 The course of one fetch from one sensor stick: its states, sizes and
 timeouts, what starts it, and how the client fills in what `link-profile`
-leaves open. The reasons are in the [decisions](../decisions/index.md). The
-procedures on the radio are those of `link-profile`; this file names them
-without repeating them.
+leaves open. The reasons are in the [decisions](../decisions/index.md), the
+terms in the [glossary](glossary.md). The procedures on the radio are those
+of `link-profile`; this file names them without repeating them.
 
 ## States
 
@@ -62,7 +62,7 @@ The background slot and its length are cited in [context.md](../context.md).
 | The operating system reports a paired sensor stick | That one |
 | The operating system grants a slot of scheduled background work | All paired ones in range whose next reading is due |
 | "Fetch now" of the [sensor-readings](sensor-readings.md) port | The named one, or all paired ones in range |
-| A consumer attaches while the program is on the screen | All paired ones in range |
+| The program comes onto the screen, or a consumer attaches while it is there | All paired ones in range |
 | A pairing succeeds | The new one |
 
 A trigger for a sensor stick that already has a session, or that is already
@@ -89,10 +89,20 @@ time reference, and when a time counts as estimated. The client adds:
 
 | Open point | The client |
 |---|---|
-| Which time references to keep | The reference of each of the 8 most recent boots of each paired sensor stick, called anchors in the decisions. They are removed at unpairing. |
+| Which time references to keep | One anchor for each of the 8 most recent boots of each paired sensor stick. They are removed at unpairing. |
 | The estimate for a reading of a boot without a reference | Start of the following boot minus the seconds between this reading and the last reading of its own boot that the sensor stick still holds |
 | The start of the following boot is itself unknown | It is estimated in the same way first |
 
 An estimate is the latest time the reading can have: it assumes that the
 earlier boot ended with its last reading and that the following boot began
 at once.
+
+Examples, for a time reference "boot 12, 86 400 seconds" taken at
+2026-10-06T07:15:00Z, so that boot 12 began at 2026-10-05T07:15:00Z:
+
+| Reading | Anchors kept | Time | Estimated |
+|---|---|---|---|
+| Boot 12, 85 500 seconds | Any | 2026-10-06T07:00:00Z | No |
+| Boot 11, 4 500 seconds | Boot 11: 3 600 seconds at 2026-10-01T10:00:00Z | 2026-10-01T10:15:00Z | No |
+| Boot 11, 1 800 seconds, the last of its boot | None for boot 11 | 2026-10-05T07:15:00Z | Yes |
+| Boot 11, 900 seconds | None for boot 11 | 2026-10-05T07:00:00Z | Yes |

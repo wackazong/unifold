@@ -9,7 +9,7 @@ above this unit and cited in [context](../context.md).
 | Item | Value |
 |---|---|
 | Topic | `ingest.readings.v1` |
-| Kind | A topic that keeps every event for a period, consumed or not |
+| Kind | A topic that keeps every event for 7 days, consumed or not |
 | Publisher | `ingest`, and nobody else |
 | Event types | `reading.accepted` |
 | Key | The sensor id |
@@ -59,13 +59,18 @@ above this unit and cited in [context](../context.md).
 Units, ranges and resolutions are those of the project conventions
 ([context](../context.md)).
 
-## Guarantees
+## Key, order, delivery
 
-- `ingest` publishes an event for every reading that `ingest-api` reports
-  as `new`, before it reports it.
-- Events with the same sensor id are published in the order in which the
-  readings were accepted. Readings of one batch are published in
-  ascending order of sequence number.
+| Aspect | Guarantee |
+|---|---|
+| Key | The sensor id. All events of one sensor stick have the same key. |
+| Order | Events with the same key reach a subscriber in the order in which `ingest` accepted the readings. Readings of one batch are published in ascending order of sequence number. No order holds between different keys. |
+| Delivery | At least once. `ingest` publishes an event for every reading that `ingest-api` reports as `new`, before it reports it. |
+| Retention | An event stays on the topic for 7 days, consumed or not. |
+| Repeats | Possible. A repeat has the same `id`. |
+
+## Further guarantees
+
 - All values in `values` are within their range. `data.time` is neither
   more than 24 hours after nor more than 90 days before the envelope
   `time`.
@@ -86,6 +91,17 @@ Units, ranges and resolutions are those of the project conventions
   id, also of one that belongs to no plant.
 - **More quantities.** A later version adds names to `values`. A
   subscriber ignores names it does not know.
+
+## Examples
+
+| Case | What happens | Events on the topic, in order |
+|---|---|---|
+| One batch | Readings 4713, 4711, 4712 of one sensor stick are accepted | `…-4711`, `…-4712`, `…-4713` |
+| Repeated batch | The same batch is uploaded again | none |
+| Late batch | Readings 4800 to 4810 are accepted, then 4700 to 4710 | `…-4800` to `…-4810`, then `…-4700` to `…-4710` |
+| Failure before the answer | `ingest` stops after publishing 4711 and before recording it; the batch is uploaded again | `…-4711` twice, with different envelope `time` |
+| Not measured | A reading without light is accepted | One event whose `values` has no `light` |
+| Rejected reading | A reading with `soil_moisture` 104.2 is uploaded | none |
 
 ## Versions
 

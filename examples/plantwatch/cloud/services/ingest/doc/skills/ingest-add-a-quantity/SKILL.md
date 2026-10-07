@@ -19,7 +19,7 @@ name are not disturbed.
 
 ## Steps
 
-1. **Cite the quantity.** Add its unit and range to the row on measured
+1. **Cite the quantity.** Add its unit and range to the item on measured
    quantities in [context](../../context.md).
 2. **Name it.** Choose the name in `values`: the name of the quantity in
    lower case with underscores. Add a row to the table of names in

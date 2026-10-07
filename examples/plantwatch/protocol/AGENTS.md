@@ -1,24 +1,27 @@
 # AGENTS.md: protocol
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show protocol`
+prints this unit with its neighbours.
 
 ## Why
 
 The radio link and the reading are each implemented more than once, by
-parts that are built and released separately. A definition that lived with
-one implementer would follow that implementer's code. So the definition
-has a folder of its own, contains no code, and its text is the only
-authority.
+parts that are built and released separately; this unit exists so that
+their definition belongs to none of them. It changes when what a sensor
+stick and a central exchange changes, or what a reading contains, and
+never because an implementation changed.
 
 Both definitions are in one unit because the record on the radio link is
-an encoding of the reading. Defined apart, the two would drift, which is
-what the unit exists to prevent.
+an encoding of the reading. Defined apart, the two would drift.
 
 Two forces shape the text. It must be exact enough that two implementers
-who never talk build parts that work together, so it uses byte tables and
-numbered procedures. And it must be changeable without replacing all parts
-at once, so every contract has a version and rules for what a minor version
-may do.
+who never talk build parts that work together, so it uses byte tables,
+numbered procedures and worked examples. And it must be changeable without
+replacing all parts at once, so each contract has a version and rules for
+what a minor version may do.
 
 The trade-off: prose and tables are easy to review, but no tool checks
 code against them. What must stay true: the text never depends on an
@@ -30,8 +33,9 @@ implementation, and behaviour that is not in the text is undefined.
 2. [doc/context.md](doc/context.md): the project decisions the definitions carry out
 3. [doc/diagrams/context.md](doc/diagrams/context.md): the unit in its surroundings
 4. [doc/decisions/index.md](doc/decisions/index.md): why the record and the confirm look as they do
-5. [doc/references/ble-profile/index.md](doc/references/ble-profile/index.md): the BLE profile
-6. [doc/references/reading-schema.md](doc/references/reading-schema.md): the reading schema
+5. [doc/references/glossary.md](doc/references/glossary.md): the terms of both contracts
+6. [doc/references/ble-profile/index.md](doc/references/ble-profile/index.md): the BLE profile
+7. [doc/references/reading-schema.md](doc/references/reading-schema.md): the reading schema
 
 ## Skills
 
@@ -46,13 +50,12 @@ implementation, and behaviour that is not in the text is undefined.
   If the text allows both, the text is at fault. Correct the text first.
 - Name roles, not implementations. The roles are "sensor stick" and
   "central". Do not name a platform, a library or a product part.
+- Use the terms of the [glossary](doc/references/glossary.md) unchanged.
+  In particular, the BLE step is "bonding", never "pairing".
 - Layouts are tables with offset and size. The byte examples in
   [README.md](README.md), in the
   [reading schema](doc/references/reading-schema.md) and in the
   [procedures](doc/references/ble-profile/procedures.md) are computed from
   the tables. Recompute them when a layout changes.
-- BLE calls it "pairing"; the glossary cited in
-  [doc/context.md](doc/context.md) uses that word for something wider.
-  Write "bonding" for the BLE step.
 - The UUID base and the company identifier are placeholders. They must be
   replaced before a product ships with them.

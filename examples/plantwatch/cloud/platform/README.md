@@ -1,22 +1,3 @@
----
-unit: platform
-summary: Shared infrastructure of the services - message bus and database
-kind: infrastructure
-status: planned
-provides:
-  event-bus:
-    kind: queue
-    summary: Durable publish and subscribe with at-least-once delivery
-    contract: doc/references/event-bus.md
-  sql-db:
-    kind: db
-    summary: Relational database with transactions, one schema per service
-    contract: doc/references/sql-db.md
-needs:
-  container-host:
-    kind: infrastructure
-    summary: Runs containers, gives them a private network and persistent volumes
----
 # platform
 
 `platform` operates the two pieces of infrastructure that several services
@@ -45,6 +26,10 @@ stopped.
 - The bus has no backup. If its volume is lost, messages that were not yet
   consumed are lost.
 
+Example: a subscriber confirms the messages 1 to 7 of a key, handles
+message 8 and stops before it confirms. After its restart it receives
+message 8 again, then 9.
+
 Contract: [event bus](doc/references/event-bus.md).
 
 ### `sql-db`
@@ -60,6 +45,10 @@ service creates and changes the tables in its schema itself.
   refuses connections; clients reconnect by themselves.
 - A role may hold at most 20 connections.
 
+Example: a service named `greenhouse` connects with the role `greenhouse`
+and creates the table `greenhouse.pot`. Its `SELECT` on a table of another
+schema fails with a permission error.
+
 Contract: [SQL database](doc/references/sql-db.md).
 
 ## Needs
@@ -69,10 +58,10 @@ Contract: [SQL database](doc/references/sql-db.md).
 `platform` expects a host that runs its containers, restarts one that
 stops, and gives each a network name under which the other containers of
 the same private network reach it. It expects three volumes that survive
-restarts and removal of a container: one for the bus, one for the database
-and one for database backups. The backup volume lies on other storage than
-the database volume. Nothing of `platform` is reachable from outside the
-private network.
+restart and replacement of a container: one for the bus, one for the
+database and one for database backups. The backup volume lies on other
+storage than the database volume. Nothing of `platform` is reachable from
+outside the private network.
 
 ## Out of scope
 

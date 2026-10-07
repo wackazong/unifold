@@ -14,9 +14,11 @@ keeps each step compatible with the parts that have not changed yet.
    measured, why, and which hardware it needs. Wait for a human to accept it.
 2. **Name it.** Add the quantity with unit, range and resolution to the
    table in [conventions.md](../../references/conventions.md).
+   Add the term to the [glossary](../../references/glossary.md) if it is
+   new.
 3. **Declare the hardware.** If a new sensor is needed, add a need to the
-   manifest in [README.md](../../../README.md) and wire it to the part that
-   reads it.
+   manifest, [unit.yaml](../../../unit.yaml), wire it to the part that reads
+   it, and describe it in [README.md](../../../README.md).
 4. **Extend the definitions.** In [protocol](../../../protocol/README.md),
    add the quantity to the reading format and to the radio protocol as an
    optional field, so that older parts keep working. Follow that unit's own
@@ -35,6 +37,13 @@ keeps each step compatible with the parts that have not changed yet.
 
 Inside each part, start with its `AGENTS.md` and use the skills listed
 there.
+
+## What else changes
+
+The measured quantities are restated in the context files of most units.
+After step 2, list them with the `cited-by` command of the tool on
+[conventions.md](../../references/conventions.md) and correct each
+restatement that names the quantities.
 
 ## Checks
 

@@ -1,7 +1,8 @@
 # Events between services
 
 The envelope, the topic names and the rules that every service of `cloud`
-follows when it publishes or consumes events. The reasons are in
+follows when it publishes or consumes events. The terms are in the
+[glossary](glossary.md), the reasons in
 [0001](../decisions/0001-services-learn-about-readings-through-events.md)
 and [0004](../decisions/0004-every-event-consumer-is-idempotent.md).
 
@@ -27,7 +28,7 @@ Every event is one JSON object in UTF-8:
 | `source` | The unit name of the service that published the event |
 | `time` | When the service published the event. Not the time of what the event describes. |
 | `key` | The ordering key. Events with the same `key` reach a subscriber in the order in which they were published. The publisher also uses it as the key of the message on the event bus. |
-| `data` | The content. Each event type has its own form, defined by the publishing service in the contract of its event port. |
+| `data` | The content. Each event type has its own form, defined by the publishing service in the contract of its event port. That contract also states key, order and delivery of the stream. |
 
 Rules for `data`:
 
@@ -62,6 +63,9 @@ A topic is named `<service>.<stream>.v<major>`.
 A subscription is named after the service that consumes: `<service>`, or
 `<service>.<purpose>` if a service needs more than one on the same topic.
 All instances of a service share its subscription.
+
+A service that subscribes states what it relies on in a contract of its
+need: the fields it reads, the key, the order and the delivery.
 
 ## Rules for a publisher
 

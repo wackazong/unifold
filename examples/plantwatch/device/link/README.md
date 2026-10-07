@@ -1,32 +1,9 @@
----
-unit: link
-summary: Implements the BLE profile on top of the radio
-kind: library
-status: planned
-provides:
-  ble-link:
-    kind: protocol
-    summary: Serves live and stored readings to a nearby central over BLE
-needs:
-  radio:
-    kind: library
-    summary: BLE peripheral role with GATT server primitives
-  reading-log:
-    kind: library
-    summary: Stored readings in order, with a way to mark them as delivered
-  live-readings:
-    kind: library
-    summary: The newest reading as soon as it exists
-  link-profile:
-    kind: specification
-    summary: The definition of the BLE services to implement
----
 # link
 
-link makes the board a BLE peripheral that speaks the profile of a sensor
+`link` makes the board a BLE peripheral that speaks the profile of a sensor
 stick. It advertises, accepts a central, and answers its requests: who am
 I, what is my state, what is the newest reading, give me the stored
-readings, I have them. link holds no readings itself. It translates
+readings, I have them. `link` holds no readings itself. It translates
 between GATT operations and the sources of readings it is given.
 
 ## Provides
@@ -35,57 +12,46 @@ between GATT operations and the sources of readings it is given.
 
 What a central can rely on:
 
-- **Conformance.** link implements the sensor stick's side of the
-  definition it gets through `link-profile`, version 1.0: the advertising
-  data, the service with all characteristics, every procedure, every
-  result code.
-- **Advertising.** While no central is connected, link advertises every
+- **Conformance.** `link` does everything the definition behind
+  `link-profile` requires of a sensor stick in version 1.0: the
+  advertising data, the service with all characteristics, every
+  procedure, every result code, the behaviour on failures.
+- **Advertising.** While no central is connected, `link` advertises every
   1285 ms. The advertising data shows the newest sequence number and
   whether stored readings wait, and follows a change within 2 s.
-- **One central at a time.** link closes a connection that has carried no
+- **One central at a time.** `link` closes a connection that has carried no
   request for 30 s, and any connection after 10 minutes.
-- **Fetch.** link sends the stored readings exactly as `reading-log`
+- **Fetch.** `link` sends the stored readings exactly as `reading-log`
   returns them, in ascending order. A fetch changes nothing.
-- **Confirm.** link has the readings marked as delivered before it
+- **Confirm.** `link` has the readings marked as delivered before it
   indicates the result. When a central sees `success`, the mark survives
-  power loss.
-- **Live readings.** link notifies a subscribed central of every new
+  power loss. When the mark fails, the central sees `storage-failure` and
+  nothing has changed.
+- **Live readings.** `link` notifies a subscribed central of every new
   reading within one connection interval after it gets the reading.
 - **Bonding** is open for 5 minutes after every start.
 - **Time reference.** The tick count in Status is the tick count of the
   read request itself, not a stored value.
 
-What link does not add: how many readings are available, how long they
+What `link` does not add: how many readings are available, how long they
 are kept and what happens when memory is full are properties of whatever
-provides `reading-log`. link has no buffer of its own.
+provides `reading-log`. `link` has no buffer of its own.
 
-Limits: at the default ATT MTU, link sends one reading per notification.
-A fetch of 2 880 readings takes about one minute, less with a larger MTU.
+Limits: at the default ATT MTU, `link` sends one reading per notification.
+To a central that takes 4 notifications per connection event at an
+interval of 100 ms or less, `link` sends at least 40 readings per second:
+2 880 readings in at most 72 s.
 
 ## Needs
 
 ### `radio`
 
-A BLE peripheral with a GATT server for one central. link expects:
-
-- advertising with data and interval of link's choice, replaceable while
-  advertising;
-- a table of characteristics that link declares at start, each with a
-  128-bit UUID, its properties, and whether an encrypted connection is
-  required;
-- every read and write as an event that link answers, also with an ATT
-  error;
-- notifications and indications with back-pressure: "no room now" and
-  "room again";
-- the subscription state of each characteristic, reset at every
-  connection;
-- bonding without user interaction, with at least 4 bonds kept across
-  power loss, accepted only for a duration that link names;
-- closing a connection on request, after a time without requests and
-  after a longest duration, both set by link;
-- an 8-byte identifier that is unique per board and never changes; link
-  reports it as the sensor id;
-- the tick count of every event. link has no other source of time.
+A BLE peripheral with a GATT server for one central: advertising with
+data and interval of `link`'s choice, characteristics that `link` declares
+and whose reads and writes `link` answers, notifications with
+back-pressure, bonding that `link` opens for a time, an identifier of 8
+bytes that never changes, and the tick count of every event. `link` has no
+other source of time. Contract: [radio](doc/references/radio.md).
 
 ### `reading-log`
 
@@ -93,32 +59,38 @@ The stored readings and their state:
 
 - a summary: number of stored readings, oldest and newest stored sequence
   number, the newest sequence number ever taken, the capacity, and whether
-  stored readings have been discarded;
-- the stored readings one after another in ascending order, starting at a
-  sequence number link names, each within a few milliseconds;
-- "mark as delivered up to n", which is durable when it returns, succeeds
-  when repeated, and is refused for an n above the newest reading taken.
+  stored readings have been discarded since the last mark or the start;
+- for a sequence number `link` names, the stored reading with the lowest
+  number at or above it, or "none", within 5 ms;
+- "mark as delivered up to n", which is durable when it returns, returns
+  within 200 ms, succeeds when repeated, and is refused for an n above the
+  newest reading taken;
+- a failure of a read or a mark is reported, and has changed nothing.
 
 ### `live-readings`
 
 Every new reading at the moment it exists, in order: sequence number, tick
-count, and soil moisture, light and temperature, each present or absent.
+count, and soil moisture in steps of 0.1 %, light in lux and temperature
+in steps of 0.1 °C, each present or absent. On request, the sampling
+interval in seconds.
 
 ### `link-profile`
 
 The definition of what a sensor stick advertises, of the GATT service and
 its characteristics, of the record that carries a reading, of the
-procedures and of the behaviour on failures, for major version 1.
+procedures and of the behaviour on failures, for major version 1. `link`
+takes it as it is defined.
 
 ## Out of scope
 
-- Measuring and storing. link serves what it is given.
-- The role of a central: link never scans and never connects.
+- Measuring and storing. `link` serves what it is given.
+- The role of a central: `link` never scans and never connects.
 - Deciding what the profile should say.
 - Anything a central does with a reading.
 
 ## More
 
 - [AGENTS.md](AGENTS.md): why the profile lives in one unit that owns no data
+- [doc/context.md](doc/context.md): what `link` inherits from above
 - [Context diagram](doc/diagrams/context.md)
 - [Decisions](doc/decisions/index.md)

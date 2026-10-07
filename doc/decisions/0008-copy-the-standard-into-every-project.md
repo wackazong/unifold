@@ -28,7 +28,11 @@ The root `README.md` also links to the published standard for human readers.
 
 - Good: works offline, and the same paths exist in every project.
 - Good: updating the standard is one visible change in version control.
-- Bad: about twenty files of the standard sit in every repository.
+- Bad: about thirty files of the standard sit in every repository. For a
+  small library that is more than its own documentation. A lighter mode, in
+  which a project keeps only the `read-docs` skill and refers to the
+  published standard by URL, needs a stable published address first and is
+  left open.
 - Bad: copies fall behind. Nothing tells a project that a newer version
   exists.
 - Bad: someone may edit the copy. The standard forbids it; nothing prevents

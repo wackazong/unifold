@@ -12,16 +12,21 @@ on a database, a clock or a network. Kept as a library with no state of
 its own, [rules](../rules/README.md) can be tested with tables of readings
 and changed without touching storage.
 
-**Notifying is an adapter.** What a push service wants, how it answers and
-how a message is worded has nothing to do with judging or storing.
-[notifier](../notifier/README.md) hides it behind one operation.
+**What lies behind a network gets an adapter.** The registry of plants and
+the push service are reached over HTTP, can be slow and can fail. Each has
+an adapter that offers a plain function and hides the rest:
+[plant-lookup](../plant-lookup/README.md) for plant and thresholds,
+[notifier](../notifier/README.md) for telling the owner, including the
+wording. The side that calls an adapter states the function it expects in
+a contract of its own need; the adapter is held to it
+([0003](decisions/0003-thresholds-reach-the-judging-logic-through-an-adapter.md)).
 
 **One process holds the state and the order.**
-[server](../server/README.md) is the only child that stores anything and
-the only one that knows in which order things happen. It calls the two
-libraries; they do not call each other and do not call back.
+[server](../server/README.md) is the only child that stores anything
+durably and the only one that knows in which order things happen. It
+calls the judging and the notifying; nothing calls it back.
 
-**Libraries, not services.** The three parts are deployed as one program
+**Libraries, not services.** All parts are deployed as one program
 ([0001](decisions/0001-evaluation-and-notification-are-libraries-beside-one-process.md)).
 An alert, the state that led to it and the fact that its notification is
 still owed are then written in one database transaction
@@ -41,7 +46,7 @@ still owed are then written in one database transaction
 - Judging uses the time of readings only. Handling the same events in the
   same order gives the same alerts.
 
-How the three children share the work for the notification invariant:
+How the children share the work for the notification invariant:
 
 | Danger | What prevents it |
 |---|---|
@@ -95,6 +100,7 @@ sequenceDiagram
     participant B as event-bus
     participant S as server
     participant R as rules
+    participant L as plant-lookup
     participant P as plants-api
     participant D as sql-db
     participant N as notifier
@@ -102,8 +108,12 @@ sequenceDiagram
     B->>S: reading event
     S->>D: read evaluation state of the sensor stick
     S->>R: evaluate(reading, state)
-    R->>P: plant and thresholds of the sensor stick
-    P-->>R: plant, owner, thresholds
+    R->>L: lookup(sensor id)
+    opt plant-lookup has to ask the registry
+        L->>P: lookup by sensor id
+        P-->>L: plant, owner, thresholds
+    end
+    L-->>R: attached, with plant, owner, thresholds
     R-->>S: plant, alerts to open or close, new state
     S->>D: store alerts and new state in one transaction
     D-->>S: committed
@@ -117,15 +127,20 @@ sequenceDiagram
     end
 ```
 
-The part below `opt` is not tied to the event. It runs for every stored
-alert whose notification is pending, also after a restart.
+The last block, notifying, is not tied to the event. It runs for every
+stored alert whose notification is pending, also after a restart.
 
 ## Trade-offs
 
 - A lookup of thresholds stands between an event and its alert. While the
-  lookup fails, events of that sensor stick wait. The alternative, a copy
-  of all thresholds inside `alerts`, is rejected one level up
-  ([context](context.md)).
+  lookup answers `unavailable`, events of that sensor stick wait. The
+  alternative, a copy of all thresholds inside `alerts`, is rejected one
+  level up ([context](context.md)).
+- A threshold that was changed takes up to 60 seconds to apply, because
+  an answer of the registry may be reused that long.
+- The interface between a caller and its adapter is written down twice:
+  as the contract of the need and as the contract of the port. Whoever
+  changes one side reads the other.
 - Notifications are effectively once, not exactly once. A repeat that
   reaches a phone after the owner has dismissed the first one is shown
   again. The window for this is the few seconds between sending and

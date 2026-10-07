@@ -28,16 +28,20 @@ changes.
    [platform](../../../platform/README.md) with the skills of that unit.
 6. **Change each subscriber.** In every service that shall react, add a
    need of kind `events` that says in the subscriber's own words what it
-   expects. Do not name the publisher there.
+   expects, with a contract that states the fields it reads, the key, the
+   order and the delivery it relies on. Do not name the publisher there.
 7. **Wire it.** In `wiring` of [README.md](../../../README.md), connect
    each new need to the publisher's port. A subscriber also needs the
-   event bus; add that line if it is missing.
+   event bus; add that line if it is missing. Compare the contract of each
+   need with the contract of the publisher's port.
 8. **Regenerate and check** with the generator and the checker of
    [youmedoc](https://youmedoc.example).
 
 ## Checks
 
 - The event has an `id` that stays the same when it is published again.
+- The contract of the event port states key, order and delivery, and has
+  an example event.
 - Every subscriber states how it stays idempotent
   ([0004](../../decisions/0004-every-event-consumer-is-idempotent.md)).
 - Exactly one service publishes to the topic.

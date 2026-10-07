@@ -1,23 +1,28 @@
 # AGENTS.md: device
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show device`
+prints this unit with its neighbours.
 
 ## Why
 
-One number shapes this firmware: an average current below 20 µA, so that a
-coin cell lasts a year. The firmware therefore sleeps almost always. It
-has no main loop and no scheduler; its parts are libraries that react to
-a timer or to the radio, do a short piece of work and return.
+A sensor stick runs one program, and this unit is that program: it turns
+two sensors and a coin cell into readings a central can fetch. It changes
+when what a sensor stick has to do changes, or the energy it may spend. A
+change of the board, of measuring, of the memory or of the profile lands
+in one part and leaves the others alone; that is how the parts are cut.
 
-The firmware is cut where the reasons for change differ: the board, the
-measuring, the memory and the BLE profile each change on their own
-occasion. Only one part touches the hardware, so the others can be built
-and tested on a development machine.
+One number shapes the firmware: an average current below 20 µA, so that a
+coin cell lasts a year. The firmware therefore sleeps almost always and
+has no main loop: its parts are libraries that react to an alarm or to
+the radio, do a short piece of work and return. Only one part touches the
+hardware, so the others are tested on a development machine.
 
 A reading moves in one direction: it is made, numbered and stamped once,
-then kept, then served. No part hands a reading back or alters it. To
-make that possible without shared storage, the sequence number is computed
-where the reading is made; the price is numbers that jump at every start.
+then kept, then served. The sequence number is therefore computed where
+the reading is made; the price is numbers that jump at every start.
 
 What must stay true: a reading is in durable memory before the board
 sleeps again; it leaves that memory only through a confirm or an overflow;
@@ -31,6 +36,7 @@ and no change exceeds the energy budget.
 4. [doc/diagrams/component.md](doc/diagrams/component.md): the parts and their wiring
 5. [doc/decisions/index.md](doc/decisions/index.md): sleep and advertising, hardware access, sequence numbers
 6. [doc/references/energy-budget.md](doc/references/energy-budget.md): where the 20 µA go
+7. [doc/references/glossary.md](doc/references/glossary.md): the terms only the firmware uses
 
 ## Skills
 
@@ -49,6 +55,9 @@ and no change exceeds the energy budget.
 - A part does not include a file of another part other than its public
   interface. If two parts need the same type, the part that provides the
   port defines it.
+- A part writes down what it expects of another as a need, with a
+  contract where numbers matter. Whoever changes a wiring line in
+  [README.md](README.md) reads both ends and makes them agree.
 - Every number in the [energy budget](doc/references/energy-budget.md)
   is a planned value until it is measured. Replace it when a measurement
   exists.

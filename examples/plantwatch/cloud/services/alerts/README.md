@@ -1,39 +1,3 @@
----
-unit: alerts
-summary: Decides when a plant needs attention and notifies its owner once
-kind: service
-status: planned
-provides:
-  alerts-api:
-    kind: http
-    summary: Open and past alerts per plant
-    contract: doc/references/alerts-api.md
-needs:
-  reading-events:
-    kind: events
-    summary: Accepted readings, to evaluate them against thresholds
-  plants-api:
-    kind: http
-    summary: The thresholds of the plant a reading belongs to, and its owner
-  push:
-    kind: http
-    summary: Delivers a notification to the phones of a user
-  sql-db:
-    kind: db
-    summary: Relational database with transactions
-  event-bus:
-    kind: queue
-    summary: Durable subscription with at-least-once delivery
-wiring:
-  alerts-api: server.alerts-api
-  server.reading-events: reading-events
-  server.evaluation: rules.evaluation
-  server.notification: notifier.notification
-  server.sql-db: sql-db
-  server.event-bus: event-bus
-  rules.thresholds: plants-api
-  notifier.push: push
----
 # alerts
 
 `alerts` is the service that decides whether a plant needs attention. It
@@ -55,15 +19,21 @@ A caller can rely on this:
 
 - At most one alert is open per plant, quantity and threshold. A plant
   that stays dry has one open alert, however many readings arrive.
-- Every alert that opens leads to exactly one notification to the owner,
-  handed to the push service. The alert says whether that has happened.
-- An alert does not flap. It closes only when the judged value has
-  recovered by a margin, or when its threshold is gone.
+- Every alert that opens leads to one notification that the owner sees. It
+  is handed to the push service at least once, always under the same
+  collapse identifier, so that a repetition replaces the earlier one. The
+  alert says whether it has been handed on.
+- An alert does not flap. It never closes with `recovered` while the
+  judged value is beyond its threshold, only when the value is back on the
+  good side by a margin, and at the latest when it is back by 10 percent
+  of the range of its quantity.
 - An alert is visible, and its notification is handed over, within 30
   seconds after the event of the reading reaches `alerts`, while
   everything `alerts` needs is healthy.
-- A reading is judged once, however often its event arrives.
-- An owner sees only the alerts of that owner's plants.
+- A reading is judged once. A repeated event changes no alert and causes
+  no notification.
+- An owner sees only the alerts of that owner's plants. An alert of
+  another owner answers `404`.
 - A closed alert is kept for 2 years.
 
 Limits:
@@ -73,6 +43,10 @@ Limits:
 - Light is judged over 24 hours, not per reading.
 - A notification is handed to the push service. Whether a phone shows it
   is outside `alerts`.
+- A changed threshold, and a sensor stick that was moved to another plant,
+  take up to 60 seconds to apply.
+- While the lookup of plants fails, no reading is judged. `alerts` catches
+  up in order afterwards.
 - No operation changes an alert.
 
 Example: `GET /v1/alerts?state=open` with `X-Owner-Id`.
@@ -92,44 +66,55 @@ Contract: [alerts API](doc/references/alerts-api.md).
 
 ### `reading-events`
 
-A stream with one event per accepted reading. `alerts` expects each event
-to carry the sensor id, the sequence number, the time of the reading, a
-flag for an estimated time, and the measured values under the names
-`soil_moisture`, `light` and `temperature`. It expects the events of one
-sensor stick to arrive in the order in which the readings were accepted.
+A stream with one event per accepted reading, keyed by sensor id. `alerts`
+expects each event to carry the sensor id, the sequence number, the time
+of the reading, a flag for an estimated time, and the measured values
+under the names `soil_moisture`, `light` and `temperature`. It expects
+
+- the events of one sensor stick in the order in which the readings were
+  accepted,
+- every accepted reading at least once, available for at least 7 days.
+
 It copes with repeated events.
 
 ### `plants-api`
 
-A lookup by sensor id that returns the plant to which the sensor stick is
-attached, with plant id, owner id, name and thresholds, or says that the
+An HTTP service inside the private network with a lookup by sensor id. It
+returns the plant to which the sensor stick is attached, with plant id,
+owner id, name and thresholds, or says with an answer of its own that the
 sensor stick is attached to no plant. A threshold is a `min`, a `max` or
-both per quantity. `alerts` expects the answer to show the current state
-and to arrive within 5 seconds. While the lookup fails, `alerts` judges
-nothing and catches up afterwards.
+both per quantity. `alerts` expects that the lookup needs no owner, can be
+repeated, shows the current state and answers within 5 seconds, or with
+the status `503` when it cannot.
 
 ### `push`
 
-A service that takes a notification addressed to an owner id and delivers
-it to the phones registered for that owner. `alerts` expects
+An HTTP service that takes one notification per request, addressed to an
+owner id, and delivers it to the phones registered for that owner.
+`alerts` expects that it accepts
 
-- a clear answer per request: taken, refused for good, or try again,
+- a title of up to 60 characters, a body of up to 120 characters and five
+  short data fields,
 - a collapse identifier: two notifications with the same identifier
-  appear on a phone as one.
+  appear on a phone as one,
+- a time to live of 24 hours, after which it stops trying to deliver,
 
-Delivery may be late or fail without `alerts` learning of it.
+and that it answers every request clearly: taken, refused for good, or
+failed for now. Delivery may be late or fail without `alerts` learning of
+it.
 
 ### `sql-db`
 
-A relational database with a schema that only `alerts` uses, and with
-transactions that survive a restart once committed.
+A relational database with a schema that only `alerts` uses. `alerts`
+expects transactions that survive a restart once committed, row locks,
+and a unique index that is limited to rows with a certain value.
 
 ### `event-bus`
 
 A broker with a durable subscription: `alerts` continues where it stopped
 after a restart, an event it has not confirmed is delivered again, and
-events with the same key arrive in order, also when several instances of
-`alerts` share the subscription.
+events with the same key arrive in order and at one instance at a time,
+also when several instances of `alerts` share the subscription.
 
 ## Out of scope
 
@@ -142,8 +127,8 @@ events with the same key arrive in order, also when several instances of
 
 ## More
 
-- [AGENTS.md](AGENTS.md): why the service is cut into a process and two
-  libraries
+- [AGENTS.md](AGENTS.md): why the service is cut into a process, the
+  judging logic and two adapters
 - [doc/context.md](doc/context.md): what the unit inherits
 - [doc/architecture.md](doc/architecture.md): invariants, the life of an
   alert, the handling of one reading
@@ -151,4 +136,5 @@ events with the same key arrive in order, also when several instances of
   [component diagram](doc/diagrams/component.md),
   [architecture diagram](doc/diagrams/architecture.md)
 - [Decisions](doc/decisions/index.md)
-- References: [alerts API](doc/references/alerts-api.md)
+- References: [alerts API](doc/references/alerts-api.md),
+  [glossary](doc/references/glossary.md)

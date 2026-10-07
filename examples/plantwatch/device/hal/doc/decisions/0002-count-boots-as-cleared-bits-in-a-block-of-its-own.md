@@ -6,12 +6,12 @@ date: 2026-10-06
 
 ## Context and Problem Statement
 
-`timer` promises a boot counter that rises by one at every start and never
+`timer` promises a boot counter that rises at every start and never
 repeats, also when the cell was out for a week. The counter must therefore
 be in flash memory, and it is written at every start, possibly at a moment
 when the cell is weak. Flash can only be erased in whole blocks, and an
 erase that is interrupted leaves the block undefined. Where and how does
-hal keep the counter?
+`hal` keep the counter?
 
 ## Considered Options
 
@@ -27,7 +27,7 @@ bit either happens or does not.
 
 The block starts with a 4-byte base value. The remaining 4092 bytes are a
 bit field. The boot counter is the base value plus the number of cleared
-bits. The bit field lasts for 32 736 starts. When it is full, hal erases
+bits. The bit field lasts for 32 736 starts. When it is full, `hal` erases
 the block once and writes the new base value.
 
 ### Consequences
@@ -40,7 +40,7 @@ the block once and writes the new base value.
 - Bad: one block of 4 kB for one number.
 - Bad: reading the counter means counting bits, up to 4 kB at every start.
 - Bad: the single erase after 32 736 starts is not protected against power
-  loss. hal carries it out only when the supply is above the power-fail
+  loss. `hal` carries it out only when the supply is above the power-fail
   level, and keeps the last value in the reserved block during the erase.
 
 ## More Information

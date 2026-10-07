@@ -1,8 +1,8 @@
 # Flash layout
 
-How store arranges readings and delivered marks in the blocks it gets
-through `flash`. Layout version 1. Nothing outside store reads these
-blocks.
+How `store` arranges readings and delivered marks in the blocks it gets
+through `flash`, whose properties are in [flash](flash.md). Layout
+version 1. Nothing outside `store` reads these blocks.
 
 ## Blocks
 
@@ -22,15 +22,15 @@ numbers are little-endian. An erased byte is `0xFF`.
 | 4 | 1 | `layout` | Layout version: 1 |
 | 5 | 1 | `role` | `0x01` ring, `0x02` journal |
 | 6 | 2 | | `0x0000` |
-| 8 | 4 | `serial` | Rises by one with every block that store starts in this role |
-| 12 | 4 | `check` | CRC-32 of bytes 0 to 11 |
+| 8 | 4 | `serial` | Rises by one with every block that `store` starts in this role |
+| 12 | 4 | `check` | CRC-32 (IEEE 802.3) of bytes 0 to 11 |
 
 A block whose header is erased is empty. A block whose header is neither
 erased nor valid is treated as empty and erased before use.
 
 ## Ring
 
-A ring block holds 204 slots of 20 bytes after the header. store fills the
+A ring block holds 204 slots of 20 bytes after the header. `store` fills the
 slots of a block in ascending order and the blocks in ascending order of
 block number, from 17 back to 0.
 
@@ -50,25 +50,25 @@ block number, from 17 back to 0.
 
 The bytes of an absent quantity are `0x00`.
 
-| State of a slot | How store recognises it | Treatment |
+| State of a slot | How `store` recognises it | Treatment |
 |---|---|---|
 | Free | All 20 bytes are `0xFF` | Next reading goes here |
 | Reading | `marker` is `0xA5` and `check` is right | A reading of the log |
 | Void | Anything else | Skipped. Left by a write that power loss interrupted. |
 
-store writes a slot once and never writes to it again.
+`store` writes a slot once and never writes to it again.
 
 ### Starting a new block
 
 When the last slot of the newest block is used, the next reading needs the
 following block.
 
-1. If that block is not empty, store erases it. It is the block with the
-   lowest `serial`. Stored readings in it are discarded; store sets the
+1. If that block is not empty, `store` erases it. It is the block with the
+   lowest `serial`. Stored readings in it are discarded; `store` sets the
    "discarded" flag of its summary if any of them was not yet delivered.
-2. store writes the header with `serial` one higher than that of the
+2. `store` writes the header with `serial` one higher than that of the
    newest block.
-3. store writes the reading into the first slot.
+3. `store` writes the reading into the first slot.
 
 ## Journal
 
@@ -83,10 +83,10 @@ A journal block holds 510 entries of 8 bytes after the header.
   `serial`.
 - An entry whose two fields do not match is skipped.
 - The valid mark is the highest `delivered_up_to` of all valid entries.
-- When the block is full, store erases the other journal block, writes its
+- When the block is full, `store` erases the other journal block, writes its
   header with the next `serial`, and writes the mark as its first entry.
   The full block keeps the previous mark until then.
-- store writes no entry for a mark that is not higher than the valid mark.
+- `store` writes no entry for a mark that is not higher than the valid mark.
 
 ## What is stored
 
@@ -116,3 +116,26 @@ Recovery reads at most 80 kB and writes nothing unless a block is invalid.
 | Erases of one ring block | One per 3 672 readings: every 38 days at 96 readings a day |
 | Entries per journal block | (4096 − 16) / 8 = 510 |
 | Erases of one journal block | One per 1 020 marks |
+
+## Examples
+
+The reading with sequence number 3 145 825, tick count 12 / 86 405,
+41.5 %, 21.4 °C and 12 000 lux as a slot; a ring block header with
+`serial` 7; the journal entry of a mark at 3 145 824:
+
+```text
+A5 07 0C 00 61 00 30 00 85 51 01 00 9F 01 D6 00 E0 2E 00 EE
+50 57 4C 47 01 01 00 00 07 00 00 00 B7 EE 54 DF
+60 00 30 00 9F FF CF FF
+```
+
+| Case | Blocks at start | Expected |
+|---|---|---|
+| New board | All bytes `0xFF` | Empty log; valid mark 0; the first reading goes to block 0, slot 0 |
+| Power was cut while a slot was written | A slot with a wrong `check`, free slots after it | The slot is void. All readings before it are in the log. The next reading goes to the slot after it. |
+| Power was cut while a mark was written | The last journal entry has fields that do not match | The entry is skipped. The valid mark is the one before. |
+| Power was cut while a ring block was erased | A block whose header is neither erased nor valid | The block is erased. The readings of the other ring blocks are in the log. |
+| Power was cut while the journal changed blocks | One full journal block; the other erased, or with a header and no entry | The valid mark is the highest of the full block |
+| The mark at 3 145 824 is given again | | No entry is written |
+| All 3 672 slots hold stored readings and one more arrives | | The block with the lowest `serial` is erased: 204 readings are discarded, the summary says so, 3 469 are stored |
+

@@ -27,6 +27,10 @@ The map form `need: provider` was chosen over a list of arrows because a need
 has one provider, a map makes a second line for the same need impossible, and
 "is every need a key?" is a simple completeness check.
 
+A need may carry a contract of its own. The unit that has the need then owns
+the interface, and providers are held to it. Without this, the consumer's
+expectation exists only as prose.
+
 ### Consequences
 
 - Good: unmet needs and unused ports are found before code exists.
@@ -34,8 +38,10 @@ has one provider, a map makes a second line for the same need impossible, and
 - Good: a unit can be moved; only wiring lines move with it.
 - Bad: something shared by siblings, such as a protocol definition, must be
   a unit of its own, otherwise siblings would refer to each other.
-- Bad: one need has one provider or a list of alternatives. A set of
-  simultaneous providers cannot be expressed.
+- Bad: one need has one provider at a time. Alternatives are named
+  (`real`, `simulated`); a set of simultaneous providers cannot be expressed.
+- Bad: a need that is used deep in the tree is declared at every level it
+  passes through. In the example, 21 of 62 wiring lines only pass a need up.
 - Bad: the manifest repeats, in coarse form, what the code's own interface
   files say. The `contract` field links the two; nothing checks that they
   agree.

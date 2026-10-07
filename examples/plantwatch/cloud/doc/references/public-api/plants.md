@@ -61,6 +61,18 @@ Rules:
 - `GET`, `PUT` and `DELETE` with a plant id that belongs to another owner
   answer `404`.
 
+Examples, for an owner who has the plant P with sensor stick S attached:
+
+| Case | Request | Response |
+|---|---|---|
+| Create | `PUT` of a new id with `name` | `200` with the plant; `created_at` equals `updated_at` |
+| Replace without thresholds | `PUT` of P with `name` only | `200`; P has no `thresholds` and no `sensor_id`; its history stays |
+| Threshold out of range | `PUT` with `soil_moisture.min` 120.0 | `400` `invalid_request` |
+| `min` not below `max` | `PUT` with `temperature` `{"min": 30.0, "max": 30.0}` | `400` `invalid_request` |
+| Sensor stick in use | `PUT` of another plant with `sensor_id` S | `409` `sensor_already_attached` |
+| 51st plant | `PUT` of a new id while the owner has 50 plants | `409` `plant_limit_reached` |
+| Delete twice | `DELETE` of P, then again | `204` both times |
+
 ## History
 
 The history of a plant consists of the accepted readings of the sensor

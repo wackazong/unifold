@@ -63,11 +63,28 @@ answers:
 
 | Situation | Answer | State afterwards |
 |---|---|---|
-| The event bus does not acknowledge within 5 seconds | `503` `unavailable` | Some events of the batch may be published. No reading counts as accepted. The repeated batch publishes them again with the same `id`. |
+| The event bus has not acknowledged everything 3 seconds after the request arrived | `503` `unavailable` | Some events of the batch may be published. No reading counts as accepted. The repeated batch publishes them again with the same `id`. |
 | `ingest` stops between publishing and recording | none | As above |
 | The accepted ranges are not loaded yet after a start | `503` `unavailable` | Nothing happened |
 
 ## Timing
 
 `ingest` answers a batch of 500 readings within 2 seconds while the event
-bus is healthy.
+bus is healthy, and every request within 4 seconds.
+
+## Examples
+
+Cases beyond those of the operation as it is defined above this unit. The
+accepted ranges of the sensor stick are `[[1, 4711]]` before each case.
+
+| Case | Request | Result | Events published |
+|---|---|---|---|
+| Out of order in the batch | Readings 4713, 4712 | `new`, `new`, in the order of the request | 4712, then 4713 |
+| Twice in one batch | Readings 4712, 4712 | `new`, `duplicate` | 4712 once |
+| Known and broken | 4711 with `soil_moisture` 104.2 | `rejected`, `value_out_of_range` | none |
+| Other sensor id inside | 4712 that states the sensor id `ffffffffffffffff` | `rejected`, `malformed_reading` | none |
+| Sequence number 0 | A reading with sequence number 0 | `rejected`, `malformed_reading` | none |
+| No measured value | 4712 without any quantity | `new` | 4712 with empty `values` |
+| Unknown field | 4712 with a field `soil_ph` | `new` | 4712; `data.reading` contains `soil_ph` |
+| No owner header | Any batch without `X-Owner-Id` | `400` `invalid_request` | none |
+| Bus unreachable | Reading 4712 | `503` `unavailable` within 4 seconds | none, or 4712; the repeated batch publishes it again |

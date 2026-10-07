@@ -13,23 +13,25 @@ because the implementations are updated one after the other, not together.
 1. **Classify the change.** Compare it with the version rules of the
    contract: [profile](../../references/ble-profile/index.md),
    [schema](../../references/reading-schema.md). If the rules allow it, it
-   is a minor change. If not, it needs a new major version: stop and get a
-   decision at the level named in [context](../../context.md), row 0002.
+   is a minor change. If not, it needs a new major version: stop and get
+   the decision that the item "changing a shared definition" in
+   [context](../../context.md) names.
 2. **Record the reason.** If the change had alternatives that concern only
    the shape of the definition, add a decision to
    [decisions](../../decisions/index.md) with status `proposed`.
 3. **Change the schema first** if a reading changes. Add the field to the
-   field table, to the JSON rules and to the binary layout. A new quantity
-   is optional, takes the next free bit of `present` and bytes after the
-   last field.
+   field table, to the JSON rules, to the binary layout and to the
+   examples. A new quantity is optional, takes the next free bit of
+   `present` and bytes after the last field.
 4. **Change the profile.** Add new bytes only at the end of a value. Take
    new op codes, result codes and UUID numbers from the unused ranges.
    Write what a side built for the previous version does when it meets the
    new element; if the tolerance rules do not already cover it, the change
    is not minor.
-5. **Update the procedures** and the failure table in
+5. **Update the procedures**, the failure table and the examples in
    [procedures.md](../../references/ble-profile/procedures.md) if behaviour
-   changes.
+   changes. Write the example of a new case before anything else: it is
+   the first test of every implementation.
 6. **Raise the version** in the first paragraph of each changed contract,
    in the Info layout if the profile changed, and in
    [README.md](../../../README.md).

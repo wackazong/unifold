@@ -40,7 +40,7 @@ ALERT-04 of the [catalogue](../references/test-catalogue.md) reach alerts
 by setting thresholds instead of values.
 
 The rig is in the configuration `simulated` exactly when `scenario-control`
-is configured and answers. The details are in
+is configured and answers, and in `real` otherwise. The details are in
 [configurations.md](../references/configurations.md).
 
 ### Consequences

@@ -25,25 +25,28 @@ every configuration it can.
    whether the rig can provoke the situation through thresholds, repeated
    transfers or cut connections. Only if the promise is about a course of
    values or a span of time does the test need `scenario-control`.
-5. **Add the row to the catalogue.** In
-   [test-catalogue.md](../../references/test-catalogue.md), add promise,
-   stimulus, expected observation and configurations under a new id in the
-   right group. Take numbers from the items cited in
-   [context.md](../../context.md), not from memory. Ids are never reused.
-6. **Write the test** so that it does exactly what the row says. It
+5. **Add the entry to the catalogue.** In
+   [test-catalogue.md](../../references/test-catalogue.md), add a section
+   with a new id and the promise as its heading, and below it the
+   configurations, the stimulus and the expected observation, in the right
+   group. State values, not "soon" or "correct". Take numbers from the
+   items cited in [context.md](../../context.md), not from memory. Ids are
+   never reused. If the promise is part of a product promise, add the id to
+   the table at the top of the catalogue.
+6. **Write the test** so that it does exactly what the entry says. It
    - uses the waiting times of
      [configurations.md](../../references/configurations.md) and has none of
      its own,
    - creates what it needs and leaves nothing behind,
    - does not branch on the configuration to check something different
      ([0001](../../decisions/0001-one-catalogue-for-real-and-simulated-devices.md)),
-   - words its failure as "expected … observed …" in terms of the row.
+   - words its failure as "expected … observed …" in terms of the entry.
 7. **See it fail.** Run the test against a simulated device with the
    stimulus changed so that the promise is broken, for example a threshold
    that is not crossed. A test that cannot fail guards nothing.
 8. **Run it in `simulated`,** ten times in a row. One failure in ten is a
    failing test.
-9. **Run it in `real`** if the catalogue row says so; follow
+9. **Run it in `real`** if the catalogue entry says so; follow
    [test-rig-run-against-real-hardware](../test-rig-run-against-real-hardware/SKILL.md).
 10. **Update the counts** of tests per configuration in
     [configurations.md](../../references/configurations.md) and in the
@@ -53,7 +56,7 @@ every configuration it can.
 
 ## Checks
 
-- The catalogue row and the test say the same thing.
+- The catalogue entry and the test say the same thing.
 - The report of a `real` run lists the new test as passed or as skipped
   with a reason, never as missing.
 - The test passes ten times in a row in `simulated`.

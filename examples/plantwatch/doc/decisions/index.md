@@ -11,3 +11,4 @@
 | 0004 | [Readings are immutable and identified by sensor id and sequence number](0004-readings-are-immutable-and-identified-by-sensor-and-sequence.md) | proposed | 2026-10-06 |
 | 0005 | [The sensor stick counts ticks and the phone assigns UTC time](0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md) | proposed | 2026-10-06 |
 | 0006 | [The server side alone decides whether a plant needs attention](0006-the-server-side-alone-decides-what-needs-attention.md) | proposed | 2026-10-06 |
+| 0007 | [Fetch in the background at most four times a day per sensor stick](0007-fetch-in-the-background-at-most-four-times-a-day.md) | proposed | 2026-10-07 |

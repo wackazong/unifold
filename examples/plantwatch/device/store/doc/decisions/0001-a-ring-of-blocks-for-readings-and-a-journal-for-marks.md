@@ -6,7 +6,7 @@ date: 2026-10-06
 
 ## Context and Problem Statement
 
-store keeps a few thousand small readings in flash memory and has to know
+`store` keeps a few thousand small readings in flash memory and has to know
 which of them are delivered. Flash can be written bit by bit only from 1
 to 0, is erased in blocks of 4 kB, wears out after 10 000 erases of a
 block, and can lose power in the middle of any operation. Readings arrive
@@ -54,9 +54,9 @@ write.
 - Bad: 2 of 20 blocks hold no readings.
 - Bad: room is regained only block by block. Overflow discards up to 204
   readings at once, not one.
-- Bad: at start, store has to scan the newest ring block and both journal
+- Bad: at start, `store` has to scan the newest ring block and both journal
   blocks to find its state.
-- Bad: a mark is one number. store cannot mark single readings.
+- Bad: a mark is one number. `store` cannot mark single readings.
 
 ## Pros and Cons of the Options
 
@@ -84,7 +84,7 @@ write.
 
 - Good: no layout to design.
 - Bad: its erase pattern and its behaviour on power loss have to be
-  trusted or studied. Its code is larger than the rest of store.
+  trusted or studied. Its code is larger than the rest of `store`.
 
 ## More Information
 

@@ -6,23 +6,97 @@ understood when the link is not available.
 
 ## From cloud
 
-| Source | What it says | What it means here |
-|---|---|---|
-| [cloud/0001 Services learn about readings through events, not calls](../../../doc/decisions/0001-services-learn-about-readings-through-events.md) | Accepted readings are announced as events. Current state that changes rarely, such as thresholds, is fetched by a call. | `alerts` is a subscriber of readings and asks for thresholds when it judges a reading. It keeps no copy of thresholds beyond a short cache. |
-| [cloud/0002 Each service owns its data and nobody else reads it](../../../doc/decisions/0002-each-service-owns-its-data.md) | One schema per service; no shared tables. | Alerts and evaluation state live in the schema of `alerts`. Plants are reached through the need `plants-api` only. |
-| [cloud/0004 Every event consumer is idempotent](../../../doc/decisions/0004-every-event-consumer-is-idempotent.md) | Events arrive at least once; a consumer's result must not change when an event arrives again. An effect outside the databases, such as a notification, needs its own way to make a repeat harmless. | A reading is judged once. The notification is the outside effect; see [0002](decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md). |
-| [cloud: events between services](../../../doc/references/events.md) | An event has `id`, `type`, `source`, `time`, `key`, `data`. Events with the same `key` arrive in order. A subscription is named after the consuming service. A consumer leaves an event unconfirmed when it fails for a passing reason. | The subscription is named `alerts`. An event stays unconfirmed while thresholds cannot be fetched. |
-| [cloud: calls between services](../../../doc/references/service-calls.md) | An operation of the public API is served under the same path and requires `X-Owner-Id`. A caller waits at most 5 seconds and repeats a failed call at most twice. Every service answers `GET /healthz`. | How `alerts-api` is served and how thresholds are fetched. |
-| [cloud: public API, alerts](../../../doc/references/public-api/alerts.md) | Defines the alert with `quantity`, `bound`, `state`, `closed_reason` and `notification`; what is judged (light over 24 hours); when an alert opens, closes with `recovered` or `threshold_changed`, and expires after 30 days; one notification per alert, `failed` after 24 hours; the operations on `/v1/alerts`. | The contract of `alerts-api` and the behaviour that this unit implements. |
-| [cloud: public API, general rules](../../../doc/references/public-api/index.md) | An alert is visible and its notification handed over within 1 minute after the upload response. A changed threshold applies to readings evaluated more than 60 seconds after the change. Error bodies have `code` and `message`. | The time budget of `alerts` and the longest time thresholds may be cached. |
+### [cloud/0001 Services learn about readings through events, not calls](../../../doc/decisions/0001-services-learn-about-readings-through-events.md)
+
+Says: accepted readings are announced as events. State that changes rarely,
+such as thresholds, is asked for with a call; no copy is kept current.
+
+Here: `alerts` subscribes to readings and asks for thresholds when it
+judges one. It keeps no copy of thresholds beyond 60 seconds.
+
+### [cloud/0002 Each service owns its data and nobody else reads it](../../../doc/decisions/0002-each-service-owns-its-data.md)
+
+Says: one schema per service and no shared tables.
+
+Here: alerts and evaluation state live in the schema of `alerts`. Plants
+are reached through the need `plants-api` only.
+
+### [cloud/0004 Every event consumer is idempotent](../../../doc/decisions/0004-every-event-consumer-is-idempotent.md)
+
+Says: events arrive at least once, and a consumer's result must not change
+with a repeat. An effect outside the databases needs its own safeguard.
+
+Here: a reading is judged once. The notification is the outside effect; see
+[0002](decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md).
+
+### [cloud: events between services](../../../doc/references/events.md)
+
+Says: events with the same `key` arrive in order. A subscription is named after
+its service. An event that fails for a passing reason stays unconfirmed.
+
+Here: the subscription is named `alerts`. An event stays unconfirmed while
+plant and thresholds cannot be had.
+
+### [cloud: calls between services](../../../doc/references/service-calls.md)
+
+Says: a public operation keeps its path and requires `X-Owner-Id`. A caller
+waits at most 5 seconds and repeats a failed call at most twice.
+
+Here: how `alerts-api` is served and how the registry of plants is asked.
+
+### [cloud: public API, alerts](../../../doc/references/public-api/alerts.md)
+
+Says, as the contract that this unit implements:
+
+- An alert has `id`, `plant_id`, `quantity`, `bound` (`min` or `max`),
+  `state`, `threshold`, `opened_at`, `opened_value`, the closing fields and
+  `notification` (`pending`, `sent`, `failed`).
+- Soil moisture and temperature are judged per reading, light by the
+  highest value of a day. A reading with an estimated time, or not newer
+  than the last judged one of its sensor stick, is not judged.
+- At most one alert is open per plant, quantity and bound. It closes with
+  `recovered` by a margin of at most 10 percent of the range of the
+  quantity, with `threshold_changed`, or with `expired` after 30 days
+  without a judged reading. A closed alert never opens again.
+- Each alert leads to one notification, `failed` after 24 hours. Closed
+  alerts are kept for 2 years.
+- `GET /v1/alerts` and `GET /v1/alerts/{alert_id}` read alerts. No
+  operation changes one.
+
+Here: the contract of `alerts-api` and the behaviour that this unit
+implements.
+
+### [cloud: public API, general rules](../../../doc/references/public-api/index.md)
+
+Says: an alert and its notification follow the upload response within 1 minute.
+A changed threshold applies to readings evaluated more than 60 seconds later.
+
+Here: the time budget of `alerts`, and the longest time an answer about
+thresholds may be reused.
+
+### [cloud: glossary](../../../doc/references/glossary.md)
+
+Says: a bound is the side of a threshold. The judged value is what is
+compared with it. A collapse identifier merges two notifications into one.
+
+Here: `alerts` uses these terms, and "attached", "registry" and "margin",
+as defined there. Its own terms are in its
+[glossary](references/glossary.md).
 
 ## From plantwatch
 
-| Source | What it says | What it means here |
-|---|---|---|
-| [plantwatch/0001 The phone relays between sensor stick and server](../../../../doc/decisions/0001-the-phone-relays-between-sensor-and-server.md) | Readings reach the server only when a phone was near. Alerts can be late by as long as the phone was away. | `alerts` judges readings that are hours or days old and still notifies. |
-| [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../../doc/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md) | Some readings have an estimated time and are flagged. | Such a reading is not judged. |
-| [plantwatch: measured quantities](../../../../doc/references/conventions.md) | Soil moisture in percent, light in lux, temperature in degrees Celsius, with fixed ranges and resolutions. An unmeasured quantity is absent. | The quantities that can cause an alert. An absent quantity is not judged. |
-| [plantwatch: time from upload to notification](../../../../doc/references/product-parameters.md) | Under 1 minute. | `alerts` handles events as they arrive and hands a notification over at once. |
-| [plantwatch: history kept on the server](../../../../doc/references/product-parameters.md) | 2 years per plant. | Closed alerts are kept for 2 years. |
-| [plantwatch: threshold, alert, notification](../../../../doc/references/glossary.md) | A threshold is a limit for one quantity of a plant. An alert is the state "this plant needs attention for this reason"; it opens once, stays open while the reason lasts, and closes. A notification is a message to the owner about an alert that has opened, one per alert. | The three things this unit is about. "Reason" here is a quantity and a bound. |
+### [plantwatch/0006 The server side alone decides whether a plant needs attention](../../../../doc/decisions/0006-the-server-side-alone-decides-what-needs-attention.md)
+
+Says: the server side judges every reading. Every other part shows or
+carries what it decided.
+
+Here: `alerts` is the one place of judgement. Nothing outside it compares a
+reading with a threshold.
+
+### [plantwatch: glossary](../../../../doc/references/glossary.md)
+
+Says: an alert is the state "this plant needs attention for this reason"; it
+opens once and closes. A notification is one message per alert to the owner.
+
+Here: the two things this unit is about. "Reason" here is a quantity and a
+bound.

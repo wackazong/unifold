@@ -1,0 +1,17 @@
+unit: emulator
+summary: Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware
+kind: tool
+status: planned
+provides:
+  ble-link:
+    kind: protocol
+    summary: Serves live and stored readings to a nearby central over BLE, like a sensor stick
+    conforms-to: link-profile
+  scenario-control:
+    kind: http
+    summary: Loads a scenario of sensor values and moves simulated time forward
+    contract: doc/references/scenario-control-api.md
+needs:
+  link-profile:
+    kind: specification
+    summary: The definition of the BLE services to implement

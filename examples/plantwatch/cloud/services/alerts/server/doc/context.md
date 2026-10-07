@@ -6,27 +6,93 @@ understood when the link is not available.
 
 ## From alerts
 
-| Source | What it says | What it means here |
-|---|---|---|
-| [alerts/0001 Evaluation and notification are libraries beside one process](../../doc/decisions/0001-evaluation-and-notification-are-libraries-beside-one-process.md) | The service is one process and two libraries. The libraries have no state and no database access; what they must remember, they return to the process. | `server` is that process. It stores the evaluation state for the library that produced it and holds no judging or wording logic. |
-| [alerts/0002 The alert row is the outbox of its notification](../../doc/decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md) | An alert is stored with `notification` set to `pending`. A separate delivery step has pending alerts notified, right after storing and on a schedule, for at most 24 hours. Delivery can repeat. | `server` implements both steps and never notifies from the handling of an event. |
-| [alerts: alerts API](../../doc/references/alerts-api.md) | The API requires `X-Owner-Id` and limits answers to that owner. An alert belongs to the owner named when it opened. An alert is stored within 30 seconds after its event arrives. Most fields never change after storing. | The contract of the port `alerts-api`, which `server` implements for the whole service. |
+### [alerts/0001 Evaluation and notification are libraries beside one process](../../doc/decisions/0001-evaluation-and-notification-are-libraries-beside-one-process.md)
+
+Says: the service is one process with libraries beside it. The libraries
+keep no state; what they must remember, they return to the process.
+
+Here: `server` is that process. It stores the evaluation state for the
+library that produced it and holds no judging or wording logic.
+
+### [alerts/0002 The alert row is the outbox of its notification](../../doc/decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md)
+
+Says: an alert is stored with `notification` set to `pending`. A separate
+delivery step notifies, at once and on a schedule, for at most 24 hours.
+
+Here: `server` implements both steps and never notifies from the handling
+of an event. Delivery can repeat.
+
+### [alerts: alerts API](../../doc/references/alerts-api.md)
+
+Says, as the contract that this unit implements: every request to
+`/v1/alerts` requires `X-Owner-Id`, and answers are limited to that owner.
+An alert belongs to the owner named when it opened. An alert is stored
+within 30 seconds after its event arrives. `id`, `plant_id`, `quantity`,
+`bound`, `threshold`, `opened_at` and `opened_value` never change; the
+closing fields and `notification` change once.
+
+Here: the contract of the port `alerts-api`, which `server` implements for
+the whole service.
+
+### [alerts: glossary](../../doc/references/glossary.md)
+
+Says: the evaluation state is what judging the earlier readings of a sensor
+stick concluded. A notification is owed while it is `pending`.
+
+Here: the value that `server` stores unread per sensor stick, and the rows
+that its delivery step takes.
 
 ## From cloud
 
-| Source | What it says | What it means here |
-|---|---|---|
-| [cloud: public API, alerts](../../../../doc/references/public-api/alerts.md) | Defines the alert with its fields, the states `open` and `closed`, the reasons `recovered`, `threshold_changed` and `expired` (no reading judged for 30 days), the notification states `pending`, `sent`, `failed`, and the operations `GET /v1/alerts` and `GET /v1/alerts/{alert_id}`. Closed alerts are kept for 2 years. | The rows `server` stores and the answers it gives. Expiry and retention are jobs of `server`. |
-| [cloud: public API, general rules](../../../../doc/references/public-api/index.md) | Error bodies have `code` and `message`. A list has at most 1 000 items per page. | The errors and the paging of `alerts-api`. |
-| [cloud/0004 Every event consumer is idempotent](../../../../doc/decisions/0004-every-event-consumer-is-idempotent.md) | An event can arrive again. The consumer's change and the record that the event was handled are one transaction; the event is confirmed after it. | The evaluation state is that record. It is stored in the same transaction as the alerts. |
-| [cloud/0002 Each service owns its data and nobody else reads it](../../../../doc/decisions/0002-each-service-owns-its-data.md) | One schema per service. | `server` owns the whole schema of the alerts service. |
-| [cloud: events between services](../../../../doc/references/events.md) | An event has `id`, `type`, `source`, `time`, `key`, `data`. A subscription is named after the service. A consumer confirms an event it can never handle and counts it; it leaves an event unconfirmed when the failure passes. | The subscription is named `alerts`. Events of unknown type are confirmed. |
-| [cloud: calls between services](../../../../doc/references/service-calls.md) | Operations of the public API are served under the same path, with `X-Owner-Id`. Every service answers `GET /healthz` and listens on port 8080. | How `server` listens. |
+### [cloud: public API, alerts](../../../../doc/references/public-api/alerts.md)
+
+Says, as far as this unit implements it: an alert has the fields `id`,
+`plant_id`, `quantity`, `bound`, `state`, `threshold`, `opened_at`,
+`opened_value`, `closed_at`, `closed_reason` and `notification`. It closes
+with `expired` when no reading of its plant was judged for 30 days. The
+notification is `pending`, `sent` or `failed`, and `failed` after 24 hours.
+Closed alerts are kept for 2 years. `GET /v1/alerts` lists in descending
+order of `opened_at`; `GET /v1/alerts/{alert_id}` reads one.
+
+Here: the rows that `server` stores and the answers it gives. Expiry and
+retention are jobs of `server`.
+
+### [cloud: public API, general rules](../../../../doc/references/public-api/index.md)
+
+Says: an error has the body `{"code", "message"}`. A list has at most 1 000
+items per page.
+
+Here: the errors and the paging of `alerts-api`.
+
+### [cloud/0004 Every event consumer is idempotent](../../../../doc/decisions/0004-every-event-consumer-is-idempotent.md)
+
+Says: an event can arrive again. The consumer's change and its record of the
+handled event are one transaction; it confirms the event afterwards.
+
+Here: the evaluation state is that record. It is stored in the same
+transaction as the alerts.
+
+### [cloud: events between services](../../../../doc/references/events.md)
+
+Says: a subscription is named after its service. A consumer confirms an event
+it can never handle and leaves one unconfirmed that fails for a passing reason.
+
+Here: the subscription is named `alerts`. Events of an unknown type are
+confirmed and counted.
+
+### [cloud: calls between services](../../../../doc/references/service-calls.md)
+
+Says: a public operation is served under its public path and requires
+`X-Owner-Id`. Every service answers `GET /healthz` and listens on port 8080.
+
+Here: how `server` listens.
 
 ## From plantwatch
 
-| Source | What it says | What it means here |
-|---|---|---|
-| [plantwatch: time from upload to notification](../../../../../doc/references/product-parameters.md) | Under 1 minute. | `server` handles an event as it arrives and starts delivery right after the commit, not on the next schedule. |
-| [plantwatch: identifiers and time](../../../../../doc/references/conventions.md) | Plant, owner and alert have a UUID in lower-case text form. Times are UTC, RFC 3339 with `Z`. | `server` generates the alert id. All stored and returned times have this form. |
-| [plantwatch: alert, notification](../../../../../doc/references/glossary.md) | An alert opens once, stays open while the reason lasts, and closes. A notification is one message per alert. | What a row of `server` stands for. |
+### [plantwatch: conventions, identifiers and time](../../../../../doc/references/conventions.md)
+
+Says: plant, owner and alert have a UUID in lower-case text form. A time is
+UTC, RFC 3339 with `Z` and whole seconds.
+
+Here: `server` generates the alert id. All stored and returned times have
+this form.

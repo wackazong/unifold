@@ -1,50 +1,3 @@
----
-unit: plantwatch
-youmedoc: "0.1"
-summary: Tells people when their house plants need water, using a sensor in the pot, a phone app and cloud services
-kind: system
-status: planned
-provides:
-  app-ui:
-    kind: ui
-    summary: Shows the state of each plant and tells the user when to water it
-  test-report:
-    kind: file
-    summary: Result of the automated end-to-end tests, for developers and CI
-needs:
-  soil-probe:
-    kind: hardware
-    summary: Capacitive soil moisture probe with an analogue output
-  ambient-sensor:
-    kind: hardware
-    summary: Light and temperature sensor on an I2C bus
-  push-service:
-    kind: http
-    summary: Delivers a notification to a phone, for example APNs or FCM
-  container-host:
-    kind: infrastructure
-    summary: Runs containers, gives them a private network and persistent volumes
-wiring:
-  app-ui: mobile.app-ui
-  test-report: test-rig.test-report
-  device.soil-probe: soil-probe
-  device.ambient-sensor: ambient-sensor
-  device.link-profile: protocol.ble-profile
-  emulator.link-profile: protocol.ble-profile
-  mobile.link-profile: protocol.ble-profile
-  mobile.reading-format: protocol.reading-schema
-  mobile.sensor-link: [device.ble-link, emulator.ble-link]
-  mobile.cloud-api: cloud.public-api
-  mobile.push-service: push-service
-  cloud.reading-format: protocol.reading-schema
-  cloud.push-service: push-service
-  cloud.container-host: container-host
-  test-rig.device-under-test: [device.ble-link, emulator.ble-link]
-  test-rig.scenario-control: emulator.scenario-control
-  test-rig.cloud-api: cloud.public-api
-  test-rig.link-profile: protocol.ble-profile
-  test-rig.reading-format: protocol.reading-schema
----
 # plantwatch
 
 plantwatch tells people when their house plants need water. A sensor stick in
@@ -53,11 +6,20 @@ readings when the phone is near, shows the state of each plant, and passes the
 readings on to a server. The server keeps the history and raises an alert when
 a plant needs attention.
 
-This repository is documented with [youmedoc](https://youmedoc.example).
-Start with [AGENTS.md](AGENTS.md).
+**Status:** design. Every unit has `status: planned`; the documents are the
+design and no product code exists yet. This project is the worked example of
+the youmedoc standard.
 
-Every unit in this repository has `status: planned`. The documents are the
-design; no product code exists yet.
+**Map:** the [architecture diagram](doc/diagrams/architecture.md) shows all
+parts and how they depend on each other. Each part is a folder with its own
+`README.md`.
+[youmedoc.html](youmedoc.html) is the same map as a page in which every box can
+be clicked; `youmedoc site` writes it.
+
+This repository is documented with [youmedoc](https://youmedoc.example): some
+folders are units with a declared interface. The interface of the project as
+a whole is in [unit.yaml](unit.yaml) and described below. Why the project is
+cut the way it is, is in [AGENTS.md](AGENTS.md).
 
 ## Provides
 
@@ -67,6 +29,11 @@ The phone app as its user sees it. For each plant it shows the latest reading,
 the history, and whether the plant needs water, more light or a warmer place.
 It works without a network connection and shows the last known state.
 A plant that needs attention produces one notification, not a series.
+
+The end-to-end catalogue named as `verified-by` in the manifest checks the
+path from a sensor value to an alert and to the notification being handed
+on. It cannot observe a phone. What the screens show, and use without a
+network, are checked by the part that builds the app, once its checks exist.
 
 ### `test-report`
 
@@ -79,25 +46,43 @@ sensor stick or against a simulated one.
 ### `soil-probe`
 
 A capacitive probe that sits in the soil and delivers an analogue voltage that
-depends on the moisture. The voltage range and the calibration are described
-by the unit that reads it.
+falls as the soil gets wetter. It runs from a supply of 2.0 to 3.3 V, draws at
+most 5 mA, and its output is stable within 100 ms after power is applied and
+proportional to the supply. The calibration is described by the unit that
+reads it.
 
 ### `ambient-sensor`
 
-A combined light and temperature sensor on an I2C bus, close enough to the
-plant to stand for its conditions.
+A combined light and temperature sensor on an I2C bus at 100 kHz, close
+enough to the plant to stand for its conditions. It measures 0 to 100 000 lux
+and -20 to 60 °C, delivers a measurement within 150 ms, and draws about 1 µA
+when idle.
 
 ### `push-service`
 
-A service at which a phone registers for the notifications of an owner and
-which delivers a short notification to every phone registered for that
-owner, such as APNs or FCM. Delivery may be delayed and is not guaranteed.
+A service such as APNs or FCM.
+
+- A phone registers with it for the notifications of one owner, can end that
+  registration, and is told when its address at the service has changed.
+- A sender hands it a notification for an owner: a title, a body, a few data
+  fields that reach the phone unchanged, a time to live, and an identifier
+  under which a repeated notification replaces the earlier one.
+- It answers each request with one of three results: taken, refused for
+  good, failed for now.
+- It delivers a taken notification to every phone registered for that owner.
+  Delivery may be delayed and is not guaranteed.
 
 ### `container-host`
 
-Something that runs containers, connects them with a private network, and
-gives them volumes that survive restarts. The server side makes no further
-assumption about the hosting.
+Something that
+
+- runs containers and restarts one that stops,
+- connects them with a private network in which they find each other by
+  name,
+- gives them volumes that survive the replacement of a container, on at
+  least two separate storage devices,
+- publishes exactly one port to the outside and terminates TLS for it, and
+- keeps the clocks of the containers within 10 seconds of UTC.
 
 ## Out of scope
 
@@ -106,6 +91,18 @@ assumption about the hosting.
   [decision 0001](doc/decisions/0001-the-phone-relays-between-sensor-and-server.md).
 - Identifying plant species. The user sets the thresholds or picks a preset.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md): what to read, what to change with
+your change, and how to run the generator and the checker.
+
+## Licence
+
+The example is part of the youmedoc repository and under its licence: MIT or
+Apache-2.0, at your option
+([LICENSE-MIT](doc/references/youmedoc/LICENSE-MIT),
+[LICENSE-APACHE](doc/references/youmedoc/LICENSE-APACHE)).
+
 ## More
 
 - [AGENTS.md](AGENTS.md): why the system is cut this way
@@ -113,4 +110,5 @@ assumption about the hosting.
 - [Context diagram](doc/diagrams/context.md), [component diagram](doc/diagrams/component.md),
   [architecture diagram](doc/diagrams/architecture.md)
 - [Decisions](doc/decisions/index.md)
-- [Glossary](doc/references/glossary.md) and [conventions](doc/references/conventions.md)
+- [Glossary](doc/references/glossary.md), [conventions](doc/references/conventions.md),
+  [product parameters](doc/references/product-parameters.md)

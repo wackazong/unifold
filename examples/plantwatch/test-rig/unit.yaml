@@ -1,0 +1,26 @@
+unit: test-rig
+summary: Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware
+kind: test
+status: planned
+provides:
+  test-report:
+    kind: file
+    summary: JUnit XML report of an end-to-end test run
+    contract: doc/references/test-report.md
+needs:
+  device-under-test:
+    kind: protocol
+    summary: Something that speaks the sensor stick's BLE protocol, real or simulated
+  scenario-control:
+    kind: http
+    summary: Lets a test set sensor values and advance time; exists only with a simulated device
+    optional: true
+  cloud-api:
+    kind: http
+    summary: The public API, to check that readings arrive and alerts are raised
+  link-profile:
+    kind: specification
+    summary: The definition of the BLE services, to drive the device under test
+  reading-format:
+    kind: specification
+    summary: The format of a reading, to build the batches the tests upload

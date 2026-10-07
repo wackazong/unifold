@@ -30,6 +30,10 @@ The store holds every item of the
 [data model](../references/data-model.md). Changes that the owner makes go
 into the store first and to the server afterwards.
 
+A notification does not break this rule. It names a plant and an alert;
+the screens read both from the store. Registering the phone for
+notifications is the only thing the screens do outside the phone.
+
 ### Consequences
 
 - Good: no screen waits for the network or shows a loading state for data

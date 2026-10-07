@@ -61,7 +61,10 @@ An alert says that one quantity of one plant is beyond one threshold.
 - An alert closes with `recovered` when the judged value is back on the
   good side of the threshold by a margin. The margin prevents an alert from
   opening and closing with every small change. Its size is not part of this
-  contract.
+  contract, but it is bounded: an alert never closes with `recovered` while
+  the judged value is beyond the threshold, and it always closes when the
+  value is on the good side by 10 percent of the range of its quantity
+  (10.0 percent soil moisture, 10 000 lux, 8.0 °C).
 - An alert closes with `threshold_changed` when the plant no longer has the
   threshold, or the threshold has moved so that the last judged value is on
   its good side. The server notices this with the next reading.
@@ -74,6 +77,20 @@ An alert says that one quantity of one plant is beyond one threshold.
   times of readings. A batch that is uploaded late can open and close an
   alert in the past.
 - The server keeps a closed alert for 2 years after `closed_at`.
+
+Example: a plant with the lower threshold 30.0 for soil moisture. The
+readings arrive in the order of their times.
+
+| Reading | Soil moisture | Effect |
+|---|---|---|
+| 1 | 31.0 | None |
+| 2 | 28.4 | Alert A opens with `opened_value` 28.4 and `threshold` 30.0; one notification |
+| 3 | 27.0 | None. A stays open; no second notification |
+| 4 | 27.5, estimated time | None. The reading is not judged |
+| 5 | 40.0 | A closes with `recovered` |
+| 6 | 29.9 | Alert B opens with a new `id`; one notification |
+| 7 | none measured | None. B stays open |
+| 8 | 29.0, 2 minutes after a `PUT` removed the threshold | B closes with `threshold_changed` |
 
 ## Notification
 

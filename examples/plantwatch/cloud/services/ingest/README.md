@@ -1,25 +1,3 @@
----
-unit: ingest
-summary: Accepts uploaded readings, validates them and publishes each one once
-kind: service
-status: planned
-provides:
-  ingest-api:
-    kind: http
-    summary: Accepts a batch of readings of one sensor and says which ones were new
-    contract: doc/references/ingest-api.md
-  reading-events:
-    kind: events
-    summary: One event per accepted reading, in order per sensor
-    contract: doc/references/reading-events.md
-needs:
-  event-bus:
-    kind: queue
-    summary: Durable publish and subscribe with at-least-once delivery
-  reading-format:
-    kind: specification
-    summary: The format in which readings are uploaded
----
 # ingest
 
 `ingest` is the service that takes readings in. It receives a batch of
@@ -44,8 +22,10 @@ A caller can rely on this:
 - A rejected reading does not affect the other readings of the batch.
 - When `ingest` cannot store events it answers `503` and reports no
   reading as accepted. Sending the batch again later is always correct.
-- `ingest` depends on nothing but the event bus. It accepts readings while
-  every user of readings is down.
+- `ingest` answers every request within 4 seconds, a batch of 500 readings
+  within 2 seconds while the event bus is healthy.
+- `ingest` depends on nothing but the event bus. It answers uploads with
+  `200` while no subscriber of its events is running.
 
 Limits:
 
@@ -79,11 +59,13 @@ in which readings are uploaded.
 
 A subscriber can rely on this:
 
-- Every accepted reading appears on the stream, also for a subscriber
-  that connects later.
-- Events of one sensor stick arrive in the order in which `ingest`
-  accepted the readings. Within one batch that is the ascending order of
-  sequence numbers.
+- **Key.** The key of an event is the sensor id.
+- **Delivery.** Every accepted reading appears on the stream at least
+  once and stays there for 7 days. A subscriber that was away for less
+  than 7 days misses nothing.
+- **Order.** Events of one sensor stick arrive in the order in which
+  `ingest` accepted the readings. Within one batch that is the ascending
+  order of sequence numbers.
 - Every value in an event has passed validation: it lies within the range
   of its quantity.
 - The `id` of an event is derived from sensor id and sequence number.
@@ -97,6 +79,10 @@ Limits:
   sequence numbers or times. A batch that is uploaded late produces events
   for old readings after events for newer ones.
 
+Example: the accepted reading 4711 of the sensor stick `00a1b2c3d4e5f607`
+becomes one event with the `id` `00a1b2c3d4e5f607-4711` and the key
+`00a1b2c3d4e5f607`.
+
 Contract: [reading events](doc/references/reading-events.md).
 
 ## Needs
@@ -105,15 +91,16 @@ Contract: [reading events](doc/references/reading-events.md).
 
 `ingest` expects a broker that
 
-- acknowledges a message only after it has stored it durably,
+- acknowledges a message only after it has stored it durably, and
+  acknowledges 500 messages of up to 16 kB within 1 second,
 - delivers messages with the same key in the order of publication,
-- keeps the messages of a topic for subscribers that `ingest` does not
-  know and that may connect later,
+- keeps every message of a topic for at least 7 days, also for subscribers
+  that `ingest` does not know and that connect later,
 - offers a second kind of topic that keeps the latest message per key
   without a time limit and can be read from the beginning.
 
 `ingest` expects the topics it uses to exist; it does not create them.
-Without the event bus it accepts nothing.
+Without the event bus it accepts nothing and answers `503`.
 
 ### `reading-format`
 

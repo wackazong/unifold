@@ -38,7 +38,7 @@ A `testcase` without `skipped`, `failure` or `error` has passed.
 | `testsuites`, `testsuite` | `time` | Duration in seconds |
 | `testsuite` | `name` | The group |
 | `testsuite` | `timestamp` | Start of the group, UTC, RFC 3339 with `Z` |
-| `testcase` | `name` | The id of the test, a space, and its promise as the catalogue words it |
+| `testcase` | `name` | The id of the test, a space, and its promise as the heading of the catalogue words it |
 | `testcase` | `classname` | Group and configuration, joined by a dot, for example `alert.simulated` |
 | `testcase` | `time` | Duration in seconds, 0 for a skipped test |
 | `skipped` | `message` | The reason, for example `needs scenario-control` |
@@ -55,6 +55,7 @@ A `testcase` without `skipped`, `failure` or `error` has passed.
 | `sensor-id` | Sensor id of the device under test |
 | `protocol-version` | The version of the radio protocol the device states |
 | `link-profile-version` | The version of `link-profile` the rig implements |
+| `reading-format-version` | The version of `reading-format` the rig uploads |
 | `api-host` | Host name of the public API under test, without path or token |
 | `rig-version` | Version of the rig |
 
@@ -81,7 +82,7 @@ test from being carried out is a failure of that test, not an error.
       <property name="sensor-id" value="00a1b2c3d4e5f607"/>
       <property name="protocol-version" value="1.0"/>
     </properties>
-    <testcase name="ALERT-01 A plant that falls below a threshold gets one alert, soon"
+    <testcase name="ALERT-01 A plant that falls below a threshold gets one alert within 1 minute"
               classname="alert.real" time="0">
       <skipped message="needs scenario-control"/>
     </testcase>

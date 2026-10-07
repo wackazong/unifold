@@ -41,10 +41,10 @@ procedure, the margins and the state.
 
 | Step | Condition or action | Outcome |
 |---|---|---|
-| 1 | `time_estimated` is `true` | Decided: no changes, `state` unchanged, `plant` nothing. No lookup. |
+| 1 | `time_estimated` is `true` | Decided: no changes, `state` unchanged, `plant` nothing. `thresholds` is not called. |
 | 2 | `state` exists and its last time is not earlier than `reading.time` | As step 1 |
-| 3 | Look up plant and thresholds for the sensor id | Lookup fails: cannot decide now |
-| 4 | The sensor stick is attached to no plant | Decided: `plant` nothing, no changes, empty `state` |
+| 3 | Call `thresholds` with the sensor id, once | Answer `unavailable`: cannot decide now |
+| 4 | The answer is `unattached` | Decided: `plant` nothing, no changes, empty `state` |
 | 5 | The plant differs from the plant in `state` | Continue with an empty `state` for the new plant. Nothing is closed for the old plant. |
 | 6 | Add the light value of the reading to the light memory | |
 | 7 | Judge every quantity and bound that has a threshold or is open in `state` | The changes |
@@ -120,10 +120,36 @@ The state is a JSON object. Its caller treats it as opaque.
 An empty state is nothing, or an object without `plant_id`. A state is at
 most 4 kB long.
 
-## Lookup of thresholds
+## Use of thresholds
 
-| Answer of whoever provides `thresholds` | Meaning for `rules` |
-|---|---|
-| A plant with thresholds | Used, and reused for the same sensor id for at most 60 seconds |
-| The sensor stick is attached to no plant | Step 4; reused for at most 60 seconds |
-| An error, or no answer after the allowed repeats | Cannot decide now; nothing is reused |
+`rules` calls `thresholds` at most once per evaluation and uses the answer
+as it is given. It keeps no answer for a later call. What it expects of the
+function is defined in [thresholds lookup](thresholds.md).
+
+An evaluation takes at most 10 ms beyond the time that the call takes.
+
+## Examples
+
+One sensor stick, attached to the plant P with the lower threshold 30.0 for
+soil moisture. Each call gets the state that the call before it returned.
+
+| Call | Reading | Answer of `thresholds` | Result |
+|---|---|---|---|
+| 1 | 14:00, 31.0, no state | `attached` P, `min` 30.0 | P, no changes |
+| 2 | 14:15, 28.4 | the same | P, `open` `soil_moisture`/`min`, value 28.4, threshold 30.0 |
+| 3 | 14:30, 33.0 | the same | P, no changes: 33.0 is below 30.0 + 5.0 |
+| 4 | 14:30, 33.0 again | not called | No changes, state unchanged |
+| 5 | 14:45, 35.0 | the same | P, `close` `soil_moisture`/`min`, `recovered`, value 35.0 |
+| 6 | 15:00, 29.0, estimated time | not called | No changes, state unchanged |
+| 7 | 15:00, 29.0 | `unavailable` | Cannot decide now |
+| 8 | 15:00, 29.0 | `attached` P, `min` 30.0 | P, `open` `soil_moisture`/`min`, value 29.0, threshold 30.0 |
+| 9 | 15:15, 29.5 | `attached` P, thresholds `{}` | P, `close` `soil_moisture`/`min`, `threshold_changed`, no threshold |
+| 10 | 15:30, 29.5 | `unattached` | `plant` nothing, no changes, empty state |
+
+Light, with the lower threshold 800 lux. The plant has been judged for
+two days; 2 400 lux were measured at 13:00.
+
+| Call | Reading | Result |
+|---|---|---|
+| 1 | 02:00 of the next day, light 0 | No changes: the judged value is 2 400 |
+| 2 | 14:00 of the next day, light 600, nothing brighter since 14:00 of the day before | `open` `light`/`min`, value 600, threshold 800 |

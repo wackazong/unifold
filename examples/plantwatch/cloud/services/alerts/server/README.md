@@ -1,29 +1,3 @@
----
-unit: server
-summary: Process of the alerts service - consumes readings, stores alerts and answers queries
-kind: app
-status: planned
-provides:
-  alerts-api:
-    kind: http
-    summary: Open and past alerts per plant
-needs:
-  reading-events:
-    kind: events
-    summary: Accepted readings, in order per sensor
-  evaluation:
-    kind: library
-    summary: Decides for a reading whether an alert opens, stays or closes
-  notification:
-    kind: library
-    summary: Tells the owner about an opened alert, exactly once
-  sql-db:
-    kind: db
-    summary: Relational database with transactions
-  event-bus:
-    kind: queue
-    summary: Durable subscription with at-least-once delivery
----
 # server
 
 `server` is a running program that keeps alerts. It consumes the events
@@ -55,6 +29,9 @@ guarantees:
 Limit: while `evaluation` cannot decide, events of the affected sensor
 stick wait, and the answers show the state before them.
 
+Example: `GET /v1/alerts/7d2c1c1e-52a0-4b0b-8a3e-1f2d3c4b5a69` with the
+`X-Owner-Id` of another owner answers `404` with the code `not_found`.
+
 ## Needs
 
 ### `reading-events`
@@ -62,7 +39,10 @@ stick wait, and the answers show the state before them.
 Events of accepted readings, each with sensor id, sequence number, time,
 a flag for an estimated time and the measured values by name. `server`
 expects the events of one sensor stick in the order in which the readings
-were accepted. It copes with repeats.
+were accepted, every accepted reading at least once, and an event to stay
+available for at least 7 days. It copes with repeats.
+
+Contract: [reading events as server expects them](doc/references/reading-events.md).
 
 ### `evaluation`
 
@@ -79,8 +59,11 @@ nothing for the first. `server` expects it to return
 - or the answer "cannot decide now", which leaves everything as it was.
 
 `server` expects the function to change nothing outside its return value,
-to return the same result for the same input, and never to ask for an
-alert to be opened that is open according to the state it was given.
+to return within 20 seconds, to return no changes when it is given the
+same reading a second time, and never to ask for an alert to be opened
+that is open according to the state it was given.
+
+Contract: [evaluation as server expects it](doc/references/evaluation.md).
 
 ### `notification`
 
@@ -88,8 +71,10 @@ A function that takes one opened alert, with alert id, owner id, plant
 id, plant name, quantity, bound, judged value, threshold and the time of
 the reading, and tells the owner about it. `server` expects one of three
 answers within 10 seconds: done, try again later, or failed for good.
-`server` expects that calling the function again for the same alert does
-not show the owner a second notification.
+`server` expects that a second call for the same alert replaces the first
+notification on a phone instead of adding one.
+
+Contract: [notification as server expects it](doc/references/notification.md).
 
 ### `sql-db`
 
@@ -119,4 +104,7 @@ again, and that it continues after a restart where it stopped.
 - [doc/context.md](doc/context.md): the contract and the decisions that
   `server` inherits
 - [Context diagram](doc/diagrams/context.md)
-- References: [processing](doc/references/processing.md)
+- References: [processing](doc/references/processing.md); what `server`
+  expects of [reading events](doc/references/reading-events.md),
+  [evaluation](doc/references/evaluation.md) and
+  [notification](doc/references/notification.md)

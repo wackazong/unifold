@@ -1,13 +1,19 @@
 # AGENTS.md: server
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show cloud/services/alerts/server`
+prints this unit with its neighbours.
 
 ## Why
 
 Something must run: hold the subscription, own the database schema,
 listen on a port. This unit is that program, and it is kept free of
 everything that is not running. It does not know what makes a reading
-alarming and not how an owner is reached. It asks for both through needs.
+alarming and not how an owner is reached. It asks for both through needs
+whose contracts it writes itself. It changes when what is stored about an
+alert, the order of the steps or the queries change.
 
 What it does know is order and durability. It is the one place that
 decides what is written together and what may repeat: a reading's
@@ -29,6 +35,10 @@ drop it.
    surroundings
 4. [doc/references/processing.md](doc/references/processing.md): what is
    stored, the handling of an event, delivery of notifications, expiry
+5. [doc/references/evaluation.md](doc/references/evaluation.md),
+   [doc/references/notification.md](doc/references/notification.md),
+   [doc/references/reading-events.md](doc/references/reading-events.md):
+   the interfaces that the unit expects of its needs
 
 ## Rules for work here
 

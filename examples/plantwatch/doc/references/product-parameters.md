@@ -10,6 +10,7 @@ them cite it in their own context file. The terms are defined in the
 | Battery life of a sensor stick | At least 12 months on one CR2032 cell at the default interval | Limits radio time and wake time per reading |
 | Readings kept on a sensor stick | At least 30 days at the default interval, that is 2 880 readings | The phone may be away that long without loss |
 | Behaviour when the sensor stick is full | The oldest undelivered reading is overwritten | Recent state matters more than old history |
+| Connections the cell life is promised for | 4 connections of 3 seconds a day per sensor stick; see [0007](../decisions/0007-fetch-in-the-background-at-most-four-times-a-day.md) | More connections shorten the life of the cell |
 | Sensor sticks per phone | Up to 20 | Bounds scan and fetch time in the app |
 | Plants per owner | Up to 50 | Bounds list sizes in API and app |
 | Time from upload to notification | Under 1 minute | The server side must evaluate readings as they arrive |

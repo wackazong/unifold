@@ -12,7 +12,7 @@ low-frequency clock and a counter keep running, at about 2 µA, and a
 switched-off state at about 0.3 µA from which only a pin or a reset wakes
 it and after which the program starts from the beginning. `timer` has to
 count seconds without interruption, and `radio` has to advertise every one
-to two seconds. Which state does hal use?
+to two seconds. Which state does `hal` use?
 
 ## Considered Options
 
@@ -38,7 +38,7 @@ advertising anyway.
 - Bad: 2 µA flow all the time. That is a tenth of the average current the
   board may draw.
 - Bad: RAM content is kept, so a fault in RAM lasts until the next start.
-  hal has to restart the board deliberately on a failed self-check.
+  `hal` has to restart the board deliberately on a failed self-check.
 
 ## Pros and Cons of the Options
 

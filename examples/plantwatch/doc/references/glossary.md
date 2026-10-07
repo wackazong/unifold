@@ -14,6 +14,7 @@ The terms of plantwatch. Every unit uses them with this meaning.
 | Tick count | The sensor stick's own measure of time: a boot counter and the seconds since that boot. |
 | Central | The BLE role of the side that connects to a sensor stick, normally a phone. |
 | Pairing | Binding a sensor stick to a phone and to a plant. |
+| Attached | A sensor stick is attached to a plant when the server side knows that its readings belong to that plant. Attaching is the plant half of pairing. |
 | Threshold | A limit for one measured quantity of a plant, below or above which the plant needs attention. |
 | Alert | The state "this plant needs attention for this reason". It opens once, stays open while the reason lasts, and closes. |
 | Notification | A message to the owner about an alert that has opened. One per alert. |

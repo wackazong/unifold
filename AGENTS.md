@@ -1,13 +1,14 @@
 # AGENTS.md: youmedoc
 
-This folder is a [youmedoc](https://youmedoc.example) unit and the home of
-the standard. Use the [read-docs](doc/skills/read-docs/SKILL.md) skill before
-anything else.
+This folder is a [youmedoc](https://youmedoc.example) unit, the root of the
+project and the home of the standard. Use the
+[read-docs](doc/skills/read-docs/SKILL.md) skill before anything else.
 
 ## Why
 
 The standard is written with its own rules, so that every rule is tried on a
-real text before a project has to follow it.
+real text before a project has to follow it. It changes when a rule proves
+wrong or missing in use.
 
 The repository is a single unit. The chapters, the skills and the tool are
 not separate parts with interfaces between them; they are one product that
@@ -19,18 +20,18 @@ every project that uses the standard. A project then carries the text, the
 procedures and the tool without network access, and an agent finds them at
 the same paths everywhere.
 
-The example is a nested project. It has its own root manifest, is checked on
-its own, and can be copied out as a starting point.
-
-The reasoning in full is in [doc/architecture.md](doc/architecture.md).
+The examples are nested projects. Each has its own root manifest, is checked
+on its own, and can be copied out as a starting point.
 
 ## Read next
 
 1. [README.md](README.md): what this repository provides
-2. [doc/references/youmedoc/index.md](doc/references/youmedoc/index.md): the standard
+2. [doc/references/youmedoc/index.md](doc/references/youmedoc/index.md): the standard, with the rules in brief
 3. [doc/architecture.md](doc/architecture.md): where the ideas come from and what the limits are
 4. [doc/decisions/index.md](doc/decisions/index.md): the design decisions
-5. [examples/plantwatch](examples/plantwatch/README.md): a worked example
+5. [examples/slugline](examples/slugline/README.md): a small example at level `core`
+6. [examples/plantwatch](examples/plantwatch/README.md): a large example of the full standard
+7. [CONTRIBUTING.md](CONTRIBUTING.md): how a change to the standard is made
 
 ## Skills
 
@@ -40,6 +41,15 @@ The reasoning in full is in [doc/architecture.md](doc/architecture.md).
 | [write-docs](doc/skills/write-docs/SKILL.md) | You create or change documents |
 | [check-docs](doc/skills/check-docs/SKILL.md) | You have changed something, or review a change |
 
+## Commands
+
+```sh
+python3 tests/conformance.py                                         # test the tool
+python3 doc/skills/check-docs/scripts/youmedoc.py generate           # this project
+python3 doc/skills/check-docs/scripts/youmedoc.py check --strict
+python3 doc/skills/check-docs/scripts/youmedoc.py init examples/plantwatch   # refresh the example's copy
+```
+
 ## Rules for work here
 
 - `doc/references/youmedoc/` and the three skills are copied into other
@@ -47,9 +57,8 @@ The reasoning in full is in [doc/architecture.md](doc/architecture.md).
   not link to `doc/decisions/`, `doc/architecture.md` or `examples/`.
 - A rule exists in three places that must agree: the chapter that states it,
   the rule table in `rules-tool.md` or `rules-review.md`, and, for tool
-  rules, `youmedoc.py`. Change them together.
+  rules, `youmedoc.py` with a case in `tests/conformance.py`.
 - Every change to a rule is recorded as a decision with status `proposed`.
-- After a change, run the checker on this project and on the example, and
-  refresh the example's copy of the standard with `youmedoc.py init`.
+- A claim about a tool, a study or a product carries a link to its source.
 - The address `https://youmedoc.example` is a placeholder for the place where
   the standard is published. Replace it everywhere at once.

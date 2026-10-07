@@ -1,35 +1,47 @@
 <!-- youmedoc:generated - do not edit; run `youmedoc generate` -->
 # Context diagram: ui
 
-[ui](../../README.md)
+[plantwatch](../../../../doc/diagrams/component.md) / [mobile](../../../doc/diagrams/component.md) / **ui** · [README](../../README.md)
 
-`ui` among its siblings inside `mobile`. Only connections that touch `ui` are drawn. Arrows point from the side that needs something to the side that provides it. Rounded nodes are ports the framing unit provides, hexagons are its needs. Dashed arrows are alternative providers; dashed borders mark planned units.
+`ui` among its siblings inside `mobile`. Only connections that touch `ui` are drawn. Arrows point from the side that needs something to the side that provides it. Rounded nodes are ports the framing unit provides, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a planned unit.
 
 ```mermaid
 flowchart LR
   subgraph u_mobile["mobile"]
-    u_mobile_ble_client["ble-client"]
-    u_mobile_sync["sync"]
-    u_mobile_ui["ui"]
+    u_mobile__ble_dclient["ble-client"]
+    u_mobile__sync["sync"]
+    u_mobile__ui["ui"]
   end
-  p_mobile_app_ui(["app-ui"])
-  n_mobile_push_service{{"push-service"}}
-  p_mobile_app_ui --> u_mobile_ui
-  u_mobile_ui -->|"plant-data"| u_mobile_sync
-  u_mobile_ui -->|"pairing"| u_mobile_ble_client
-  u_mobile_ui -->|"push-service"| n_mobile_push_service
-  click u_mobile_ble_client href "../../../ble-client/README.md"
-  click u_mobile_sync href "../../../sync/README.md"
-  click u_mobile_ui href "../../README.md"
+  p_mobile___app_dui(["app-ui"])
+  n_mobile___push_dservice{{"push-service"}}
+  p_mobile___app_dui --> u_mobile__ui
+  u_mobile__ui -->|"plant-data"| u_mobile__sync
+  u_mobile__ui -->|"pairing"| u_mobile__ble_dclient
+  u_mobile__ui -->|"push-service"| n_mobile___push_dservice
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
-  class u_mobile,u_mobile_ble_client,u_mobile_sync,u_mobile_ui planned
-  class u_mobile_ui focus
+  classDef plain stroke-dasharray:2 3
+  class u_mobile,u_mobile__ble_dclient,u_mobile__sync,u_mobile__ui planned
+  class u_mobile__ui focus
 ```
 
-| Unit | Summary | Status | Diagram |
-|---|---|---|---|
-| [mobile](../../../README.md) | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | planned | [component](../../../doc/diagrams/component.md) |
-| [ble-client](../../../ble-client/README.md) | Finds sensor sticks and fetches their readings over BLE | planned | [context](../../../ble-client/doc/diagrams/context.md) |
-| [sync](../../../sync/README.md) | Keeps plants, history and alerts on the phone and in step with the server | planned | [context](../../../sync/doc/diagrams/context.md) |
-| [ui](../../README.md) | Screens of the phone app | planned | [context](context.md) |
+| Unit | Kind | Diagram |
+|---|---|---|
+| [mobile](../../../README.md) | app | [component](../../../doc/diagrams/component.md) |
+| [ble-client](../../../ble-client/README.md) | library | [context](../../../ble-client/doc/diagrams/context.md) |
+| [sync](../../../sync/README.md) | library | [context](../../../sync/doc/diagrams/context.md) |
+| [ui](../../README.md) | library | [context](context.md) |
+
+### Who provides what this unit needs
+
+| Need | Kind | Own contract | Provided by | Port | Their contract |
+|---|---|---|---|---|---|
+| plant-data | library | [contract](../references/plant-data.md) | [mobile/sync](../../../sync/README.md) | plant-data | [contract](../../../sync/doc/references/plant-data.md) |
+| pairing | library |  | [mobile/ble-client](../../../ble-client/README.md) | pairing | [contract](../../../ble-client/doc/references/pairing.md) |
+| push-service | http |  | outside the project, as need `push-service` of the root | | |
+
+### Who uses what this unit provides
+
+| Port | Kind | Used by | As need | Their contract |
+|---|---|---|---|---|
+| app-ui | ui | outside the project, as port `app-ui` of the root | | |

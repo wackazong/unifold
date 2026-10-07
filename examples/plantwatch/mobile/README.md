@@ -1,40 +1,3 @@
----
-unit: mobile
-summary: Phone app that collects readings from sensor sticks, shows the plants and relays data to the server
-kind: app
-status: planned
-provides:
-  app-ui:
-    kind: ui
-    summary: Shows the state of each plant and tells the user when to water it
-    contract: doc/references/app-ui.md
-needs:
-  sensor-link:
-    kind: protocol
-    summary: A sensor stick in radio range that serves its readings over BLE
-  cloud-api:
-    kind: http
-    summary: Stores readings and returns plants, history and alerts
-  link-profile:
-    kind: specification
-    summary: The definition of the BLE services of a sensor stick
-  reading-format:
-    kind: specification
-    summary: The format in which readings are stored and uploaded
-  push-service:
-    kind: http
-    summary: Registers this phone for the notifications of an owner and delivers them to it
-wiring:
-  app-ui: ui.app-ui
-  ble-client.sensor-link: sensor-link
-  ble-client.link-profile: link-profile
-  sync.sensor-readings: ble-client.sensor-readings
-  sync.cloud-api: cloud-api
-  sync.reading-format: reading-format
-  ui.plant-data: sync.plant-data
-  ui.pairing: ble-client.pairing
-  ui.push-service: push-service
----
 # mobile
 
 mobile is the phone app. It collects readings from the owner's sensor sticks
@@ -50,14 +13,15 @@ The app as its owner sees it.
 
 - For each plant it shows the latest reading, the history of the last 90
   days, and every open alert with its reason.
-- It shows all of this without a network connection, and it says how old the
-  data is.
+- It shows all of this without a network connection, together with the age
+  of the readings and the time of the last exchange with the server.
 - It collects readings without being opened, as far as the phone's operating
-  system lets an app run in the background. Opening the app near a paired
-  sensor stick always starts a fetch.
+  system lets an app run in the background. When the owner opens the app
+  near a paired sensor stick, a fetch starts within 5 seconds.
 - The owner pairs up to 20 sensor sticks and keeps up to 50 plants.
-- A change to a plant that the owner makes without a network connection is
-  kept and reaches the server later.
+- A change to a plant that the owner makes without a network connection
+  shows within 1 second, marked "not yet sent", and goes to the server with
+  the next exchange.
 - The app shows alerts; it does not raise them. Tapping a notification opens
   the plant it is about.
 
@@ -67,37 +31,40 @@ opens the app again. A reading reaches the phone only while the phone is in
 radio range of the sensor stick.
 
 Example: the owner comes home after three days away. Without the phone being
-touched, the readings of those three days arrive on it, usually within
-minutes. As soon as the phone has a network connection they go on to the
-server.
+touched, the operating system wakes the app and the 288 readings of those
+three days arrive on the phone. They are in the history before any upload
+and go to the server with the next network connection.
 
-Contract: [app-ui](doc/references/app-ui.md).
+Contract: [app-ui](doc/references/app-ui.md), with example cases.
 
 ## Needs
 
+The app defines none of these interfaces. It takes each as whoever provides
+it defines it; the lists say what the app as a whole relies on.
+
 ### `sensor-link`
 
-A sensor stick in radio range that behaves as `link-profile` defines. The app
-expects that it
+A sensor stick in radio range that behaves as `link-profile` defines. The
+app relies on that it
 
-- advertises, so that a central finds it without the owner doing anything,
-- accepts pairing with this phone while it is open for pairing, and says in
-  its advertising whether it is,
-- serves its stored readings in ascending sequence number, each with its
-  tick count, and tells its current tick count,
-- keeps every reading until a central has confirmed it, and
-- states the version of the radio protocol it speaks.
+- advertises whenever no central is connected and says there whether it is
+  open for pairing, so that the phone finds it without the owner's help,
+- keeps every reading until a central has confirmed it or, when its memory
+  is full, discards the oldest and reports that it did, and serves the
+  unconfirmed ones in ascending sequence number with their tick counts,
+- tells its current tick count, its sampling interval and the version of
+  the radio protocol it speaks, and
+- accepts a connection as often as once per sampling interval.
 
 ### `cloud-api`
 
-The server. The app expects that it
+The server. The app relies on that it
 
-- creates an owner on request and gives out a token that stands for this
-  owner, and a further token for the same owner, so that a second phone can
-  join,
-- accepts batches of readings in the `reading-format`, accepts a batch that
-  it has received before, and says for each reading whether it is accepted,
-  known already or refused,
+- creates an owner on request and gives out a token for this owner, and a
+  further token for the same owner, so that a second phone can join,
+- accepts batches of up to 500 readings in the `reading-format`, also a
+  batch it has received before, and answers for each reading whether it is
+  new, known already or refused,
 - returns the owner's plants, the history of a plant and the alerts,
 - accepts a plant under an id the app has chosen, creating or replacing it,
   and removes a plant on request, and
@@ -107,25 +74,28 @@ The server. The app expects that it
 
 The definition of the BLE services, characteristics and procedures of a
 sensor stick: finding, pairing, fetching stored readings, confirming them,
-reading the tick count. It carries a version. The app supports major
-version 1.
+reading the tick count. It carries a version. The app implements the
+central side of major version 1.
 
 ### `reading-format`
 
 The definition of the fields, units and identity of a reading as the app
-stores and uploads it. It carries a version.
+stores and uploads it. It carries a version. The app writes and reads major
+version 1.
 
 ### `push-service`
 
-The push service of the phone's platform. The app expects that it
+The push service of the phone's platform. The app relies on that it
 
-- accepts the registration of this phone for one owner and tells the app
-  when the phone's address has changed, so that the app can register again,
-- delivers a notification that was sent to an owner to every phone
-  registered for that owner, and
-- hands a tapped notification to the app with the alert it belongs to.
+- registers this phone for the notifications of one owner, ends the
+  registration on request, and tells the app when the phone's address has
+  changed, so that the app registers again, and
+- delivers a notification that was sent to that owner to this phone,
+  together with the ids of the alert and of its plant that the sender
+  attached.
 
-The app works without it. Alerts then show only when the app is opened.
+The app does not depend on delivery. Every alert that a notification
+announces is on the screens after the next exchange with the server.
 
 ## Out of scope
 
@@ -151,4 +121,5 @@ The app works without it. Alerts then show only when the app is opened.
 - [Decisions](doc/decisions/index.md)
 - References: [what the owner can do](doc/references/app-ui.md),
   [data model](doc/references/data-model.md),
-  [platform limits](doc/references/platform-limits.md)
+  [platform limits](doc/references/platform-limits.md),
+  [glossary](doc/references/glossary.md)

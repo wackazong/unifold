@@ -106,7 +106,7 @@ Every request may be repeated, for example after a lost response.
 
 - A change to a plant is visible to the next request.
 - A reading reported as `new` appears in the history of its plant within
-  seconds after the upload response, not before it.
+  10 seconds after the upload response, not before it.
 - An alert caused by a reading is visible, and its notification is handed
   to the push service, within 1 minute after the upload response.
 - A changed threshold applies to readings that are evaluated more than 60
@@ -123,3 +123,15 @@ Every request may be repeated, for example after a lost response.
 | Requests per token | 120 per minute |
 | `POST /v1/owners` per client address | 10 per hour |
 | Age of a reading at upload | 90 days |
+
+## Examples
+
+| Case | Request | Response |
+|---|---|---|
+| First start of a client | `POST /v1/owners` without token | `201` with `owner_id`, `token`, `expires_at` |
+| No token | `GET /v1/plants` without `Authorization` | `401` `unauthenticated` |
+| Expired token | Any request, 366 days after the token was issued | `401` `unauthenticated` |
+| Too many requests | The 121st request with one token within a minute | `429` `rate_limited` with `Retry-After` |
+| Body too large | A body of 1 MB and 1 byte | `413` `payload_too_large` |
+| Plant of another owner | `GET /v1/plants/{plant_id}` with the token of owner B for a plant of owner A | `404` `not_found` |
+| Repeated request | The same `PUT /v1/plants/{plant_id}` twice | `200` twice, with equal bodies |

@@ -2,21 +2,21 @@
 
 The two configurations the rig runs in, the settings that select them, and
 the waiting times. The tests are in the
-[test catalogue](test-catalogue.md). The reasons are in
+[test catalogue](test-catalogue.md), the terms in the
+[glossary](glossary.md). The reasons are in
 [decision 0001](../decisions/0001-one-catalogue-for-real-and-simulated-devices.md).
 
 ## The two configurations
 
-| | `simulated` | `real` |
+| | `real` | `simulated` |
 |---|---|---|
-| Device under test | A simulated device | A real sensor stick |
-| `scenario-control` | Present | Absent |
-| Sensor values | Set by a scenario | Whatever the sensor stick measures |
-| Time on the device | Simulated; the rig moves it forward | Real; the rig waits |
-| Sensor id | A new one for every scenario the rig loads | The one of the sensor stick |
-| Tests that run | All 16 | 9; the other 7 are reported as skipped |
-| Typical duration | About 10 minutes | Up to 90 minutes at a sampling interval of 15 minutes |
-| Typical place | Developer machine, CI runner on every change | A machine next to the hardware, before a release |
+| Device under test | A real sensor stick | A simulated device |
+| `scenario-control` | Absent | Present |
+| Sensor values | Whatever the sensor stick measures | Set by a scenario |
+| Time on the device | Real; the rig waits | Simulated; the rig moves it forward |
+| Sensor id | The one of the sensor stick | A new one for every scenario the rig loads |
+| Tests that run | 9; the other 7 are reported as skipped | All 16 |
+| Typical place | A machine next to the hardware, before a release | Developer machine, CI runner on every change |
 
 The rig does not choose the configuration by a switch of its own. It is
 `simulated` exactly when the setting for `scenario-control` is present and
@@ -27,7 +27,7 @@ answer, the run ends in error; the rig does not fall back to `real`.
 
 | Situation | Behaviour |
 |---|---|
-| A test is marked `simulated` only in the catalogue | Reported as skipped with the message "needs scenario-control" |
+| A test runs in `simulated` only, according to the catalogue | Reported as skipped with the message "needs scenario-control" |
 | A test needs a new reading | The rig waits in real time, up to one sampling interval plus 2 minutes; then the test ends in error "no reading in time" |
 | A test compares values | The rig compares what it fetched with what the public API returns. It does not know what the values should be. |
 | A test needs the device in its initial state | Not possible. The person who starts the run prepares the sensor stick; see the [skill](../skills/test-rig-run-against-real-hardware/SKILL.md). |
@@ -52,19 +52,19 @@ the sampling interval from the device under test.
 
 ## Waiting times
 
-| Wait | `simulated` | `real` |
+| Wait | `real` | `simulated` |
 |---|---|---|
-| Find the device under test | 10 seconds | 30 seconds |
-| A new reading on the device | Until `scenario-control` answers, at most 30 seconds | One sampling interval plus 2 minutes |
+| Find the device under test | 30 seconds | 10 seconds |
+| A new reading on the device | One sampling interval plus 2 minutes | Until `scenario-control` answers, at most 30 seconds |
 | After creating or changing a plant, before the next upload | 60 seconds | The same |
 | A reading in the history after an upload | 10 seconds, asked every second | The same |
 | An alert after an upload | 60 seconds, asked every 2 seconds | The same |
 | No alert after an upload | 60 seconds | The same |
 | One request to the public API | 20 seconds | The same |
-| The whole run | 30 minutes | 3 hours |
+| The whole run | 3 hours | 30 minutes |
 
-The waits that concern the public API follow the times it states for
-itself. Where it says "within seconds", the rig allows 10 seconds.
+The waits that concern the public API are the times the rig expects of
+`cloud-api`.
 
 A wait that runs out ends the test in error, with two exceptions: a
 reading that is missing from the history after 10 seconds and an alert that
@@ -75,8 +75,8 @@ is missing after 60 seconds are failures, because these times are promises.
 | Moment | The rig |
 |---|---|
 | Start | Checks the settings and the token, removes every plant of the test owner. In `real`: finds and pairs the device under test and reads its identity. |
-| Each scenario, `simulated` only | Loads the scenario with a sensor id the run has not used, then finds and pairs the device again |
-| Before each group and each "fresh plant" | Removes the plant of the previous tests and creates a new one bound to the device |
+| Before each group and each test that names a scenario, `simulated` only | Loads the scenario with a sensor id the run has not used, then finds and pairs the device again |
+| Before each group and each "fresh plant" | Removes the plant of the previous tests and creates a new one attached to the device |
 | End, also after an error | Removes its plants, forgets the pairing, writes the report |
 
 If the start fails, every test is reported as in error with the cause, and

@@ -1,24 +1,10 @@
----
-unit: notifier
-summary: Turns an opened alert into one notification to the owner
-kind: library
-status: planned
-provides:
-  notification:
-    kind: library
-    summary: Tells the owner about an opened alert, exactly once
-    contract: doc/references/notification.md
-needs:
-  push:
-    kind: http
-    summary: Delivers a notification to the phones of a user
----
 # notifier
 
-`notifier` is a library that tells an owner about an opened alert. It
-words the message, hands it to a push service addressed to the owner, and
-reports how that went. It stores nothing. It is built so that a caller
-that is unsure whether a notification went out can simply ask again.
+`notifier` is an adapter that tells an owner about an opened alert. Its
+caller sees a plain function. Behind it, `notifier` words the message,
+hands it to a push service addressed to the owner, and reports how that
+went. It stores nothing. It is built so that a caller that is unsure
+whether a notification went out can simply ask again.
 
 ## Provides
 
@@ -82,8 +68,10 @@ expects that the service
   has registered with it for that owner,
 - accepts a collapse identifier and shows two notifications with the same
   identifier on a phone as one,
-- accepts a time to live after which it stops trying to deliver,
-- accepts a title, a body and a small set of data fields,
+- accepts a time to live of 24 hours, after which it stops trying to
+  deliver,
+- accepts a title of up to 60 characters, a body of up to 120 characters
+  and five data fields of up to 40 characters each,
 - answers each request clearly: taken, refused for good, or failed for
   now.
 

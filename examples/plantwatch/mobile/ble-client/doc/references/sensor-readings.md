@@ -3,7 +3,8 @@
 The operations, data and guarantees of the port through which the client
 hands fetched readings to its consumer. The description is independent of a
 programming language. The fields of a reading and of a paired sensor stick
-are those cited in [context.md](../context.md).
+are those cited in [context.md](../context.md); the unit's own terms are in
+the [glossary](glossary.md).
 
 ## Operations
 
@@ -12,7 +13,7 @@ are those cited in [context.md](../context.md).
 | Attach consumer | A receiver for batches | Nothing | From now on the client delivers batches to this receiver. A second attach replaces the first. |
 | Detach consumer | Nothing | Nothing | The client stops fetching. Readings stay on their sensor sticks. |
 | Acknowledge | Batch id | Nothing | The consumer states that it has stored the batch. The client confirms the readings to the sensor stick. |
-| Fetch now | Nothing, or one sensor id | One outcome per paired sensor stick | The client tries at once to fetch from the named, or from every, paired sensor stick. |
+| Fetch now | Nothing, or one sensor id | One outcome per paired sensor stick | The client starts within 1 second to connect to the named, or to every, paired sensor stick. |
 | Observe status | Nothing | The status of every paired sensor stick, again whenever one changes | None |
 
 The consumer attaches when the program starts, also when the operating
@@ -79,6 +80,23 @@ client connects to no sensor stick.
 - Acknowledge a batch only after storing it durably.
 - Acknowledge within 5 seconds. A later acknowledgement is ignored and the
   batch is delivered again at the next fetch.
+
+## Examples
+
+Each case is a "fetch now" for one paired sensor stick in range, with an
+attached consumer that acknowledges within 1 second, unless the case says
+otherwise.
+
+| Case | Given | Expected |
+|---|---|---|
+| Backlog | 450 unconfirmed readings | Batches of 200, 200 and 50; "more to come" yes, yes, no; outcome `fetched` with 450 |
+| Nothing to fetch | No unconfirmed reading | No batch; outcome `fetched` with 0 |
+| Connection lost | 450 readings; the connection breaks for good during the second batch | First batch confirmed; outcome `partly fetched` with 200 and `connection lost`; the next fetch starts with reading 201 |
+| Late acknowledgement | The consumer acknowledges the first batch after 6 seconds | Nothing confirmed; outcome `failed` with `not acknowledged`; the next fetch delivers the same readings under a new batch id |
+| Invalid value | 10 readings, the fourth with a soil moisture of 120 percent | One batch of 9 readings; "invalid readings" rises by 1; all 10 confirmed to the sensor stick |
+| Unknown boot | 4 readings of a boot the client holds no anchor for, then 4 of the current boot | 8 readings in ascending sequence number; the first 4 flagged as estimated, the last 4 not |
+| Newer major version | The sensor stick states protocol version 2.0 | No batch; outcome `failed` with `unsupported version`; nothing written to the sensor stick |
+| No consumer | The consumer has detached | The client connects to no sensor stick |
 
 ## Failures
 

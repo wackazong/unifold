@@ -23,7 +23,9 @@ known, and a decision is identified by its unit and its number, so clashes
 between units do not matter.
 
 A decision written by an agent has status `proposed`. Only a human sets
-`accepted`. An accepted decision is immutable apart from its status.
+`accepted`, and the record then names the decision-makers; the tool rejects
+an accepted decision without them (`S10`). An accepted decision is immutable
+apart from its status.
 
 ### Consequences
 
@@ -31,5 +33,7 @@ A decision written by an agent has status `proposed`. Only a human sets
 - Good: the status field tells an agent which decisions bind it.
 - Bad: two branches that add a decision to the same unit pick the same
   number and must renumber on merge.
-- Bad: there is no project-wide list. Each unit has a generated index of its
-  own decisions only.
+- Bad: each unit has a generated index of its own decisions only. The
+  project-wide list is a command, `youmedoc decisions`, not a file.
+- Bad: nothing stops an agent from writing names into `decision-makers`.
+  The rule makes the act visible in review; it does not prevent it.

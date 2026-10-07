@@ -52,6 +52,18 @@ A token is valid when all of this holds:
 Every failure leads to the same answer, `401` `unauthenticated`, with a
 `message` that does not say which check failed.
 
+Examples, with one configured key `2026-10`:
+
+| Token | Result |
+|---|---|
+| Signed with `2026-10`, `exp` in 300 days | Valid |
+| The same, `exp` 30 seconds ago | Valid: within the tolerated 60 seconds |
+| The same, `exp` 61 seconds ago | `401` |
+| `alg` is `none`, no signature | `401` |
+| `kid` is `2025-10`, a key that is not configured | `401` |
+| One character of the payload changed | `401`: the signature does not match |
+| `sub` is `not-a-uuid`, signature correct | `401` |
+
 ## What follows from the form
 
 - Verification needs no lookup. An instance verifies a token with its

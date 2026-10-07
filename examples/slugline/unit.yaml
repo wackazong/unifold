@@ -1,0 +1,20 @@
+unit: slugline
+youmedoc: "0.1"
+level: core
+summary: Turns any string into a URL slug, as a library and on the command line
+kind: library
+provides:
+  slugify:
+    kind: library
+    summary: Turn a string into a slug
+    verified-by: core/tests
+  slug-cli:
+    kind: cli
+    summary: Slugs on the command line
+    verified-by: cli/tests
+wiring:
+  slugify: core.slugify
+  slug-cli: cli.slug-cli
+  cli.slugify: core.slugify
+  cli.transliteration: unicode.transliteration
+  unicode.plugin-api: core.plugin-api

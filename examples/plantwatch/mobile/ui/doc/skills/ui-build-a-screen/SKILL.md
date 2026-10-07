@@ -11,10 +11,11 @@ nobody wrote down are the ones nobody builds.
 ## Steps
 
 1. **Check the data.** List what the screen shows and what the owner can do
-   on it. For each item, find the query or command under `plant-data` or
-   `pairing` in [README.md](../../../README.md). If one is missing, stop:
-   the change is larger than this unit. Tell the human; do not fetch the
-   data in another way.
+   on it. For each item, find what ui asks for or tells in
+   [plant-data.md](../../references/plant-data.md), or the expectation
+   under `pairing` in [README.md](../../../README.md). If one is missing,
+   write it down there and stop: whoever provides the need has to offer it
+   first. Tell the human; do not fetch the data in another way.
 2. **Describe the screen.** Add or change its row in the table "Screens" of
    [app-ui.md](../../references/app-ui.md) and its arrows in the navigation
    diagram.
@@ -33,11 +34,9 @@ nobody wrote down are the ones nobody builds.
    - no comparison of a reading with a threshold anywhere in the screen,
    - no loading state for data on the phone,
    - no state shown by colour alone.
-7. **Test with prepared data:** an empty phone; one plant without a sensor
-   stick; 50 plants of which 20 have an open alert; a plant whose newest
-   reading is 3 days old; a plant in the state `waiting` and one in the
-   state `refused`; readings with estimated times; a quantity that is
-   absent.
+7. **Test with prepared data:** every case of the table "Prepared data"
+   in [plant-data.md](../../references/plant-data.md). If the screen has a
+   state that no case reaches, add the case there first.
 8. **Test accessibility:** the largest text size of the system, the screen
    reader of each platform from the first to the last control, and a
    contrast check of every text.
@@ -59,5 +58,7 @@ nobody wrote down are the ones nobody builds.
 
 - [app-ui.md](../../references/app-ui.md): screens, navigation, states,
   formats
+- [plant-data.md](../../references/plant-data.md): what the screens get,
+  and the prepared data
 - [presets.md](../../references/presets.md): threshold presets of the plant
   form

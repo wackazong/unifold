@@ -11,7 +11,7 @@ between states is in [exchange.md](exchange.md).
 |---|---|---|
 | Reading | Sensor id and sequence number | Upload state, and the time it was stored |
 | Plant | Plant id | Change state, the waiting change, the reason of a refusal |
-| Binding | Plant id and sensor id | From when until when the sensor stick was bound to the plant |
+| Binding | Plant id and sensor id | From when until when the sensor stick was attached to the plant |
 | Alert | Alert id | Nothing |
 | Session | Nothing; there is at most one | Whether the server has created the owner yet |
 | Exchange record | Nothing; there is one | Time of the last success, the last failure, the current pause |
@@ -33,7 +33,7 @@ stateDiagram-v2
 
 | State | Uploaded again | Part of the history | Removed |
 |---|---|---|---|
-| `fetched` | Yes, until the server answers; only while the server knows its sensor stick as bound to a plant | Yes | Never while in this state |
+| `fetched` | Yes, until the server answers; only while the server knows its sensor stick as attached to a plant | Yes | Never while in this state |
 | `confirmed` | No | Yes | When older than 90 days |
 | `refused` | No | Yes | When older than 90 days |
 
@@ -60,7 +60,7 @@ values. A further change of the same plant is merged into it.
 |---|---|
 | Reading, `confirmed` or `refused` | Its time is more than 90 days ago |
 | Reading, `fetched` | Never; it waits for the server |
-| Reading of a sensor stick that is bound to no plant | Never while `fetched`; it waits until the sensor stick is bound and the server has confirmed the plant |
+| Reading of a sensor stick that is attached to no plant | Never while `fetched`; it waits until the sensor stick is attached and the server has confirmed the plant |
 | Alert, closed | It closed more than 90 days ago |
 | Binding that has ended | No reading of its span is left |
 | Everything of the owner | The phone has left the owner |
@@ -79,7 +79,8 @@ sync removes expired items once a day and after each exchange.
 ## Durability
 
 - A write is complete when it has reached durable storage. Only then does
-  sync acknowledge a batch or return from a command.
+  sync acknowledge a batch or return from a command. For a batch of up to
+  500 readings this takes at most 2 seconds.
 - A batch of readings is stored in one transaction: all of its readings or
   none.
 - The store has a layout version. On start, sync migrates an older layout

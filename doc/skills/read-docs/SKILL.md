@@ -1,51 +1,71 @@
 ---
 name: read-docs
 description: Find your way through a repository that is documented with youmedoc. Use it before you read, change or review anything in such a repository, and whenever you enter a folder you do not know yet.
+license: MIT OR Apache-2.0
 ---
 # Read the docs of a youmedoc project
 
 In a youmedoc project the knowledge about a folder is in that folder. Reading
-in the right order gives you what you need with few files. Reading at random
-costs context and misses the rules that apply.
+in the right order gives you what you need with few files.
 
-## Steps
+## First: find your unit and its neighbourhood
 
 1. **Find your unit.** Start at the file or folder your task concerns. Walk
-   up until a folder has a `README.md` whose front matter contains `unit:`.
-   That folder is your unit. Folders you passed on the way are plain folders.
-2. **Read the interface.** Read the unit's `README.md`: the manifest, then
-   the body. You now know what the unit provides and needs.
-3. **Read the why.** Read `AGENTS.md` in the same folder. Follow its
-   `## Read next` list as far as your task requires. Note its skills table.
-4. **Read the inherited rules.** If `doc/context.md` exists, read it. It
-   tells you which decisions and conventions from above apply here.
-5. **Look at the diagrams.** `doc/diagrams/context.md` shows the unit among
-   its siblings. `doc/diagrams/component.md` shows its children. Use the
-   table below each diagram to move to another unit.
-6. **Go down only through interfaces.** To learn about a child, read the
-   child's `README.md` and nothing else. Enter the child, and repeat from
-   step 2, only when your task is inside it.
-7. **Go up only when needed.** If `doc/context.md` does not answer a
-   question about the surroundings, go to the parent unit and repeat from
-   step 2 there.
-8. **Do not read siblings to understand a unit.** The unit's needs say what
-   it expects. If you must know what a provider guarantees, look up the need
-   in the `wiring` of the parent's manifest and read the provider's
-   `README.md`.
+   up until a folder has a manifest: a file `unit.yaml`, or a `README.md`
+   whose front matter contains `unit:`. That folder is your unit. Folders you
+   passed are plain folders. The project root is the nearest folder above
+   whose manifest contains `youmedoc:`; the standard and its skills are there.
+2. **Ask the tool.** From the unit's folder run
 
-## Where to find what
+   ```sh
+   uv run <root>/doc/skills/check-docs/scripts/youmedoc.py show
+   ```
 
-| Question | Where |
+   (or `python3` with PyYAML). It prints the unit's ports, who finally
+   provides each need, who finally uses each port, the parent, the children,
+   the skills, the decisions and the files of the unit. `--json` gives the
+   same as data. `tree` prints all units of the project.
+3. **Without the tool,** read the unit's generated
+   `doc/diagrams/context.md`: its tables hold the same resolved neighbours.
+
+## Then: read what your task needs
+
+| Your task | Read, in this order |
 |---|---|
-| What does this unit offer and require? | Manifest and body of its `README.md` |
-| What exactly is the contract of a port? | The `contract` path in the manifest |
-| Who provides a need of this unit? | `wiring` in the parent's `README.md`: the line whose key is `unit.need` |
-| Who uses a port of this unit? | `wiring` in the parent's `README.md`: the lines whose value is `unit.port` |
-| Why is the unit built this way? | `AGENTS.md`, then `doc/architecture.md`, then `doc/decisions/index.md` |
-| Which rules from above apply here? | `doc/context.md` |
-| How do I do a certain task here? | Skills table in `AGENTS.md` |
-| What does a term mean? | A glossary in `doc/references/` of this unit or, via `doc/context.md`, of an ancestor |
-| Does the code exist yet? | `status` in the manifest |
+| Use the unit from outside, or answer what it offers | The unit's `README.md`. For exact definitions, the `contract` of the port. |
+| Change code inside the unit | `README.md`, `AGENTS.md`, `doc/context.md`. Then the skill in the `## Skills` table of `AGENTS.md` that fits the task. |
+| Change a port of the unit | The above, then `youmedoc port <unit folder> <port>`: it prints what each side of every connection says about the port. |
+| Change a value, a limit or a default | `show` for the users of the port it belongs to; `cited-by` on the file that defines it; then search the project for the old value in every notation (15 minutes, 900 s). |
+| Add a unit below this one | This unit's `AGENTS.md` skills table first: a project skill for it takes precedence. Then the `write-docs` skill. |
+| Understand why it is built this way | `AGENTS.md`, `doc/architecture.md`, `doc/decisions/index.md` |
+| Find out what a term means | `doc/references/glossary.md` of the unit; if the term is not there, the items in `doc/context.md` that cite an ancestor's glossary |
+| Review a change | The `check-docs` skill |
+
+## Rules for moving around
+
+- **Down only through interfaces.** To learn about a child, read the child's
+  `README.md` and nothing else. Enter the child, and start again at the top
+  of this skill, only when your task is inside it.
+- **Up only when needed.** `doc/context.md` tells you which decisions and
+  conventions from above apply. Go to the parent only if it does not answer
+  your question.
+- **Never sideways by guessing.** Do not open a sibling to find out what a
+  need means. The need's text in your unit's `README.md` says what is
+  expected. Who provides it is in the output of `show`; read that provider's
+  `README.md` only if you must know what it guarantees.
+
+## Resolving wiring by hand
+
+If you cannot run the tool: the wiring is in the manifest of the parent.
+
+- The line whose key is `your-unit.need` names the provider. A value
+  `sibling.port` is that sibling's port. A bare value, such as `clock`, is a
+  need of the parent itself: repeat the lookup one level up with
+  `parent.clock`. A value that starts with `./` is a plain folder.
+- The lines whose value is `your-unit.port` name the users. A key
+  `sibling.need` is that sibling. A bare key is a port of the parent itself:
+  repeat one level up to find who uses the parent's port.
+- Read only the manifest of a parent, not its body.
 
 ## Things to know while reading
 
@@ -53,9 +73,10 @@ costs context and misses the rules that apply.
   are probably reading outside your unit.
 - Files in `doc/diagrams/` and `doc/decisions/index.md` are generated. Trust
   them for structure, never edit them.
-- A decision with status `proposed` is not yet agreed. A decision that is
-  `deprecated` or `superseded` no longer applies.
-- A unit with `status: planned` describes intended behaviour.
+- Only decisions with status `accepted` bind. `proposed` is not yet agreed;
+  `deprecated` and `superseded` no longer apply.
+- A unit with `status: planned` describes intended behaviour; its code may
+  not exist.
 
 ## Before and after
 
@@ -65,18 +86,15 @@ costs context and misses the rules that apply.
 
 ## The standard
 
-The full text of youmedoc is in this project:
+The full text of youmedoc is in this project. Start at
+[index](../../references/youmedoc/index.md), which lists the rules in brief
+and every chapter. The chapters you need most often:
 
 | Chapter | Content |
 |---|---|
-| [index](../../references/youmedoc/index.md) | Overview and goals |
-| [concepts](../../references/youmedoc/concepts.md) | Terms and principles |
 | [unit-files](../../references/youmedoc/unit-files.md) | `README.md` and `AGENTS.md` |
 | [doc-folder](../../references/youmedoc/doc-folder.md) | Context, architecture, decisions, references, skills |
 | [manifest](../../references/youmedoc/manifest.md) | Manifest fields |
 | [wiring](../../references/youmedoc/wiring.md) | Connecting needs to providers |
-| [diagrams](../../references/youmedoc/diagrams.md) | Generated diagrams |
-| [markdown](../../references/youmedoc/markdown.md) | Writing rules |
 | [rules](../../references/youmedoc/rules.md) | The ruleset and the direction rules |
-| [workflow](../../references/youmedoc/workflow.md) | Design first, change, adopt, copy |
 | [checker](../../references/youmedoc/checker.md) | The tool |

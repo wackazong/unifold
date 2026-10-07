@@ -31,7 +31,9 @@ written for.
    `skip_sequence_numbers` when a gap in the sequence numbers shall
    appear.
 5. **Leave out what the defaults cover.** Set `sensor_id` only when
-   several scenarios run side by side or a fixed id matters.
+   several scenarios run side by side or a fixed id matters. Set `bonding`
+   to `always` only for work by hand, when a central shall bond later
+   than 300 simulated seconds after a start.
 6. **Save** the file in the folder `scenarios/` of this unit, named after
    `name`.
 7. **Load it**: `PUT /scenario` with the file as body. A 422 response

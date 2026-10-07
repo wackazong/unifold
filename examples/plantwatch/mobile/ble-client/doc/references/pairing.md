@@ -33,7 +33,7 @@ has not been heard for 5 seconds leaves the list.
   that is already paired with this phone.
 - **Pairing is all or nothing.** After `paired`, the sensor stick appears
   in "list paired", the operating system wakes the program when the sensor
-  stick is near, and the first fetch starts at once. After a failure,
+  stick is near, and a first fetch starts within 1 second. After a failure,
   nothing of this holds.
 - **Pairing lasts.** A pairing survives restarts of the program and of the
   phone, and updates of the program.
@@ -56,6 +56,17 @@ has not been heard for 5 seconds leaves the list.
 
 "Search" reports `bluetooth off` and `permission missing` in the same way
 instead of delivering a list.
+
+## Examples
+
+| Case | Given | Expected |
+|---|---|---|
+| Search | Two unpaired sensor sticks in range, one open for pairing at -48 dBm, one not open | A list with the first only |
+| Out of range | A listed sensor stick is not heard for 5 seconds | It leaves the list |
+| Pair | "Pair" for a listed sensor stick; the owner accepts the system dialogs | `paired`; "list paired" contains it; a first fetch starts |
+| Too late | "Pair" after the sensor stick has stopped being open for pairing | `refused`; "list paired" is unchanged |
+| Limit | 20 sensor sticks are paired; "pair" for another | `limit reached`; the 20 stay paired |
+| Unpair out of range | "Unpair" while the sensor stick is not in range | It leaves "list paired"; no later fetch from it |
 
 ## Limits
 

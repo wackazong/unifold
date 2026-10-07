@@ -1,13 +1,18 @@
 # AGENTS.md: plants
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show cloud/services/plants`
+prints this unit with its neighbours.
 
 ## Why
 
 Somebody has to own the answer to "which plant is this, and whose". This
-unit does. Names, attached sensor sticks and thresholds are entered
-rarely and read often, and they must be correct at once, so they live in
-one place with one database schema and are served by calls.
+unit does, and it changes when what is known about a plant changes: its
+fields, its thresholds, its history. Names, attached sensor sticks and
+thresholds are entered rarely and read often, and they must be correct at
+once, so they live in one place with one schema and are served by calls.
 
 History is kept in the same service because the registry decides where a
 reading belongs: the attachment of a sensor stick to a plant is the join
@@ -35,7 +40,9 @@ is accepted for version 1.
 4. [doc/decisions/index.md](doc/decisions/index.md): decisions
 5. [doc/references/plants-api.md](doc/references/plants-api.md): the
    operations and their guarantees
-6. [doc/references/data-model.md](doc/references/data-model.md): what is
+6. [doc/references/reading-events.md](doc/references/reading-events.md):
+   what the unit requires of the stream of readings
+7. [doc/references/data-model.md](doc/references/data-model.md): what is
    stored and for how long
 
 ## Skills

@@ -1,24 +1,3 @@
----
-unit: gateway
-summary: Single entry point of the server side that authenticates callers and routes requests
-kind: service
-status: planned
-provides:
-  public-api:
-    kind: http
-    summary: Upload readings and query plants, history and alerts
-    contract: doc/references/public-api.md
-needs:
-  ingest-api:
-    kind: http
-    summary: Accepts a batch of readings of one sensor
-  plants-api:
-    kind: http
-    summary: Plants with their thresholds and their history
-  alerts-api:
-    kind: http
-    summary: Open and past alerts per plant
----
 # gateway
 
 `gateway` is the one HTTP endpoint that clients reach. It issues and

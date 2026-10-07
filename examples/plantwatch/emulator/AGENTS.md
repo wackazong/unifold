@@ -1,13 +1,19 @@
 # AGENTS.md: emulator
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show emulator`
+prints this unit with its neighbours.
 
 ## Why
 
 A sensor stick is slow to work with: one reading in 15 minutes, a full
-memory after a month, and a board on the desk. The emulator removes the
-board and the waiting. It keeps everything else, so that what is developed
-against it also works with a sensor stick.
+memory after a month, and a board on the desk. The emulator exists to
+remove the board and the waiting and to keep everything else, so that what
+is developed against it also works with a sensor stick. It changes when
+the definition it implements changes, or when a situation has to be
+reproduced that no scenario can express yet.
 
 That gives the program two faces. The radio face must be indistinguishable
 from a sensor stick, so it speaks real BLE and has nothing of its own. The
@@ -32,6 +38,7 @@ reproducible.
 4. [doc/decisions/index.md](doc/decisions/index.md): real BLE, and how time moves
 5. [doc/references/scenario-format.md](doc/references/scenario-format.md): the scenario document
 6. [doc/references/scenario-control-api.md](doc/references/scenario-control-api.md): the HTTP API
+7. [doc/references/glossary.md](doc/references/glossary.md): the terms of this unit
 
 ## Skills
 
@@ -50,4 +57,8 @@ reproducible.
 - No randomness and no wall clock in anything that ends up in a reading.
 - A control request names a target state. Never add a request that means
   "one more step".
-- Radio timing stays real time. Do not scale it with simulated time.
+- Radio timing stays real time. Do not scale it with simulated time. The
+  one exception is the time in which bonding is open: a central can
+  measure it only by the tick count, so it follows simulated time.
+- A new request or scenario member starts as a row in the examples of its
+  reference. The row is the first test.

@@ -1,0 +1,16 @@
+unit: cli
+summary: The slugline command
+kind: app
+provides:
+  slug-cli:
+    kind: cli
+    summary: Reads lines on standard input and writes slugs on standard output
+    verified-by: tests
+needs:
+  slugify:
+    kind: library
+    summary: A function that turns one string into one slug
+  transliteration:
+    kind: library
+    summary: Maps characters outside ASCII to ASCII before a slug is made
+    optional: true

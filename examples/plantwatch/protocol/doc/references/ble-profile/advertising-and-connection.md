@@ -89,3 +89,26 @@ Limits of this scheme:
 - Advertising data, Info and Status are readable by anyone in range. They
   contain the sensor id and counters, no measured values.
 - The static address makes a sensor stick trackable by its address.
+
+## Examples
+
+A sensor stick with the sensor id `00a1b2c3d4e5f607` that has taken
+reading 4806 and holds unconfirmed readings, 10 minutes after its start.
+Advertising data, 31 bytes, then scan response, 21 bytes:
+
+```text
+02 01 06  11 07 47 2A 0E 6C 1F 5D A2 B3 5B 4E 1C 9A 01 00 77 70
+09 FF FF FF 01 01 C6 12 00 00
+
+08 09 50 57 2D 66 36 30 37  0B FF FF FF 00 A1 B2 C3 D4 E5 F6 07
+```
+
+| Case | Expected |
+|---|---|
+| The same sensor stick 2 minutes after its start | `flags` in the advertising data is `03`: `has-readings` and `bonding-open` |
+| An unknown central starts pairing 301 s after the start | Rejected with `Pairing Not Supported` |
+| A central without a bond writes to Transfer control | ATT error `0x05` |
+| A bonded central writes to Transfer control before encryption is on | ATT error `0x0F` |
+| A fifth central bonds with a sensor stick that keeps 4 bonds | Its bond replaces the one that was used longest ago |
+| The central disconnects | The sensor stick advertises again within 1 s |
+

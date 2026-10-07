@@ -1,19 +1,14 @@
 # Calibration
 
-How sampling converts raw sensor values into the quantities of a reading.
+How `sampling` converts raw sensor values into the quantities of a reading.
 The constants are planned values. They are replaced by measured ones
-before the first boards are used.
+before the first boards are used. The example tables are the first test
+cases of the conversion.
 
-## Raw values sampling assumes
+## Raw values
 
-| Raw value | Scale |
-|---|---|
-| Soil | 0 to 4095: output voltage of the probe as a share of its supply voltage. Higher means drier. |
-| Light | Unsigned counts, one count for 0.01 lux at the sensor |
-| Temperature | Signed counts, one count for 1/16 °C at the sensor |
-
-Whoever provides `sensor-io` has to deliver these scales. If a scale
-changes, the constants below change with it.
+The scales of the three raw values are part of what `sampling` expects of
+`sensor-io`: [sensor-io](sensor-io.md). The constants below rest on them.
 
 ## Constants
 
@@ -69,6 +64,7 @@ light = raw × LIGHT_LUX_PER_COUNT × LIGHT_WINDOW_FACTOR
 
 | Raw | Light |
 |---|---|
+| unavailable | absent |
 | 0 | 0 |
 | 750 000 | 12 000 |
 | 7 000 000 | 100 000 |
@@ -91,12 +87,14 @@ not specified there, and a clamped value would look like a measurement.
 | Raw | Temperature |
 |---|---|
 | 349 | 21.4 |
+| 966 | 60.0 |
+| 968 | absent |
 | −313 | −20.0 |
 | −330 | absent |
 
 ## Rounding
 
-sampling rounds half away from zero, once, as the last step. It computes
+`sampling` rounds half away from zero, once, as the last step. It computes
 with integers scaled by 10; no floating point is needed.
 
 ## Expected accuracy

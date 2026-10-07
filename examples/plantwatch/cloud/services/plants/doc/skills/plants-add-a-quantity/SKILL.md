@@ -20,8 +20,10 @@ the change stay valid.
 
 ## Steps
 
-1. **Cite the quantity.** Add its unit, range and resolution to the row
-   on measured quantities in [context](../../context.md).
+1. **Cite the quantity.** Add its unit, range and resolution to the item
+   on measured quantities in [context](../../context.md), and its name to
+   the table of fields in
+   [reading events](../../references/reading-events.md).
 2. **Extend the data model.** Add the column for the value to `reading`
    and the three columns for `min`, `mean` and `max` to `hour_aggregate`
    in [data model](../../references/data-model.md).

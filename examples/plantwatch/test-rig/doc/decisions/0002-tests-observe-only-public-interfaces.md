@@ -26,7 +26,8 @@ observed from outside is not a promise to anyone, and because tests that
 look inside break with every internal change and then get switched off.
 
 The rig shares no code with anything it tests. It builds its central from
-`link-profile` and its API client from the documented public API.
+`link-profile`, the readings it uploads from `reading-format`, and its API
+client from what `cloud-api` documents.
 
 `scenario-control` is a stimulus, not an observation: the rig uses it to
 set values and move time, never to ask what the device under test did.

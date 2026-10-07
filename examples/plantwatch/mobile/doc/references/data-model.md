@@ -105,7 +105,7 @@ The phone learns of an alert only from the server.
 |---|---|
 | Owner id | UUID of the owner this phone acts for; absent until the server has created the owner |
 | Token | What the server gave out for this owner; kept in the phone's protected storage |
-| Token valid until | UTC time; the app renews the token well before |
+| Token valid until | UTC time; the app obtains a new token before this time |
 
 A phone acts for one owner at a time. After the first start the app lets
 the server create an owner at the first exchange. A further phone joins the

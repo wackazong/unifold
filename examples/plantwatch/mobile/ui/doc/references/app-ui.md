@@ -2,8 +2,11 @@
 
 The screens, the ways between them, and what each screen shows in each
 state. The things shown are those of the data model cited in
-[context.md](../context.md). The reasons for the navigation are in
+[context.md](../context.md); the unit's own terms are in the
+[glossary](glossary.md). The reasons for the navigation are in
 [decision 0001](../decisions/0001-the-plant-list-is-home-and-alerts-have-no-screen-of-their-own.md).
+The prepared data with which every state is checked is in
+[plant-data.md](plant-data.md).
 
 ## Screens
 
@@ -15,7 +18,7 @@ state. The things shown are those of the data model cited in
 | Plant form | Name, the three lower limits, presets, the sensor stick | Save, pick a preset, switch a limit off, put a sensor stick to the plant or release it, remove the plant |
 | Find sensor stick | How to open a sensor stick for pairing, then the sensor sticks found, nearest first | Pick one, search again |
 | Settings | The paired sensor sticks with their last fetch, the state of the permissions, the time of the last exchange with the server | Unpair a sensor stick, open the system settings, show the code for another phone, leave the owner |
-| Code for another phone | A code that carries a token, valid while the screen is open | Close |
+| Code for another phone | A code that carries a token; the code is on the screen only while the screen is open | Close |
 
 ## Navigation
 
@@ -40,8 +43,16 @@ stateDiagram-v2
     Settings --> Welcome: left the owner
 ```
 
-A notification about a plant the phone does not hold leads to the plant
-list, and the screens ask `plant-data` for fresh data.
+## Notifications
+
+| Situation | ui |
+|---|---|
+| Notifications are allowed and `plant-data` gives an owner id | Registers the phone for that owner through `push-service` |
+| `push-service` reports a new address of the phone | Registers again |
+| The phone has left its owner | Ends the registration |
+| Tap on a notification about a plant the phone holds | Opens "Plant" for that plant; "back" leads to the plant list |
+| Tap on a notification about a plant the phone does not hold | Opens the plant list and asks `plant-data` for fresh data |
+| Notifications are not allowed | Registers nothing; alerts show on the screens only |
 
 ## States every screen has
 
@@ -89,7 +100,7 @@ part of the chart that rests on estimated times is drawn dashed.
 | Absent value | "no value" |
 | Age | Relative up to 7 days ("2 hours ago"), then the date |
 | Time | In the phone's time zone; prefixed with "about" if estimated |
-| Signal strength | Three steps: near, in the room, far |
+| Signal strength | Three steps: "near" from -60 dBm, "in the room" from -80 dBm, "far" below |
 
 ## Find sensor stick
 
@@ -109,6 +120,7 @@ part of the chart that rests on estimated times is drawn dashed.
 | Declined | "Pairing was cancelled." |
 | Limit reached | "This phone already has 20 sensor sticks." |
 | Unsupported version | "This sensor stick needs a newer version of the app." |
+| Bluetooth off, or permission missing | The bar of the state "permission missing" |
 
 ## Permissions
 

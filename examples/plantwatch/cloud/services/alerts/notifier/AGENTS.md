@@ -1,13 +1,18 @@
 # AGENTS.md: notifier
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show cloud/services/alerts/notifier`
+prints this unit with its neighbours.
 
 ## Why
 
 Reaching an owner means dealing with a push service: its addressing, its
 answers, its limits, and the wording of a message. None of that has to do
-with why an alert opened. This unit keeps it in one place, so that a
-change of provider or of wording touches nothing else.
+with why an alert opened. This unit keeps it in one place. It changes when
+the push provider or the wording of a message changes, and such a change
+touches nothing else.
 
 The hard part is the word "once" in a world where every call can fail
 half-way. `notifier` cannot know whether an earlier attempt for the same

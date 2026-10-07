@@ -1,24 +1,3 @@
----
-unit: ui
-summary: Screens of the phone app
-kind: library
-status: planned
-provides:
-  app-ui:
-    kind: ui
-    summary: Shows the state of each plant and tells the user when to water it
-    contract: doc/references/app-ui.md
-needs:
-  plant-data:
-    kind: library
-    summary: Plants, history and alerts, readable offline and updated when they change
-  pairing:
-    kind: library
-    summary: Finds a new sensor stick nearby and binds it to this phone
-  push-service:
-    kind: http
-    summary: Registers this phone for the notifications of an owner and delivers them to it
----
 # ui
 
 ui is everything the owner sees and touches on the phone: the list of
@@ -37,16 +16,18 @@ The screens, in English and German, in portrait orientation.
   or "needs a warmer place".
 - A plant's screen shows the latest reading, the open alerts and the
   history of up to 90 days as a chart.
-- Every screen shows what the phone holds, at once. No screen shows a
-  loading state for data that is on the phone.
-- Every screen that shows readings or alerts says how old they are, and
-  says so more prominently when they are older than a day.
-- A change the owner makes is visible at once and carries a mark until it
-  is confirmed. A refused change is shown with the reason.
+- A screen shows what the phone holds within 1 second after it opens. No
+  screen shows a loading state for data that is on the phone.
+- Every screen that shows readings or alerts says how old they are. When
+  the newest reading of a plant is older than 24 hours, it says "No
+  readings since" with the time.
+- A change the owner makes is visible within 1 second and carries a mark
+  until it is confirmed. A refused change is shown with the reason.
 - A reading whose time is estimated is shown with "about" before the time.
 - No state is shown by colour alone. Every control has a label for screen
   readers. Text follows the text size of the system.
-- A tap on a notification leads to the plant it is about.
+- Once the owner has allowed notifications, ui keeps the phone registered
+  for the owner's notifications. A tap on one opens the plant it is about.
 - The screens ask for no account. A second phone joins by scanning a code
   that the first phone shows.
 
@@ -58,55 +39,60 @@ Example: the owner taps "Monstera" in the list. The plant's screen shows
 "Soil moisture 23 %, 2 hours ago", the alert "Needs water since Tuesday",
 and the chart of the last week.
 
-Contract: [app-ui](doc/references/app-ui.md).
+Contract: [app-ui](doc/references/app-ui.md): every screen, its states
+and the ways between the screens.
 
 ## Needs
 
 ### `plant-data`
 
 The owner's plants, history and alerts, and the commands that change a
-plant. ui expects that
+plant. ui defines this interface itself, as the customer of whoever
+provides it: [what the screens expect](doc/references/plant-data.md). In
+short, ui expects that
 
-- every query answers at once from data on the phone, with or without a
-  network connection,
-- a query can be observed, so that a screen changes when the data changes,
-- the list of plants comes with the newest reading, the open alerts and the
-  age of the readings of each plant,
-- the history of a plant is available by hour and by day with minimum, mean
-  and maximum, so that a chart of 90 days needs no arithmetic on the screen,
-- a command takes effect at once, and each plant says whether a change is
-  waiting or was refused, and why,
-- it reports when data was last exchanged with the server and whether the
-  phone has lost its access to the owner's data,
-- it starts without an account, gives out a token for another phone, takes
-  such a token to join an owner, and lets the phone leave its owner, and
-- it offers a way to ask for fresh data now.
+- every query answers from data on the phone within 100 milliseconds, with
+  or without a network connection, and can be observed,
+- plants come with their newest reading, open alerts and the age of their
+  readings, and the history comes by reading, by hour and by day, so that
+  a chart of 90 days needs no arithmetic on a screen,
+- a command has taken effect when it returns and lasts, and each plant
+  says whether a change is waiting or was refused, and why,
+- it tells whether the phone acts for an owner or has lost its access,
+  gives the owner's id, and says when data was last exchanged, and
+- it offers "start", "join", "leave", a token for another phone, and a way
+  to ask for fresh data now.
 
 ### `pairing`
 
-A way to find and bind a sensor stick. ui expects that it
+A way to find and bind a sensor stick. ui takes this interface as its
+provider defines it, with its failure reasons and its measure of signal
+strength. ui relies on that it
 
 - lists the sensor sticks in range that can be paired, with a signal
-  strength, nearest first, while a search runs,
-- pairs one of them and answers `paired` or a reason the owner can act on,
+  strength, strongest first, while a search runs,
+- pairs one of them and answers with success or with a reason that ui can
+  turn into an instruction for the owner,
 - lists the paired sensor sticks with the time of their last fetch, and
 - unpairs one.
 
 ### `push-service`
 
-The push service of the phone's platform. ui expects that it
+The push service of the phone's platform, taken as it is. ui relies on
+that it
 
-- registers this phone for the owner once the owner has allowed
-  notifications, and reports when the phone's address has changed,
-- delivers a notification sent to that owner to this phone, and
-- hands a tapped notification to ui with the alert it belongs to, so that
-  ui opens the plant of that alert.
+- registers this phone for one owner's notifications, ends the
+  registration when ui asks, and reports a changed address of the phone,
+- delivers a notification that was sent to that owner to this phone, and
+- hands a tapped notification to ui with the ids of the plant and the
+  alert it is about.
 
-Without it, ui shows alerts only on its screens.
+Notifications that are not allowed or not delivered cost nothing else: ui
+shows every alert that `plant-data` contains on its screens.
 
 ## Out of scope
 
-- Fetching readings, storing data, talking to a server.
+- Fetching readings, storing data, exchanging data with a server.
 - Deciding whether a plant needs attention.
 - Composing or delivering notifications.
 - Layouts for landscape, tablets or watches.
@@ -120,3 +106,4 @@ Without it, ui shows alerts only on its screens.
 - [Presets](doc/references/presets.md): the threshold presets the plant
   form offers
 - [Decisions](doc/decisions/index.md)
+- [Glossary](doc/references/glossary.md): ui's own terms

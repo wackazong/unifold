@@ -2,7 +2,8 @@
 
 Defines what a reading is: its fields, its identity, its JSON form and its
 binary form. Everything that produces, stores or transfers a reading conforms
-to this schema. Version 1.0.
+to this schema. Version 1.0. The terms are defined in the
+[glossary](glossary.md).
 
 ## Fields
 
@@ -133,6 +134,24 @@ The reading of the JSON example as a record:
 | Not carried | `sensor_id` from the connection, `taken_at` and `time_estimated` from the time reference |
 
 The conversion is exact in both directions. No holder rounds a value again.
+
+## Examples
+
+"The record" is the record above. Offsets count from 0.
+
+| Case | Input | Expected |
+|---|---|---|
+| All quantities | The record | Sequence number 4711, tick count 12 / 86 400, 41.5 %, 12 000 lux, 21.4 °C |
+| Light not measured | The record with `present` `05` and bytes 14 to 16 `00 00 00` | Valid. The JSON form has no member `light`. |
+| No quantity | The record with `present` `00` and bytes 12 to 18 all `00` | Valid. The JSON form has none of the three members. |
+| Lowest temperature | The record with bytes 17 and 18 `38 FF` | −20.0 °C |
+| Record of a later 1.x version | `length` `14`, `present` `0F`, two more bytes at the end | A 1.0 receiver reads the same values as in the first case and skips the rest |
+| Record too short | `length` `0A` | Rejected |
+| Value out of range | The record with bytes 12 and 13 `E9 03`, that is 100.1 % | Rejected |
+| `null` for a quantity | JSON with `"light": null` | Rejected |
+| No reading has number 0 | JSON with `"sequence_number": 0` | Rejected |
+| Unknown member | JSON with an added `"battery": 2.9` | Accepted. The member is ignored and kept when the reading is passed on. |
+| Known reading again | A reading whose `sensor_id` and `sequence_number` the holder has | Success. The holder keeps the reading it has. |
 
 ## Version
 

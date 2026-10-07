@@ -19,7 +19,7 @@ with a margin of its own. States written before the change stay readable.
 
 ## Steps
 
-1. **Cite the quantity** with unit and resolution in the row on measured
+1. **Cite the quantity** with unit and resolution in the item on measured
    quantities in [context](../../context.md).
 2. **Add the judged value** as a row to the table "Judged value" in
    [evaluation](../../references/evaluation.md).
@@ -32,7 +32,9 @@ with a margin of its own. States written before the change stay readable.
    state without the field is still read correctly. Otherwise raise `v`
    and write the code that reads both forms.
 5. **Write the tests first**, each as a sequence of readings with the
-   expected changes: see "Checks".
+   expected changes, and add the first of them to the table "Examples":
+   see "Checks". The tests meet the need `thresholds` with a table of
+   answers, not with a network.
 6. **Implement** the judged value and the margin. The table "Opening and
    closing" applies unchanged; do not add a special case there.
 7. **Check the size** of the state with the new field against the limit

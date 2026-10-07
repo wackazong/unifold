@@ -1,24 +1,28 @@
 # AGENTS.md: sampling
 
-This folder is a [youmedoc](https://youmedoc.example) unit.
+This folder is a [youmedoc](https://youmedoc.example) unit. The standard and
+its skills `read-docs`, `write-docs` and `check-docs` are in the project
+root, the nearest folder above whose manifest contains `youmedoc`. From
+there, `python3 doc/skills/check-docs/scripts/youmedoc.py show device/sampling`
+prints this unit with its neighbours.
 
 ## Why
 
-A reading is made in exactly one place. Before sampling there are only raw
-signals; after it, a reading is kept or passed on, never altered. Putting
-measuring, converting and numbering into one unit gives the rule "a
-reading is complete and final when it leaves" one owner.
+A reading is made in exactly one place, and this is it. `sampling` changes
+when what is measured changes, or how a raw value becomes a quantity: a
+sensor part, a probe type, the housing, a new quantity.
 
-sampling does not know where its readings go. It serves subscribers, so
-that keeping a reading and showing it at once are two uses that sampling
-need not tell apart. And it does not know the board: it converts numbers
-into numbers, which makes the calibration testable with a table of values.
+Before `sampling` there are only raw signals; after it, a reading is kept or
+passed on, never altered. Measuring, converting and numbering are one unit
+so that the rule "a reading is complete and final when it leaves" has one
+owner. `sampling` does not know where its readings go, and it does not know
+the board: it converts numbers into numbers, which makes the calibration
+testable with a table of values.
 
 The main tension is identity. A reading must carry its sequence number
 from the first moment, but this unit has no memory that survives a start.
 The number is therefore computed from the tick count
-(see [context](doc/context.md)). The price is a jump in the numbers at
-every start and an upper limit of starts.
+(see [context](doc/context.md)). The price is a jump at every start.
 
 What must stay true: one reading per interval, whatever the sensors do.
 A reading with absent quantities says "alive, but could not measure",
@@ -30,7 +34,10 @@ which a missing reading cannot say.
 2. [doc/context.md](doc/context.md): rules from above, in particular how a reading is numbered
 3. [doc/diagrams/context.md](doc/diagrams/context.md): the unit in its surroundings
 4. [doc/decisions/index.md](doc/decisions/index.md): calibration per probe type
-5. [doc/references/calibration.md](doc/references/calibration.md): formulas and constants
+5. [doc/references/calibration.md](doc/references/calibration.md): formulas, constants and test cases
+6. What `sampling` expects of its needs:
+   [sensor-io](doc/references/sensor-io.md),
+   [timer](doc/references/timer.md)
 
 ## Skills
 
@@ -41,7 +48,11 @@ which a missing reading cannot say.
 ## Rules for work here
 
 - The constants in [calibration.md](doc/references/calibration.md) and in
-  the code are the same numbers. Change both in one change.
+  the code are the same numbers. Change both in one change, and the
+  example tables first: they are the test cases.
+- What `sampling` expects of raw values and of time is written in the
+  contracts of its two needs. A new expectation goes there before the
+  code relies on it.
 - The sampling times are computed from the seconds since start: first
   time plus n times the interval. Never "now plus interval"; that drifts
   by the duration of every measurement.

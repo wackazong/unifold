@@ -21,7 +21,7 @@ the next one starts.
      and take it to whoever owns that definition; come back when it is
      changed.
 2. **Declare the hardware.** Add a need of kind `hardware` to the
-   manifest in [README.md](../../../README.md) and describe in the body
+   manifest, [unit.yaml](../../../unit.yaml), and describe in the `README.md`
    what the firmware expects of the part: supply, bus, timing, idle
    current. Whoever composes this unit has to meet the new need.
 3. **Check the energy first.** Take supply current, measuring time and
@@ -34,7 +34,9 @@ the next one starts.
    documents.
 5. **Write the conversion** in [sampling](../../../sampling/README.md):
    from the raw value to the quantity, with range and rounding. Work
-   inside that unit by its own documents and skills.
+   inside that unit by its own documents and skills. Then read both ends
+   of the wiring line that joins the two: scale, range, timing and
+   "unavailable" of the raw value must agree.
 6. **Test without a board.** Run the conversion against a table of raw
    values, including "unavailable", the lowest and the highest raw value.
 7. **Test on a board.** Take 100 readings. Disconnect the sensor during
