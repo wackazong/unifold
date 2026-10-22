@@ -1,6 +1,6 @@
 ---
 name: unifold-convert
-description: Convert an existing repository to unifold, or bring a part of one into the map. Find the units in the folder layout and the build files, write one unifold.yaml per unit with capabilities, needs and wiring, and check the result against the code. Use it when a repository has no unifold.yaml yet, when `unifold check` passes but most folders are not units, or when a need is wired to a plain folder.
+description: Convert an existing repository to unifold, or bring a part of one into the map. Find the units in the folder layout and the build files, write one unifold.yaml per unit with capabilities, needs and wiring, and check the result against the code. Use it when a repository has no unifold.yaml yet, when `unifold check` passes but most folders are not units, or when it reports dependencies on code that has no manifest.
 license: MIT OR Apache-2.0
 ---
 
@@ -8,7 +8,7 @@ license: MIT OR Apache-2.0
 
 The result is a map that a person can accept: a few well-chosen units, wired by the unit above, and a clean `check`. Each unit has a `unifold.yaml` that says what the folder provides and what it needs. No script writes this map. A build file knows packages and their dependencies. It does not know which folders are parts of the architecture, what a part provides, or what it needs from others. You read the repository and decide; the tool checks what you decided against the code.
 
-`unifold` below means the tool: `uvx unifold`, or `python3 docs/skills/unifold/scripts/unifold.py` once the skills are installed. The standard is one page: <https://unifold.md/spec>. How to work in a converted project: the skill `unifold`.
+`unifold` below means the tool of the skill `unifold`: `uv run docs/skills/unifold/scripts/unifold.py` once the skills are installed, or `python3` with PyYAML in place of `uv run`. The standard is one page: <https://unifold.md/spec>. How to work in a converted project: the skill `unifold`.
 
 ## 0. Before you start
 
@@ -41,6 +41,7 @@ Write each manifest from the template [unifold.template.yaml](../unifold/assets/
 3. `needs`: what the unit needs from outside, in its own words, never who provides it: `clock`, `cart-store`, `api-definition`. Do not declare the language runtime, the standard library, registry packages or logging. Declare one need per thing; two packages that give the same thing are one need.
 4. `status: planned` where the code does not exist yet; `kind` where it says something (`service`, `library`, `cli`, `adapter`); `owner` where known.
 5. A need of the project itself is a need of the root: a database, a cloud API, a cluster. What it provides to the outside is a capability of the root.
+6. Every unit needs a `README.md`. Keep one that exists. Where there is none, write a short one from the template ([README.template.md](../unifold/assets/README.template.md)): the heading, one paragraph on what the unit is for, and a `## Why` of a few lines.
 
 Then the wiring, in the manifest of the nearest unit above both sides: `child.need: other-child.capability`, one line per need and child. A need that no sibling meets becomes a need of the parent with the same name; it passes up without a line. Where several providers exist, write named alternatives; the first is the default. Patterns: <https://unifold.md/wiring>.
 
@@ -73,7 +74,7 @@ Tell the person:
 - the warnings that remain and the summaries that are still `TODO`;
 - that the map is a proposal. A person accepts it by reading it, not by running the check.
 
-Every unit needs a `README.md`; where one is missing, `check` reports it. Write them with the skill `unifold` (<https://unifold.md/documents>) once the map is accepted.
+The `README.md` files you wrote are drafts. Complete them with the skill `unifold` once the map is accepted.
 
 ## What not to do
 
@@ -81,4 +82,4 @@ Every unit needs a `README.md`; where one is missing, `check` reports it. Write 
 - Do not name a need after its provider. The provider may change; the need stays.
 - Do not weaken a manifest to make `check` pass: no `optional`, no deleted need, no removed capability unless it was wrong.
 - Do not move code. If the layout does not match the architecture, describe the layout and say so in the report.
-- Do not write decisions in this step. Write a `README.md` only where a unit has none: the map comes first, the documents are a second step.
+- Do not write decisions or rewrite an existing `README.md` in this step: the map comes first, the documents second.

@@ -8,7 +8,7 @@ license: MIT OR Apache-2.0
 
 In a unifold project some folders are **units**: they contain a `unifold.yaml` that says what the folder provides, its **capabilities**, and what it **needs**. The nearest unit above connects each need to a provider in its `wiring`. A tool checks this against the code and generates the diagrams. The standard is one page: <https://unifold.md/spec>.
 
-`unifold` below means the tool. Run it as `uvx unifold`, or as `python3 <folder of this skill>/scripts/unifold.py` (Python 3.9 or newer with PyYAML). It finds the project root from any folder inside the project.
+`unifold` below means the tool in this skill: `uv run <folder of this skill>/scripts/unifold.py`, or `python3` with PyYAML in place of `uv run`. It finds the project root from any folder inside the project.
 
 ## 1. Find your unit
 
@@ -37,7 +37,7 @@ Every unit has a `README.md`; its `docs/` follows the conventions used below, an
 | Add a unit | The parent's `README.md` and manifest; for a repository without a map, the skill `unifold-convert` |
 | Understand why it is built this way | `README.md` `## Why`, then `docs/explanation/reasoning.md` and `docs/decisions/index.md` |
 | Find out what a term means | `docs/references/glossary.md` of the unit, then `docs/explanation/context.md` |
-| Review a change | The review checklist: <https://unifold.md/documents> |
+| Review a change | The review checklist: <https://unifold.md/writing#review-checklist> |
 
 ## 3. Change
 
@@ -47,9 +47,10 @@ Do not weaken a manifest to make the check pass. Mark a need `optional`, delete 
 
 1. Create `unifold.yaml` in the folder from [unifold.template.yaml](assets/unifold.template.yaml). The folder name is the unit's name. Required: `summary`. Set `status: planned` if the code does not exist yet.
 2. Declare capabilities and needs with one line each. Write a need from the point of view of this unit: what is needed, never who has it. Do not declare the language runtime, registry packages or logging as needs.
-3. Add a `wiring` line for every need to the parent's manifest (`new-unit.need: sibling.capability`). Skip the line when the parent has a need of the same name. Add a line for each capability that a sibling uses.
-4. Write `README.md` from the template below. Its `## Why` is the part that matters. Do not list children, capabilities or connections in prose. `AGENTS.md` is generated in step 5.
-5. Finish (section 4).
+3. Add a `wiring` line for every need to the parent's manifest (`new-unit.need: sibling.capability`). Skip the line when the parent has a need of the same name. Add a line for each sibling need that the new unit meets.
+4. Give both sides of every new connection the same `contract`: a document in `docs/references/` of the parent or a unit above it. Write it if it does not exist: the form of what travels, and an example.
+5. Write `README.md` from the template below. Its `## Why` is the part that matters. Do not list children, capabilities or connections in prose. `AGENTS.md` is generated in step 6.
+6. Finish (section 4).
 
 ### Change a capability, a need, or a dependency in code
 
@@ -72,7 +73,7 @@ Do not weaken a manifest to make the check pass. Mark a need `optional`, delete 
 1. Choose the lowest unit whose insides the decision fully covers. A decision about how two siblings talk belongs to their parent.
 2. Write `docs/decisions/NNNN-short-title.md` with the next free number, from [decision.template.md](assets/decision.template.md).
 3. Keep `status: proposed`. Never set `accepted` and never fill in `decision-makers`; a person does both.
-4. Never edit an accepted decision. Write a new one and set the old one to `superseded by NNNN`.
+4. Never edit an accepted decision. To replace it, write a new one and set the old one to `superseded by NNNN`. To change a part, write a new one that says "This amends NNNN:".
 5. In a unit below that depends on it, add an item to `docs/explanation/context.md` from [context.template.md](assets/explanation/context.template.md). Do not type a stamp; run `unifold stamp`, which adds it. Finish.
 
 ### Add a skill

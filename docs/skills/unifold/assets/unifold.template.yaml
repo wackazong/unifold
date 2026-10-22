@@ -8,9 +8,9 @@ summary: <what the unit is, in one line>
 # kind: <library | service | app | adapter | ...>
 # owner: <team or person>
 capabilities:
-  <capability-name>: <what the capability offers, in one line>
+  <capability-name>: <what the capability provides, in one line>
   <other-capability>:
-    summary: <what the capability offers, in one line>
+    summary: <what the capability provides, in one line>
     kind: <library | http | events | cli | ...>
     contract: <path or URL of the exact definition>
     verified-by: <path or URL of the tests that check it>
