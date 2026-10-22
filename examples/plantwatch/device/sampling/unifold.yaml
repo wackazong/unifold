@@ -5,12 +5,13 @@ capabilities:
   readings:
     kind: library
     summary: Calibrated readings, one per sampling interval, delivered to subscribers
+    contract: ../docs/references/readings.md
 needs:
   sensor-io:
     kind: library
     summary: Raw sensor values on request
-    contract: docs/references/sensor-io.md
+    contract: ../docs/references/sensor-io.md
   timer:
     kind: library
     summary: Calls back at the next sampling time and counts ticks across sleep
-    contract: docs/references/timer.md
+    contract: ../docs/references/timer.md

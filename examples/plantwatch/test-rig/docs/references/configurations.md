@@ -1,9 +1,6 @@
 # Configurations of a run
 
-The two configurations the rig runs in, the settings that select them, and
-the waiting times. The tests are in the
-[test catalogue](test-catalogue.md), the terms in the
-[glossary](glossary.md). The reasons are in
+The two configurations the rig runs in, the settings that select them, and the waiting times. The tests are in the [test catalogue](test-catalogue.md), the terms in the [glossary](glossary.md). The reasons are in
 [decision 0001](../decisions/0001-one-catalogue-for-real-and-simulated-devices.md).
 
 ## The two configurations
@@ -18,10 +15,7 @@ the waiting times. The tests are in the
 | Tests that run | 9; the other 7 are reported as skipped | All 16 |
 | Typical place | A machine next to the hardware, before a release | Developer machine, CI runner on every change |
 
-The rig does not choose the configuration by a switch of its own. It is
-`simulated` exactly when the setting for `scenario-control` is present and
-the address answers. If the setting is present and the address does not
-answer, the run ends in error; the rig does not fall back to `real`.
+The rig does not choose the configuration by a switch of its own. It is `simulated` exactly when the setting for `scenario-control` is present and the address answers. If the setting is present and the address does not answer, the run ends in error; the rig does not fall back to `real`.
 
 ## What the rig does without `scenario-control`
 
@@ -35,8 +29,7 @@ answer, the run ends in error; the rig does not fall back to `real`.
 
 ## Settings
 
-Settings come from the environment of the run. None has a default that
-points at a real system.
+Settings come from the environment of the run. None has a default that points at a real system.
 
 | Setting | Content | Required |
 |---|---|---|
@@ -47,8 +40,7 @@ points at a real system.
 | Report path | Where the report is written | No; default `test-report.xml` in the working directory |
 | Groups | Which groups of the catalogue run | No; default all |
 
-The token is never written to the report or to any output. The rig reads
-the sampling interval from the device under test.
+The token is never written to the report or to any output. The rig reads the sampling interval from the device under test.
 
 ## Waiting times
 
@@ -63,12 +55,9 @@ the sampling interval from the device under test.
 | One request to the public API | 20 seconds | The same |
 | The whole run | 3 hours | 30 minutes |
 
-The waits that concern the public API are the times the rig expects of
-`cloud-api`.
+The waits that concern the public API are the times the rig expects of `cloud-api`.
 
-A wait that runs out ends the test in error, with two exceptions: a
-reading that is missing from the history after 10 seconds and an alert that
-is missing after 60 seconds are failures, because these times are promises.
+A wait that runs out ends the test in error, with two exceptions: a reading that is missing from the history after 10 seconds and an alert that is missing after 60 seconds are failures, because these times are promises.
 
 ## Start and end of a run
 
@@ -79,5 +68,4 @@ is missing after 60 seconds are failures, because these times are promises.
 | Before each group and each "fresh plant" | Removes the plant of the previous tests and creates a new one attached to the device |
 | End, also after an error | Removes its plants, forgets the pairing, writes the report |
 
-If the start fails, every test is reported as in error with the cause, and
-the report is still written.
+If the start fails, every test is reported as in error with the cause, and the report is still written.

@@ -1,8 +1,6 @@
 # Glossary of the app
 
-Terms that have one fixed meaning in the app and its parts. The terms of the
-whole project are cited in [context.md](../explanation/context.md) and are not repeated
-here.
+Terms that have one fixed meaning in the app and its parts. The terms of the whole project are cited in [context.md](../explanation/context.md) and are not repeated here.
 
 | Term | Meaning |
 |---|---|
@@ -14,6 +12,5 @@ here.
 | Standing request | What the app leaves with the operating system per paired sensor stick, so that the system wakes the app when that sensor stick appears. |
 | Server | Whatever provides `cloud-api`. |
 
-The things the app handles, among them paired sensor stick, session, change
-state and the two ages of data, are defined with their fields in the
+The things the app handles, among them paired sensor stick, session, change state and the two ages of data, are defined with their fields in the
 [data model](data-model.md).

@@ -1,8 +1,6 @@
 # Data model of plants
 
-What `plants` stores in its database schema and how long. It is internal:
-only `plants` reads these tables ([context](../explanation/context.md)). The reasons
-are in the [decisions](../decisions/index.md).
+What `plants` stores in its database schema and how long. It is internal: only `plants` reads these tables ([context](../explanation/context.md)). The reasons are in the [decisions](../decisions/index.md).
 
 ## Tables
 
@@ -52,8 +50,7 @@ are in the [decisions](../decisions/index.md).
 | A row with the same `sensor_id` and `sequence_number` exists | None. The event is confirmed. |
 | Otherwise | A row in `reading`. The row of `hour_aggregate` for the plant and the hour of the reading is computed anew from all rows of `reading` of that plant and hour. |
 
-`latest_reading` of a plant is not stored. It is the row of `reading` of
-the plant with the latest `time`.
+`latest_reading` of a plant is not stored. It is the row of `reading` of the plant with the latest `time`.
 
 ## Derived values
 

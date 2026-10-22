@@ -12,7 +12,6 @@ flowchart LR
     u_device["device"]
     u_emulator["emulator"]
     u_mobile["mobile"]
-    u_protocol["protocol"]
     u_test_drig["test-rig"]
   end
   n_root___push_dservice{{"push-service"}}
@@ -21,11 +20,6 @@ flowchart LR
   n_root___ambient_dsensor{{"ambient-sensor"}}
   p_root___app_dui(["app-ui"])
   p_root___test_dreport(["test-report"])
-  u_device -->|"link-profile → ble-profile"| u_protocol
-  u_emulator -->|"link-profile → ble-profile"| u_protocol
-  u_mobile -->|"link-profile → ble-profile, reading-format → reading-schema"| u_protocol
-  u_test_drig -->|"link-profile → ble-profile, reading-format → reading-schema"| u_protocol
-  u_cloud -->|"reading-format → reading-schema"| u_protocol
   u_mobile -->|"sensor-link → ble-link (real)"| u_device
   u_mobile -.->|"sensor-link → ble-link (simulated)"| u_emulator
   u_mobile -->|"cloud-api → public-api"| u_cloud
@@ -44,7 +38,7 @@ flowchart LR
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
   classDef plain stroke-dasharray:2 3
-  class u_cloud,u_device,u_emulator,u_mobile,u_protocol,u_test_drig planned
+  class u_cloud,u_device,u_emulator,u_mobile,u_test_drig planned
 ```
 
 | Unit | Kind | Summary | Status | Diagram |
@@ -53,7 +47,6 @@ flowchart LR
 | [device](../../device/README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../device/docs/diagrams/component.md) |
 | [emulator](../../emulator/README.md) | tool | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | **planned** | [context](../../emulator/docs/diagrams/context.md) |
 | [mobile](../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../mobile/docs/diagrams/component.md) |
-| [protocol](../../protocol/README.md) | specification | Defines the BLE profile of the sensor stick and the format of a reading | **planned** | [context](../../protocol/docs/diagrams/context.md) |
 | [test-rig](../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** | [context](../../test-rig/docs/diagrams/context.md) |
 
 ### Connections
@@ -62,13 +55,6 @@ flowchart LR
 |---|---|---|
 | capability `app-ui` of `plantwatch` | `mobile.app-ui` | implemented by |
 | capability `test-report` of `plantwatch` | `test-rig.test-report` | implemented by |
-| `device.link-profile` | `protocol.ble-profile` |  |
-| `emulator.link-profile` | `protocol.ble-profile` |  |
-| `mobile.link-profile` | `protocol.ble-profile` |  |
-| `test-rig.link-profile` | `protocol.ble-profile` |  |
-| `cloud.reading-format` | `protocol.reading-schema` |  |
-| `mobile.reading-format` | `protocol.reading-schema` |  |
-| `test-rig.reading-format` | `protocol.reading-schema` |  |
 | `mobile.sensor-link` | `device.ble-link` (real) or `emulator.ble-link` (simulated) |  |
 | `mobile.cloud-api` | `cloud.public-api` |  |
 | `mobile.push-service` | need `push-service` of `plantwatch` |  |

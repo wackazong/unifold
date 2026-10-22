@@ -34,14 +34,14 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| plant-data | library | [contract](../references/plant-data.md) | [mobile/sync](../../../sync/README.md) (planned) | plant-data | [contract](../../../sync/docs/references/plant-data.md) |  |
-| pairing | library |  | [mobile/ble-client](../../../ble-client/README.md) (planned) | pairing | [contract](../../../ble-client/docs/references/pairing.md) |  |
-| push-service | http |  | outside the project, as need `push-service` of the root (passed up by name) | | | |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| plant-data | library | [contract](../../../docs/references/plant-data.md) | [mobile/sync](../../../sync/README.md) (planned) | plant-data |  |
+| pairing | library | [contract](../../../docs/references/pairing.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | pairing |  |
+| push-service | http | [contract](../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root (passed up by name) | | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| app-ui | ui | [contract](../references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | | |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| app-ui | ui | [contract](../../../docs/references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | |

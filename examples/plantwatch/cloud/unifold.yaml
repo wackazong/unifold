@@ -6,17 +6,16 @@ capabilities:
   public-api:
     kind: http
     summary: Upload readings and query plants, history and alerts
-    contract: docs/references/public-api/index.md
+    contract: ../docs/references/public-api/index.md
 needs:
   push-service:
     kind: http
     summary: Takes a notification for an owner and delivers it to the phones registered for that owner
-  reading-format:
-    kind: specification
-    summary: The format in which readings are uploaded
+    contract: ../docs/references/push-service.md
   container-host:
     kind: infrastructure
     summary: Runs containers, gives them a private network and persistent volumes
+    contract: ../docs/references/container-host.md
 wiring:
   ingest.event-bus: platform.event-bus
   plants.event-bus: platform.event-bus

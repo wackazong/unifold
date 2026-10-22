@@ -5,18 +5,17 @@ capabilities:
   ble-link:
     kind: protocol
     summary: Serves live and stored readings to a nearby central over BLE
-    conforms-to: link-profile
+    contract: ../../docs/references/ble-profile/index.md
 needs:
   radio:
     kind: library
     summary: BLE peripheral role with GATT server primitives
-    contract: docs/references/radio.md
+    contract: ../docs/references/radio.md
   reading-log:
     kind: library
     summary: Stored readings in order, with a way to mark them as delivered
+    contract: ../docs/references/reading-log.md
   live-readings:
     kind: library
     summary: The newest reading as soon as it exists
-  link-profile:
-    kind: specification
-    summary: The definition of the BLE services to implement
+    contract: ../docs/references/readings.md

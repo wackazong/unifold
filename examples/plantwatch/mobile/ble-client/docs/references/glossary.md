@@ -1,7 +1,6 @@
 # Glossary of ble-client
 
-Terms that have one fixed meaning inside this unit. Inherited terms are
-cited in [context.md](../explanation/context.md) and are not repeated here.
+Terms that have one fixed meaning inside this unit. Inherited terms are cited in [context.md](../explanation/context.md) and are not repeated here.
 
 | Term | Meaning |
 |---|---|

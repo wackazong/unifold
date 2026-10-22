@@ -30,12 +30,12 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| thresholds | library | [contract](../references/thresholds.md) | [cloud/services/alerts/plant-lookup](../../../plant-lookup/README.md) (planned) | thresholds | [contract](../../../plant-lookup/docs/references/thresholds.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| thresholds | library | [contract](../../../docs/references/thresholds.md) | [cloud/services/alerts/plant-lookup](../../../plant-lookup/README.md) (planned) | thresholds |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| evaluation | library | [contract](../references/evaluation.md) |  | [cloud/services/alerts/server](../../../server/README.md) (planned) | evaluation | [contract](../../../server/docs/references/evaluation.md) |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| evaluation | library | [contract](../../../docs/references/evaluation.md) |  | [cloud/services/alerts/server](../../../server/README.md) (planned) | evaluation |

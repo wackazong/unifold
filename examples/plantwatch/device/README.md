@@ -1,42 +1,22 @@
 # device
 
-`device` is the firmware of the sensor stick. It measures soil moisture,
-light and temperature at a fixed interval, keeps the readings on the
-sensor stick until a central has confirmed them, and serves them over
-Bluetooth Low Energy. It is built to run for a year on one coin cell.
+`device` is the firmware of the sensor stick. It measures soil moisture, light and temperature at a fixed interval, keeps the readings on the sensor stick until a central has confirmed them, and serves them over Bluetooth Low Energy. It is built to run for a year on one coin cell.
 
 ## Why
 
-A sensor stick runs one program, and this unit is that program: it turns
-two sensors and a coin cell into readings a central can fetch. It changes
-when what a sensor stick has to do changes, or the energy it may spend. A
-change of the board, of measuring, of the memory or of the profile lands
-in one part and leaves the others alone; that is how the parts are cut.
+A sensor stick runs one program, and this unit is that program: it turns two sensors and a coin cell into readings a central can fetch. It changes when what a sensor stick has to do changes, or the energy it may spend. A change of the board, of measuring, of the memory or of the profile lands in one part and leaves the others alone; that is how the parts are cut.
 
-One number shapes the firmware: an average current below 20 µA, so that a
-coin cell lasts a year. The firmware therefore sleeps almost always and
-has no main loop: its parts are libraries that react to an alarm or to
-the radio, do a short piece of work and return. Only one part touches the
-hardware, so the others are tested on a development machine.
+One number shapes the firmware: an average current below 20 µA, so that a coin cell lasts a year. The firmware therefore sleeps almost always and has no main loop: its parts are libraries that react to an alarm or to the radio, do a short piece of work and return. Only one part touches the hardware, so the others are tested on a development machine.
 
-A reading moves in one direction: it is made, numbered and stamped once,
-then kept, then served. The sequence number is therefore computed where
-the reading is made; the price is numbers that jump at every start.
+A reading moves in one direction: it is made, numbered and stamped once, then kept, then served. The sequence number is therefore computed where the reading is made; the price is numbers that jump at every start.
 
-What must stay true: a reading is in durable memory before the board
-sleeps again; it leaves that memory only through a confirm or an overflow;
-and no change exceeds the energy budget.
+What must stay true: a reading is in durable memory before the board sleeps again; it leaves that memory only through a confirm or an overflow; and no change exceeds the energy budget.
 
 ## Capabilities
 
 ### `ble-link`
 
-The sensor stick as a central sees it over the air. The firmware does
-everything the definition behind `link-profile` requires of a sensor stick
-in version 1.0: advertising, the service with all its characteristics,
-every procedure, every result code and the behaviour on failures. Where
-that definition leaves a choice or sets only a bound, a central observes
-this:
+The sensor stick as a central sees it over the air. The firmware does everything the BLE profile requires of a sensor stick in version 1.0: advertising, the service with all its characteristics, every procedure, every result code and the behaviour on failures. Where that definition leaves a choice or sets only a bound, a central observes this:
 
 | Matter | Behaviour |
 |---|---|
@@ -56,34 +36,18 @@ Limits:
 
 - The sampling interval cannot be changed over the radio link.
 - The firmware reports no battery level.
-- A new firmware image is written through the programming header of the
-  board, not over the air.
+- A new firmware image is written through the programming header of the board, not over the air.
 - A sensor stick gives readings for 16 383 starts.
 
 ## Needs
 
 ### `soil-probe`
 
-A capacitive probe in the soil with an analogue output between 0 V and its
-supply voltage. The output falls as the soil gets wetter and is
-proportional to the supply voltage. The firmware supplies the probe with
-2.0 V to 3.3 V and only while it measures; the probe draws at most 5 mA,
-and its output is stable within 100 ms. The firmware is calibrated for one
-type of probe, not for the single probe.
+A capacitive probe in the soil with an analogue output between 0 V and its supply voltage. The output falls as the soil gets wetter and is proportional to the supply voltage. The firmware supplies the probe with 2.0 V to 3.3 V and only while it measures; the probe draws at most 5 mA, and its output is stable within 100 ms. The firmware is calibrated for one type of probe, not for the single probe.
 
 ### `ambient-sensor`
 
-One sensor for light and temperature on an I2C bus at 100 kHz, in a place
-that sees the light the plant sees. It covers at least 0 to 100 000 lux
-and −20 °C to 60 °C, runs on 2.0 V to 3.3 V, answers within 150 ms and
-draws at most 1 µA when idle.
-
-### `link-profile`
-
-The definition of what a sensor stick advertises, of its service and
-characteristics, of the record that carries a reading, of the procedures
-and of the behaviour on failures, for major version 1. The firmware takes
-this definition as it is and adds nothing to it.
+One sensor for light and temperature on an I2C bus at 100 kHz, in a place that sees the light the plant sees. It covers at least 0 to 100 000 lux and −20 °C to 60 °C, runs on 2.0 V to 3.3 V, answers within 150 ms and draws at most 1 µA when idle.
 
 ## Out of scope
 
@@ -94,12 +58,9 @@ this definition as it is and adds nothing to it.
 
 ## Read next
 
-1. [docs/explanation/reasoning.md](docs/explanation/reasoning.md): why the
-   firmware is cut this way
-2. [docs/explanation/invariants.md](docs/explanation/invariants.md): what
-   holds at every moment
-3. [docs/explanation/runtime.md](docs/explanation/runtime.md): the start
-   order and the sleep and wake cycle
+1. [docs/explanation/reasoning.md](docs/explanation/reasoning.md): why the firmware is cut this way
+2. [docs/explanation/invariants.md](docs/explanation/invariants.md): what holds at every moment
+3. [docs/explanation/runtime.md](docs/explanation/runtime.md): the start order and the sleep and wake cycle
 4. [docs/references/energy-budget.md](docs/references/energy-budget.md): where the 20 µA go
 5. [docs/references/glossary.md](docs/references/glossary.md): the terms only the firmware uses
 6. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above

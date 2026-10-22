@@ -5,23 +5,28 @@ capabilities:
   alerts-api:
     kind: http
     summary: Open and past alerts per plant
-    contract: docs/references/alerts-api.md
+    contract: ../../docs/references/alerts-api.md
 needs:
   reading-events:
     kind: events
     summary: One event per accepted reading, at least once, in order of acceptance per sensor stick
+    contract: ../../docs/references/reading-events.md
   plants-api:
     kind: http
     summary: An HTTP lookup that returns the plant a sensor stick is attached to, with owner and thresholds
+    contract: ../../docs/references/plants-api.md
   push:
     kind: http
     summary: Takes one notification for an owner, with a collapse identifier, and delivers it to that owner's phones
+    contract: ../../../docs/references/push-service.md
   sql-db:
     kind: db
     summary: A schema of its own in a relational database with transactions and row locks
+    contract: ../../docs/references/sql-db.md
   event-bus:
     kind: queue
     summary: A durable subscription that keeps the order per key and delivers again what was not confirmed
+    contract: ../../docs/references/event-bus.md
 wiring:
   alerts-api: server.alerts-api
   server.evaluation: rules.evaluation

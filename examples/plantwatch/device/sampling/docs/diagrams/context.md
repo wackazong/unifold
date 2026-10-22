@@ -33,14 +33,14 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| sensor-io | library | [contract](../references/sensor-io.md) | [device/hal](../../../hal/README.md) (planned) | sensor-io | [contract](../../../hal/docs/references/sensor-io.md) |  |
-| timer | library | [contract](../references/timer.md) | [device/hal](../../../hal/README.md) (planned) | timer | [contract](../../../hal/docs/references/timer.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| sensor-io | library | [contract](../../../docs/references/sensor-io.md) | [device/hal](../../../hal/README.md) (planned) | sensor-io |  |
+| timer | library | [contract](../../../docs/references/timer.md) | [device/hal](../../../hal/README.md) (planned) | timer |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| readings | library |  |  | [device/store](../../../store/README.md) (planned) | readings |  |
-| readings | library |  |  | [device/link](../../../link/README.md) (planned) | live-readings |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| readings | library | [contract](../../../docs/references/readings.md) |  | [device/store](../../../store/README.md) (planned) | readings |
+| readings | library | [contract](../../../docs/references/readings.md) |  | [device/link](../../../link/README.md) (planned) | live-readings |

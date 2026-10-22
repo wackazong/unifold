@@ -13,11 +13,9 @@ flowchart LR
     u_mobile__ui["ui"]
   end
   n_mobile___sensor_dlink{{"sensor-link"}}
-  n_mobile___link_dprofile{{"link-profile"}}
   u_mobile__sync -->|"sensor-readings"| u_mobile__ble_dclient
   u_mobile__ui -->|"pairing"| u_mobile__ble_dclient
   u_mobile__ble_dclient -->|"sensor-link"| n_mobile___sensor_dlink
-  u_mobile__ble_dclient -->|"link-profile"| n_mobile___link_dprofile
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
@@ -34,15 +32,14 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| sensor-link | protocol |  | [device/link](../../../../device/link/README.md) (planned) (real; passed up by name) | ble-link |  |  |
-| sensor-link | protocol |  | [emulator](../../../../emulator/README.md) (planned) (simulated; passed up by name) | ble-link |  |  |
-| link-profile | specification |  | [protocol](../../../../protocol/README.md) (planned) (passed up by name) | ble-profile | [contract](../../../../protocol/docs/references/ble-profile/index.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [device/link](../../../../device/link/README.md) (planned) (real; passed up by name) | ble-link |  |
+| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [emulator](../../../../emulator/README.md) (planned) (simulated; passed up by name) | ble-link |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| sensor-readings | library | [contract](../references/sensor-readings.md) |  | [mobile/sync](../../../sync/README.md) (planned) | sensor-readings |  |
-| pairing | library | [contract](../references/pairing.md) |  | [mobile/ui](../../../ui/README.md) (planned) | pairing |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| sensor-readings | library | [contract](../../../docs/references/sensor-readings.md) |  | [mobile/sync](../../../sync/README.md) (planned) | sensor-readings |
+| pairing | library | [contract](../../../docs/references/pairing.md) |  | [mobile/ui](../../../ui/README.md) (planned) | pairing |

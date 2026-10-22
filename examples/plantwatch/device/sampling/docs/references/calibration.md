@@ -1,14 +1,10 @@
 # Calibration
 
-How `sampling` converts raw sensor values into the quantities of a reading.
-The constants are planned values. They are replaced by measured ones
-before the first boards are used. The example tables are the first test
-cases of the conversion.
+How `sampling` converts raw sensor values into the quantities of a reading. The constants are planned values. They are replaced by measured ones before the first boards are used. The example tables are the first test cases of the conversion.
 
 ## Raw values
 
-The scales of the three raw values are part of what `sampling` expects of
-`sensor-io`: [sensor-io](sensor-io.md). The constants below rest on them.
+The scales of the three raw values are part of what `sampling` expects of `sensor-io`: [sensor-io](../../../docs/references/sensor-io.md). The constants below rest on them.
 
 ## Constants
 
@@ -37,8 +33,7 @@ moisture = (SOIL_DRY − raw) × 100 / (SOIL_DRY − SOIL_WET)
 | `moisture` above 100 | 100.0 |
 | Otherwise | `moisture`, rounded to 0.1 |
 
-"Percent of the calibrated range" means: 0 is the probe in dry air, 100 is
-the probe in water. Garden soil at field capacity reads about 70 to 85.
+"Percent of the calibrated range" means: 0 is the probe in dry air, 100 is the probe in water. Garden soil at field capacity reads about 70 to 85.
 
 | Raw | Soil moisture |
 |---|---|
@@ -81,8 +76,7 @@ temperature = raw × TEMP_C_PER_COUNT + TEMP_OFFSET_C
 | Rounded `temperature` below −20.0 or above 60.0 | Absent |
 | Otherwise | `temperature`, rounded to 0.1 |
 
-A temperature outside the range is absent and not clamped: the board is
-not specified there, and a clamped value would look like a measurement.
+A temperature outside the range is absent and not clamped: the board is not specified there, and a clamped value would look like a measurement.
 
 | Raw | Temperature |
 |---|---|
@@ -94,8 +88,7 @@ not specified there, and a clamped value would look like a measurement.
 
 ## Rounding
 
-`sampling` rounds half away from zero, once, as the last step. It computes
-with integers scaled by 10; no floating point is needed.
+`sampling` rounds half away from zero, once, as the last step. It computes with integers scaled by 10; no floating point is needed.
 
 ## Expected accuracy
 

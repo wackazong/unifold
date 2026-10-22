@@ -1,8 +1,6 @@
 # Board
 
-The pins, peripherals and memory regions of the sensor stick board that `hal`
-uses. All values are planned values for board revision A; no board exists
-yet.
+The pins, peripherals and memory regions of the sensor stick board that `hal` uses. All values are planned values for board revision A; no board exists yet.
 
 ## Microcontroller
 
@@ -57,10 +55,7 @@ The processor sleeps during both waits.
 
 ## Ambient sensor
 
-The part is not selected yet. `hal` assumes: one I2C device at address
-`0x44`, a single-shot command that measures light and temperature, light
-as a mantissa and an exponent that `hal` combines into counts of 0.01 lux,
-temperature as a signed number in steps of 1/16 °C.
+The part is not selected yet. `hal` assumes: one I2C device at address `0x44`, a single-shot command that measures light and temperature, light as a mantissa and an exponent that `hal` combines into counts of 0.01 lux, temperature as a signed number in steps of 1/16 °C.
 
 ## Memory map
 
@@ -73,8 +68,7 @@ temperature as a signed number in steps of 1/16 °C.
 | Bonds | `0x7D000` to `0x7EFFF` | 2 blocks | Keys of bonded centrals, managed by the radio stack |
 | Reserved | `0x7F000` to `0x7FFFF` | 1 block | Empty, except while the boot counter block is erased |
 
-One block is one flash page of the microcontroller: 4096 bytes, erased as
-a whole, 10 000 erase cycles.
+One block is one flash page of the microcontroller: 4096 bytes, erased as a whole, 10 000 erase cycles.
 
 ## Currents
 

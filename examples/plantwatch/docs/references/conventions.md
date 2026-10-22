@@ -11,8 +11,7 @@ Rules that hold in every unit of plantwatch. The terms are defined in the
 | Light | lux | 0 to 100 000 | 1 |
 | Temperature | degrees Celsius | -20 to 60 | 0.1 |
 
-A value outside its range is invalid and is rejected by the first receiver.
-A quantity that could not be measured is absent, not zero.
+A value outside its range is invalid and is rejected by the first receiver. A quantity that could not be measured is absent, not zero.
 
 ## Identifiers
 
@@ -27,8 +26,7 @@ A reading is identified by sensor id and sequence number together.
 ## Time
 
 - Outside the sensor stick, every time is UTC.
-- In APIs and stored documents a time is an RFC 3339 string with the suffix
-  `Z` and whole seconds.
+- In APIs and stored documents a time is an RFC 3339 string with the suffix `Z` and whole seconds.
 - A time that was estimated carries a flag saying so.
 
 ## Delivery
@@ -46,10 +44,10 @@ A reading is identified by sensor id and sequence number together.
 
 ## Changing a shared definition
 
-- The radio protocol and the reading format are changed in the unit that
-  defines them, before any part that uses them changes.
-- A change that an older counterpart cannot ignore needs a new major
-  version and a decision of plantwatch.
+- The radio protocol and the reading format are references of plantwatch: the [BLE profile](ble-profile/index.md) and the [reading schema](reading-schema.md). Every part that implements the profile names it as the contract of its connection. They change here, before any part that implements them changes.
+- Every change to one of them changes its version number in the same change. A change that an older counterpart cannot ignore needs a new major version and a decision of plantwatch.
+- The contracts name roles, "sensor stick" and "central", never a platform, a library or a product part. When two implementations disagree, the question is what the text says; if the text allows both, the text is at fault.
+- Layouts are tables with offset and size; the byte examples are computed from the tables. The UUID base and the company identifier are placeholders until a product ships.
 
 ## Names
 
@@ -58,10 +56,8 @@ A reading is identified by sensor id and sequence number together.
 
 ## Working in this repository
 
-- The project is in its design phase. Nobody writes product code for a unit
-  before a person has accepted the decisions that unit depends on.
+- The project is in its design phase. Nobody writes product code for a unit before a person has accepted the decisions that unit depends on.
 - A change to the radio protocol or to the reading format follows
   [Changing a shared definition](#changing-a-shared-definition).
-- Every file uses the terms of the [glossary](glossary.md) unchanged. In
-  particular, a "reading" is one measurement set, never a single value.
+- Every file uses the terms of the [glossary](glossary.md) unchanged. In particular, a "reading" is one measurement set, never a single value.
 - Every change ends with `unifold check --fix`, then `unifold check`.

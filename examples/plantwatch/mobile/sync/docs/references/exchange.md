@@ -1,8 +1,6 @@
 # Exchange with the server
 
-The steps, sizes and pauses of one exchange between the
-[local store](local-store.md) and the server behind `cloud-api`. The
-reasons are in the [decisions](../decisions/index.md), the terms in the
+The steps, sizes and pauses of one exchange between the [local store](local-store.md) and the server behind `cloud-api`. The reasons are in the [decisions](../decisions/index.md), the terms in the
 [glossary](glossary.md).
 
 ## What starts an exchange
@@ -14,10 +12,9 @@ reasons are in the [decisions](../decisions/index.md), the terms in the
 | The program comes onto the screen | |
 | A network connection appears | |
 | The operating system grants a slot of scheduled background work | |
-| "Refresh" of [plant-data](plant-data.md) | Ignores a running pause |
+| "Refresh" of [plant-data](../../../docs/references/plant-data.md) | Ignores a running pause |
 
-One exchange runs at a time. A trigger during a running exchange causes one
-more exchange directly after it.
+One exchange runs at a time. A trigger during a running exchange causes one more exchange directly after it.
 
 ## Steps of an exchange
 
@@ -30,11 +27,9 @@ more exchange directly after it.
 | 5 | Asks for the alerts and replaces the alerts in the store | Yes |
 | 6 | Asks for the history of each plant for the part of the last 90 days the store does not hold | No |
 
-An exchange that completed step 5 counts as successful and sets the time
-of the last exchange.
+An exchange that completed step 5 counts as successful and sets the time of the last exchange.
 
-Step 6 runs only while the program is on the screen. It serves a phone that
-has joined its owner later than the readings were taken.
+Step 6 runs only while the program is on the screen. It serves a phone that has joined its owner later than the readings were taken.
 
 ## Sending a changed plant
 
@@ -55,10 +50,7 @@ has joined its owner later than the readings were taken.
 | Requests at a time | 1 |
 | Time limit per request | 20 seconds |
 
-For every reading of a batch the server's answer is one of three: new,
-known already, or refused. sync marks the first two as `confirmed` and the
-third as `refused`. An answer that does not cover every reading of the
-batch counts as "try again later".
+For every reading of a batch the server's answer is one of three: new, known already, or refused. sync marks the first two as `confirmed` and the third as `refused`. An answer that does not cover every reading of the batch counts as "try again later".
 
 ## Answers of the server
 
@@ -100,7 +92,4 @@ Each case starts with a session that is `active` and a network connection.
 
 ## In the background
 
-In a background slot sync stores first and acknowledges the batch. It
-starts an exchange only afterwards and gives up without a failure record
-when the slot ends. The readings stay `fetched` and go with the next
-exchange.
+In a background slot sync stores first and acknowledges the batch. It starts an exchange only afterwards and gives up without a failure record when the slot ends. The readings stay `fetched` and go with the next exchange.

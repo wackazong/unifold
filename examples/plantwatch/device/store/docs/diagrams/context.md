@@ -33,13 +33,13 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| flash | library | [contract](../references/flash.md) | [device/hal](../../../hal/README.md) (planned) | flash | [contract](../../../hal/docs/references/flash.md) |  |
-| readings | library |  | [device/sampling](../../../sampling/README.md) (planned) | readings |  |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| flash | library | [contract](../../../docs/references/flash.md) | [device/hal](../../../hal/README.md) (planned) | flash |  |
+| readings | library | [contract](../../../docs/references/readings.md) | [device/sampling](../../../sampling/README.md) (planned) | readings |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| reading-log | library |  |  | [device/link](../../../link/README.md) (planned) | reading-log |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| reading-log | library | [contract](../../../docs/references/reading-log.md) |  | [device/link](../../../link/README.md) (planned) | reading-log |

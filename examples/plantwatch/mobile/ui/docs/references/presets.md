@@ -1,9 +1,6 @@
 # Threshold presets
 
-The presets the plant form offers. A preset fills in the three thresholds
-of the form; the owner may change them before saving. A saved plant keeps
-its thresholds and no link to the preset. The thresholds and their meaning
-are cited in [context.md](../explanation/context.md).
+The presets the plant form offers. A preset fills in the three thresholds of the form; the owner may change them before saving. A saved plant keeps its thresholds and no link to the preset. The thresholds and their meaning are cited in [context.md](../explanation/context.md).
 
 ## Presets
 
@@ -20,10 +17,8 @@ are cited in [context.md](../explanation/context.md).
 
 ## Rules
 
-- The values are starting points for common house plants. The form says so
-  next to the presets.
+- The values are starting points for common house plants. The form says so next to the presets.
 - A preset sets all three thresholds and switches all three on.
 - The form shows "Custom" as soon as a value differs from every preset.
-- Presets are part of the screens. They are not stored with the plant and
-  not sent anywhere.
+- Presets are part of the screens. They are not stored with the plant and not sent anywhere.
 - The names are translated; the values are the same in every language.

@@ -35,15 +35,15 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| ingest-api | http |  | [cloud/services/ingest](../../../ingest/README.md) (planned) | ingest-api | [contract](../../../ingest/docs/references/ingest-api.md) |  |
-| plants-api | http |  | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api | [contract](../../../plants/docs/references/plants-api.md) |  |
-| alerts-api | http |  | [cloud/services/alerts/server](../../../alerts/server/README.md) (planned) | alerts-api |  |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| ingest-api | http | [contract](../../../../docs/references/ingest-api.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | ingest-api |  |
+| plants-api | http | [contract](../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api |  |
+| alerts-api | http | [contract](../../../../docs/references/alerts-api.md) | [cloud/services/alerts/server](../../../alerts/server/README.md) (planned) | alerts-api |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| public-api | http | [contract](../references/public-api.md) |  | [mobile/sync](../../../../../mobile/sync/README.md) (planned) | cloud-api |  |
-| public-api | http | [contract](../references/public-api.md) |  | [test-rig](../../../../../test-rig/README.md) (planned) | cloud-api |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| public-api | http | [contract](../../../../../docs/references/public-api/index.md) |  | [mobile/sync](../../../../../mobile/sync/README.md) (planned) | cloud-api |
+| public-api | http | [contract](../../../../../docs/references/public-api/index.md) |  | [test-rig](../../../../../test-rig/README.md) (planned) | cloud-api |

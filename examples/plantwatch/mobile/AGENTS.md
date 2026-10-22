@@ -1,16 +1,14 @@
 <!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: mobile
 
-unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
-says what the unit is for and why it is built this way. Everything else is in
-`docs/`.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
 
 ## Documents
 
 | Kind | Files |
 |---|---|
 | Learn | [first-plant](docs/tutorials/first-plant.md) |
-| Look up | [app-ui](docs/references/app-ui.md), [conventions](docs/references/conventions.md), [data-model](docs/references/data-model.md), [glossary](docs/references/glossary.md), [platform-limits](docs/references/platform-limits.md) |
+| Look up | [app-ui](docs/references/app-ui.md), [conventions](docs/references/conventions.md), [data-model](docs/references/data-model.md), [glossary](docs/references/glossary.md), [pairing](docs/references/pairing.md), [plant-data](docs/references/plant-data.md), [platform-limits](docs/references/platform-limits.md), [sensor-readings](docs/references/sensor-readings.md) |
 | Understand | [context](docs/explanation/context.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [runtime](docs/explanation/runtime.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

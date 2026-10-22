@@ -1,8 +1,6 @@
 # Flash layout
 
-How `store` arranges readings and delivered marks in the blocks it gets
-through `flash`, whose properties are in [flash](flash.md). Layout
-version 1. Nothing outside `store` reads these blocks.
+How `store` arranges readings and delivered marks in the blocks it gets through `flash`, whose properties are in [flash](../../../docs/references/flash.md). Layout version 1. Nothing outside `store` reads these blocks.
 
 ## Blocks
 
@@ -11,8 +9,7 @@ version 1. Nothing outside `store` reads these blocks.
 | 0 to 17 | Ring | Readings, in the order in which they were received |
 | 18 and 19 | Journal | Delivered marks |
 
-Every block in use starts with a header of 16 bytes. All multi-byte
-numbers are little-endian. An erased byte is `0xFF`.
+Every block in use starts with a header of 16 bytes. All multi-byte numbers are little-endian. An erased byte is `0xFF`.
 
 ### Block header
 
@@ -25,14 +22,11 @@ numbers are little-endian. An erased byte is `0xFF`.
 | 8 | 4 | `serial` | Rises by one with every block that `store` starts in this role |
 | 12 | 4 | `check` | CRC-32 (IEEE 802.3) of bytes 0 to 11 |
 
-A block whose header is erased is empty. A block whose header is neither
-erased nor valid is treated as empty and erased before use.
+A block whose header is erased is empty. A block whose header is neither erased nor valid is treated as empty and erased before use.
 
 ## Ring
 
-A ring block holds 204 slots of 20 bytes after the header. `store` fills the
-slots of a block in ascending order and the blocks in ascending order of
-block number, from 17 back to 0.
+A ring block holds 204 slots of 20 bytes after the header. `store` fills the slots of a block in ascending order and the blocks in ascending order of block number, from 17 back to 0.
 
 ### Slot
 
@@ -60,14 +54,10 @@ The bytes of an absent quantity are `0x00`.
 
 ### Starting a new block
 
-When the last slot of the newest block is used, the next reading needs the
-following block.
+When the last slot of the newest block is used, the next reading needs the following block.
 
-1. If that block is not empty, `store` erases it. It is the block with the
-   lowest `serial`. Stored readings in it are discarded; `store` sets the
-   "discarded" flag of its summary if any of them was not yet delivered.
-2. `store` writes the header with `serial` one higher than that of the
-   newest block.
+1. If that block is not empty, `store` erases it. It is the block with the lowest `serial`. Stored readings in it are discarded; `store` sets the "discarded" flag of its summary if any of them was not yet delivered.
+2. `store` writes the header with `serial` one higher than that of the newest block.
 3. `store` writes the reading into the first slot.
 
 ## Journal
@@ -79,30 +69,22 @@ A journal block holds 510 entries of 8 bytes after the header.
 | 0 | 4 | `delivered_up_to` | Sequence number of a mark |
 | 4 | 4 | `inverse` | Every bit of `delivered_up_to` inverted |
 
-- A mark is the next free entry of the journal block with the higher
-  `serial`.
+- A mark is the next free entry of the journal block with the higher `serial`.
 - An entry whose two fields do not match is skipped.
 - The valid mark is the highest `delivered_up_to` of all valid entries.
-- When the block is full, `store` erases the other journal block, writes its
-  header with the next `serial`, and writes the mark as its first entry.
-  The full block keeps the previous mark until then.
+- When the block is full, `store` erases the other journal block, writes its header with the next `serial`, and writes the mark as its first entry. The full block keeps the previous mark until then.
 - `store` writes no entry for a mark that is not higher than the valid mark.
 
 ## What is stored
 
-A reading of the ring is stored if its sequence number is higher than the
-valid mark. Because a mark covers only readings that were received before
-it, discarding an old ring block never brings a delivered reading back.
+A reading of the ring is stored if its sequence number is higher than the valid mark. Because a mark covers only readings that were received before it, discarding an old ring block never brings a delivered reading back.
 
 ## Recovery at start
 
 1. Read the 20 headers. Erase a block whose header is invalid.
-2. The ring block with the highest `serial` is the newest. Its first free
-   slot is where the next reading goes. If no ring block has a header,
-   the ring is empty and starts at block 0.
+2. The ring block with the highest `serial` is the newest. Its first free slot is where the next reading goes. If no ring block has a header, the ring is empty and starts at block 0.
 3. The valid mark is taken from both journal blocks.
-4. Count the readings above the valid mark, and note the lowest and the
-   highest sequence number among them.
+4. Count the readings above the valid mark, and note the lowest and the highest sequence number among them.
 
 Recovery reads at most 80 kB and writes nothing unless a block is invalid.
 
@@ -119,9 +101,7 @@ Recovery reads at most 80 kB and writes nothing unless a block is invalid.
 
 ## Examples
 
-The reading with sequence number 3 145 825, tick count 12 / 86 405,
-41.5 %, 21.4 °C and 12 000 lux as a slot; a ring block header with
-`serial` 7; the journal entry of a mark at 3 145 824:
+The reading with sequence number 3 145 825, tick count 12 / 86 405, 41.5 %, 21.4 °C and 12 000 lux as a slot; a ring block header with `serial` 7; the journal entry of a mark at 3 145 824:
 
 ```text
 A5 07 0C 00 61 00 30 00 85 51 01 00 9F 01 D6 00 E0 2E 00 EE
@@ -138,4 +118,3 @@ A5 07 0C 00 61 00 30 00 85 51 01 00 9F 01 D6 00 E0 2E 00 EE
 | Power was cut while the journal changed blocks | One full journal block; the other erased, or with a header and no entry | The valid mark is the highest of the full block |
 | The mark at 3 145 824 is given again | | No entry is written |
 | All 3 672 slots hold stored readings and one more arrives | | The block with the lowest `serial` is erased: 204 readings are discarded, the summary says so, 3 469 are stored |
-

@@ -38,16 +38,16 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| reading-events | events |  | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events | [contract](../../../ingest/docs/references/reading-events.md) |  |
-| plants-api | http |  | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api | [contract](../../../plants/docs/references/plants-api.md) |  |
-| push | http |  | outside the project, as need `push-service` of the root | | | |
-| sql-db | db |  | [cloud/platform](../../../../platform/README.md) (planned) | sql-db | [contract](../../../../platform/docs/references/sql-db.md) |  |
-| event-bus | queue |  | [cloud/platform](../../../../platform/README.md) (planned) | event-bus | [contract](../../../../platform/docs/references/event-bus.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| reading-events | events | [contract](../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events |  |
+| plants-api | http | [contract](../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api |  |
+| push | http | [contract](../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
+| sql-db | db | [contract](../../../../docs/references/sql-db.md) | [cloud/platform](../../../../platform/README.md) (planned) | sql-db |  |
+| event-bus | queue | [contract](../../../../docs/references/event-bus.md) | [cloud/platform](../../../../platform/README.md) (planned) | event-bus |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| alerts-api | http | [contract](../references/alerts-api.md) |  | [cloud/services/gateway](../../../gateway/README.md) (planned) | alerts-api |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| alerts-api | http | [contract](../../../../docs/references/alerts-api.md) |  | [cloud/services/gateway](../../../gateway/README.md) (planned) | alerts-api |

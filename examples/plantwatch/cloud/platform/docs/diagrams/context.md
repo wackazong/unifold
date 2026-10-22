@@ -35,16 +35,16 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| container-host | infrastructure |  | outside the project, as need `container-host` of the root (passed up by name) | | | |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| container-host | infrastructure | [contract](../../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root (passed up by name) | | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| event-bus | queue | [contract](../references/event-bus.md) |  | [cloud/services/ingest](../../../services/ingest/README.md) (planned) | event-bus |  |
-| event-bus | queue | [contract](../references/event-bus.md) |  | [cloud/services/plants](../../../services/plants/README.md) (planned) | event-bus |  |
-| event-bus | queue | [contract](../references/event-bus.md) |  | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | event-bus |  |
-| sql-db | db | [contract](../references/sql-db.md) |  | [cloud/services/plants](../../../services/plants/README.md) (planned) | sql-db |  |
-| sql-db | db | [contract](../references/sql-db.md) |  | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | sql-db |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| event-bus | queue | [contract](../../../docs/references/event-bus.md) |  | [cloud/services/ingest](../../../services/ingest/README.md) (planned) | event-bus |
+| event-bus | queue | [contract](../../../docs/references/event-bus.md) |  | [cloud/services/plants](../../../services/plants/README.md) (planned) | event-bus |
+| event-bus | queue | [contract](../../../docs/references/event-bus.md) |  | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | event-bus |
+| sql-db | db | [contract](../../../docs/references/sql-db.md) |  | [cloud/services/plants](../../../services/plants/README.md) (planned) | sql-db |
+| sql-db | db | [contract](../../../docs/references/sql-db.md) |  | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | sql-db |

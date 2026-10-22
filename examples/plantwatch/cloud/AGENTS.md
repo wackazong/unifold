@@ -1,15 +1,13 @@
 <!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: cloud
 
-unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
-says what the unit is for and why it is built this way. Everything else is in
-`docs/`.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
 
 ## Documents
 
 | Kind | Files |
 |---|---|
-| Look up | [conventions](docs/references/conventions.md), [events](docs/references/events.md), [glossary](docs/references/glossary.md), [public-api](docs/references/public-api/index.md), [service-calls](docs/references/service-calls.md) |
+| Look up | [alerts-api](docs/references/alerts-api.md), [conventions](docs/references/conventions.md), [event-bus](docs/references/event-bus.md), [events](docs/references/events.md), [glossary](docs/references/glossary.md), [ingest-api](docs/references/ingest-api.md), [plants-api](docs/references/plants-api.md), [reading-events](docs/references/reading-events.md), [service-calls](docs/references/service-calls.md), [sql-db](docs/references/sql-db.md) |
 | Understand | [context](docs/explanation/context.md), [requirements](docs/explanation/requirements.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [runtime](docs/explanation/runtime.md), [deployment](docs/explanation/deployment.md), [risks](docs/explanation/risks.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

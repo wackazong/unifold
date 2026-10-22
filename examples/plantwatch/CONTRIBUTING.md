@@ -1,24 +1,14 @@
 # Contributing to plantwatch
 
-plantwatch follows [unifold](https://unifold.md) at level `full`. Some
-folders are units: they have a `unifold.yaml` that says what the unit provides
-and needs, a `README.md` that describes it from outside and says why it is built
-the way it is, and a generated `AGENTS.md` that points to its documents.
+plantwatch follows [unifold](https://unifold.md) at level `full`. Some folders are units: they have a `unifold.yaml` that says what the unit provides and needs, a `README.md` that describes it from outside and says why it is built the way it is, and a generated `AGENTS.md` that points to its documents.
 
 ## If you change something in a unit
 
 1. Read the `README.md` and the `AGENTS.md` of the unit.
 2. Make your change.
-3. If behaviour that the `README.md` promises changed, change the
-   `README.md`. If a capability or a need was added, removed or renamed, change
-   the `unifold.yaml` of the unit and the `wiring` in the `unifold.yaml` of the
-   folder above.
-4. If you change a number that documents state, such as a limit or a
-   default, find the other places: run `show` on the unit to see who uses
-   its capabilities, run `cited-by` on the file that defines the number, and search
-   the repository for the old value in every notation (15 minutes, 900 s).
-5. If you changed a file that context items cite, correct each `Says`
-   that is no longer true (`cited-by` lists them), then run `unifold stamp`.
+3. If behaviour that the `README.md` promises changed, change the `README.md`. If a capability or a need was added, removed or renamed, change the `unifold.yaml` of the unit and the `wiring` in the `unifold.yaml` of the folder above.
+4. If you change a number that documents state, such as a limit or a default, find the other places: run `show` on the unit to see who uses its capabilities, run `cited-by` on the file that defines the number, and search the repository for the old value in every notation (15 minutes, 900 s).
+5. If you changed a file that context items cite, correct each `Says` that is no longer true (`cited-by` lists them), then run `unifold stamp`.
 6. Run the tool and commit what it writes with your change:
 
    ```sh
@@ -26,24 +16,16 @@ the way it is, and a generated `AGENTS.md` that points to its documents.
    unifold check
    ```
 
-   `unifold` is the reference tool of the standard: `uvx unifold`, or, from
-   a clone of the unifold repository,
-   `python3 docs/skills/unifold/scripts/unifold.py` (Python 3.9 or newer
-   with PyYAML).
+   `unifold` is the reference tool of the standard: `uvx unifold`, or, from a clone of the unifold repository, `python3 docs/skills/unifold/scripts/unifold.py` (Python 3.9 or newer with PyYAML).
 
 ## Decisions
 
-Choices with alternatives are recorded in `docs/decisions/` of the unit they
-concern, with `status: proposed`. A maintainer accepts a decision by setting
-`status: accepted` and naming the decision-makers. Every decision in this
-example is still `proposed`.
+Choices with alternatives are recorded in `docs/decisions/` of the unit they concern, with `status: proposed`. A maintainer accepts a decision by setting `status: accepted` and naming the decision-makers. Every decision in this example is still `proposed`.
 
 ## Rules you will meet
 
 - A file has at most 200 lines.
-- A unit does not name or link to its neighbours. What it wants from them is
-  a need in its `unifold.yaml`.
-- Files in `docs/diagrams/`, `docs/decisions/index.md` and every `AGENTS.md`
-  are generated. Do not edit them.
+- A unit does not name or link to its neighbours. What it wants from them is a need in its `unifold.yaml`.
+- Files in `docs/diagrams/`, `docs/decisions/index.md` and every `AGENTS.md` are generated. Do not edit them.
 
 The rules are explained at <https://unifold.md/rules>.

@@ -1,15 +1,13 @@
 <!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: ui
 
-unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
-says what the unit is for and why it is built this way. Everything else is in
-`docs/`.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
 
 ## Documents
 
 | Kind | Files |
 |---|---|
-| Look up | [app-ui](docs/references/app-ui.md), [conventions](docs/references/conventions.md), [glossary](docs/references/glossary.md), [plant-data](docs/references/plant-data.md), [presets](docs/references/presets.md) |
+| Look up | [conventions](docs/references/conventions.md), [glossary](docs/references/glossary.md), [presets](docs/references/presets.md), [screens](docs/references/screens.md) |
 | Understand | [context](docs/explanation/context.md), [invariants](docs/explanation/invariants.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

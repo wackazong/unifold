@@ -1,43 +1,21 @@
 # Reasoning of cloud
 
-The long form of the why in [README.md](../../README.md). Which services
-exist and how they are wired is shown in the
+The long form of the why in [README.md](../../README.md). Which services exist and how they are wired is shown in the
 [component diagram](../diagrams/component.md).
 
-**Accepting is separated from using.** A client is online rarely and
-briefly. The moment it uploads is the only chance to take its readings, so
-that path has as few dependencies as possible. The service that accepts
-readings validates them, recognises duplicates and announces each reading as
-an event. It calls nobody
+**Accepting is separated from using.** A client is online rarely and briefly. The moment it uploads is the only chance to take its readings, so that path has as few dependencies as possible. The service that accepts readings validates them, recognises duplicates and announces each reading as an event. It calls nobody
 ([0001](../decisions/0001-services-learn-about-readings-through-events.md)).
-It is also the only service that depends on the format of an uploaded
-reading. The others see readings only as events.
+It is also the only service that depends on the format of an uploaded reading. The others see readings only as events.
 
-**History and alerts are separate consumers.** Both follow the same events
-and neither waits for the other. A slow history query does not delay an
-alert, and a fault in evaluation does not lose history. Each consumer keeps
-its own position on the event stream and catches up after a restart.
+**History and alerts are separate consumers.** Both follow the same events and neither waits for the other. A slow history query does not delay an alert, and a fault in evaluation does not lose history. Each consumer keeps its own position on the event stream and catches up after a restart.
 
-**Evaluation asks for thresholds instead of copying them.** Thresholds
-change rarely and must be current when a reading is judged. A call for the
-plant of a reading is simpler than a second event stream for plant changes,
-and a short outage of the registry only delays evaluation, because the
-reading waits on the event bus.
+**Evaluation asks for thresholds instead of copying them.** Thresholds change rarely and must be current when a reading is judged. A call for the plant of a reading is simpler than a second event stream for plant changes, and a short outage of the registry only delays evaluation, because the reading waits on the event bus.
 
-**Data is private to a service.** Two services never share a table. What one
-needs from another is a capability
-([0002](../decisions/0002-each-service-owns-its-data.md)). This keeps a schema
-change inside one service.
+**Data is private to a service.** Two services never share a table. What one needs from another is a capability ([0002](../decisions/0002-each-service-owns-its-data.md)). This keeps a schema change inside one service.
 
-**One door.** Authentication happens once, at the only service that is
-reachable from outside
-([0003](../decisions/0003-one-gateway-is-the-only-public-entry.md)). The
-services behind it stay free of token handling and are told the owner they
-act for ([service calls](../references/service-calls.md)).
+**One door.** Authentication happens once, at the only service that is reachable from outside ([0003](../decisions/0003-one-gateway-is-the-only-public-entry.md)). The services behind it stay free of token handling and are told the owner they act for ([service calls](../references/service-calls.md)).
 
-**Shared infrastructure has an owner.** The event bus and the database are
-operated in one place, [platform](../../platform/README.md). The services state
-what they need from it and do not configure it themselves.
+**Shared infrastructure has an owner.** The event bus and the database are operated in one place, [platform](../../platform/README.md). The services state what they need from it and do not configure it themselves.
 
 ## Trade-offs
 

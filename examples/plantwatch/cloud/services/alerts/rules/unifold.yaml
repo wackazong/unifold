@@ -5,9 +5,9 @@ capabilities:
   evaluation:
     kind: library
     summary: Decides for a reading whether an alert opens, stays or closes
-    contract: docs/references/evaluation.md
+    contract: ../docs/references/evaluation.md
 needs:
   thresholds:
     kind: library
     summary: The plant a sensor stick is attached to, with its owner and thresholds
-    contract: docs/references/thresholds.md
+    contract: ../docs/references/thresholds.md

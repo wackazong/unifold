@@ -1,7 +1,6 @@
 # Glossary of alerts
 
-The terms that have one fixed meaning inside `alerts` and that are not
-defined above it. Terms from above are cited in [context](../explanation/context.md).
+The terms that have one fixed meaning inside `alerts` and that are not defined above it. Terms from above are cited in [context](../explanation/context.md).
 
 | Term | Meaning |
 |---|---|

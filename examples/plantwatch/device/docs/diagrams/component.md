@@ -15,7 +15,6 @@ flowchart LR
   end
   n_device___soil_dprobe{{"soil-probe"}}
   n_device___ambient_dsensor{{"ambient-sensor"}}
-  n_device___link_dprofile{{"link-profile"}}
   p_device___ble_dlink(["ble-link"])
   u_device__sampling -->|"sensor-io, timer"| u_device__hal
   u_device__store -->|"flash"| u_device__hal
@@ -25,7 +24,6 @@ flowchart LR
   u_device__link -->|"live-readings → readings"| u_device__sampling
   u_device__hal -->|"soil-probe"| n_device___soil_dprobe
   u_device__hal -->|"ambient-sensor"| n_device___ambient_dsensor
-  u_device__link -->|"link-profile"| n_device___link_dprofile
   p_device___ble_dlink --> u_device__link
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
@@ -55,4 +53,3 @@ flowchart LR
 | `link.live-readings` | `sampling.readings` |  |
 | `hal.soil-probe` | need `soil-probe` of `device` | passed up by name |
 | `hal.ambient-sensor` | need `ambient-sensor` of `device` | passed up by name |
-| `link.link-profile` | need `link-profile` of `device` | passed up by name |

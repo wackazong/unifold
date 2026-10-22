@@ -1,9 +1,6 @@
 # Glossary of device
 
-The terms that have one fixed meaning in the firmware and in all its
-parts. Terms of the whole project, such as reading, sequence number, tick
-count and central, are cited in [context](../explanation/context.md) and not repeated
-here.
+The terms that have one fixed meaning in the firmware and in all its parts. Terms of the whole project, such as reading, sequence number, tick count and central, are cited in [context](../explanation/context.md) and not repeated here.
 
 | Term | Meaning |
 |---|---|

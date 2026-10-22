@@ -10,16 +10,13 @@ needs:
   device-under-test:
     kind: protocol
     summary: Something that speaks the sensor stick's BLE protocol, real or simulated
+    contract: ../docs/references/ble-profile/index.md
   scenario-control:
     kind: http
     summary: Lets a test set sensor values and advance time; exists only with a simulated device
+    contract: ../docs/references/scenario-control.md
     optional: true
   cloud-api:
     kind: http
     summary: The public API, to check that readings arrive and alerts are raised
-  link-profile:
-    kind: specification
-    summary: The definition of the BLE services, to drive the device under test
-  reading-format:
-    kind: specification
-    summary: The format of a reading, to build the batches the tests upload
+    contract: ../docs/references/public-api/index.md

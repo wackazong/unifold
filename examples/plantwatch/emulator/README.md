@@ -1,48 +1,22 @@
 # emulator
 
-`emulator` is a desktop program that behaves like a sensor stick. A central
-that connects to it over BLE finds the same service, the same procedures
-and the same kind of readings as on a sensor stick. The measured values
-come from a scenario instead of sensors, and time is simulated: a month of
-readings takes seconds. The program exists so that everything that talks
-to a sensor stick can be developed and tried out without hardware and
-without waiting.
+`emulator` is a desktop program that behaves like a sensor stick. A central that connects to it over BLE finds the same service, the same procedures and the same kind of readings as on a sensor stick. The measured values come from a scenario instead of sensors, and time is simulated: a month of readings takes seconds. The program exists so that everything that talks to a sensor stick can be developed and tried out without hardware and without waiting.
 
 ## Why
 
-A sensor stick is slow to work with: one reading in 15 minutes, a full
-memory after a month, and a board on the desk. The emulator exists to
-remove the board and the waiting and to keep everything else, so that what
-is developed against it also works with a sensor stick. It changes when
-the definition it implements changes, or when a situation has to be
-reproduced that no scenario can express yet.
+A sensor stick is slow to work with: one reading in 15 minutes, a full memory after a month, and a board on the desk. The emulator exists to remove the board and the waiting and to keep everything else, so that what is developed against it also works with a sensor stick. It changes when the definition it implements changes, or when a situation has to be reproduced that no scenario can express yet.
 
-That gives the program two faces. The radio face must be indistinguishable
-from a sensor stick, so it speaks real BLE and has nothing of its own. The
-control face is what a sensor stick does not have: a way to dictate values
-and time. It is kept off the radio, on a local HTTP port.
+That gives the program two faces. The radio face must be indistinguishable from a sensor stick, so it speaks real BLE and has nothing of its own. The control face is what a sensor stick does not have: a way to dictate values and time. It is kept off the radio, on a local HTTP port.
 
-The program is built from the profile definition alone. A second,
-independent reading of that text is half of the program's value: where it
-behaves differently from a sensor stick, either the text has a gap or one
-of the two is wrong.
+The program is built from the profile definition alone. A second, independent reading of that text is half of the program's value: where it behaves differently from a sensor stick, either the text has a gap or one of the two is wrong.
 
-The price: the host needs a Bluetooth controller, and the program says
-nothing about energy, memory wear or radio timing. What must stay true: the
-radio face follows the definition and nothing else, and a run is
-reproducible.
+The price: the host needs a Bluetooth controller, and the program says nothing about energy, memory wear or radio timing. What must stay true: the radio face follows the definition and nothing else, and a run is reproducible.
 
 ## Capabilities
 
 ### `ble-link`
 
-Through a Bluetooth controller of the host, the program does everything
-the definition behind `link-profile` requires of a sensor stick in version
-1.0: advertising, the service with all its characteristics, every
-procedure, every result code and the behaviour on failures. It sends
-nothing the definition does not name: no further characteristic and no
-further byte in the advertising data. Where the definition leaves a
-choice or sets only a bound, a central observes this:
+Through a Bluetooth controller of the host, the program does everything the BLE profile requires of a sensor stick in version 1.0: advertising, the service with all its characteristics, every procedure, every result code and the behaviour on failures. It sends nothing the definition does not name: no further characteristic and no further byte in the advertising data. Where the definition leaves a choice or sets only a bound, a central observes this:
 
 | Matter | Behaviour |
 |---|---|
@@ -60,42 +34,25 @@ choice or sets only a bound, a central observes this:
 
 Limits:
 
-- The host needs a Bluetooth LE controller that can act as a peripheral: a
-  real adapter, or a virtual controller. Without one the capability does not
-  exist.
-- Advertising, connections and the bonding handshake run in real time.
-  Sampling, the tick count and the time in which bonding is open follow
-  simulated time.
-- A scenario can ask for bonding that is always open. The program then
-  departs from the definition in this one point.
+- The host needs a Bluetooth LE controller that can act as a peripheral: a real adapter, or a virtual controller. Without one the capability does not exist.
+- Advertising, connections and the bonding handshake run in real time. Sampling, the tick count and the time in which bonding is open follow simulated time.
+- A scenario can ask for bonding that is always open. The program then departs from the definition in this one point.
 - One process simulates one sensor stick.
-- At start the program loads the built-in scenario `steady` (constant
-  mid-range values, sampling interval 900 s) and runs simulated time at
-  rate 1. It then behaves like a sensor stick with nobody controlling it.
-  Loading a scenario replaces `steady`.
+- At start the program loads the built-in scenario `steady` (constant mid-range values, sampling interval 900 s) and runs simulated time at rate 1. It then behaves like a sensor stick with nobody controlling it. Loading a scenario replaces `steady`.
 
 ### `scenario-control`
 
-An HTTP API on the local machine. A client loads a scenario, moves
-simulated time forward, takes the simulated sensor stick out of radio range
-or cuts a transfer, and looks at what the program has done.
+An HTTP API on the local machine. A client loads a scenario, moves simulated time forward, takes the simulated sensor stick out of radio range or cuts a transfer, and looks at what the program has done.
 
 What a client can rely on:
 
-- Every request states an absolute target. A repeated request gives the
-  same response and changes nothing.
-- When a request that moves time has returned, every reading due up to the
-  new time is taken and visible on the radio link. Moving time by 30 days
-  at the default interval, 2 880 readings, takes at most 5 s.
+- Every request states an absolute target. A repeated request gives the same response and changes nothing.
+- When a request that moves time has returned, every reading due up to the new time is taken and visible on the radio link. Moving time by 30 days at the default interval, 2 880 readings, takes at most 5 s.
 - Simulated time stands still unless a client moves it or sets a rate.
-- Loading a scenario gives a simulated sensor stick as new: nothing from
-  before is stored, no central is bonded, bonding is open.
-- The program remembers every reading it has taken in the scenario, also
-  after a central has confirmed it, so that a client can compare what
-  arrived elsewhere with what was sent.
+- Loading a scenario gives a simulated sensor stick as new: nothing from before is stored, no central is bonded, bonding is open.
+- The program remembers every reading it has taken in the scenario, also after a central has confirmed it, so that a client can compare what arrived elsewhere with what was sent.
 
-Limits: the API listens on `127.0.0.1` only, by default on port 8650, and
-has no authentication.
+Limits: the API listens on `127.0.0.1` only, by default on port 8650, and has no authentication.
 
 ```sh
 curl -X PUT localhost:8650/scenario --data @drying-out.scenario.json
@@ -103,35 +60,22 @@ curl -X PUT localhost:8650/time --data '{"elapsed_s": 259200}'
 curl localhost:8650/state
 ```
 
-Contract: [scenario-control API](docs/references/scenario-control-api.md).
-The scenario document is defined in the
-[scenario format](docs/references/scenario-format.md).
+Contract: [scenario control](../docs/references/scenario-control.md); it links the scenario format, the second part of this contract.
 
 ## Needs
 
-### `link-profile`
-
-The definition of what a sensor stick advertises, of its GATT service and
-characteristics, of the record that carries a reading, and of the
-procedures, for major version 1. The program is built from this text and
-from nothing else, so the text has to be complete for the peripheral side:
-every byte layout, every result code, and the behaviour on every failure.
-
 ## Out of scope
 
-- Raw sensor signals and calibration. A scenario states values in percent,
-  lux and degrees Celsius.
+- Raw sensor signals and calibration. A scenario states values in percent, lux and degrees Celsius.
 - Energy use, memory wear and radio timing of real hardware.
 - The role of a central.
-- Deciding whether a plant needs attention. The program produces readings
-  and knows no thresholds.
+- Deciding whether a plant needs attention. The program produces readings and knows no thresholds.
 
 ## Read next
 
-1. [docs/references/scenario-format.md](docs/references/scenario-format.md): the scenario document
-2. [docs/references/scenario-control-api.md](docs/references/scenario-control-api.md): the HTTP API
-3. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
-4. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above
-5. [Context diagram](docs/diagrams/context.md)
-6. [Decisions](docs/decisions/index.md)
-7. [Writing a scenario](docs/skills/emulator-write-a-scenario/SKILL.md)
+1. [scenario control](../docs/references/scenario-control.md): the HTTP API and, linked from it, the scenario document
+2. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
+3. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above
+4. [Context diagram](docs/diagrams/context.md)
+5. [Decisions](docs/decisions/index.md)
+6. [Writing a scenario](docs/skills/emulator-write-a-scenario/SKILL.md)

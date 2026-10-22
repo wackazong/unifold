@@ -5,15 +5,13 @@ capabilities:
   sensor-readings:
     kind: library
     summary: Readings fetched from every paired sensor stick in range, in order per sensor stick
-    contract: docs/references/sensor-readings.md
+    contract: ../docs/references/sensor-readings.md
   pairing:
     kind: library
     summary: Finds unpaired sensor sticks nearby and binds one to this phone
-    contract: docs/references/pairing.md
+    contract: ../docs/references/pairing.md
 needs:
   sensor-link:
     kind: protocol
     summary: A sensor stick in radio range that serves its readings over BLE
-  link-profile:
-    kind: specification
-    summary: The definition of the BLE services of a sensor stick
+    contract: ../../docs/references/ble-profile/index.md

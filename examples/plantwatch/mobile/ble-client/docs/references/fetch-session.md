@@ -1,10 +1,6 @@
 # Fetch session
 
-The course of one fetch from one sensor stick: its states, sizes and
-timeouts, what starts it, and how the client fills in what `link-profile`
-leaves open. The reasons are in the [decisions](../decisions/index.md), the
-terms in the [glossary](glossary.md). The procedures on the radio are those
-of `link-profile`; this file names them without repeating them.
+The course of one fetch from one sensor stick: its states, sizes and timeouts, what starts it, and how the client fills in what the BLE profile leaves open. The reasons are in the [decisions](../decisions/index.md), the terms in the [glossary](glossary.md). The procedures on the radio are those of the BLE profile; this file names them without repeating them.
 
 ## States
 
@@ -32,28 +28,28 @@ stateDiagram-v2
 | State | The client |
 |---|---|
 | Connecting | Connects to the sensor stick |
-| Preparing | Opens a session and takes a time reference, both as `link-profile` defines; checks the major version and that the sensor stick still accepts this phone |
+| Preparing | Opens a session and takes a time reference, both as the BLE profile defines; checks the major version and that the sensor stick still accepts this phone |
 | Requesting | Asks for the next chunk, starting at the oldest reading the sensor stick holds unconfirmed |
 | Delivering | Gives every reading its time, drops invalid readings, hands the batch to the consumer and waits |
 | Confirming | Confirms to the sensor stick up to the highest sequence number of the chunk, including dropped readings |
 | Reconnecting | Connects again and starts over at the oldest unconfirmed reading |
 | Done | Disconnects and records the fetch |
 
-A chunk in which every reading was dropped as invalid is confirmed without a
-delivery.
+A chunk in which every reading was dropped as invalid is confirmed without a delivery.
 
 ## Sizes and timeouts
 
 | Parameter | Value | Follows from |
 |---|---|---|
-| Readings per chunk | The largest batch the [contract](sensor-readings.md) allows | One chunk is fetched, delivered and confirmed inside one background slot |
+| Readings per chunk | The largest batch the [contract](../../../docs/references/sensor-readings.md) allows | One chunk is fetched, delivered and confirmed inside one background slot |
 | Connect timeout | 10 seconds | The owner waits on a screen for the outcome of "fetch now" |
-| Acknowledgement timeout | As the [contract](sensor-readings.md) states | Half a background slot |
+| Acknowledgement timeout | As the [contract](../../../docs/references/sensor-readings.md) states | Half a background slot |
 | Reconnect attempts per session | 3, without a pause | A sensor stick that is still in range answers at once |
 | Sessions at a time | 1 | One radio, short slots |
 | Disconnect after `Done` | At once | The sensor stick saves energy when no central is connected |
 
-The background slot and its length are cited in [context.md](../explanation/context.md).
+The background slot and its length are cited in
+[context.md](../explanation/context.md).
 
 ## What triggers a session
 
@@ -61,19 +57,15 @@ The background slot and its length are cited in [context.md](../explanation/cont
 |---|---|
 | The operating system reports a paired sensor stick | That one |
 | The operating system grants a slot of scheduled background work | All paired ones in range whose next reading is due |
-| "Fetch now" of the [sensor-readings](sensor-readings.md) capability | The named one, or all paired ones in range |
+| "Fetch now" of the [sensor-readings](../../../docs/references/sensor-readings.md) capability | The named one, or all paired ones in range |
 | The program comes onto the screen, or a consumer attaches while it is there | All paired ones in range |
 | A pairing succeeds | The new one |
 
-A trigger for a sensor stick that already has a session, or that is already
-in the queue, has no effect. When several sensor sticks wait, the client
-takes the one whose last fetch lies furthest back first. A sensor stick
-whose session ended with a failure goes to the end of the queue.
+A trigger for a sensor stick that already has a session, or that is already in the queue, has no effect. When several sensor sticks wait, the client takes the one whose last fetch lies furthest back first. A sensor stick whose session ended with a failure goes to the end of the queue.
 
 ## Holding back the standing request
 
-A sensor stick advertises whenever no central is connected. A standing
-request that is set again right after a fetch would connect again at once.
+A sensor stick advertises whenever no central is connected. A standing request that is set again right after a fetch would connect again at once.
 
 | Situation | The client |
 |---|---|
@@ -84,8 +76,7 @@ request that is set again right after a fetch would connect again at once.
 
 ## Time of a reading
 
-`link-profile` defines how a central computes the time of a reading from a
-time reference, and when a time counts as estimated. The client adds:
+the BLE profile defines how a central computes the time of a reading from a time reference, and when a time counts as estimated. The client adds:
 
 | Open point | The client |
 |---|---|
@@ -93,12 +84,9 @@ time reference, and when a time counts as estimated. The client adds:
 | The estimate for a reading of a boot without a reference | Start of the following boot minus the seconds between this reading and the last reading of its own boot that the sensor stick still holds |
 | The start of the following boot is itself unknown | It is estimated in the same way first |
 
-An estimate is the latest time the reading can have: it assumes that the
-earlier boot ended with its last reading and that the following boot began
-at once.
+An estimate is the latest time the reading can have: it assumes that the earlier boot ended with its last reading and that the following boot began at once.
 
-Examples, for a time reference "boot 12, 86 400 seconds" taken at
-2026-10-06T07:15:00Z, so that boot 12 began at 2026-10-05T07:15:00Z:
+Examples, for a time reference "boot 12, 86 400 seconds" taken at 2026-10-06T07:15:00Z, so that boot 12 began at 2026-10-05T07:15:00Z:
 
 | Reading | Anchors kept | Time | Estimated |
 |---|---|---|---|

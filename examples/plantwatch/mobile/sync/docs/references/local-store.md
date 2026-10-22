@@ -1,9 +1,6 @@
 # Local store
 
-What sync keeps on the phone, in which states, and for how long. The things
-themselves are defined in the data model cited in
-[context.md](../explanation/context.md). How the exchange with the server moves them
-between states is in [exchange.md](exchange.md).
+What sync keeps on the phone, in which states, and for how long. The things themselves are defined in the data model cited in [context.md](../explanation/context.md). How the exchange with the server moves them between states is in [exchange.md](exchange.md).
 
 ## What is kept
 
@@ -16,8 +13,7 @@ between states is in [exchange.md](exchange.md).
 | Session | Nothing; there is at most one | Whether the server has created the owner yet |
 | Exchange record | Nothing; there is one | Time of the last success, the last failure, the current pause |
 
-The token of the session is kept in the phone's protected storage, not in
-the store.
+The token of the session is kept in the phone's protected storage, not in the store.
 
 ## Upload state of a reading
 
@@ -37,15 +33,11 @@ stateDiagram-v2
 | `confirmed` | No | Yes | When older than 90 days |
 | `refused` | No | Yes | When older than 90 days |
 
-A reading that arrives a second time, from a sensor stick or from the
-server, changes nothing in the store except this: a `fetched` reading that
-arrives from the server as history becomes `confirmed`.
+A reading that arrives a second time, from a sensor stick or from the server, changes nothing in the store except this: a `fetched` reading that arrives from the server as history becomes `confirmed`.
 
 ## Waiting change of a plant
 
-The store keeps at most one waiting change per plant. It names the settings
-the owner changed since the plant was last `in step`, with their newest
-values. A further change of the same plant is merged into it.
+The store keeps at most one waiting change per plant. It names the settings the owner changed since the plant was last `in step`, with their newest values. A further change of the same plant is merged into it.
 
 | Waiting change | Sent as |
 |---|---|
@@ -78,12 +70,6 @@ sync removes expired items once a day and after each exchange.
 
 ## Durability
 
-- A write is complete when it has reached durable storage. Only then does
-  sync acknowledge a batch or return from a command. For a batch of up to
-  500 readings this takes at most 2 seconds.
-- A batch of readings is stored in one transaction: all of its readings or
-  none.
-- The store has a layout version. On start, sync migrates an older layout
-  step by step to the current one before it answers any query. It refuses
-  to open a layout that is newer than itself and reports this as a failure
-  of every query and command.
+- A write is complete when it has reached durable storage. Only then does sync acknowledge a batch or return from a command. For a batch of up to 500 readings this takes at most 2 seconds.
+- A batch of readings is stored in one transaction: all of its readings or none.
+- The store has a layout version. On start, sync migrates an older layout step by step to the current one before it answers any query. It refuses to open a layout that is newer than itself and reports this as a failure of every query and command.

@@ -1,9 +1,6 @@
 # Contract of `test-report`
 
-The file a run of the rig produces, and the exit status that goes with it.
-Readers are developers and the tools of a CI system that understand JUnit
-XML. The tests are listed in the [test catalogue](test-catalogue.md), the
-configurations in [configurations.md](configurations.md).
+The file a run of the rig produces, and the exit status that goes with it. Readers are developers and the tools of a CI system that understand JUnit XML. The tests are listed in the [test catalogue](test-catalogue.md), the configurations in [configurations.md](configurations.md).
 
 ## The file
 
@@ -54,8 +51,8 @@ A `testcase` without `skipped`, `failure` or `error` has passed.
 | `configuration` | `simulated` or `real` |
 | `sensor-id` | Sensor id of the device under test |
 | `protocol-version` | The version of the radio protocol the device states |
-| `link-profile-version` | The version of `link-profile` the rig implements |
-| `reading-format-version` | The version of `reading-format` the rig uploads |
+| `ble-profile-version` | The version of the BLE profile the rig implements |
+| `reading-schema-version` | The version of the reading schema the rig uploads |
 | `api-host` | Host name of the public API under test, without path or token |
 | `rig-version` | Version of the rig |
 
@@ -68,8 +65,7 @@ A `testcase` without `skipped`, `failure` or `error` has passed.
 | Error, `depends on` | The test continues a test that did not pass | ALERT-02 after a failed ALERT-01 |
 | Error, `rig` | The rig itself failed | An unexpected internal fault |
 
-A deviation of the device under test from `link-profile` that prevents a
-test from being carried out is a failure of that test, not an error.
+A deviation of the device under test from the BLE profile that prevents a test from being carried out is a failure of that test, not an error.
 
 ## Example
 
@@ -95,8 +91,7 @@ test from being carried out is a failure of that test, not an error.
 </testsuites>
 ```
 
-The example is shortened: a real report contains every test of the group
-and all properties.
+The example is shortened: a real report contains every test of the group and all properties.
 
 ## Exit status
 
@@ -110,10 +105,6 @@ Skipped tests do not change the exit status.
 
 ## Stability
 
-- The id at the start of a `testcase` name never changes and is never
-  reused. Tools that track a test over time match on the id.
-- New properties and new tests may be added at any time. Readers ignore
-  what they do not know.
-- No token, no owner's data other than the rig's own test plants, and
-  no value of a setting other than those listed under "Properties" appears
-  in the file.
+- The id at the start of a `testcase` name never changes and is never reused. Tools that track a test over time match on the id.
+- New properties and new tests may be added at any time. Readers ignore what they do not know.
+- No token, no owner's data other than the rig's own test plants, and no value of a setting other than those listed under "Properties" appears in the file.

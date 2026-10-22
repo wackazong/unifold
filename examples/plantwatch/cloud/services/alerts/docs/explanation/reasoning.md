@@ -1,33 +1,18 @@
 # Reasoning of alerts
 
-The long form of the why in [README.md](../../README.md). Which children
-exist and how they are wired is shown in the
+The long form of the why in [README.md](../../README.md). Which children exist and how they are wired is shown in the
 [component diagram](../diagrams/component.md).
 
-**Judging is pure.** Whether a reading opens or closes an alert depends on
-the reading, the thresholds and what was judged before. It does not depend
-on a database, a clock or a network. Kept as a library with no state of
-its own, [rules](../../rules/README.md) can be tested with tables of readings
-and changed without touching storage.
+**Judging is pure.** Whether a reading opens or closes an alert depends on the reading, the thresholds and what was judged before. It does not depend on a database, a clock or a network. Kept as a library with no state of its own, [rules](../../rules/README.md) can be tested with tables of readings and changed without touching storage.
 
-**What lies behind a network gets an adapter.** The registry of plants and
-the push service are reached over HTTP, can be slow and can fail. Each has
-an adapter that offers a plain function and hides the rest:
-[plant-lookup](../../plant-lookup/README.md) for plant and thresholds,
-[notifier](../../notifier/README.md) for telling the owner, including the
-wording. The side that calls an adapter states the function it expects in
-a contract of its own need; the adapter is held to it
+**What lies behind a network gets an adapter.** The registry of plants and the push service are reached over HTTP, can be slow and can fail. Each has an adapter that offers a plain function and hides the rest: [plant-lookup](../../plant-lookup/README.md) for plant and thresholds, [notifier](../../notifier/README.md) for telling the owner, including the wording. The side that calls an adapter states the function it expects in a contract of its own need; the adapter is held to it
 ([0003](../decisions/0003-thresholds-reach-the-judging-logic-through-an-adapter.md)).
 
-**One process holds the state and the order.**
-[server](../../server/README.md) is the only child that stores anything
-durably and the only one that knows in which order things happen. It
-calls the judging and the notifying; nothing calls it back.
+**One process holds the state and the order.** [server](../../server/README.md) is the only child that stores anything durably and the only one that knows in which order things happen. It calls the judging and the notifying; nothing calls it back.
 
 **Libraries, not services.** All parts are deployed as one program
 ([0001](../decisions/0001-evaluation-and-notification-are-libraries-beside-one-process.md)).
-An alert, the state that led to it and the fact that its notification is
-still owed are then written in one database transaction
+An alert, the state that led to it and the fact that its notification is still owed are then written in one database transaction
 ([0002](../decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md)).
 
 ## Trade-offs

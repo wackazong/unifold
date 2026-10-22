@@ -14,12 +14,10 @@ flowchart LR
     u_cloud__services__ingest["ingest"]
     u_cloud__services__plants["plants"]
   end
-  n_cloud___reading_dformat{{"reading-format"}}
   u_cloud__services__ingest -->|"event-bus"| u_cloud__platform
   u_cloud__services__gateway -->|"ingest-api"| u_cloud__services__ingest
   u_cloud__services__plants -->|"reading-events"| u_cloud__services__ingest
   u_cloud__services__alerts -->|"reading-events"| u_cloud__services__ingest
-  u_cloud__services__ingest -->|"reading-format"| n_cloud___reading_dformat
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
@@ -38,15 +36,14 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| event-bus | queue |  | [cloud/platform](../../../../platform/README.md) (planned) | event-bus | [contract](../../../../platform/docs/references/event-bus.md) |  |
-| reading-format | specification |  | [protocol](../../../../../protocol/README.md) (planned) (passed up by name) | reading-schema | [contract](../../../../../protocol/docs/references/reading-schema.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| event-bus | queue | [contract](../../../../docs/references/event-bus.md) | [cloud/platform](../../../../platform/README.md) (planned) | event-bus |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| ingest-api | http | [contract](../references/ingest-api.md) |  | [cloud/services/gateway](../../../gateway/README.md) (planned) | ingest-api |  |
-| reading-events | events | [contract](../references/reading-events.md) |  | [cloud/services/plants](../../../plants/README.md) (planned) | reading-events | [contract](../../../plants/docs/references/reading-events.md) |
-| reading-events | events | [contract](../references/reading-events.md) |  | [cloud/services/alerts/server](../../../alerts/server/README.md) (planned) | reading-events | [contract](../../../alerts/server/docs/references/reading-events.md) |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| ingest-api | http | [contract](../../../../docs/references/ingest-api.md) |  | [cloud/services/gateway](../../../gateway/README.md) (planned) | ingest-api |
+| reading-events | events | [contract](../../../../docs/references/reading-events.md) |  | [cloud/services/plants](../../../plants/README.md) (planned) | reading-events |
+| reading-events | events | [contract](../../../../docs/references/reading-events.md) |  | [cloud/services/alerts/server](../../../alerts/server/README.md) (planned) | reading-events |

@@ -1,8 +1,6 @@
 # Glossary of emulator
 
-The terms that have one fixed meaning inside this unit. Terms of the whole
-project, such as scenario, sensor stick, reading and central, are cited in
-[context](../explanation/context.md) and not repeated here.
+The terms that have one fixed meaning inside this unit. Terms of the whole project, such as scenario, sensor stick, reading and central, are cited in [context](../explanation/context.md) and not repeated here.
 
 | Term | Meaning |
 |---|---|

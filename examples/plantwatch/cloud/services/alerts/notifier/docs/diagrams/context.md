@@ -29,12 +29,12 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| push | http |  | outside the project, as need `push-service` of the root (passed up by name) | | | |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| push | http | [contract](../../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root (passed up by name) | | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| notification | library | [contract](../references/notification.md) |  | [cloud/services/alerts/server](../../../server/README.md) (planned) | notification | [contract](../../../server/docs/references/notification.md) |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| notification | library | [contract](../../../docs/references/notification.md) |  | [cloud/services/alerts/server](../../../server/README.md) (planned) | notification |

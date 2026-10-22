@@ -21,7 +21,6 @@ flowchart LR
   end
   n_cloud___push_dservice{{"push-service"}}
   n_cloud___container_dhost{{"container-host"}}
-  n_cloud___reading_dformat{{"reading-format"}}
   p_cloud___public_dapi(["public-api"])
   u_cloud__services__ingest -->|"event-bus"| u_cloud__platform
   u_cloud__services__plants -->|"event-bus, sql-db"| u_cloud__platform
@@ -34,7 +33,6 @@ flowchart LR
   u_cloud__services__alerts__plant_dlookup -->|"plants-api"| u_cloud__services__plants
   u_cloud__services__alerts__notifier -->|"push → push-service"| n_cloud___push_dservice
   u_cloud__platform -->|"container-host"| n_cloud___container_dhost
-  u_cloud__services__ingest -->|"reading-format"| n_cloud___reading_dformat
   p_cloud___public_dapi --> u_cloud__services__gateway
   u_cloud__services__alerts__server -->|"evaluation"| u_cloud__services__alerts__rules
   u_cloud__services__alerts__server -->|"notification"| u_cloud__services__alerts__notifier

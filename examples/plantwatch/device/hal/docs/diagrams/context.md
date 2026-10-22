@@ -37,16 +37,16 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| soil-probe | hardware |  | outside the project, as need `soil-probe` of the root (passed up by name) | | | |
-| ambient-sensor | hardware |  | outside the project, as need `ambient-sensor` of the root (passed up by name) | | | |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| soil-probe | hardware | [contract](../../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root (passed up by name) | | |
+| ambient-sensor | hardware | [contract](../../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root (passed up by name) | | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| sensor-io | library | [contract](../references/sensor-io.md) |  | [device/sampling](../../../sampling/README.md) (planned) | sensor-io | [contract](../../../sampling/docs/references/sensor-io.md) |
-| radio | library | [contract](../references/radio.md) |  | [device/link](../../../link/README.md) (planned) | radio | [contract](../../../link/docs/references/radio.md) |
-| flash | library | [contract](../references/flash.md) |  | [device/store](../../../store/README.md) (planned) | flash | [contract](../../../store/docs/references/flash.md) |
-| timer | library | [contract](../references/timer.md) |  | [device/sampling](../../../sampling/README.md) (planned) | timer | [contract](../../../sampling/docs/references/timer.md) |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| sensor-io | library | [contract](../../../docs/references/sensor-io.md) |  | [device/sampling](../../../sampling/README.md) (planned) | sensor-io |
+| radio | library | [contract](../../../docs/references/radio.md) |  | [device/link](../../../link/README.md) (planned) | radio |
+| flash | library | [contract](../../../docs/references/flash.md) |  | [device/store](../../../store/README.md) (planned) | flash |
+| timer | library | [contract](../../../docs/references/timer.md) |  | [device/sampling](../../../sampling/README.md) (planned) | timer |

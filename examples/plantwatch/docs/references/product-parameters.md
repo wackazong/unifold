@@ -1,7 +1,6 @@
 # Product parameters
 
-The numbers plantwatch version 1 is designed for. Units that depend on one of
-them cite it in their own context file. The terms are defined in the
+The numbers plantwatch version 1 is designed for. Units that depend on one of them cite it in their own context file. The terms are defined in the
 [glossary](glossary.md).
 
 | Parameter | Value | Why it matters |

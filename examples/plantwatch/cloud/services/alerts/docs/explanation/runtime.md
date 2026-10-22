@@ -1,14 +1,11 @@
 # Runtime of alerts
 
-Scenarios that cross the children of this unit and that no single child
-can tell. Which children exist is in the
+Scenarios that cross the children of this unit and that no single child can tell. Which children exist is in the
 [component diagram](../diagrams/component.md).
 
 ## The life of an alert
 
-An alert has two things that change: its state and the state of its
-notification. They are independent; an alert can close while its
-notification is still owed. The notification is sent all the same.
+An alert has two things that change: its state and the state of its notification. They are independent; an alert can close while its notification is still owed. The notification is sent all the same.
 
 ```mermaid
 stateDiagram-v2
@@ -30,9 +27,7 @@ stateDiagram-v2
     failed --> [*]
 ```
 
-The first diagram is the state of the alert, the second the state of its
-notification. The three ways to close set `closed_reason` to `recovered`,
-`threshold_changed` and `expired`.
+The first diagram is the state of the alert, the second the state of its notification. The three ways to close set `closed_reason` to `recovered`, `threshold_changed` and `expired`.
 
 | Transition | Decided by | Stored by |
 |---|---|---|
@@ -76,5 +71,4 @@ sequenceDiagram
     end
 ```
 
-The last block, notifying, is not tied to the event. It runs for every
-stored alert whose notification is pending, also after a restart.
+The last block, notifying, is not tied to the event. It runs for every stored alert whose notification is pending, also after a restart.

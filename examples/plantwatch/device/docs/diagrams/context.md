@@ -10,12 +10,10 @@ flowchart LR
   subgraph u_root["plantwatch"]
     u_device["device"]
     u_mobile["mobile"]
-    u_protocol["protocol"]
     u_test_drig["test-rig"]
   end
   n_root___soil_dprobe{{"soil-probe"}}
   n_root___ambient_dsensor{{"ambient-sensor"}}
-  u_device -->|"link-profile → ble-profile"| u_protocol
   u_mobile -->|"sensor-link → ble-link (real)"| u_device
   u_test_drig -->|"device-under-test → ble-link (real)"| u_device
   u_device -->|"soil-probe"| n_root___soil_dprobe
@@ -24,7 +22,7 @@ flowchart LR
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
   classDef plain stroke-dasharray:2 3
-  class u_device,u_mobile,u_protocol,u_test_drig planned
+  class u_device,u_mobile,u_test_drig planned
   class u_device focus
 ```
 
@@ -32,20 +30,18 @@ flowchart LR
 |---|---|---|---|---|
 | [device](../../README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](component.md) |
 | [mobile](../../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../../mobile/docs/diagrams/component.md) |
-| [protocol](../../../protocol/README.md) | specification | Defines the BLE profile of the sensor stick and the format of a reading | **planned** | [context](../../../protocol/docs/diagrams/context.md) |
 | [test-rig](../../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** | [context](../../../test-rig/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| soil-probe | hardware |  | outside the project, as need `soil-probe` of the root (passed up by name) | | | |
-| ambient-sensor | hardware |  | outside the project, as need `ambient-sensor` of the root (passed up by name) | | | |
-| link-profile | specification |  | [protocol](../../../protocol/README.md) (planned) | ble-profile | [contract](../../../protocol/docs/references/ble-profile/index.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| soil-probe | hardware | [contract](../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root (passed up by name) | | |
+| ambient-sensor | hardware | [contract](../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root (passed up by name) | | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| ble-link | protocol |  |  | [mobile/ble-client](../../../mobile/ble-client/README.md) (planned) (real) | sensor-link |  |
-| ble-link | protocol |  |  | [test-rig](../../../test-rig/README.md) (planned) (real) | device-under-test |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) |  | [mobile/ble-client](../../../mobile/ble-client/README.md) (planned) (real) | sensor-link |
+| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) |  | [test-rig](../../../test-rig/README.md) (planned) (real) | device-under-test |

@@ -1,8 +1,6 @@
 # What the owner can rely on: contract of `app-ui`
 
-The promises the app makes to its owner, independent of how a screen looks.
-The screens and the way between them are defined by
-[ui](../../ui/README.md). The things named here are those of the
+The promises the app makes to its owner, independent of how a screen looks. The screens and the way between them are defined by [ui](../../ui/README.md). The things named here are those of the
 [data model](data-model.md).
 
 ## What the owner can do
@@ -13,7 +11,7 @@ The screens and the way between them are defined by
 | See how a plant is doing | The latest reading and the history of the last 90 days for soil moisture, light and temperature |
 | Know how far to trust what is shown | The age of the plant's readings and the age of server data, on every screen that shows either |
 | Add a plant | Name, thresholds or a preset, and optionally a sensor stick; possible without a network connection |
-| Put a sensor stick to a plant | Pairing with a sensor stick in range and binding it to one plant; needs Bluetooth, no network connection. A sensor stick is open for pairing only for a few minutes after its cell has been put in, as `link-profile` defines; the app tells the owner to do that. |
+| Put a sensor stick to a plant | Pairing with a sensor stick in range and binding it to one plant; needs Bluetooth, no network connection. A sensor stick is open for pairing only for a few minutes after its cell has been put in, as the BLE profile defines; the app tells the owner to do that. |
 | Change or remove a plant | Possible without a network connection; the change is marked until the server has it |
 | React to a notification | A tap opens the plant the notification is about |
 | Start without an account | The app asks for no name and no password and works from the first start, also without a network connection. The server creates the owner at the first exchange. |
@@ -32,8 +30,7 @@ The screens and the way between them are defined by
 
 ## Examples
 
-Each case starts from a phone with one plant, "Monstera", whose sensor stick
-is paired, lower limit for soil moisture 30 %.
+Each case starts from a phone with one plant, "Monstera", whose sensor stick is paired, lower limit for soil moisture 30 %.
 
 | Case | Given | Expected |
 |---|---|---|
@@ -48,16 +45,11 @@ is paired, lower limit for soil moisture 30 %.
 
 ## What the app does not promise
 
-- A time by which a reading reaches the phone or the server. It depends on
-  the phone coming near the sensor stick.
-- Background fetching after a force-quit, with Bluetooth off or without the
-  permissions.
-- An alert on the phone before the server has raised it. A reading below a
-  threshold that is not uploaded yet shows up in the history, not as an
-  alert.
+- A time by which a reading reaches the phone or the server. It depends on the phone coming near the sensor stick.
+- Background fetching after a force-quit, with Bluetooth off or without the permissions.
+- An alert on the phone before the server has raised it. A reading below a threshold that is not uploaded yet shows up in the history, not as an alert.
 - Exact times for readings flagged as estimated.
-- A way back to the owner's data for a phone that has lost its token while
-  no other phone of the owner is at hand.
+- A way back to the owner's data for a phone that has lost its token while no other phone of the owner is at hand.
 
 ## Limits
 
@@ -71,7 +63,8 @@ is paired, lower limit for soil moisture 30 %.
 | Languages | English and German |
 | Screen orientation | Portrait |
 
-The first three values are inherited; see [context.md](../explanation/context.md).
+The first three values are inherited; see
+[context.md](../explanation/context.md).
 
 ## Permissions
 
@@ -81,8 +74,7 @@ The first three values are inherited; see [context.md](../explanation/context.md
 | Notifications | No notifications. Alerts are visible in the app. |
 | Camera | No joining an owner by scanning a code. Everything else works. |
 
-The app asks for a permission at the moment the owner first needs it and
-says why.
+The app asks for a permission at the moment the owner first needs it and says why.
 
 ## Accessibility
 

@@ -5,15 +5,17 @@ capabilities:
   app-ui:
     kind: ui
     summary: Shows the state of each plant and tells the user when to water it
-    contract: docs/references/app-ui.md
+    contract: ../docs/references/app-ui.md
 needs:
   plant-data:
     kind: library
     summary: Plants, history and alerts, readable offline and updated when they change
-    contract: docs/references/plant-data.md
+    contract: ../docs/references/plant-data.md
   pairing:
     kind: library
     summary: Finds a new sensor stick nearby and binds it to this phone
+    contract: ../docs/references/pairing.md
   push-service:
     kind: http
     summary: Registers this phone for the notifications of an owner and delivers them to it
+    contract: ../../docs/references/push-service.md

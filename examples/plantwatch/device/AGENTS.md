@@ -1,15 +1,13 @@
 <!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: device
 
-unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
-says what the unit is for and why it is built this way. Everything else is in
-`docs/`.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
 
 ## Documents
 
 | Kind | Files |
 |---|---|
-| Look up | [conventions](docs/references/conventions.md), [energy-budget](docs/references/energy-budget.md), [glossary](docs/references/glossary.md) |
+| Look up | [conventions](docs/references/conventions.md), [energy-budget](docs/references/energy-budget.md), [flash](docs/references/flash.md), [glossary](docs/references/glossary.md), [radio](docs/references/radio.md), [reading-log](docs/references/reading-log.md), [readings](docs/references/readings.md), [sensor-io](docs/references/sensor-io.md), [timer](docs/references/timer.md) |
 | Understand | [context](docs/explanation/context.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [runtime](docs/explanation/runtime.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

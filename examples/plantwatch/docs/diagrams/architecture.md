@@ -32,7 +32,6 @@ flowchart LR
       u_mobile__sync["sync"]
       u_mobile__ui["ui"]
     end
-    u_protocol["protocol"]
     u_test_drig["test-rig"]
   end
   n_root___push_dservice{{"push-service"}}
@@ -41,12 +40,6 @@ flowchart LR
   n_root___ambient_dsensor{{"ambient-sensor"}}
   p_root___app_dui(["app-ui"])
   p_root___test_dreport(["test-report"])
-  u_device__link -->|"link-profile → ble-profile"| u_protocol
-  u_emulator -->|"link-profile → ble-profile"| u_protocol
-  u_mobile__ble_dclient -->|"link-profile → ble-profile"| u_protocol
-  u_test_drig -->|"link-profile → ble-profile, reading-format → reading-schema"| u_protocol
-  u_cloud__services__ingest -->|"reading-format → reading-schema"| u_protocol
-  u_mobile__sync -->|"reading-format → reading-schema"| u_protocol
   u_mobile__ble_dclient -->|"sensor-link → ble-link (real)"| u_device__link
   u_mobile__ble_dclient -.->|"sensor-link → ble-link (simulated)"| u_emulator
   u_mobile__sync -->|"cloud-api → public-api"| u_cloud__services__gateway
@@ -86,7 +79,7 @@ flowchart LR
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
   classDef plain stroke-dasharray:2 3
-  class u_cloud,u_cloud__platform,u_cloud__services__alerts,u_cloud__services__alerts__notifier,u_cloud__services__alerts__plant_dlookup,u_cloud__services__alerts__rules,u_cloud__services__alerts__server,u_cloud__services__gateway,u_cloud__services__ingest,u_cloud__services__plants,u_device,u_device__hal,u_device__link,u_device__sampling,u_device__store,u_emulator,u_mobile,u_mobile__ble_dclient,u_mobile__sync,u_mobile__ui,u_protocol,u_test_drig planned
+  class u_cloud,u_cloud__platform,u_cloud__services__alerts,u_cloud__services__alerts__notifier,u_cloud__services__alerts__plant_dlookup,u_cloud__services__alerts__rules,u_cloud__services__alerts__server,u_cloud__services__gateway,u_cloud__services__ingest,u_cloud__services__plants,u_device,u_device__hal,u_device__link,u_device__sampling,u_device__store,u_emulator,u_mobile,u_mobile__ble_dclient,u_mobile__sync,u_mobile__ui,u_test_drig planned
 ```
 
 | Unit | Kind | Summary | Status | Diagram |
@@ -111,5 +104,4 @@ flowchart LR
 | [ble-client](../../mobile/ble-client/README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** | [context](../../mobile/ble-client/docs/diagrams/context.md) |
 | [sync](../../mobile/sync/README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** | [context](../../mobile/sync/docs/diagrams/context.md) |
 | [ui](../../mobile/ui/README.md) | library | Screens of the phone app | **planned** | [context](../../mobile/ui/docs/diagrams/context.md) |
-| [protocol](../../protocol/README.md) | specification | Defines the BLE profile of the sensor stick and the format of a reading | **planned** | [context](../../protocol/docs/diagrams/context.md) |
 | [test-rig](../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** | [context](../../test-rig/docs/diagrams/context.md) |

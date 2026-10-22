@@ -36,15 +36,15 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| reading-events | events | [contract](../references/reading-events.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events | [contract](../../../ingest/docs/references/reading-events.md) |  |
-| sql-db | db |  | [cloud/platform](../../../../platform/README.md) (planned) | sql-db | [contract](../../../../platform/docs/references/sql-db.md) |  |
-| event-bus | queue |  | [cloud/platform](../../../../platform/README.md) (planned) | event-bus | [contract](../../../../platform/docs/references/event-bus.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| reading-events | events | [contract](../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events |  |
+| sql-db | db | [contract](../../../../docs/references/sql-db.md) | [cloud/platform](../../../../platform/README.md) (planned) | sql-db |  |
+| event-bus | queue | [contract](../../../../docs/references/event-bus.md) | [cloud/platform](../../../../platform/README.md) (planned) | event-bus |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| plants-api | http | [contract](../references/plants-api.md) |  | [cloud/services/gateway](../../../gateway/README.md) (planned) | plants-api |  |
-| plants-api | http | [contract](../references/plants-api.md) |  | [cloud/services/alerts/plant-lookup](../../../alerts/plant-lookup/README.md) (planned) | plants-api |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| plants-api | http | [contract](../../../../docs/references/plants-api.md) |  | [cloud/services/gateway](../../../gateway/README.md) (planned) | plants-api |
+| plants-api | http | [contract](../../../../docs/references/plants-api.md) |  | [cloud/services/alerts/plant-lookup](../../../alerts/plant-lookup/README.md) (planned) | plants-api |

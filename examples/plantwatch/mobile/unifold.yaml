@@ -11,18 +11,15 @@ needs:
   sensor-link:
     kind: protocol
     summary: A sensor stick in radio range that serves its readings over BLE
+    contract: ../docs/references/ble-profile/index.md
   cloud-api:
     kind: http
     summary: Stores readings and returns plants, history and alerts
-  link-profile:
-    kind: specification
-    summary: The definition of the BLE services of a sensor stick
-  reading-format:
-    kind: specification
-    summary: The format in which readings are stored and uploaded
+    contract: ../docs/references/public-api/index.md
   push-service:
     kind: http
     summary: Registers this phone for the notifications of an owner and delivers them to it
+    contract: ../docs/references/push-service.md
 wiring:
   app-ui: ui.app-ui
   sync.sensor-readings: ble-client.sensor-readings

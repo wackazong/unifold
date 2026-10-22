@@ -1,15 +1,13 @@
 <!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: sync
 
-unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
-says what the unit is for and why it is built this way. Everything else is in
-`docs/`.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
 
 ## Documents
 
 | Kind | Files |
 |---|---|
-| Look up | [conventions](docs/references/conventions.md), [exchange](docs/references/exchange.md), [glossary](docs/references/glossary.md), [local-store](docs/references/local-store.md), [plant-data](docs/references/plant-data.md) |
+| Look up | [conventions](docs/references/conventions.md), [exchange](docs/references/exchange.md), [glossary](docs/references/glossary.md), [local-store](docs/references/local-store.md) |
 | Understand | [context](docs/explanation/context.md), [invariants](docs/explanation/invariants.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

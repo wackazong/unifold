@@ -5,11 +5,13 @@ capabilities:
   reading-log:
     kind: library
     summary: Stored readings oldest first, with a way to mark them as delivered
+    contract: ../docs/references/reading-log.md
 needs:
   flash:
     kind: library
     summary: Block storage that survives power loss
-    contract: docs/references/flash.md
+    contract: ../docs/references/flash.md
   readings:
     kind: library
     summary: Every new reading as soon as it has been taken
+    contract: ../docs/references/readings.md

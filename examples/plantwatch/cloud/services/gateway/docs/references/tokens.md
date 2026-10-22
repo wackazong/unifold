@@ -1,14 +1,11 @@
 # Tokens
 
-The form of the tokens that `gateway` issues and verifies. For a client a
-token is an opaque string; nothing here is part of the public contract. The
-reasons are in
+The form of the tokens that `gateway` issues and verifies. For a client a token is an opaque string; nothing here is part of the public contract. The reasons are in
 [0001](../decisions/0001-self-contained-signed-tokens.md).
 
 ## Form
 
-A token is a JSON Web Token ([RFC 7519](https://www.rfc-editor.org/rfc/rfc7519))
-with a signature of the kind HS256 (HMAC with SHA-256).
+A token is a JSON Web Token ([RFC 7519](https://www.rfc-editor.org/rfc/rfc7519)) with a signature of the kind HS256 (HMAC with SHA-256).
 
 | Place | Field | Content |
 |---|---|---|
@@ -31,9 +28,7 @@ A token carries nothing else: no name, no rights, no device.
 
 - A new token is always signed with the current key.
 - All instances have the same keys.
-- An earlier key stays configured until every token signed with it has
-  expired, that is 365 days after its last use for signing, unless it is
-  withdrawn because it leaked.
+- An earlier key stays configured until every token signed with it has expired, that is 365 days after its last use for signing, unless it is withdrawn because it leaked.
 
 ## Verification
 
@@ -49,8 +44,7 @@ A token is valid when all of this holds:
 | Issue | `iat` is not later than now plus 60 seconds |
 | Owner | `sub` is a UUID in lower-case text form |
 
-Every failure leads to the same answer, `401` `unauthenticated`, with a
-`message` that does not say which check failed.
+Every failure leads to the same answer, `401` `unauthenticated`, with a `message` that does not say which check failed.
 
 Examples, with one configured key `2026-10`:
 
@@ -66,10 +60,7 @@ Examples, with one configured key `2026-10`:
 
 ## What follows from the form
 
-- Verification needs no lookup. An instance verifies a token with its
-  configuration alone.
+- Verification needs no lookup. An instance verifies a token with its configuration alone.
 - No list of owners or of issued tokens exists.
-- A single token cannot be withdrawn. Withdrawing a key withdraws every
-  token signed with it.
-- Whoever knows a key that is still accepted can make a valid token for
-  any owner id.
+- A single token cannot be withdrawn. Withdrawing a key withdraws every token signed with it.
+- Whoever knows a key that is still accepted can make a valid token for any owner id.

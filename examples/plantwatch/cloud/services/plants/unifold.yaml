@@ -5,15 +5,17 @@ capabilities:
   plants-api:
     kind: http
     summary: Plants with their sensors, thresholds and history
-    contract: docs/references/plants-api.md
+    contract: ../../docs/references/plants-api.md
 needs:
   reading-events:
     kind: events
     summary: One event per accepted reading, at least once, to build the history of each plant
-    contract: docs/references/reading-events.md
+    contract: ../../docs/references/reading-events.md
   sql-db:
     kind: db
     summary: A schema of its own in a relational database with transactions
+    contract: ../../docs/references/sql-db.md
   event-bus:
     kind: queue
     summary: A durable subscription that delivers again what was not confirmed
+    contract: ../../docs/references/event-bus.md

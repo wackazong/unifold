@@ -12,11 +12,9 @@ flowchart LR
     u_device["device"]
     u_emulator["emulator"]
     u_mobile["mobile"]
-    u_protocol["protocol"]
   end
   n_root___push_dservice{{"push-service"}}
   p_root___app_dui(["app-ui"])
-  u_mobile -->|"link-profile → ble-profile, reading-format → reading-schema"| u_protocol
   u_mobile -->|"sensor-link → ble-link (real)"| u_device
   u_mobile -.->|"sensor-link → ble-link (simulated)"| u_emulator
   u_mobile -->|"cloud-api → public-api"| u_cloud
@@ -26,7 +24,7 @@ flowchart LR
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
   classDef plain stroke-dasharray:2 3
-  class u_cloud,u_device,u_emulator,u_mobile,u_protocol planned
+  class u_cloud,u_device,u_emulator,u_mobile planned
   class u_mobile focus
 ```
 
@@ -36,21 +34,18 @@ flowchart LR
 | [device](../../../device/README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../../device/docs/diagrams/component.md) |
 | [emulator](../../../emulator/README.md) | tool | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | **planned** | [context](../../../emulator/docs/diagrams/context.md) |
 | [mobile](../../README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](component.md) |
-| [protocol](../../../protocol/README.md) | specification | Defines the BLE profile of the sensor stick and the format of a reading | **planned** | [context](../../../protocol/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| sensor-link | protocol |  | [device/link](../../../device/link/README.md) (planned) (real) | ble-link |  |  |
-| sensor-link | protocol |  | [emulator](../../../emulator/README.md) (planned) (simulated) | ble-link |  |  |
-| cloud-api | http |  | [cloud/services/gateway](../../../cloud/services/gateway/README.md) (planned) | public-api | [contract](../../../cloud/services/gateway/docs/references/public-api.md) |  |
-| link-profile | specification |  | [protocol](../../../protocol/README.md) (planned) | ble-profile | [contract](../../../protocol/docs/references/ble-profile/index.md) |  |
-| reading-format | specification |  | [protocol](../../../protocol/README.md) (planned) | reading-schema | [contract](../../../protocol/docs/references/reading-schema.md) |  |
-| push-service | http |  | outside the project, as need `push-service` of the root | | | |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| sensor-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [device/link](../../../device/link/README.md) (planned) (real) | ble-link |  |
+| sensor-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [emulator](../../../emulator/README.md) (planned) (simulated) | ble-link |  |
+| cloud-api | http | [contract](../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../cloud/services/gateway/README.md) (planned) | public-api |  |
+| push-service | http | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| app-ui | ui | [contract](../references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | | |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| app-ui | ui | [contract](../references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | |

@@ -29,12 +29,12 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| plants-api | http |  | [cloud/services/plants](../../../../plants/README.md) (planned) (passed up by name) | plants-api | [contract](../../../../plants/docs/references/plants-api.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| plants-api | http | [contract](../../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../../plants/README.md) (planned) (passed up by name) | plants-api |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| thresholds | library | [contract](../references/thresholds.md) |  | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | thresholds | [contract](../../../rules/docs/references/thresholds.md) |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| thresholds | library | [contract](../../../docs/references/thresholds.md) |  | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | thresholds |

@@ -1,8 +1,6 @@
 # Energy budget
 
-Where the charge of the cell goes, and how much each activity of the
-firmware may use. All figures are planned values. They are replaced by
-measured ones when a board exists.
+Where the charge of the cell goes, and how much each activity of the firmware may use. All figures are planned values. They are replaced by measured ones when a board exists.
 
 ## What is available
 
@@ -26,9 +24,7 @@ At the default sampling interval of 900 s.
 | **Sum** | | | **12.4 µA** |
 | Reserve | | | 7.0 µA |
 
-With 12.4 µA the cell lasts about 19 months. The reserve covers cold,
-ageing of the cell, and the difference between planned and measured
-values.
+With 12.4 µA the cell lasts about 19 months. The reserve covers cold, ageing of the cell, and the difference between planned and measured values.
 
 ## What one event contains
 

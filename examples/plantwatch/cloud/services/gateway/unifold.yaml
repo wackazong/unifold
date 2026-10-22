@@ -5,14 +5,17 @@ capabilities:
   public-api:
     kind: http
     summary: Upload readings and query plants, history and alerts
-    contract: docs/references/public-api.md
+    contract: ../../../docs/references/public-api/index.md
 needs:
   ingest-api:
     kind: http
     summary: Serves the upload of a batch of readings as the public API defines it
+    contract: ../../docs/references/ingest-api.md
   plants-api:
     kind: http
     summary: Serves the operations on plants and history as the public API defines them
+    contract: ../../docs/references/plants-api.md
   alerts-api:
     kind: http
     summary: Serves the operations on alerts as the public API defines them
+    contract: ../../docs/references/alerts-api.md

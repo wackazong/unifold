@@ -38,16 +38,16 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| reading-events | events | [contract](../references/reading-events.md) | [cloud/services/ingest](../../../../ingest/README.md) (planned) (passed up by name) | reading-events | [contract](../../../../ingest/docs/references/reading-events.md) |  |
-| evaluation | library | [contract](../references/evaluation.md) | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | evaluation | [contract](../../../rules/docs/references/evaluation.md) |  |
-| notification | library | [contract](../references/notification.md) | [cloud/services/alerts/notifier](../../../notifier/README.md) (planned) | notification | [contract](../../../notifier/docs/references/notification.md) |  |
-| sql-db | db |  | [cloud/platform](../../../../../platform/README.md) (planned) (passed up by name) | sql-db | [contract](../../../../../platform/docs/references/sql-db.md) |  |
-| event-bus | queue |  | [cloud/platform](../../../../../platform/README.md) (planned) (passed up by name) | event-bus | [contract](../../../../../platform/docs/references/event-bus.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| reading-events | events | [contract](../../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../../ingest/README.md) (planned) (passed up by name) | reading-events |  |
+| evaluation | library | [contract](../../../docs/references/evaluation.md) | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | evaluation |  |
+| notification | library | [contract](../../../docs/references/notification.md) | [cloud/services/alerts/notifier](../../../notifier/README.md) (planned) | notification |  |
+| sql-db | db | [contract](../../../../../docs/references/sql-db.md) | [cloud/platform](../../../../../platform/README.md) (planned) (passed up by name) | sql-db |  |
+| event-bus | queue | [contract](../../../../../docs/references/event-bus.md) | [cloud/platform](../../../../../platform/README.md) (planned) (passed up by name) | event-bus |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| alerts-api | http |  |  | [cloud/services/gateway](../../../../gateway/README.md) (planned) | alerts-api |  |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| alerts-api | http | [contract](../../../../../docs/references/alerts-api.md) |  | [cloud/services/gateway](../../../../gateway/README.md) (planned) | alerts-api |

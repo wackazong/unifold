@@ -1,6 +1,5 @@
 unifold: "0.1"
 name: plantwatch
-level: full
 diagrams: all
 summary: Tells people when their house plants need water, using a sensor in the pot, a phone app and cloud services
 kind: system
@@ -10,31 +9,30 @@ capabilities:
   app-ui:
     kind: ui
     summary: Shows the state of each plant and tells the user when to water it
+    contract: mobile/docs/references/app-ui.md
     verified-by: test-rig/docs/references/test-catalogue.md
   test-report:
     kind: file
     summary: Result of the automated end-to-end tests, for developers and CI
+    contract: test-rig/docs/references/test-report.md
 needs:
   soil-probe:
     kind: hardware
     summary: Capacitive soil moisture probe with an analogue output
+    contract: docs/references/soil-probe.md
   ambient-sensor:
     kind: hardware
     summary: Light and temperature sensor on an I2C bus
+    contract: docs/references/ambient-sensor.md
   push-service:
     kind: http
     summary: Registers phones for an owner and delivers a notification to them, for example APNs or FCM
+    contract: docs/references/push-service.md
   container-host:
     kind: infrastructure
     summary: Runs containers, gives them a private network and persistent volumes
+    contract: docs/references/container-host.md
 wiring:
-  device.link-profile: protocol.ble-profile
-  emulator.link-profile: protocol.ble-profile
-  mobile.link-profile: protocol.ble-profile
-  test-rig.link-profile: protocol.ble-profile
-  cloud.reading-format: protocol.reading-schema
-  mobile.reading-format: protocol.reading-schema
-  test-rig.reading-format: protocol.reading-schema
   app-ui: mobile.app-ui
   test-report: test-rig.test-report
   mobile.sensor-link:

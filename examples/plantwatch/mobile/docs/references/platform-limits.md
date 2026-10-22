@@ -1,9 +1,6 @@
 # Platform limits
 
-What iOS and Android let the app do, as far as the design depends on it. The
-values are design assumptions for the system versions named here. None of
-them has been confirmed against the vendors' documentation or on a phone
-yet; confirm each one before code relies on it. The
+What iOS and Android let the app do, as far as the design depends on it. The values are design assumptions for the system versions named here. None of them has been confirmed against the vendors' documentation or on a phone yet; confirm each one before code relies on it. The
 [mobile-review-a-new-os-version](../skills/mobile-review-a-new-os-version/SKILL.md)
 skill keeps this file current.
 
@@ -43,8 +40,7 @@ skill keeps this file current.
 | Permission withdrawn | No wake-up | No wake-up |
 | Battery saver of the phone's manufacturer | Not applicable | May stop the app on some phones; differs per manufacturer |
 
-The app cannot notice any of these while it is stopped. It notices them when
-the owner opens it.
+The app cannot notice any of these while it is stopped. It notices them when the owner opens it.
 
 ## Permissions
 

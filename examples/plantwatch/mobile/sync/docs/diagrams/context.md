@@ -13,11 +13,9 @@ flowchart LR
     u_mobile__ui["ui"]
   end
   n_mobile___cloud_dapi{{"cloud-api"}}
-  n_mobile___reading_dformat{{"reading-format"}}
   u_mobile__sync -->|"sensor-readings"| u_mobile__ble_dclient
   u_mobile__ui -->|"plant-data"| u_mobile__sync
   u_mobile__sync -->|"cloud-api"| n_mobile___cloud_dapi
-  u_mobile__sync -->|"reading-format"| n_mobile___reading_dformat
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
@@ -34,14 +32,13 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |
-|---|---|---|---|---|---|---|
-| sensor-readings | library |  | [mobile/ble-client](../../../ble-client/README.md) (planned) | sensor-readings | [contract](../../../ble-client/docs/references/sensor-readings.md) |  |
-| cloud-api | http |  | [cloud/services/gateway](../../../../cloud/services/gateway/README.md) (planned) (passed up by name) | public-api | [contract](../../../../cloud/services/gateway/docs/references/public-api.md) |  |
-| reading-format | specification |  | [protocol](../../../../protocol/README.md) (planned) (passed up by name) | reading-schema | [contract](../../../../protocol/docs/references/reading-schema.md) |  |
+| Need | Kind | Contract | Provided by | Capability | Verified by |
+|---|---|---|---|---|---|
+| sensor-readings | library | [contract](../../../docs/references/sensor-readings.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | sensor-readings |  |
+| cloud-api | http | [contract](../../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../../cloud/services/gateway/README.md) (planned) (passed up by name) | public-api |  |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |
-|---|---|---|---|---|---|---|
-| plant-data | library | [contract](../references/plant-data.md) |  | [mobile/ui](../../../ui/README.md) (planned) | plant-data | [contract](../../../ui/docs/references/plant-data.md) |
+| Capability | Kind | Contract | Verified by | Used by | As need |
+|---|---|---|---|---|---|
+| plant-data | library | [contract](../../../docs/references/plant-data.md) |  | [mobile/ui](../../../ui/README.md) (planned) | plant-data |

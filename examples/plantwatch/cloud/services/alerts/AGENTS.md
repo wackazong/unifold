@@ -1,15 +1,13 @@
 <!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: alerts
 
-unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
-says what the unit is for and why it is built this way. Everything else is in
-`docs/`.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
 
 ## Documents
 
 | Kind | Files |
 |---|---|
-| Look up | [alerts-api](docs/references/alerts-api.md), [conventions](docs/references/conventions.md), [glossary](docs/references/glossary.md) |
+| Look up | [conventions](docs/references/conventions.md), [evaluation](docs/references/evaluation.md), [glossary](docs/references/glossary.md), [notification](docs/references/notification.md), [thresholds](docs/references/thresholds.md) |
 | Understand | [context](docs/explanation/context.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [runtime](docs/explanation/runtime.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

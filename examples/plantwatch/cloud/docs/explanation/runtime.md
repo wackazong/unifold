@@ -1,12 +1,10 @@
 # Runtime of cloud
 
-Scenarios that cross several services and that no single service can tell.
-Which services exist is in the [component diagram](../diagrams/component.md).
+Scenarios that cross several services and that no single service can tell. Which services exist is in the [component diagram](../diagrams/component.md).
 
 ## An upload that leads to an alert
 
-The sequence crosses several services and is therefore drawn here. It shows
-the direct children of `cloud` and the outside world.
+The sequence crosses several services and is therefore drawn here. It shows the direct children of `cloud` and the outside world.
 
 ```mermaid
 sequenceDiagram
@@ -42,5 +40,4 @@ sequenceDiagram
     G->>P: history of a plant
 ```
 
-The upload is answered before history and evaluation have seen the reading.
-The two branches run independently and in any order.
+The upload is answered before history and evaluation have seen the reading. The two branches run independently and in any order.

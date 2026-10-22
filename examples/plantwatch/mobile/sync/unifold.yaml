@@ -5,14 +5,13 @@ capabilities:
   plant-data:
     kind: library
     summary: Plants, history and alerts, readable offline and updated when they change
-    contract: docs/references/plant-data.md
+    contract: ../docs/references/plant-data.md
 needs:
   sensor-readings:
     kind: library
     summary: Readings fetched from sensor sticks, to store and upload
+    contract: ../docs/references/sensor-readings.md
   cloud-api:
     kind: http
     summary: Stores readings and returns plants, history and alerts
-  reading-format:
-    kind: specification
-    summary: The format in which readings are stored and uploaded
+    contract: ../../docs/references/public-api/index.md
