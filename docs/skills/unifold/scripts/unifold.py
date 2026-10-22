@@ -142,7 +142,7 @@ RULES = {
     "S1": ("error", "The root manifest states a version of the standard that this tool supports, as a string.",
            "Write `unifold: \"0.1\"` in the root `unifold.yaml`."),
     "S3": ("error", "Every unit has a `README.md`.",
-           "Write the file (template in the `unifold` skill)."),
+           "Write the file (the template is in the `unifold` skill)."),
     "S7": ("error", "Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`.",
            "Correct the front matter."),
     "S9": ("error", "A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has a valid `status` and an ISO `date`; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision.",
@@ -153,12 +153,12 @@ RULES = {
            "Correct the YAML. The unit and its wiring are not checked until it parses."),
     "M2": ("error", "A manifest has a one-line `summary` and otherwise only the keys, types and values of the standard; root-only keys are in the root; names of capabilities and needs use letters, digits, `-` and `_` and start with a letter or digit; no summary is a placeholder (`<...>`).",
            "Correct the key or value named in the message. Project-specific keys start with `x-`."),
-    "M7": ("error", "`contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and lies in this unit, a unit above it or a unit below it, never in a sibling.",
+    "M7": ("error", "`contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and lies in this unit, an ancestor or a descendant.",
            "Correct the path, create the file, or remove the key until there is something to point at. A definition that two siblings share lies in the unit above both."),
     "M10": ("warn", "No summary is still `TODO`.",
             "Replace `TODO` with one line that says what the unit, capability or need is."),
     "W1": ("error", "Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A connection joins two units; a folder is never a provider.",
-           "Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.capability`)."),
+           "Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`."),
     "W2": ("error", "Every need of every child has a provider, unless it is `optional`: a wiring line, or a need of the same name in the parent (implicit pass-up).",
            "Add `child.need: provider` to the parent's wiring, or declare a need of the same name in the parent to pass it up. Do not mark a need optional to silence this."),
     "W3": ("warn", "Every capability of a child is used: a wiring line names it as provider, a capability of the parent is implemented by it, or code of the parent itself is observed to depend on the child.",
@@ -188,7 +188,7 @@ RULES = {
     "T5": ("warn", "A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest.",
            "Rename or remove the section; the manifest is the list of capabilities and needs."),
     "G1": ("error", "Every generated file exists and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
-           "Run `unifold generate` (or `unifold check --fix`)."),
+           "Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command."),
     "D1": ("error", "Code in one unit depends on code in another unit only where a connection covers it. A dependency that only tests have is exempt.",
            "Declare the need and wire it, give the code a manifest if it has none, or remove the dependency from the code."),
     "D2": ("warn", "For every connection between two units whose dependencies are extracted, a dependency is found in code.",
@@ -786,6 +786,7 @@ class Project:
         self.units: list = []
         self.findings: list = []
         self.foreign: dict = {}                 # nested project path -> owning unit
+        self.plain: list = []                   # folders that are not units
         self.by_path: dict = {}
         self.root_unit = None
         self.usable = False                     # False: only `check` can say something
@@ -938,6 +939,8 @@ class Project:
                     owner.children.append(current)
                     self.units.append(current)
                     self.by_path[path] = current
+                else:
+                    self.plain.append(path)
                 stack.append((path, current))
 
     def owner_of(self, path: str):
@@ -1443,6 +1446,8 @@ def check_wiring(project: Project, unit: Unit, parent_uses=frozenset()):
 
     def contracts_agree(key: str, side: Unit, side_spec: dict, side_text: str,
                         other: Unit, other_spec: dict, other_text: str, line):
+        if other.broken:                     # its manifest is reported once, as M1
+            return
         mine, theirs = contract_of(side, side_spec), contract_of(other, other_spec)
         if mine is None and key not in reported:
             reported.add(key)
@@ -1991,6 +1996,14 @@ def leftovers(project: Project, expected: dict) -> list:
             marked = project.doc(path).generated
             if marked or os.path.dirname(path) == folder:
                 out.append((path, marked))
+    for folder in project.plain:                # a folder that stopped being a unit
+        diagrams = os.path.join(folder, "docs", "diagrams")
+        candidates = [os.path.join(folder, "AGENTS.md"), os.path.join(folder, "docs", "decisions", "index.md")]
+        if os.path.isdir(diagrams):
+            candidates += [os.path.join(diagrams, n) for n in sorted(os.listdir(diagrams)) if n.endswith(".md")]
+        for path in candidates:
+            if os.path.isfile(path) and project.doc(path).generated:
+                out.append((path, True))
     for stub_dir in STUB_DIRS:
         folder = os.path.join(project.root, *stub_dir.split("/"))
         if project.kind_of(folder) != "dir":

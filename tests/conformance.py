@@ -234,7 +234,7 @@ CASES = [
      ["info S12 docs/architecture.md", "info S12 docs/context.md"]),
     # ------------------------------------------------------------- M: manifest
     ("M1-invalid-yaml-in-child-reports-once", project(WIRED, {"a": NEEDS_X, "b": "capabilities: [x\n"}),
-     ["error M1 b/unifold.yaml", "error W11 unifold.yaml"]),
+     ["error M1 b/unifold.yaml"]),
     ("M1-duplicate-key", project("", {"a": "summary: again\n"}), ["error M1 a/unifold.yaml"]),
     ("M1-key-is-a-list", project("", {"a": "[a, b]: c\n"}), ["error M1 a/unifold.yaml"]),
     ("M1-broken-root-manifest", {"unifold.yaml": ROOT + "summary: twice\n"}, ["error M1 unifold.yaml"]),
@@ -428,6 +428,10 @@ CASES = [
      {"generate": False}),
     ("G1-leftover-generated-file", project(files={"docs/diagrams/component.md": MARK + "\n# Old\n"}),
      ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"], {"generate": False}),
+    ("G1-leftover-in-a-folder-that-is-no-longer-a-unit", project(files={
+        "old/AGENTS.md": MARK + "\n# AGENTS.md: old\n", "old/docs/diagrams/context.md": MARK + "\n# Old\n",
+        "old/notes/AGENTS.md": "# Hand-written\n"}),
+     ["error G1 AGENTS.md", "error G1 old/AGENTS.md", "error G1 old/docs/diagrams/context.md"], {"generate": False}),
     ("G1-hand-written-file-at-generated-path", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
         "docs/diagrams/component.md": "# Mine\n"}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md"],
