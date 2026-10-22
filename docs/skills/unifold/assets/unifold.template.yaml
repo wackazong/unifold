@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://unifold.md/0.1/unifold.schema.json
+# Manifest of a unit. The folder name is the unit's name. Only 'summary' is
+# required; delete what you do not need. Standard: https://unifold.md/spec
+summary: <what the unit is, in one line>
+# unifold: "0.1"         # root only: the version of the standard
+# name: <project-name>   # root only, and every root should set it; default: the folder name
+# level: full            # this unit and the units below it also follow https://unifold.md/documents
+# status: planned        # planned | active (default) | deprecated
+# kind: <library | service | app | adapter | ...>
+# owner: <team or person>
+capabilities:
+  <capability-name>: <what the capability offers, in one line>
+  <other-capability>:
+    summary: <what the capability offers, in one line>
+    kind: <library | http | events | cli | ...>
+    contract: <path or URL of the exact definition>
+    verified-by: <path or URL of the tests that check it>
+needs:
+  <need-name>: <what this unit expects from whoever provides it>
+  <other-need>:
+    summary: <what this unit expects from whoever provides it>
+    optional: true       # the need may stay unconnected
+wiring:                  # only in a unit that has child units
+  <child>.<need>: <other-child>.<capability>
+  <own-capability>: <child>.<capability>
+  <child>.<need>:                     # named alternatives; the first is the default
+    <name>: <child>.<capability>
+    <other-name>: <other-child>.<capability>

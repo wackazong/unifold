@@ -1,279 +1,1204 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT OR Apache-2.0
-"""Conformance cases for unifold checkers.
+"""Conformance suite for unifold tools.
 
-Each case is a small project (a mapping of file path to content) and the
-findings a checker must report for it, as "SEVERITY RULE file". The cases are
-data, so that another implementation can be tested against them:
+Two sorts of tests, both run through the command line only, so that another
+implementation can be tested with `--tool`:
 
-    python3 tests/conformance.py               run all cases against the reference tool
-    python3 tests/conformance.py --write DIR   write every case to DIR/<name>/ with expected.txt
-    python3 tests/conformance.py --tool CMD    test another checker; CMD gets: check --json PATH
-                                               (and --deps PATH/deps.json if the case has that file)
+- CASES: a small project (file path -> content) and the findings that
+  `check --json` must report for it, as "severity rule file". The comparison
+  is exact: nothing missing, nothing extra.
+- SCENARIOS: a sequence of commands with assertions (init, stamps, --fix,
+  JSON on failure, idempotent generation, MCP, ...).
+
+    python3 tests/conformance.py                 all tests against the reference tool
+    python3 tests/conformance.py NAME ...        only tests whose name contains NAME
+    python3 tests/conformance.py --tool "CMD"    test another implementation
+    python3 tests/conformance.py --write DIR     write every case to DIR/<name>/
+    python3 tests/conformance.py --list          names of all tests
+
+How a case runs: the files are written to an empty folder named `demo`; then
+`CMD generate demo` (unless the case says generate=False: the cases for rule
+G1, where the test is what `check` says about files nobody generated); then
+`CMD check --json [args] demo`. With `--tool`, the generator under test runs,
+never the reference generator.
+
+A meta test compares the rule table in docs/references/unifold/rules.md with
+the tool (`CMD rules --json`) and demands a failing case for every rule.
 """
 from __future__ import annotations
 
 import json
+import os
+import re
 import shlex
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-TOOL = Path(__file__).resolve().parents[1] / "doc/skills/check-docs/scripts/unifold.py"
+REPO = Path(__file__).resolve().parents[1]
+TOOL = REPO / "docs/skills/unifold/scripts/unifold.py"
+RULES_MD = REPO / "docs/references/unifold/rules.md"
 MARK = "<!-- unifold:generated - do not edit; run `unifold generate` -->"
 
+ROOT = 'unifold: "0.1"\nsummary: A demo\n'
+UNIT = "summary: A part\n"
+NEEDS_X = "needs:\n  x: {kind: library, summary: Needs x}\n"
+CAPABILITY_X = "capabilities:\n  x: {kind: library, summary: Offers x}\n"
+WIRED = "wiring:\n  a.x: b.x\n"
+README = "# {name}\n\nWhat it is for.\n"
+AGENTS = "# AGENTS.md: {name}\n\nunifold unit; run `unifold show` here.\n\n## Why\n\nBecause.\n"  # hand-written: not allowed at level full
+DECISION = "---\nstatus: {status}\ndate: {date}\n{more}---\n# A decision\n\nText.\n"
+ITEM = ("# Context of a\n\n### [demo/0001 A decision](../../../docs/decisions/0001-x.md)\n"
+        "{stamp}\nSays: x holds.\n\nHere: a does y.\n")
+CONTEXT = "a/docs/explanation/context.md"
+WHY = "# {name}\n\nWhat it is for.\n\n## Why\n\n" + "{lines}" + "\n## Out of scope\n\nNothing.\n"
+SKILL = "---\nname: do-it\ndescription: Does it.\n---\n# Do it\n"
+AGENTS_FIX = ("AGENTS.md is generated at level full. Move its content into README.md (`## Why`) and "
+              "docs/, delete the file, then run `unifold check --fix`.")
 
-def readme(manifest: str, extra: str = "", sidecar: bool = False) -> str:
-    name = manifest.split("unit:", 1)[1].split()[0]
-    body = f"# {name}\n\nText.\n\n- [Diagram](doc/diagrams/context.md)\n{extra}"
-    return body if sidecar else f"---\n{manifest.strip()}\n---\n{body}"
+
+def stamp(text: str) -> str:
+    """The stamp line for a cited text: SHA-256 of the text with every run of white space
+    collapsed to one space, first 8 hex digits."""
+    import hashlib
+    digest = hashlib.sha256(" ".join(text.split()).encode("utf-8")).hexdigest()[:8]
+    return f"<!-- unifold:cites sha={digest} -->\n"
 
 
-def agents(extra: str = "") -> str:
-    return f"# AGENTS.md\n\n## Why\n\nBecause.\n{extra}"
-
-
-def project(root_manifest: str = "", units: dict | None = None, files: dict | None = None,
-            root_extra: str = "", sidecar: bool = False) -> dict:
-    """A root unit with the files the standard requires, plus child units."""
-    manifest = 'unit: demo\nunifold: "0.1"\nsummary: A demo\nstatus: planned\n' + root_manifest
-    out = {
-        "README.md": readme(manifest, root_extra, sidecar),
-        "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"),
-        "doc/skills/read-docs/SKILL.md":
-            "---\nname: read-docs\ndescription: Read.\n---\n# Read\n\n"
-            "[standard](../../references/unifold/index.md)\n",
-        "doc/references/unifold/index.md": "# unifold\n",
-    }
-    if sidecar:
-        out["unit.yaml"] = manifest
-    for path, child_manifest in (units or {}).items():
-        full = f"unit: {path.rsplit('/', 1)[-1]}\nsummary: A part\nstatus: planned\n" + child_manifest
-        out[f"{path}/README.md"] = readme(full)
-        out[f"{path}/AGENTS.md"] = agents()
+def core(root: str = "", units: dict | None = None, files: dict | None = None) -> dict:
+    """A project at level core: manifests only."""
+    out = {"unifold.yaml": ROOT + root}
+    for path, manifest in (units or {}).items():
+        out[f"{path}/unifold.yaml"] = UNIT + manifest
     out.update(files or {})
     return {k: v for k, v in out.items() if v is not None}
 
 
-A_NEEDS_X = "needs:\n  x: {kind: library, summary: Needs x}\n"
-B_PROVIDES_X = "provides:\n  x: {kind: library, summary: Offers x}\n"
-WIRED = "wiring:\n  a.x: b.x\n"
-DECISION = "---\nstatus: {status}\ndate: 2026-10-07\n{more}---\n# A decision\n\nText.\n"
+def full(root: str = "", units: dict | None = None, files: dict | None = None) -> dict:
+    """A project at level full: every unit has a README.md. AGENTS.md is generated."""
+    out = core("level: full\n" + root, units)
+    out["README.md"] = README.format(name="demo")
+    for path in units or {}:
+        name = path.rsplit("/", 1)[-1]
+        out[f"{path}/README.md"] = README.format(name=name)
+    out.update(files or {})
+    return {k: v for k, v in out.items() if v is not None}
 
+
+def with_decision(status="proposed", more="", date="2026-10-07", name="0001-x.md") -> dict:
+    return {f"docs/decisions/{name}": DECISION.format(status=status, more=more, date=date)}
+
+
+def cargo(members: dict, root_package: str = "") -> dict:
+    """A tiny Cargo workspace. members: {folder: [path dependencies]} ('dev:x' = dev-dependency)."""
+    out = {"Cargo.toml": "[workspace]\nmembers = [%s]\n%s" % (
+        ", ".join(f'"{m}"' for m in members), root_package)}
+    for folder, deps in members.items():
+        name = folder.rsplit("/", 1)[-1]
+        normal = "".join(f'{d} = {{ path = "../{d}" }}\n' for d in deps if not d.startswith("dev:"))
+        dev = "".join(f'{d[4:]} = {{ path = "../{d[4:]}" }}\n' for d in deps if d.startswith("dev:"))
+        out[f"{folder}/Cargo.toml"] = (f'[package]\nname = "{name}"\nversion = "0.1.0"\n'
+                                       f'description = "The {name} crate."\n\n[dependencies]\n{normal}'
+                                       + (f"\n[dev-dependencies]\n{dev}" if dev else ""))
+        out[f"{folder}/src/lib.rs"] = "// code\n"
+    return out
+
+
+def npm(members: dict) -> dict:
+    """A tiny npm workspace. members: {folder: [dependencies on other members]}."""
+    out = {"package.json": json.dumps({"name": "demo", "private": True,
+                                       "workspaces": ["packages/*"]})}
+    for folder, deps in members.items():
+        out[f"packages/{folder}/package.json"] = json.dumps(
+            {"name": f"@demo/{folder}", "version": "1.0.0", "description": f"The {folder} package",
+             "dependencies": {f"@demo/{d}": "workspace:*" for d in deps}})
+    return out
+
+
+CARGO_AB = cargo({"a": ["b"], "b": []})
+A_NEEDS_B = "needs:\n  b: The b crate\n"
+B_CAPABILITY_B = "capabilities:\n  b: {kind: library, summary: The b crate}\n"
+CONTEXT_FILES = {**with_decision(), CONTEXT: ITEM.format(stamp="")}
+
+# name, files, expected findings, options (generate, args)
 CASES = [
-    ("single-unit", project(), []),
-    ("root-manifest-in-unit-yaml", project(sidecar=True), []),
-    ("two-units-wired", project(WIRED, {"a": A_NEEDS_X, "b": B_PROVIDES_X}), []),
-    ("unit-in-plain-folder", project(WIRED, {"parts/a": A_NEEDS_X, "parts/b": B_PROVIDES_X}), []),
-    ("need-not-wired", project("", {"a": A_NEEDS_X, "b": B_PROVIDES_X}),
-     ["E W2 README.md", "W W3 README.md"]),
-    ("optional-need-not-wired",
-     project("", {"a": "needs:\n  x: {kind: library, summary: s, optional: true}\n"}), []),
-    ("port-not-needed", project("", {"b": B_PROVIDES_X}), ["W W3 README.md"]),
-    ("unknown-endpoint", project("wiring:\n  a.x: b.y\n", {"a": A_NEEDS_X, "b": B_PROVIDES_X}),
-     ["E W1 README.md", "W W3 README.md"]),
-    ("kinds-differ",
-     project(WIRED, {"a": A_NEEDS_X, "b": "provides:\n  x: {kind: http, summary: s}\n"}),
-     ["W W4 README.md"]),
-    ("cycle", project("wiring:\n  a.x: b.x\n  b.y: a.y\n", {
-        "a": A_NEEDS_X + "provides:\n  y: {kind: library, summary: s}\n",
-        "b": B_PROVIDES_X + "needs:\n  y: {kind: library, summary: s}\n"}),
-     ["W W7 README.md"]),
-    ("alternatives", project("wiring:\n  a.x: {real: b.x, fake: c.x}\n",
-                             {"a": A_NEEDS_X, "b": B_PROVIDES_X, "c": B_PROVIDES_X}), []),
-    ("alternatives-as-list", project("wiring:\n  a.x: [b.x, c.x]\n",
-                                     {"a": A_NEEDS_X, "b": B_PROVIDES_X, "c": B_PROVIDES_X}),
-     ["E M4 README.md", "E W2 README.md", "W W3 README.md", "W W3 README.md"]),
-    ("plain-folder-provider", project("wiring:\n  a.x: ./legacy\n", {"a": A_NEEDS_X},
-                                      {"legacy/code.txt": "x\n"}), ["I W8 README.md"]),
-    ("delegation-and-pass-up", project(
-        "provides:\n  p: {kind: http, summary: s}\nneeds:\n  n: {kind: http, summary: s}\n"
+    # ---------------------------------------------------------------- clean
+    ("clean-single-unit", core(), []),
+    ("clean-two-units-wired", core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}), []),
+    ("clean-shorthand-entries",
+     core(WIRED, {"a": "needs:\n  x: Needs x\n", "b": "capabilities:\n  x: Offers x\n"}), []),
+    ("clean-unit-below-plain-folder", core(WIRED, {"parts/a": NEEDS_X, "parts/b": CAPABILITY_X}), []),
+    ("clean-implicit-pass-up", core("needs:\n  x: From outside\n", {"a": NEEDS_X}), []),
+    ("clean-implicit-pass-up-two-levels",
+     core("needs:\n  x: From outside\n", {"a": NEEDS_X, "a/deep": NEEDS_X}), []),
+    ("clean-explicit-line-wins-over-pass-up",
+     core("needs:\n  x: One\n  y: Two\nwiring:\n  a.x: y\n", {"a": NEEDS_X}), []),
+    ("clean-path-form-reference", core(
+        'wiring:\n  "left/utils.x": right/utils.x\n',
+        {"left/utils": NEEDS_X, "right/utils": CAPABILITY_X}), []),
+    ("clean-folder-name-with-dots", core(
+        "wiring:\n  my.pkg.x: other.lib.x\n", {"my.pkg": NEEDS_X, "other.lib": CAPABILITY_X}), []),
+    ("clean-alternatives", core("wiring:\n  a.x: {real: b.x, fake: c.x}\n",
+                                {"a": NEEDS_X, "b": CAPABILITY_X, "c": CAPABILITY_X}), []),
+    ("clean-two-children-one-provider", core("wiring:\n  a.x: c.x\n  b.x: c.x\n",
+                                             {"a": NEEDS_X, "b": NEEDS_X, "c": CAPABILITY_X}), []),
+    ("clean-optional-need-unconnected",
+     core("", {"a": "needs:\n  x: {summary: s, optional: true}\n"}), []),
+    ("clean-capability-implemented-by-child", core(
+        "capabilities:\n  p: {kind: http, summary: s}\nneeds:\n  n: {kind: http, summary: s}\n"
         "wiring:\n  p: a.p\n  a.n: n\n",
-        {"a": "provides:\n  p: {kind: http, summary: s}\nneeds:\n  n: {kind: http, summary: s}\n"}),
+        {"a": "capabilities:\n  p: {kind: http, summary: s}\nneeds:\n  n: {kind: http, summary: s}\n"}), []),
+    ("clean-kind-stated-on-one-side-only",
+     core(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: Offers x\n"}), []),
+    ("clean-ignored-folder", core("ignore: [vendor]\n", files={
+        "vendor/dep/unifold.yaml": "summary: [broken\n"}), []),
+    ("clean-nested-project-is-not-checked", core("", files={
+        "inner/unifold.yaml": 'unifold: "0.1"\nsummary: Inner\nwiring:\n  nobody.x: nothing.y\n'}), []),
+    ("clean-units-below-folder-named-target", core(WIRED, {"target/a": NEEDS_X, "target/b": CAPABILITY_X}), []),
+    ("clean-contract-elsewhere-in-project-and-url", core("", {
+        "a": "capabilities:\n  x:\n    summary: s\n    contract: ../shared/spec.md\n"
+             "    verified-by: https://example.org/ci\n"},
+        {"shared/spec.md": "# Spec\n", "unifold.yaml": ROOT + "capabilities:\n  x: s\nwiring:\n  x: a.x\n"}), []),
+    ("clean-extension-keys", core("x-team: red\n", {"a": "x-anything: {a: 1}\n"}), []),
+    ("clean-diagrams-none", core("diagrams: none\n" + WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}), [],
+     {"generate": False}),
+    ("clean-core-ignores-prose", core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
+        "a/README.md": "# a\n\n[b](../b/README.md) [gone](nowhere.md)\n" + "line\n" * 300}), []),
+    ("clean-full-level", full(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
+        "README.md": "# demo\n\n[a](a/README.md) and [b](b/)\n",
+        "a/README.md": "# a\n\n## Needs\n\n### `x`\n\nText. See [the map](docs/explanation/context.md).\n",
+        CONTEXT: "# Context of a\n\n### [demo](../../../README.md)\n"
+                 + stamp("# demo\n\n[a](a/README.md) and [b](b/)\n")
+                 + "\nSays: x.\n\nHere: y.\n"}), []),
+    ("clean-one-unit-at-full", core(WIRED, {"a": NEEDS_X + "level: full\n", "b": CAPABILITY_X}, {
+        "a/README.md": README.format(name="a")}), []),
+    ("clean-max-lines", full("max-lines: 400\n", files={
+        "docs/explanation/reasoning.md": "# Long\n" + "line\n" * 300}), []),
+    ("clean-all-document-kinds", full(files={
+        "docs/tutorials/first.md": "# First\n", "docs/references/api/index.md": "# API\n",
+        "docs/explanation/risks.md": "# Risks\n", "docs/skills/do-it/SKILL.md": SKILL,
+        **with_decision()}), []),
+    ("clean-code-agrees-with-wiring-cargo",
+     core("wiring:\n  a.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B}, CARGO_AB), []),
+    ("clean-code-agrees-with-wiring-npm", core(
+        "wiring:\n  a.b: b.b\n", {"packages/a": A_NEEDS_B, "packages/b": B_CAPABILITY_B},
+        npm({"a": ["b"], "b": []})), []),
+    ("clean-dev-dependency-needs-no-wiring", core(
+        "capabilities:\n  a: s\n  b: s\nwiring:\n  a: a.a\n  b: b.b\n",
+        {"a": "capabilities:\n  a: s\n", "b": B_CAPABILITY_B}, cargo({"a": ["dev:b"], "b": []})), []),
+    ("clean-own-code-uses-child", core("", {"b": B_CAPABILITY_B}, {
+        "Cargo.toml": '[workspace]\nmembers = ["b"]\n[package]\nname = "demo"\nversion = "0.1.0"\n'
+                      '[dependencies]\nb = { path = "b" }\n',
+        "b/Cargo.toml": '[package]\nname = "b"\nversion = "0.1.0"\n'}), []),
+    ("clean-given-dependency-list", core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
+        "a/main.c": "x\n", "b/lib.c": "x\n",
+        "deps.json": '[{"from": "a/main.c", "to": "b\\\\lib.c", "kind": "call", "evidence": "trace"}]\n'}),
+     [], {"args": ["--deps", "deps.json"]}),
+    # ------------------------------------------------------------ S: structure
+    ("S1-unsupported-version", {"unifold.yaml": 'unifold: "9.9"\nsummary: A demo\n'},
+     ["error S1 unifold.yaml"]),
+    ("S1-version-is-not-a-string", {"unifold.yaml": "unifold: 0.10\nsummary: A demo\n"},
+     ["error S1 unifold.yaml"]),
+    ("S3-full-without-readme", full(files={"README.md": None}), ["error S3 ."]),
+    ("S3-child-at-full-without-readme", core("", {"a": "level: full\n"}), ["error S3 a"]),
+    ("S7-skill-needs-no-link-from-agents-file", full(files={"docs/skills/do-it/SKILL.md": SKILL}), []),
+    ("S7-skill-name-differs", full(files={
+        "docs/skills/do-it/SKILL.md": "---\nname: other\ndescription: Does it.\n---\n# Do it\n"}),
+     ["error S7 docs/skills/do-it/SKILL.md"]),
+    ("S7-skill-without-description", full(files={
+        "docs/skills/do-it/SKILL.md": "---\nname: do-it\n---\n# Do it\n"}),
+     ["error S7 docs/skills/do-it/SKILL.md"]),
+    ("S9-accepted-without-decision-makers", full(files=with_decision("accepted")),
+     ["error S9 docs/decisions/0001-x.md"]),
+    ("S9-accepted-with-decision-makers",
+     full(files=with_decision("accepted", "decision-makers: [Ada]\n")), []),
+    ("S9-status-typo", full(files=with_decision("proposedd")), ["error S9 docs/decisions/0001-x.md"]),
+    ("S9-superseded-by-missing-decision", full(files=with_decision("superseded by 0099")),
+     ["error S9 docs/decisions/0001-x.md"]),
+    ("S9-date-is-not-a-date", full(files=with_decision(date="next sprint")),
+     ["error S9 docs/decisions/0001-x.md"]),
+    ("S9-duplicate-number", full(files={**with_decision(), **with_decision(name="0001-y.md")}),
+     ["error S9 docs/decisions/0001-y.md"]),
+    ("S9-file-name", full(files=with_decision(name="first-choice.md")),
+     ["error S9 docs/decisions/first-choice.md"]),
+    ("S12-entries-of-another-kind-in-docs", full(files={
+        "docs/notes.md": "# Notes\n", "docs/site/index.html": "<p>x</p>\n", "docs/.hidden": "x\n"}),
+     ["info S12 docs/notes.md", "info S12 docs/site"]),
+    ("S12-old-layout-context-and-architecture", full(files={
+        "docs/context.md": "# Context\n", "docs/architecture.md": "# Architecture\n"}),
+     ["info S12 docs/architecture.md", "info S12 docs/context.md"]),
+    ("S12-not-at-level-core", core(files={"docs/notes.md": "# Notes\n", "docs/site/index.html": "x\n"}), []),
+    # ------------------------------------------------------------- M: manifest
+    ("M1-invalid-yaml-in-child-reports-once", core(WIRED, {"a": NEEDS_X, "b": "capabilities: [x\n"}),
+     ["error M1 b/unifold.yaml"]),
+    ("M1-duplicate-key", core("", {"a": "summary: again\n"}), ["error M1 a/unifold.yaml"]),
+    ("M1-key-is-a-list", core("", {"a": "[a, b]: c\n"}), ["error M1 a/unifold.yaml"]),
+    ("M1-broken-root-manifest", {"unifold.yaml": ROOT + "summary: twice\n"}, ["error M1 unifold.yaml"]),
+    ("M1-children-of-broken-unit-keep-their-parent", core(
+        "", {"a": "wiring: [\n", "a/deep": NEEDS_X}), ["error M1 a/unifold.yaml"]),
+    ("M2-unknown-key", core("colour: blue\n"), ["error M2 unifold.yaml"]),
+    ("M2-old-key-unit", core("", {"a": "unit: a\n"}), ["error M2 a/unifold.yaml"]),
+    ("M2-no-summary", {"unifold.yaml": 'unifold: "0.1"\n'}, ["error M2 unifold.yaml"]),
+    ("M2-placeholder-summary", {"unifold.yaml": 'unifold: "0.1"\nsummary: <what the project is, in one line>\n'},
+     ["error M2 unifold.yaml"]),
+    ("M2-summary-over-two-lines", {"unifold.yaml": 'unifold: "0.1"\nsummary: |\n  one\n  two\n'},
+     ["error M2 unifold.yaml"]),
+    ("M2-root-key-in-child", core("", {"a": "ignore: [x]\n"}), ["error M2 a/unifold.yaml"]),
+    ("M2-status-as-boolean", core("status: yes\n"), ["error M2 unifold.yaml"]),
+    ("M2-level-value", core("level: complete\n"), ["error M2 unifold.yaml"]),
+    ("M2-ignore-as-text", core("ignore: vendor\n"), ["error M2 unifold.yaml"]),
+    ("M2-max-lines", core("max-lines: none\n"), ["error M2 unifold.yaml"]),
+    ("M2-capability-name-with-dot", core("capabilities:\n  v1.api: s\n"), ["error M2 unifold.yaml"]),
+    ("M2-capability-name-starts-with-underscore", core("capabilities:\n  _api: s\n"), ["error M2 unifold.yaml"]),
+    ("M2-placeholder-summary-of-a-need", core("needs:\n  x: <what is needed>\n"),
+     ["error M2 unifold.yaml"]),
+    ("M2-capabilities-as-list", core("capabilities: [x]\n"), ["error M2 unifold.yaml"]),
+    ("M2-capability-without-summary", core("capabilities:\n  x: {kind: http}\n"), ["error M2 unifold.yaml"]),
+    ("M2-optional-is-not-a-boolean",
+     core("", {"a": 'needs:\n  x: {summary: s, optional: "yes"}\n'}),
+     ["error M2 a/unifold.yaml", "error W2 unifold.yaml"]),
+    ("M2-optional-on-a-capability", core("capabilities:\n  x: {summary: s, optional: true}\n"),
+     ["error M2 unifold.yaml"]),
+    ("M2-conforms-to-unknown-need", core("capabilities:\n  x: {summary: s, conforms-to: spec}\n"),
+     ["error M2 unifold.yaml"]),
+    ("M2-comma-in-flow-summary", core("capabilities:\n  x: {summary: one, two words}\n"),
+     ["error M2 unifold.yaml"]),
+    ("M2-alternatives-as-list", core("wiring:\n  a.x: [b.x, c.x]\n",
+                                     {"a": NEEDS_X, "b": CAPABILITY_X, "c": CAPABILITY_X}),
+     ["error M2 unifold.yaml", "error W2 unifold.yaml", "warn W3 unifold.yaml", "warn W3 unifold.yaml"]),
+    ("M2-contract-as-list", core("capabilities:\n  x: {summary: s, contract: [a.md, b.md]}\n"),
+     ["error M2 unifold.yaml"]),
+    ("M7-contract-missing", core("capabilities:\n  x: {summary: s, contract: docs/api.md}\n"),
+     ["error M7 unifold.yaml"]),
+    ("M7-verified-by-missing", core("capabilities:\n  x: {summary: s, verified-by: tests}\n"),
+     ["error M7 unifold.yaml"]),
+    ("M7-contract-outside-project", core("capabilities:\n  x: {summary: s, contract: ../elsewhere.md}\n"),
+     ["error M7 unifold.yaml"]),
+    ("M10-summary-todo", core("", {"a": ""}, {"a/unifold.yaml": "summary: TODO\nneeds:\n  x: {summary: TODO, optional: true}\n"}),
+     ["warn M10 a/unifold.yaml"]),
+    # --------------------------------------------------------------- W: wiring
+    ("W1-unknown-capability", core("wiring:\n  a.x: b.y\n", {"a": NEEDS_X, "b": CAPABILITY_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml", "warn W3 unifold.yaml"]),
+    ("W1-unknown-child", core("wiring:\n  a.x: nobody.x\n", {"a": NEEDS_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml"]),
+    ("W1-wrong-direction", core("wiring:\n  b.x: a.x\n", {"a": NEEDS_X, "b": CAPABILITY_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml", "warn W3 unifold.yaml"]),
+    ("W1-reference-to-grandchild", core(
+        "wiring:\n  a.x: deep.x\n", {"a": NEEDS_X, "b": "", "b/deep": CAPABILITY_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml", "warn W3 b/unifold.yaml"]),
+    ("W1-capability-wired-to-own-need", core("capabilities:\n  p: s\nneeds:\n  n: s\nwiring:\n  p: n\n"),
+     ["error W1 unifold.yaml"]),
+    ("W1-ambiguous-folder-name", core(
+        "wiring:\n  utils.x: other.x\n", {"left/utils": NEEDS_X, "right/utils": "", "other": CAPABILITY_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml", "warn W3 unifold.yaml"]),
+    ("W1-star-key-not-allowed", core('wiring:\n  "*.x": c.x\n',
+                                     {"a": NEEDS_X, "b": NEEDS_X, "c": CAPABILITY_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml", "error W2 unifold.yaml",
+      "warn W3 unifold.yaml"]),
+    ("W1-star-value-not-allowed", core("wiring:\n  a.x: '*'\n", {"a": NEEDS_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml"]),
+    ("W1-unit-provides-for-its-own-need", core(
+        "wiring:\n  a.x: a.x\n", {"a": NEEDS_X + CAPABILITY_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml", "warn W3 unifold.yaml"]),
+    ("W1-plain-folder-missing", core("wiring:\n  a.x: ./legacy\n", {"a": NEEDS_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml"]),
+    ("W1-plain-folder-is-a-unit", core("wiring:\n  a.x: ./b\n", {"a": NEEDS_X, "b": ""}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml"]),
+    ("W1-own-code-is-written-with-a-slash", core("wiring:\n  a.x: .\n", {"a": NEEDS_X}),
+     ["error W1 unifold.yaml", "error W2 unifold.yaml"]),
+    ("W1-capability-implemented-by-own-code", core("capabilities:\n  p: s\nwiring:\n  p: ./\n"),
+     ["error W1 unifold.yaml"]),
+    ("W2-need-without-provider", core("", {"a": NEEDS_X, "b": CAPABILITY_X}),
+     ["error W2 unifold.yaml", "warn W3 unifold.yaml"]),
+    ("W2-no-pass-up-without-need-of-the-same-name",
+     core("needs:\n  other: s\n", {"a": NEEDS_X}), ["error W2 unifold.yaml"]),
+    ("W3-capability-not-used", core("", {"b": CAPABILITY_X}), ["warn W3 unifold.yaml"]),
+    ("W4-kinds-differ", core(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {kind: http, summary: s}\n"}),
+     ["warn W4 unifold.yaml"]),
+    ("W7-cycle", core("wiring:\n  a.x: b.x\n  b.y: a.y\n", {
+        "a": NEEDS_X + "capabilities:\n  y: s\n", "b": CAPABILITY_X + "needs:\n  y: s\n"}),
+     ["warn W7 unifold.yaml"]),
+    ("W8-plain-folder-provider", core("wiring:\n  a.x: ./legacy\n", {"a": NEEDS_X},
+                                      {"legacy/code.txt": "x\n"}), ["info W8 unifold.yaml"]),
+    ("W8-own-code-provider", core("wiring:\n  a.x: ./\n", {"a": NEEDS_X}), ["info W8 unifold.yaml"]),
+    ("W9-active-unit-needs-planned-provider", core(
+        WIRED, {"a": NEEDS_X, "b": CAPABILITY_X + "status: planned\n"}), ["warn W9 unifold.yaml"]),
+    ("W9-active-unit-needs-deprecated-provider", core(
+        WIRED, {"a": NEEDS_X, "b": CAPABILITY_X + "status: deprecated\n"}), ["warn W9 unifold.yaml"]),
+    ("W9-not-for-optional-needs", core(WIRED, {
+        "a": "needs:\n  x: {summary: s, optional: true}\n", "b": CAPABILITY_X + "status: planned\n"}), []),
+    # ------------------------------------------------ L, T: documents (level full)
+    ("L1-broken-link", full(files={"README.md": "# demo\n\n[gone](docs/gone.md)\n"}),
+     ["error L1 README.md"]),
+    ("L1-broken-link-in-angle-brackets-and-html", full(files={
+        "README.md": "# demo\n\n[a\nb](<no such file.md>)\n\n<a href=\"gone.html\">x</a>\n"}),
+     ["error L1 README.md", "error L1 README.md"]),
+    ("L1-broken-anchor", full(files={
+        "README.md": "# demo\n\n[part](docs/explanation/reasoning.md#no-such-part) [ok](docs/explanation/reasoning.md#real-part)\n",
+        "docs/explanation/reasoning.md": "# Reasoning\n\n## Real part\n\nText.\n"}), ["error L1 README.md"]),
+    ("L1-anchor-of-a-table-row", full(files={
+        "README.md": "# demo\n\n[word](docs/references/glossary.md#my-term) [none](docs/references/glossary.md#term)\n",
+        "docs/references/glossary.md": "# Glossary\n\n| Term | Meaning |\n|---|---|\n| `My term` | Text |\n"}),
+     ["error L1 README.md"]),
+    ("L1-links-in-code-are-ignored", full(files={
+        "README.md": "# demo\n\n`[x](gone.md)`\n\n````text\n```\n[y](gone.md)\n````\n\n[paren](docs/references/a_(v1).md)\n",
+        "docs/references/a_(v1).md": "# A\n"}), []),
+    ("L1-broken-link-in-a-tutorial", full(files={"docs/tutorials/x.md": "# X\n\n[gone](nope.md)\n"}),
+     ["error L1 docs/tutorials/x.md"]),
+    ("L2-upward-link-outside-context", full("", {"a": ""}, {
+        "a/README.md": "# a\n\n[up](../README.md)\n"}), ["error L2 a/README.md"]),
+    ("L2-upward-link-from-another-explanation-file", full("", {"a": ""}, {
+        "a/docs/explanation/reasoning.md": "# Why\n\n[up](../../../README.md)\n"}),
+     ["error L2 a/docs/explanation/reasoning.md"]),
+    ("L2-upward-link-from-context-is-allowed", full("", {"a": ""}, {
+        CONTEXT: "# Context of a\n\n### [demo](../../../README.md)\n" + stamp(README.format(name="demo"))
+                 + "\nSays: x.\n\nHere: y.\n"}), []),
+    ("L2-old-context-path-does-not-allow-upward-links", full("", {"a": ""}, {
+        "a/docs/context.md": "# Context of a\n\n### [demo](../../README.md)\n\nSays: x.\n\nHere: y.\n"}),
+     ["info S12 a/docs/context.md"]),
+    ("L2-sideways-link", full("", {"a": "", "b": ""}, {
+        "a/README.md": "# a\n\n[b](../b/README.md)\n"}), ["error L2 a/README.md"]),
+    ("L2-link-into-child", full("", {"a": ""}, {"README.md": "# demo\n\n[a](a/AGENTS.md)\n"}),
+     ["error L2 README.md"]),
+    ("L2-link-below-a-child", full("", {"a": "", "a/deep": ""}, {
+        "README.md": "# demo\n\n[deep](a/deep/README.md)\n"}), ["error L2 README.md"]),
+    ("L2-absolute-link", full(files={"README.md": "# demo\n\n[x](/docs/x.md)\n"}),
+     ["error L2 README.md"]),
+    ("L2-link-out-of-the-project", full(files={"README.md": "# demo\n\n[up](..) [in](../demo/README.md)\n"}),
+     ["error L2 README.md"]),
+    ("L2-generated-marker-gives-no-exemption", full("", {"a": "", "b": ""}, {
+        "a/README.md": MARK + "\n# a\n\n[b](../b/README.md)\n"}), ["error L2 a/README.md"]),
+    ("L7-context-cites-superseded-decision", full("", {"a": ""}, {
+        **with_decision("superseded by 0002"), **with_decision(name="0002-y.md"),
+        CONTEXT: ITEM.format(stamp=stamp(DECISION.format(
+            status="superseded by 0002", date="2026-10-07", more="")))}),
+     [f"warn L7 {CONTEXT}"]),
+    ("L7-active-unit-cites-proposed-decision", full("", {"a": ""}, {
+        **with_decision(), CONTEXT: ITEM.format(stamp="<!-- unifold:cites sha=00000000 -->\n")}),
+     [f"warn L7 {CONTEXT}", f"warn L10 {CONTEXT}"]),
+    ("L9-item-without-says", full("", {"a": "status: planned\n"}, {
+        **with_decision(),
+        CONTEXT: "# Context of a\n\n### [demo/0001](../../../docs/decisions/0001-x.md)\n\nHere: y.\n"}),
+     [f"warn L9 {CONTEXT}", f"warn L10 {CONTEXT}"]),
+    ("L10-item-without-stamp", full("", {"a": "status: planned\n"}, CONTEXT_FILES),
+     [f"warn L10 {CONTEXT}"]),
+    ("L10-cited-section-missing", full("", {"a": "status: planned\n"}, {
+        CONTEXT: "# Context of a\n\n### [demo](../../../README.md#no-such-section)\n\n"
+                 "Says: x.\n\nHere: y.\n"}),
+     [f"error L1 {CONTEXT}", f"warn L10 {CONTEXT}"]),
+    ("T1-file-too-long", full(files={"docs/explanation/risks.md": "# Risks\n" + "line\n" * 200}),
+     ["warn T1 docs/explanation/risks.md"]),
+    ("T4-why-too-long", full(files={"README.md": WHY.format(name="demo", lines="why\n" * 21)}),
+     ["warn T4 README.md"]),
+    ("T4-why-of-twenty-lines", full(files={"README.md": WHY.format(name="demo", lines="why\n\n" * 20)}), []),
+    ("T5-readme-heading-not-in-manifest", full("capabilities:\n  x: s\n", files={
+        "README.md": "# demo\n\n## Capabilities\n\n### `x`\n\nText.\n\n### `gone`\n\nText.\n"}),
+     ["warn T5 README.md"]),
+    # ------------------------------------------------------ G: generated files
+    ("G1-generated-file-missing", core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}),
+     ["error G1 docs/diagrams/component.md"], {"generate": False}),
+    ("G1-generated-file-out-of-date", core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
+        "docs/diagrams/component.md": MARK + "\n# Old\n"}),
+     ["error G1 docs/diagrams/component.md"], {"generate": False}),
+    ("G1-leftover-generated-file", core(files={"docs/diagrams/component.md": MARK + "\n# Old\n"}),
+     ["error G1 docs/diagrams/component.md"], {"generate": False}),
+    ("G1-hand-written-file-at-generated-path", core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
+        "docs/diagrams/component.md": "# Mine\n"}),
+     ["error G1 docs/diagrams/component.md"], {"generate": False}),
+    ("G1-hand-written-file-among-diagrams", full(files={"docs/diagrams/mine.md": "# Mine\n"}),
+     ["error G1 AGENTS.md", "error G1 docs/diagrams/mine.md"], {"generate": False}),
+    ("G1-decision-index-missing", full(files=with_decision()),
+     ["error G1 AGENTS.md", "error G1 docs/decisions/index.md"], {"generate": False}),
+    ("G1-agents-file-missing-at-full", full("", {"a": ""}),
+     ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 docs/diagrams/component.md"],
+     {"generate": False}),
+    ("G1-agents-file-without-marker-at-full", full(files={"AGENTS.md": AGENTS.format(name="demo")}),
+     ["error G1 AGENTS.md"]),
+    ("G1-agents-file-out-of-date-at-full", full(files={"AGENTS.md": MARK + "\n# AGENTS.md: old\n"}),
+     ["error G1 AGENTS.md"], {"generate": False}),
+    ("G1-agents-file-not-generated-at-core", core(files={"AGENTS.md": AGENTS.format(name="demo")}), []),
+    ("G1-all-diagrams-for-leaves", core("diagrams: all\n", {"a": ""}),
+     ["error G1 a/docs/diagrams/context.md", "error G1 docs/diagrams/component.md"],
+     {"generate": False}),
+    ("G1-architecture-only-with-grandchildren", core("", {"a": "", "a/deep": ""}),
+     ["error G1 a/docs/diagrams/component.md", "error G1 a/docs/diagrams/context.md",
+      "error G1 docs/diagrams/architecture.md", "error G1 docs/diagrams/component.md"],
+     {"generate": False}),
+    # ------------------------------------------------- D: dependencies in code
+    ("D1-dependency-without-wiring-cargo", core(
+        "capabilities:\n  b: s\nwiring:\n  b: b.b\n", {"a": "", "b": B_CAPABILITY_B}, CARGO_AB),
+     ["error D1 unifold.yaml"]),
+    ("D1-dependency-without-wiring-npm", core(
+        "capabilities:\n  b: s\nwiring:\n  b: b.b\n", {"packages/a": "", "packages/b": B_CAPABILITY_B},
+        npm({"a": ["b"], "b": []})), ["error D1 unifold.yaml"]),
+    ("D1-dependency-in-given-list", core("", {"a": "", "b": ""}, {
+        "a/main.c": "x\n", "b/lib.c": "x\n",
+        "deps.json": '[{"from": "a/main.c", "to": "b/lib.c"}]\n'}),
+     ["error D1 unifold.yaml"], {"args": ["--deps", "deps.json"]}),
+    ("D1-code-of-ancestor-used-without-folder-line", core("", {"a": ""}, {
+        "a/main.c": "x\n", "lib/x.c": "x\n", "deps.json": '[{"from": "a/main.c", "to": "lib/x.c"}]\n'}),
+     ["error D1 unifold.yaml"], {"args": ["--deps", "deps.json"]}),
+    ("D1-code-of-ancestor-covered-by-folder-line", core("wiring:\n  a.x: ./lib\n", {"a": NEEDS_X}, {
+        "a/main.c": "x\n", "lib/x.c": "x\n", "deps.json": '[{"from": "a/main.c", "to": "lib/x.c"}]\n'}),
+     ["info W8 unifold.yaml"], {"args": ["--deps", "deps.json"]}),
+    ("D1-code-of-ancestor-covered-by-own-code-line", core("wiring:\n  a.x: ./\n", {"a": NEEDS_X}, {
+        "a/main.c": "x\n", "main.c": "x\n", "deps.json": '[{"from": "a/main.c", "to": "main.c"}]\n'}),
+     ["info W8 unifold.yaml"], {"args": ["--deps", "deps.json"]}),
+    ("D1-not-for-a-dependency-of-tests-in-given-list", core("", {"a": "", "b": ""}, {
+        "a/main.c": "x\n", "b/lib.c": "x\n",
+        "deps.json": '[{"from": "a/main.c", "to": "b/lib.c", "kind": "make-dev"}]\n'}),
+     [], {"args": ["--deps", "deps.json"]}),
+    ("D1-cargo-binary-in-a-unit-below-the-package", core("", {"app": "", "b": B_CAPABILITY_B}, {
+        **cargo({"b": []}, '[package]\nname = "demo"\nversion = "0.1.0"\n[[bin]]\nname = "demo"\n'
+                           'path = "app/main.rs"\n[dependencies]\nb = { path = "b" }\n'),
+        "app/main.rs": "fn main() {}\n"}),
+     ["error D1 unifold.yaml", "warn W3 unifold.yaml"]),
+    ("D1-cargo-binary-in-a-unit-below-the-package-wired", core(
+        "wiring:\n  app.b: b.b\n", {"app": A_NEEDS_B, "b": B_CAPABILITY_B}, {
+            **cargo({"b": []}, '[package]\nname = "demo"\nversion = "0.1.0"\n[[bin]]\nname = "demo"\n'
+                               'path = "app/main.rs"\n[dependencies]\nb = { path = "b" }\n'),
+            "app/main.rs": "fn main() {}\n"}),
      []),
-    ("unknown-key", project("colour: blue\nx-team: red\n"), ["E M5 README.md"]),
-    ("manifest-in-two-places", project(files={"unit.yaml": 'unit: demo\nunifold: "0.1"\nsummary: s\n'}),
-     ["E M1 unit.yaml", "E S1 ."]),
-    ("unsupported-version", {**project(), "README.md": readme(
-        'unit: demo\nunifold: "9.9"\nsummary: A demo\nstatus: planned\n')}, ["E S1 README.md"]),
-    ("name-differs-from-folder", project("", {"a": ""}, {"a/README.md": readme(
-        "unit: other\nsummary: s\nstatus: planned\n")}), ["E S2 a/README.md"]),
-    ("no-agents-file", project("", {"a": ""}, {"a/AGENTS.md": None}), ["E S11 a"]),
-    ("skill-not-linked", project(files={
-        "doc/skills/do-it/SKILL.md": "---\nname: do-it\ndescription: Does it.\n---\n# Do it\n"}),
-     ["E S8 AGENTS.md"]),
-    ("active-without-verification",
-     {**project(), "README.md": readme('unit: demo\nunifold: "0.1"\nsummary: A demo\n'
-                                       "provides:\n  p: {kind: cli, summary: s}\n")},
-     ["W M8 README.md"]),
-    ("link-up-outside-context", project("", {"a": ""}, {"a/README.md": readme(
-        "unit: a\nsummary: s\nstatus: planned\n", "[up](../README.md)\n")}),
-     ["E L3 a/README.md"]),
-    ("link-sideways", project("", {"a": "", "b": ""}, {"a/README.md": readme(
-        "unit: a\nsummary: s\nstatus: planned\n", "[b](../b/README.md)\n")}),
-     ["E L4 a/README.md"]),
-    ("link-into-child", project(root_extra="[a](a/AGENTS.md)\n", units={"a": ""}),
-     ["E L2 README.md"]),
-    ("link-to-child-readme", project(root_extra="[a](a/README.md)\n", units={"a": ""}), []),
-    ("sibling-named-in-code-font", project("", {"a": "", "b": ""}, {"a/README.md": readme(
-        "unit: a\nsummary: s\nstatus: planned\n", "It talks to `b`.\n")}),
-     ["W L6 a/README.md"]),
-    ("context-cites-ancestor", project("", {"a": ""}, {
-        "doc/decisions/0001-x.md": DECISION.format(status="proposed", more=""),
-        "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"
-                            "[decisions](doc/decisions/index.md)\n"),
-        "a/AGENTS.md": agents("\n[context](doc/context.md)\n"),
-        "a/doc/context.md": "# Context of a\n\n### [demo/0001](../../doc/decisions/0001-x.md)\n\n"
-                            "Says: x.\n\nHere: y.\n"}), []),
-    ("context-cites-superseded-decision", project("", {"a": ""}, {
-        "doc/decisions/0001-x.md": DECISION.format(status="superseded by 0002", more=""),
-        "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"
-                            "[decisions](doc/decisions/index.md)\n"),
-        "a/AGENTS.md": agents("\n[context](doc/context.md)\n"),
-        "a/doc/context.md": "# Context of a\n\n### [demo/0001](../../doc/decisions/0001-x.md)\n\n"
-                            "Says: x.\n\nHere: y.\n"}),
-     ["W L7 a/doc/context.md"]),
-    ("context-item-without-restatement", project("", {"a": ""}, {
-        "doc/decisions/0001-x.md": DECISION.format(status="proposed", more=""),
-        "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"
-                            "[decisions](doc/decisions/index.md)\n"),
-        "a/AGENTS.md": agents("\n[context](doc/context.md)\n"),
-        "a/doc/context.md": "# Context of a\n\n### [demo/0001](../../doc/decisions/0001-x.md)\n\n"
-                            "Here: y.\n"}),
-     ["W L9 a/doc/context.md"]),
-    ("conforms-to-unknown-need",
-     project("", {"b": "provides:\n  x: {kind: library, summary: s, conforms-to: spec}\n"}),
-     ["E M9 b/README.md", "W W3 README.md"]),
-    ("conforms-to-own-need", project(
-        "wiring:\n  b.spec: c.x\n  a.x: b.x\n",
-        {"a": A_NEEDS_X,
-         "b": "provides:\n  x: {kind: library, summary: s, conforms-to: spec}\n"
-              "needs:\n  spec: {kind: library, summary: s}\n",
-         "c": B_PROVIDES_X}), []),
-    ("accepted-without-decision-makers", project(files={
-        "doc/decisions/0001-x.md": DECISION.format(status="accepted", more=""),
-        "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"
-                            "[decisions](doc/decisions/index.md)\n")}),
-     ["E S10 doc/decisions/0001-x.md"]),
-    ("accepted-with-decision-makers", project(files={
-        "doc/decisions/0001-x.md": DECISION.format(status="accepted",
-                                                   more="decision-makers: [Ada]\n"),
-        "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"
-                            "[decisions](doc/decisions/index.md)\n")}), []),
-    ("file-too-long", project(files={"doc/architecture.md": "# Long\n" + "line\n" * 200},
-                              root_extra="[arch](doc/architecture.md)\n"),
-     ["E T1 doc/architecture.md"]),
-    ("line-too-long", project(files={"doc/architecture.md": "# Wide\n\n" + "word " * 100 + "\n"},
-                              root_extra="[arch](doc/architecture.md)\n"),
-     ["W T3 doc/architecture.md"]),
-    ("file-not-reachable", project(files={"doc/references/lost.md": "# Lost\n"}),
-     ["E L5 doc/references/lost.md"]),
-    ("hand-written-file-among-diagrams", project(files={"doc/diagrams/mine.md": "# Mine\n"}),
-     ["E G2 doc/diagrams/mine.md", "E L5 doc/diagrams/mine.md"]),
-    ("core-level-needs-no-agents-file-and-no-copy", {
-        "unit.yaml": 'unit: demo\nunifold: "0.1"\nlevel: core\nsummary: A demo\n'
-                     "status: planned\nwiring:\n  a.x: b.x\n",
-        "README.md": "# demo\n",
-        "a/unit.yaml": "unit: a\nsummary: s\nstatus: planned\n" + A_NEEDS_X,
-        "a/README.md": "# a\n",
-        "b/unit.yaml": "unit: b\nsummary: s\nstatus: planned\n" + B_PROVIDES_X,
-        "b/README.md": "# b\n"}, []),
-    ("core-level-still-checks-wiring", {
-        "unit.yaml": 'unit: demo\nunifold: "0.1"\nlevel: core\nsummary: A demo\n'
-                     "status: planned\n",
-        "README.md": "# demo\n",
-        "a/unit.yaml": "unit: a\nsummary: s\nstatus: planned\n" + A_NEEDS_X,
-        "a/README.md": "# a\n"}, ["E W2 unit.yaml"]),
-    ("wildcard-wiring", project('wiring:\n  "*.x": c.x\n',
-                                {"a": A_NEEDS_X, "b": A_NEEDS_X, "c": B_PROVIDES_X}), []),
-    ("wildcard-matches-nothing", project('wiring:\n  "*.y": c.x\n', {"c": B_PROVIDES_X}),
-     ["E W1 README.md", "W W3 README.md"]),
-    ("optional-must-be-a-boolean",
-     project("", {"a": 'needs:\n  x: {kind: library, summary: s, optional: "false"}\n'}),
-     ["E M4 a/README.md", "E W2 README.md"]),
-    ("active-unit-needs-planned-provider", project(WIRED, {"a": A_NEEDS_X, "b": B_PROVIDES_X}, {
-        "a/README.md": readme("unit: a\nsummary: s\nstatus: active\n" + A_NEEDS_X)}),
-     ["W W9 README.md"]),
-    ("alternatives-conform-to-different-definitions", project(
-        "wiring:\n  a.x: {real: b.x, fake: c.x}\n  b.spec: d.one\n  c.spec: d.two\n",
-        {"a": A_NEEDS_X,
-         "b": "provides:\n  x: {kind: library, summary: s, conforms-to: spec}\n"
-              "needs:\n  spec: {kind: specification, summary: s}\n",
-         "c": "provides:\n  x: {kind: library, summary: s, conforms-to: spec}\n"
-              "needs:\n  spec: {kind: specification, summary: s}\n",
-         "d": "provides:\n  one: {kind: specification, summary: s}\n"
-              "  two: {kind: specification, summary: s}\n"}),
-     ["W W10 README.md"]),
-    ("readme-heading-not-in-manifest", project("", {"b": B_PROVIDES_X}, {
-        "b/README.md": readme("unit: b\nsummary: s\nstatus: planned\n" + B_PROVIDES_X,
-                              "\n## Provides\n\n### `x`\n\nText.\n\n### `gone`\n\nText.\n")}),
-     ["W T5 b/README.md", "W W3 README.md"]),
-    ("readme-title-is-not-the-unit-name", project("", {"a": ""}, {
-        "a/README.md": "---\nunit: a\nsummary: s\nstatus: planned\n---\n# other\n\n"
-                       "[d](doc/diagrams/context.md)\n"}), ["W T6 a/README.md"]),
-    ("duplicate-decision-number", project(files={
-        "doc/decisions/0001-x.md": DECISION.format(status="proposed", more=""),
-        "doc/decisions/0001-y.md": DECISION.format(status="proposed", more=""),
-        "AGENTS.md": agents("\n[read-docs](doc/skills/read-docs/SKILL.md)\n"
-                            "[decisions](doc/decisions/index.md)\n")}),
-     ["E S9 doc/decisions/0001-y.md"]),
-    ("undeclared-dependency-in-code", project("", {"a": "", "b": ""}, {
-        "a/src/main.c": "x\n", "b/src/lib.c": "x\n",
-        "deps.json": '[{"from": "a/src/main.c", "to": "b/src/lib.c"}]\n'}),
-     ["E D1 README.md"]),
-    ("declared-dependency-in-code", project(WIRED, {"a": A_NEEDS_X, "b": B_PROVIDES_X}, {
-        "a/src/main.c": "x\n", "b/src/lib.c": "x\n",
-        "deps.json": '[{"from": "a/src/main.c", "to": "b/src/lib.c"}]\n'}), []),
-    ("wired-but-no-dependency-observed", project(WIRED, {"a": A_NEEDS_X, "b": B_PROVIDES_X}, {
-        "deps.json": "[]\n"}), ["I D2 README.md"]),
-    ("ignored-folder", project("ignore: [./vendor]\n", files={
-        "vendor/dep/README.md": "---\nunit: wrong-name\nsummary: s\n---\n# dep\n"}), []),
+    ("D2-cargo-binary-in-a-unit-below-the-package", core(
+        "wiring:\n  app.b: b.b\n", {"app": A_NEEDS_B, "b": B_CAPABILITY_B}, {
+            **cargo({"b": []}, '[package]\nname = "demo"\nversion = "0.1.0"\n[[bin]]\nname = "demo"\n'
+                               'path = "app/main.rs"\n'),
+            "app/main.rs": "fn main() {}\n"}),
+     ["warn D2 unifold.yaml"]),
+    ("D2-not-when-only-tests-depend", core(
+        "wiring:\n  a.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B}, cargo({"a": ["dev:b"], "b": []})),
+     []),
+    ("D2-wiring-without-dependency-in-code", core(
+        "wiring:\n  a.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B}, cargo({"a": [], "b": []})),
+     ["warn D2 unifold.yaml"]),
+    ("D2-not-for-units-without-extracted-code", core(
+        "wiring:\n  a.b: b.b\n  notes.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B, "notes": A_NEEDS_B},
+        CARGO_AB), []),
+    ("D3-unknown-path-in-list", core("", {"a": ""}, {
+        "deps.json": '[{"from": "a/nowhere.c", "to": "a"}]\n'}),
+     ["error D3 deps.json"], {"args": ["--deps", "deps.json"]}),
+    ("D3-list-is-an-object", core("", {"a": ""}, {"deps.json": '{"edges": []}\n'}),
+     ["error D3 deps.json"], {"args": ["--deps", "deps.json"]}),
+    ("D3-entries-of-another-shape", core("", {"a": ""}, {
+        "deps.json": '[{"source": "a", "target": "a"}]\n'}),
+     ["error D3 deps.json"], {"args": ["--deps", "deps.json"]}),
 ]
 
 
-def run_tool(tool: list[str], *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run([*tool, *args], capture_output=True, text=True)
+# ------------------------------------------------------------------ running
+
+class Runner:
+    def __init__(self, tool: list):
+        self.tool = tool
+
+    def run(self, *args: str, cwd=None, stdin=None, env=None) -> subprocess.CompletedProcess:
+        return subprocess.run([*self.tool, *args], capture_output=True, text=True, cwd=cwd,
+                              input=stdin, env={**os.environ, **(env or {})})
+
+    def json(self, *args: str, cwd=None):
+        """Run and parse stdout as JSON. Returns (data, process)."""
+        done = self.run(*args, cwd=cwd)
+        try:
+            return json.loads(done.stdout), done
+        except ValueError:
+            raise AssertionError(f"`{' '.join(args)}` printed no valid JSON: "
+                                 f"{(done.stdout + done.stderr).strip()[:300]}")
+
+    def findings(self, folder, *args) -> list:
+        data, _ = self.json("check", "--json", *args, str(folder))
+        return sorted(f"{f['severity']} {f['rule']} {f['file']}" for f in data["findings"])
 
 
-def write_case(folder: Path, files: dict) -> None:
+def write_files(folder: Path, files: dict) -> None:
     for path, content in files.items():
         target = folder / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
 
 
+def new_project(tmp: str, files: dict) -> Path:
+    folder = Path(tmp).resolve() / "demo"
+    write_files(folder, files)
+    return folder
+
+
+def run_case(runner: Runner, case) -> str | None:
+    name, files, expected = case[:3]
+    options = case[3] if len(case) > 3 else {}
+    with tempfile.TemporaryDirectory() as tmp:
+        folder = new_project(tmp, files)
+        if options.get("generate", True):
+            runner.run("generate", str(folder))
+        args = [str(folder / a) if a.endswith(".json") else a for a in options.get("args", [])]
+        try:
+            found = runner.findings(folder, *args)
+        except AssertionError as exc:
+            return str(exc)
+        if found != sorted(expected):
+            return f"expected {sorted(expected)}\n     found    {found}"
+    return None
+
+
+# ---------------------------------------------------------------- scenarios
+
+def check(condition, message):
+    if not condition:
+        raise AssertionError(message)
+
+
+def scenario_json_on_failure(runner: Runner, tmp: str):
+    empty = Path(tmp) / "empty"
+    empty.mkdir()
+    data, done = runner.json("check", "--json", str(empty))
+    check(done.returncode == 2 and data["ok"] is False and data["findings"] == []
+          and data["error"]["code"] == "no-project", f"no project: {done.returncode} {data}")
+    for command in (["show"], ["tree"], ["capability", str(empty), "x"], ["impact"], ["cited-by"]):
+        args = command if len(command) > 1 else [*command, str(empty)]
+        data, done = runner.json(*args[:1], "--json", *args[1:])
+        check(done.returncode == 2 and data["ok"] is False and "message" in data["error"],
+              f"{command[0]} --json outside a project: {data}")
+    data, done = runner.json("check", "--json", str(empty / "missing"))
+    check(done.returncode == 2 and data["ok"] is False, "check on a missing path")
+    broken = new_project(tmp, {"unifold.yaml": ROOT + "summary: twice\n", "a/unifold.yaml": UNIT})
+    data, done = runner.json("check", "--json", str(broken / "a"))
+    check(done.returncode == 1 and not data["ok"] and data["findings"][0]["rule"] == "M1"
+          and data["findings"][0]["file"] == "unifold.yaml" and data["findings"][0]["line"] == 3,
+          f"a broken root manifest is still the root: {data}")
+    data, done = runner.json("show", "--json", str(broken))
+    check(done.returncode == 2 and data["error"]["code"] == "bad-root", "show with a broken root")
+
+
+def scenario_finding_shape(runner: Runner, tmp: str):
+    folder = new_project(tmp, core("wiring:\n  a.x: b.y\n", {"a": NEEDS_X, "b": CAPABILITY_X}))
+    runner.run("generate", str(folder))
+    data, done = runner.json("check", "--json", str(folder))
+    check(done.returncode == 1 and data["ok"] is False, "exit code 1 with errors")
+    check(data["summary"]["error"] == 2 and data["summary"]["warn"] == 1
+          and data["summary"]["units"] == 3, f"summary: {data['summary']}")
+    for finding in data["findings"]:
+        check(set(finding) >= {"rule", "severity", "file", "line", "message", "fix", "url"},
+              f"finding keys: {sorted(finding)}")
+        check(finding["severity"] in ("error", "warn", "info"), "severity is a word")
+    w1 = next(f for f in data["findings"] if f["rule"] == "W1")
+    check(w1["line"] == 4 and "it provides: x" in w1["message"], f"W1 line and hint: {w1}")
+    text = runner.run("check", str(folder)).stdout
+    check("error W1 unifold.yaml:4:" in text and "fix:" in text, f"text output: {text}")
+    github = runner.run("check", "--format", "github", str(folder), cwd=str(folder.parent)).stdout
+    check("::error file=demo/unifold.yaml,line=4,title=unifold W1::" in github
+          and "::warning file=demo/unifold.yaml" in github, f"github output: {github}")
+    strict = core("", {"b": CAPABILITY_X})
+    folder2 = Path(tmp) / "strict"
+    write_files(folder2, strict)
+    runner.run("generate", str(folder2))
+    check(runner.run("check", str(folder2)).returncode == 0, "a warning alone: exit 0")
+    check(runner.run("check", "--strict", str(folder2)).returncode == 1, "--strict: exit 1")
+    only = runner.findings(folder, "--rule", "W3")
+    check(only == ["warn W3 unifold.yaml"], f"--rule: {only}")
+
+
+def scenario_generate_is_idempotent(runner: Runner, tmp: str):
+    files = full(
+        "diagrams: all\nneeds:\n  x: s\n  log: s\n" + "wiring:\n  a.x: {real: b.x, fake: c.x}\n",
+        {"a": "needs:\n  x: {kind: library, summary: Needs x}\n  log: Logs\n",
+         "b": CAPABILITY_X + "needs:\n  log: Logs\n",
+         "c": "capabilities:\n  x: {kind: library, summary: Offers x}\n",
+         "my plugins/deep": "status: planned\nneeds:\n  log: Logs\n", "c/inner": ""},
+        with_decision())
+    folder = new_project(tmp, files)
+    first = runner.run("generate", str(folder))
+    check(first.returncode == 0, f"generate: {first.stderr}")
+
+    def snapshot():
+        return {str(p.relative_to(folder)): p.read_text() for p in sorted(folder.rglob("*.md"))}
+    before = snapshot()
+    data, _ = runner.json("generate", "--json", str(folder))
+    check(data["written"] == [] and data["removed"] == [], f"second generate wrote: {data}")
+    for path in list(folder.rglob("docs/diagrams/*.md")) + list(folder.rglob("AGENTS.md")) \
+            + [folder / "docs/decisions/index.md"]:
+        path.unlink()
+    runner.run("generate", str(folder), env={"PYTHONHASHSEED": "12345"})
+    check(snapshot() == before, "regenerated from nothing: not byte-identical")
+    check(runner.findings(folder) == [], f"clean after generate: {runner.findings(folder)}")
+    component = before["docs/diagrams/component.md"]
+    check("Shared connections, not drawn" in component and "passed up by name" in component
+          and "|\"log\"|" not in component,
+          "a need that three children pass up by name is listed, not drawn")
+    check("my%20plugins/deep" in component, "generated links are URL-encoded")
+    check("-.->" in component, "an alternative is a dashed arrow")
+    context = before["a/docs/diagrams/context.md"]
+    check('u_b["b"]' in context and 'u_my' not in context,
+          "a context diagram shows only connected siblings")
+    check("**planned**" in component, "status is marked in the unit table")
+    check("docs/diagrams/architecture.md" in before and "[architecture](architecture.md)" in component
+          and "c/docs/diagrams/architecture.md" not in before,
+          "architecture only for a unit whose children have children")
+    check("proposed" in before["docs/decisions/index.md"], "decision index")
+    check(before["AGENTS.md"].startswith(MARK) and "<!-- unifold:end -->" in before["AGENTS.md"]
+          and "| a | `a` | A part |" in before["AGENTS.md"], "the root AGENTS.md carries the unit index")
+    check(before["a/AGENTS.md"].startswith(MARK) and "<!-- unifold:begin" not in before["a/AGENTS.md"],
+          "a child's AGENTS.md has no block")
+
+
+def scenario_show_port_impact(runner: Runner, tmp: str):
+    folder = new_project(tmp, core(
+        "needs:\n  clock: A time source\ncapabilities:\n  api: s\n"
+        "wiring:\n  api: web.api\n  web.store: db.store\n  web.log: db.log\n",
+        {"web": "capabilities:\n  api: s\nneeds:\n  store: s\n  log: s\n  clock: s\n",
+         "web/inner": "needs:\n  clock: Needs time\n  store: s\n",
+         "db": "status: planned\ncapabilities:\n  store: {summary: Keeps things, contract: schema.sql}\n  log: s\n"},
+        {"db/schema.sql": "-- x\n"}))
+    data, done = runner.json("show", "--json", str(folder / "web" / "inner"))
+    check(done.returncode == 0, "show")
+    clock = data["needs"]["clock"]["provided-by"][0]
+    check(clock.get("outside") and clock["root-need"] == "clock"
+          and "passed up by name" in clock["via"], f"implicit pass-up in show: {clock}")
+    store = data["needs"]["store"]["provided-by"][0]
+    check(store["unit"] == "db" and store["status"] == "planned"
+          and store["contract"] == "db/schema.sql", f"resolved provider with status: {store}")
+    text = runner.run("show", str(folder / "web" / "inner")).stdout
+    check("passed up by name" in text and "[planned" in text, f"show text: {text}")
+    data, _ = runner.json("show", "--json", str(folder / "web"))
+    log = data["needs"]["log"]["provided-by"][0]
+    check(log["unit"] == "db" and log["via"] == [], f"an explicit line in show: {log}")
+    data, _ = runner.json("capability", "--json", str(folder / "db"), "store")
+    check([e.get("unit") for e in data["ends"]] == ["db", "web/inner"]
+          and data["ends"][0]["status"] == "planned", f"capability: {data}")
+    done = runner.run("capability", str(folder / "db"), "nothing")
+    check(done.returncode == 2 and "store" in done.stderr, "capability with an unknown name")
+    data, _ = runner.json("impact", "--json", str(folder / "db"))
+    check([d["unit"] for d in data["dependents"]] == ["web", "web/inner"]
+          or sorted(d["unit"] for d in data["dependents"]) == ["web", "web/inner"],
+          f"impact: {data['dependents']}")
+    data, _ = runner.json("impact", "--json", str(folder / "web"), "api")
+    check(data["outside"] == ["api"] and data["exposed-as"] == [{"unit": ".", "capability": "api"}],
+          f"impact of a capability that the root exposes: {data}")
+    data, _ = runner.json("tree", "--json", str(folder))
+    check([u["path"] for u in data] == [".", "db", "web", "web/inner"], f"tree: {data}")
+
+
+def scenario_stamps(runner: Runner, tmp: str):
+    folder = new_project(tmp, full("", {"a": "status: planned\n"}, CONTEXT_FILES))
+    runner.run("generate", str(folder))
+    check(runner.findings(folder) == [f"warn L10 {CONTEXT}"], "an item without a stamp")
+    data, _ = runner.json("stamp", "--json", str(folder))
+    check(data["stamped"] == 1, f"stamp: {data}")
+    context = (folder / CONTEXT).read_text()
+    check(re.search(r"0001-x\.md\)\n<!-- unifold:cites sha=[0-9a-f]{8} -->\n\nSays", context),
+          f"the stamp is directly under the heading: {context}")
+    check(runner.findings(folder) == [], "clean after stamp")
+    check(runner.json("stamp", "--json", str(folder))[0]["stamped"] == 0, "stamp twice")
+    decision = folder / "docs/decisions/0001-x.md"
+    decision.write_text(decision.read_text().replace("Text.", "Text.   \n"))
+    check(runner.findings(folder) == [], "white space in the source does not count")
+    decision.write_text(decision.read_text().replace("Text.", "Another outcome."))
+    found, _ = runner.json("check", "--json", str(folder))
+    check([f["rule"] for f in found["findings"]] == ["L10"] and found["findings"][0]["line"] == 3
+          and "changed" in found["findings"][0]["message"], f"source changed: {found}")
+    rows, _ = runner.json("cited-by", "--json", str(decision))
+    check(len(rows) == 1 and any(r["file"] == CONTEXT and r["line"] == 3
+          and r["says"] == "x holds." and r["stamp"] == "stale" for r in rows), f"cited-by: {rows}")
+    before = (folder / CONTEXT).read_text()
+    data, _ = runner.json("check", "--fix", "--json", str(folder))
+    check("stamped" not in data["summary"]["fixed"] and [f["rule"] for f in data["findings"]] == ["L10"]
+          and (folder / CONTEXT).read_text() == before,
+          f"check --fix never refreshes a stamp whose source changed: {data}")
+    data, _ = runner.json("stamp", "--json", str(folder))
+    check(data["stamped"] == 1 and data["items"] == [
+        {"file": CONTEXT, "line": 3, "cites": "docs/decisions/0001-x.md",
+         "title": "demo/0001 A decision", "action": "refreshed"}], f"stamp names the item: {data}")
+    check(runner.findings(folder) == [], "clean after an explicit stamp")
+    decision.write_text(decision.read_text().replace("Another outcome.", "A third outcome."))
+    done = runner.run("stamp", str(folder))
+    check(f"refreshed {CONTEXT}:3:" in done.stdout and "docs/decisions/0001-x.md" in done.stdout,
+          f"stamp prints file, line and cited source: {done.stdout}")
+    (folder / CONTEXT).write_text(ITEM.format(stamp=""))
+    data, _ = runner.json("check", "--fix", "--json", str(folder))
+    check([f["rule"] for f in data["findings"]] == ["L10"]
+          and (folder / CONTEXT).read_text() == ITEM.format(stamp=""),
+          f"check --fix never adds a stamp either: only `stamp` writes stamps: {data}")
+    done = runner.run("stamp", str(folder))
+    check(f"added {CONTEXT}:3:" in done.stdout and runner.findings(folder) == [],
+          f"stamp prints the item it adds a stamp to: {done.stdout}")
+    decision.unlink()
+    rows, done = runner.json("cited-by", "--json", str(decision))
+    check(done.returncode == 0 and any(r["file"] == CONTEXT for r in rows),
+          "cited-by works for a file that was deleted")
+    data, _ = runner.json("impact", "--json", str(folder))
+    check(data["citations"] == [] or all("file" in c for c in data["citations"]), "impact citations")
+
+
+GLOSSARY = ("# Glossary\n\n## Words\n\n| Term | Meaning |\n|---|---|\n"
+            "| **`capability`** | {capability} |\n| stamp | {stamp} |\n\n## Other\n\n{other}\n")
+ROW_ITEM = ("# Context of a\n\n### [demo: capability](../../../docs/references/glossary.md#capability)\n"
+            "{stamp}\nSays: a capability is what a unit provides.\n\nHere: a has one.\n")
+
+
+def scenario_row_citation(runner: Runner, tmp: str):
+    """A citation with a fragment that names a table row is stamped on that row alone."""
+    words = {"capability": "What a unit provides", "stamp": "A hash", "other": "Text."}
+    row = "| **`capability`** | What a unit provides |"
+    folder = new_project(tmp, full("", {"a": "status: planned\n"}, {
+        "docs/references/glossary.md": GLOSSARY.format(**words),
+        CONTEXT: ROW_ITEM.format(stamp=stamp(row))}))
+    runner.run("generate", str(folder))
+    check(runner.findings(folder) == [], f"the stamp of a row is the hash of the row: {runner.findings(folder)}")
+    glossary = folder / "docs/references/glossary.md"
+    glossary.write_text(GLOSSARY.format(**{**words, "stamp": "Another meaning", "other": "More."}))
+    check(runner.findings(folder) == [], "another row and another section changed: the stamp holds")
+    glossary.write_text(GLOSSARY.format(**{**words, "capability": "Something else"}))
+    check(runner.findings(folder) == [f"warn L10 {CONTEXT}"], "the cited row changed")
+    data, _ = runner.json("stamp", "--json", str(folder))
+    check(data["items"][0]["cites"] == "docs/references/glossary.md#capability" and
+          runner.findings(folder) == [], f"stamp names the row: {data}")
+    (folder / CONTEXT).write_text(
+        ROW_ITEM.format(stamp="").replace("#capability", "#words"))
+    runner.run("stamp", str(folder))
+    glossary.write_text(GLOSSARY.format(**{**words, "capability": "Something else", "other": "Again."}))
+    check(runner.findings(folder) == [], "a heading wins: the section is hashed, other sections do not count")
+    glossary.write_text(GLOSSARY.format(**{**words, "stamp": "A third meaning"}))
+    check(runner.findings(folder) == [f"warn L10 {CONTEXT}"], "any row of a cited section counts")
+    (folder / CONTEXT).write_text(ROW_ITEM.format(stamp="").replace("#capability", "#term"))
+    found = runner.findings(folder)
+    check(found == [f"error L1 {CONTEXT}", f"warn L10 {CONTEXT}"],
+          f"the header row of a table is no anchor: {found}")
+
+
+def scenario_check_fix(runner: Runner, tmp: str):
+    folder = new_project(tmp, core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
+        "a/docs/diagrams/context.md": MARK + "\n# Left over\n"}))
+    check(runner.findings(folder) == ["error G1 a/docs/diagrams/context.md",
+                                      "error G1 docs/diagrams/component.md"], "before --fix")
+    data, done = runner.json("check", "--fix", "--json", str(folder))
+    check(done.returncode == 0 and data["ok"] and data["summary"]["fixed"]["written"] ==
+          ["docs/diagrams/component.md"] and data["summary"]["fixed"]["removed"] ==
+          ["a/docs/diagrams/context.md"], f"--fix: {data['summary']}")
+    (folder / "docs/diagrams/component.md").write_text("# Mine\n")
+    done = runner.run("generate", str(folder))
+    check(done.returncode == 1 and (folder / "docs/diagrams/component.md").read_text() == "# Mine\n",
+          "generate does not overwrite a file without the marker")
+
+
+EXPECTED_AGENTS_A = (MARK + """
+# AGENTS.md: a
+
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
+says what the unit is for and why it is built this way. Everything else is in
+`docs/`.
+
+## Documents
+
+| Kind | Files |
+|---|---|
+| Learn | [first-steps](docs/tutorials/first-steps.md) |
+| Look up | [api](docs/references/api/index.md), [events](docs/references/events.md) |
+| Understand | [context](docs/explanation/context.md), [reasoning](docs/explanation/reasoning.md), [decisions](docs/decisions/index.md) |
+
+## Skills
+
+| Skill | Description |
+|---|---|
+| [do-it](docs/skills/do-it/SKILL.md) | Does it. |
+""")
+
+
+def scenario_agents_generated(runner: Runner, tmp: str):
+    """At level full, AGENTS.md is generated: its content, and the refusal to overwrite a
+    hand-written one."""
+    folder = new_project(tmp, full("", {"a": "", "b": ""}, {
+        "a/docs/tutorials/first-steps.md": "# First steps\n",
+        "a/docs/references/events.md": "# Events\n",
+        "a/docs/references/api/index.md": "# API\n",
+        "a/docs/references/api/calls.md": "# Calls\n",
+        "a/docs/references/notes/draft.md": "# No index: not listed\n",
+        "a/docs/explanation/reasoning.md": "# Reasoning\n",
+        "a/docs/explanation/context.md": "# Context of a\n\n### [demo](../../../README.md)\n"
+                                         + stamp(README.format(name="demo")) + "\nSays: x.\n\nHere: y.\n",
+        "a/docs/decisions/0001-x.md": DECISION.format(status="proposed", date="2026-10-07", more=""),
+        "a/docs/skills/do-it/SKILL.md": SKILL,
+        "b/docs/explanation/zz-topic.md": "# Z\n", "b/docs/explanation/aaa-topic.md": "# A\n",
+        "b/docs/explanation/risks.md": "# R\n", "b/docs/explanation/runtime.md": "# R\n",
+        "b/docs/tutorials/one.md": "# 1\n", "b/docs/tutorials/two.md": "# 2\n"}))
+    found = runner.findings(folder)
+    check(found == ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 a/docs/decisions/index.md",
+                    "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md"],
+          f"before --fix: {found}")
+    data, done = runner.json("check", "--fix", "--json", str(folder))
+    check(done.returncode == 0 and data["ok"] and "a/AGENTS.md" in data["summary"]["fixed"]["written"]
+          and "AGENTS.md" in data["summary"]["fixed"]["written"], f"--fix writes AGENTS.md: {data['summary']}")
+    agents = (folder / "a/AGENTS.md").read_text()
+    check(agents == EXPECTED_AGENTS_A, f"the generated AGENTS.md of a:\n{agents}")
+    root = (folder / "AGENTS.md").read_text()
+    check(root.startswith(MARK + "\n# AGENTS.md: demo\n") and "## Documents" not in root
+          and "## Skills" not in root and "\n\n<!-- unifold:begin" in root and root.endswith("<!-- unifold:end -->\n")
+          and "| a | `a` | A part |" in root, f"the root AGENTS.md is the unit part plus the block:\n{root}")
+    b = (folder / "b/AGENTS.md").read_text()
+    check("| Learn | [one](docs/tutorials/one.md), [two](docs/tutorials/two.md) |" in b
+          and "| Understand | [runtime](docs/explanation/runtime.md), [risks](docs/explanation/risks.md), "
+              "[aaa-topic](docs/explanation/aaa-topic.md), [zz-topic](docs/explanation/zz-topic.md) |" in b
+          and "Look up" not in b and "## Skills" not in b, f"fixed order, then by name; no empty rows:\n{b}")
+    data, _ = runner.json("show", "--json", str(folder / "a"))
+    check(data["documents"] == {"tutorials": ["a/docs/tutorials/first-steps.md"],
+                                "references": ["a/docs/references/api/index.md", "a/docs/references/events.md"],
+                                "explanation": ["a/docs/explanation/context.md", "a/docs/explanation/reasoning.md"]},
+          f"show lists the documents by kind: {data['documents']}")
+    text = runner.run("show", str(folder / "a")).stdout
+    check("tutorials" in text and "a/docs/references/events.md" in text, f"show text: {text}")
+    for i in range(13):
+        (folder / f"b/docs/tutorials/t{i:02}.md").write_text(f"# {i}\n")
+    runner.run("generate", str(folder))
+    check("| Learn | 15 files in docs/tutorials/ |" in (folder / "b/AGENTS.md").read_text(),
+          "more than 12 files of a kind are counted")
+    # a hand-written AGENTS.md at level full is reported and never overwritten
+    hand = AGENTS.format(name="a")
+    (folder / "a/AGENTS.md").write_text(hand)
+    data, done = runner.json("check", "--fix", "--json", str(folder))
+    g1 = [f for f in data["findings"] if f["rule"] == "G1"]
+    check(done.returncode == 1 and len(g1) == 1 and g1[0]["file"] == "a/AGENTS.md"
+          and g1[0]["fix"] == AGENTS_FIX and data["summary"]["fixed"]["refused"] == ["a/AGENTS.md"]
+          and (folder / "a/AGENTS.md").read_text() == hand, f"hand-written AGENTS.md at level full: {data}")
+    done = runner.run("generate", str(folder))
+    check(done.returncode == 1 and (folder / "a/AGENTS.md").read_text() == hand, "generate refuses too")
+    (folder / "a/AGENTS.md").unlink()
+    data, done = runner.json("check", "--fix", "--json", str(folder))
+    check(done.returncode == 0 and (folder / "a/AGENTS.md").read_text() == EXPECTED_AGENTS_A,
+          "after deleting the hand-written file, --fix writes the generated one")
+    (folder / "a/AGENTS.md").write_text(MARK + "\n# AGENTS.md: old\n")
+    data, _ = runner.json("check", "--json", str(folder))
+    g1 = [f for f in data["findings"] if f["rule"] == "G1"]
+    check(len(g1) == 1 and g1[0]["fix"] != AGENTS_FIX and "out of date" in g1[0]["message"],
+          f"a stale generated AGENTS.md gets the normal G1 fix: {g1}")
+
+
+def scenario_init(runner: Runner, tmp: str):
+    """`init` writes the root manifest only: it reads no build file and drafts no unit."""
+    files = cargo({"crates/core": [], "crates/cli": ["core", "dev:extra"], "crates/extra": []})
+    files["crates/cli/src/main.rs"] = "fn main() {}\n"
+    folder = new_project(tmp, files)
+    data, done = runner.json("init", "--json", str(folder))
+    check(done.returncode == 0 and data["ok"] and data["units"] == 1
+          and data["written"] == ["unifold.yaml"], f"init: {done.stderr} {data}")
+    check(not (folder / "crates/core/unifold.yaml").exists()
+          and not (folder / "crates/cli/unifold.yaml").exists(), "init writes no manifest below the root")
+    root = (folder / "unifold.yaml").read_text()
+    check('unifold: "0.1"' in root and "\nname: demo\n" in root and "summary: TODO" in root,
+          f"root manifest: {root}")
+    check(runner.findings(folder) == ["warn M10 unifold.yaml"], f"after init: {runner.findings(folder)}")
+    again = runner.run("init", str(folder))
+    check(again.returncode == 0 and (folder / "unifold.yaml").read_text() == root
+          and "kept" in again.stdout and "unifold-convert" in again.stdout,
+          f"init twice keeps the manifest and names the skill: {again.stdout}")
+    edges, _ = runner.json("deps", str(folder))
+    check({"from": "crates/cli", "to": "crates/core", "kind": "cargo",
+           "evidence": "crates/cli/Cargo.toml [dependencies] core"} in edges, f"deps: {edges}")
+    check(any(e["kind"] == "cargo-dev" for e in edges), "dev-dependencies are listed with their kind")
+    empty = Path(tmp) / "none"
+    data, done = runner.json("init", "--json", str(empty))
+    check(done.returncode == 0 and data["units"] == 1 and data["written"] == ["unifold.yaml"]
+          and "\nname: none\n" in (empty / "unifold.yaml").read_text(),
+          f"init in an empty folder writes the root manifest only: {data}")
+    check(runner.findings(empty) == ["warn M10 unifold.yaml"], "the new root manifest says TODO")
+    (folder / "crates/core/unifold.yaml").write_text(UNIT)
+    done = runner.run("init", str(folder / "crates/core"))
+    check(done.returncode == 2 and "no key 'unifold'" in done.stderr,
+          f"init on a unit that is not a root: {done.returncode} {done.stderr}")
+
+
+def scenario_hints(runner: Runner, tmp: str):
+    """Texts that must not mislead: the D1 hint for a declared need, `capability` at level core."""
+    files = core("", {"a": "needs:\n  b: {summary: The b crate, optional: true}\n", "b": B_CAPABILITY_B},
+                 CARGO_AB)
+    folder = new_project(tmp, files)
+    runner.run("generate", str(folder))
+    data, _ = runner.json("check", "--json", "--rule", "D1", str(folder))
+    fix = data["findings"][0]["fix"] if data["findings"] else ""
+    check("Wire need `b`" in fix and "Add a need" not in fix and "`a.b: b.b`" in fix,
+          f"D1 for a need that is declared but not wired says: wire it: {fix}")
+    (folder / "a/unifold.yaml").write_text(UNIT)
+    data, _ = runner.json("check", "--json", "--rule", "D1", str(folder))
+    check("Add a need" in data["findings"][0]["fix"], "D1 without such a need says: add one")
+    done = runner.run("capability", str(folder / "b"), "b")
+    check(done.returncode == 0 and "README.md" not in done.stdout,
+          f"capability at level core does not speak of README.md: {done.stdout}")
+    (folder / "unifold.yaml").write_text(ROOT + "level: full\n")
+    done = runner.run("capability", str(folder / "b"), "b")
+    check("(no section for it in README.md)" in done.stdout, "capability at level full does")
+
+
+def scenario_agents(runner: Runner, tmp: str):
+    folder = new_project(tmp, core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
+        "a/docs/skills/release/SKILL.md": "---\nname: release\ndescription: Release a.\n---\n# Release\n",
+        "CLAUDE.md": "# Notes\n"}))
+    done = runner.run("init", "--agents", str(folder))
+    check(done.returncode == 0 and "@AGENTS.md" in done.stdout, f"init --agents: {done.stdout}{done.stderr}")
+    check((folder / "docs/skills/unifold/SKILL.md").is_file()
+          and (folder / "docs/skills/unifold/scripts/unifold.py").is_file(), "the skill is installed")
+    check((folder / "docs/skills/unifold-convert/SKILL.md").is_file(), "the convert skill is installed")
+    agents = (folder / "AGENTS.md").read_text()
+    check("<!-- unifold:begin" in agents and "<!-- unifold:end -->" in agents
+          and "| a | `a` | A part |" in agents and " show " in agents and " check" in agents
+          and " capability " in agents and "unifold-convert" in agents, f"AGENTS.md block: {agents}")
+    for base in (".agents/skills", ".claude/skills"):
+        stub = folder / base / "a-release" / "SKILL.md"
+        check(stub.is_file() and "name: a-release" in stub.read_text()
+              and "a/docs/skills/release/SKILL.md" in stub.read_text(), f"stub in {base}")
+        check((folder / base / "unifold" / "SKILL.md").is_file(), f"stub of the unifold skill in {base}")
+        check((folder / base / "unifold-convert" / "SKILL.md").is_file(), f"stub of the convert skill in {base}")
+    check(runner.findings(folder) == [], f"clean after init --agents: {runner.findings(folder)}")
+    (folder / "c").mkdir()
+    (folder / "c/unifold.yaml").write_text(UNIT)
+    (folder / "a/docs/skills/release/SKILL.md").write_text(
+        "---\nname: release\ndescription: Release a, carefully.\n---\n# Release\n")
+    found = runner.findings(folder)
+    check(found == ["error G1 .agents/skills/a-release/SKILL.md",
+                    "error G1 .claude/skills/a-release/SKILL.md", "error G1 AGENTS.md",
+                    "error G1 docs/diagrams/component.md"], f"stale stubs and unit index: {found}")
+    data, _ = runner.json("skills", "sync", "--json", str(folder))
+    check(len(data["written"]) >= 2, f"skills sync: {data}")
+    runner.run("generate", str(folder))
+    check(runner.findings(folder) == [], "clean after generate")
+    rows, _ = runner.json("skills", "--json", str(folder))
+    check({r["name"] for r in rows} == {"unifold", "unifold-convert", "release"}, f"skills: {rows}")
+
+
+def scenario_stub_names(runner: Runner, tmp: str):
+    def skill(name):
+        return f"---\nname: {name}\ndescription: Do {name}.\n---\n# {name}\n"
+    folder = new_project(tmp, core("", {"a": "", "x/a": "", "b": ""}, {
+        "docs/skills/unifold/SKILL.md": skill("unifold"),
+        "docs/skills/a-release/SKILL.md": skill("a-release"),
+        "a/docs/skills/release/SKILL.md": skill("release"),
+        "x/a/docs/skills/release/SKILL.md": skill("release"),
+        "b/docs/skills/b-deploy/SKILL.md": skill("b-deploy"),
+        "b/docs/skills/test/SKILL.md": skill("test")}))
+    data, done = runner.json("skills", "sync", "--json", str(folder))
+    check(done.returncode == 0, f"skills sync: {data}")
+    for base in (".agents/skills", ".claude/skills"):
+        names = sorted(p.name for p in (folder / base).iterdir())
+        check(names == ["a-release", "a-release-2", "b-deploy", "b-test", "unifold", "x-a-release"],
+              f"a root skill keeps its name, others are <unit>-<skill>, a clash takes the path: {names}")
+        for name in names:
+            text = (folder / base / name / "SKILL.md").read_text()
+            check(f"name: {name}\n" in text, f"the stub {name} carries its own name: {text}")
+        check("x/a/docs/skills/release/SKILL.md" in (folder / base / "x-a-release/SKILL.md").read_text()
+              and "(../../../docs/skills/a-release/SKILL.md)" in
+              (folder / base / "a-release/SKILL.md").read_text(), "stubs point at their sources")
+    check(runner.findings(folder) == [], f"clean after skills sync: {runner.findings(folder)}")
+
+
+def scenario_mcp(runner: Runner, tmp: str):
+    folder = new_project(tmp, core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}))
+    runner.run("generate", str(folder))
+    messages = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+            "protocolVersion": "2025-03-26", "capabilities": {},
+            "clientInfo": {"name": "test", "version": "0"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+         "params": {"name": "show", "arguments": {"path": "a"}}},
+        {"jsonrpc": "2.0", "id": 4, "method": "tools/call",
+         "params": {"name": "capability", "arguments": {"path": "b", "name": "x"}}},
+        {"jsonrpc": "2.0", "id": 5, "method": "tools/call",
+         "params": {"name": "impact", "arguments": {"path": "b"}}},
+        {"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "check"}},
+        {"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+         "params": {"name": "tree", "arguments": {"depth": 0}}},
+        {"jsonrpc": "2.0", "id": 8, "method": "tools/call",
+         "params": {"name": "capability", "arguments": {"path": "b", "name": "nothing"}}},
+        {"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": "delete"}},
+        {"jsonrpc": "2.0", "id": 10, "method": "resources/list"},
+        {"jsonrpc": "2.0", "id": 11, "method": "ping"},
+    ]
+    stdin = "\n".join(json.dumps(m) for m in messages[:2]) + "\nnot json\n" \
+        + "\n".join(json.dumps(m) for m in messages[2:]) + "\n"
+    done = runner.run("mcp", str(folder), stdin=stdin)
+    check(done.returncode == 0, f"mcp exit: {done.returncode} {done.stderr}")
+    replies = [json.loads(line) for line in done.stdout.splitlines() if line.strip()]
+    by_id = {r.get("id"): r for r in replies}
+    check(len(replies) == 12 and all(r["jsonrpc"] == "2.0" for r in replies),
+          f"one reply per request, none for the notification: {len(replies)}")
+    init = by_id[1]["result"]
+    check(init["protocolVersion"] == "2025-03-26" and "tools" in init["capabilities"]
+          and init["serverInfo"]["name"] == "unifold", f"initialize: {init}")
+    check(by_id[None]["error"]["code"] == -32700, "parse error")
+    tools = by_id[2]["result"]["tools"]
+    check([t["name"] for t in tools] == ["show", "capability", "impact", "check", "tree"]
+          and all(t["inputSchema"]["type"] == "object" for t in tools), f"tools/list: {tools}")
+
+    def content(reply):
+        return json.loads(reply["result"]["content"][0]["text"])
+    check(content(by_id[3])["needs"]["x"]["provided-by"][0]["unit"] == "b", "tools/call show")
+    check(len(content(by_id[4])["ends"]) == 2, "tools/call capability")
+    check(content(by_id[5])["dependents"][0]["unit"] == "a", "tools/call impact")
+    check(content(by_id[6])["ok"] is True and by_id[6]["result"]["isError"] is False, "tools/call check")
+    check([u["path"] for u in content(by_id[7])["units"]] == ["."], "tools/call tree")
+    check(by_id[8]["result"]["isError"] is True and "nothing" in content(by_id[8])["error"]["message"],
+          "a failing tool call is a result with isError")
+    check(by_id[9]["error"]["code"] == -32602 and by_id[10]["error"]["code"] == -32601
+          and by_id[11]["result"] == {}, "unknown tool, unknown method, ping")
+    newer = runner.run("mcp", str(folder), stdin=json.dumps(
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+         "params": {"protocolVersion": "2099-01-01"}}) + "\n")
+    check(json.loads(newer.stdout)["result"]["protocolVersion"] == "2025-06-18",
+          "an unknown protocol version is answered with the newest one the server speaks")
+
+
+def scenario_site(runner: Runner, tmp: str):
+    folder = new_project(tmp, core("wiring:\n  a.x: b.x\n",
+                                   {"a": NEEDS_X, "b": CAPABILITY_X + "status: planned\n"}))
+    out = Path(tmp) / "site" / "map.html"
+    done = runner.run("site", str(folder), "-o", str(out))
+    check(done.returncode == 0 and out.is_file(), f"site: {done.stderr}")
+    html = out.read_text()
+    check('"status": "planned"' in html and '"x"' in html and "cdn.jsdelivr.net" in html,
+          "the page holds the model, its connections and status")
+    fake = Path(tmp) / "mermaid.min.js"
+    fake.write_text("window.mermaid = {initialize(){}, render: async () => ({svg: '<svg></svg>'})};\n")
+    done = runner.run("site", str(folder), "-o", str(out.parent), "--mermaid", str(fake))
+    html = (out.parent / "unifold.html").read_text()
+    check(done.returncode == 0 and "window.mermaid = {initialize" in html
+          and "cdn.jsdelivr.net" not in html, "--mermaid FILE embeds the renderer; -o takes a folder")
+    done = runner.run("site", str(folder), "--mermaid", str(Path(tmp) / "missing.js"))
+    check(done.returncode == 2, "--mermaid with a missing file")
+
+
+def scenario_robustness(runner: Runner, tmp: str):
+    files = {"unifold.yaml": ROOT + "wiring:\n" + "".join(
+        f"  u{i}.x: u{(i + 1) % 1200}.x\n" for i in range(1200))}
+    for i in range(1200):
+        files[f"u{i}/unifold.yaml"] = UNIT + NEEDS_X + CAPABILITY_X
+    folder = new_project(tmp, files)
+    runner.run("generate", str(folder))
+    found = runner.findings(folder)
+    check(found == ["warn W7 unifold.yaml"], f"a cycle through 1200 siblings: {found[:5]}")
+    deep = Path(tmp) / "deep" / "demo"
+    write_files(deep, {"unifold.yaml": ROOT, **{
+        "/".join(["d"] * n) + "/unifold.yaml": UNIT for n in range(1, 40)}})
+    runner.run("generate", str(deep))
+    check(runner.findings(deep) == [], "39 levels deep")
+    odd = Path(tmp) / "odd" / "demo"
+    write_files(odd, full(files={"docs/x.md/keep.txt": "a folder named like a file\n",
+                                 "docs/references/utf16.md": "x"}))
+    (odd / "docs/references/utf16.md").write_bytes("# T\n".encode("utf-16"))
+    runner.run("generate", str(odd))
+    done = runner.run("check", "--json", str(odd))
+    check(done.returncode in (0, 1) and json.loads(done.stdout), "odd files do not crash check")
+    for command in (["show", str(odd / "missing")], ["init", str(odd / "unifold.yaml")],
+                    ["rules", "ZZ"], ["capability", str(odd), "nothing"]):
+        done = runner.run(*command)
+        check(done.returncode == 2 and "Traceback" not in done.stderr and done.stderr.strip(),
+              f"{command[0]}: exit {done.returncode}, {done.stderr[:200]}")
+    crlf = Path(tmp) / "crlf" / "demo"
+    write_files(crlf, {k: v.replace("\n", "\r\n") for k, v in
+                       core(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}).items()})
+    runner.run("generate", str(crlf))
+    check(runner.findings(crlf) == [], "CRLF line ends")
+    sub = runner.run("check", "--json", cwd=str(crlf / "a"))
+    check(json.loads(sub.stdout)["summary"]["units"] == 3, "run from a folder below the root")
+
+
+SCENARIOS = [
+    ("scenario-json-on-failure", scenario_json_on_failure),
+    ("scenario-finding-shape-text-github-strict", scenario_finding_shape),
+    ("scenario-generate-is-idempotent", scenario_generate_is_idempotent),
+    ("scenario-show-capability-impact-tree", scenario_show_port_impact),
+    ("scenario-stamps-and-cited-by", scenario_stamps),
+    ("scenario-row-citation", scenario_row_citation),
+    ("scenario-check-fix", scenario_check_fix),
+    ("scenario-agents-generated-at-level-full", scenario_agents_generated),
+    ("scenario-init-root-manifest-only", scenario_init),
+    ("scenario-hints-d1-and-capability", scenario_hints),
+    ("scenario-init-agents-and-skill-stubs", scenario_agents),
+    ("scenario-skill-stub-names", scenario_stub_names),
+    ("scenario-mcp-exchange", scenario_mcp),
+    ("scenario-site", scenario_site),
+    ("scenario-robustness", scenario_robustness),
+]
+
+
+def meta_rules(runner: Runner) -> str | None:
+    """rules.md, the tool and the cases name the same rules."""
+    table = {}
+    for line in RULES_MD.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^\| (?:<a id=\"[a-z0-9]+\"></a>)?`?([A-Z]\d+)`? \| (error|warn|info) "
+                         r"\| (core|full) \|", line)
+        if match:
+            table[match.group(1)] = (match.group(2), match.group(3))
+    if not table:
+        return f"no rule table found in {RULES_MD}"
+    try:
+        listed, _ = runner.json("rules", "--json")
+        tool = {r["id"]: (r["severity"], r["level"]) for r in listed}
+    except (AssertionError, KeyError, TypeError):
+        tool = None                                   # another implementation need not have `rules`
+    if tool is not None and tool != table:
+        diff = sorted(set(tool.items()) ^ set(table.items()))
+        return f"rules.md and `rules --json` differ: {diff}"
+    failing = {e.split()[1] for case in CASES for e in case[2]}
+    missing = sorted(set(table) - failing)
+    if missing:
+        return f"no failing case for: {', '.join(missing)}"
+    unknown = sorted(failing - set(table))
+    if unknown:
+        return f"cases expect rules that rules.md does not define: {', '.join(unknown)}"
+    wrong = sorted({e for case in CASES for e in case[2]
+                    if table.get(e.split()[1], ("",))[0] != e.split()[0]})
+    if wrong:
+        return f"cases expect a severity that rules.md does not give: {wrong}"
+    return None
+
+
 def main() -> int:
     args = sys.argv[1:]
+    tool = [sys.executable, str(TOOL)]
+    if "--tool" in args:
+        index = args.index("--tool")
+        tool = shlex.split(args[index + 1])
+        del args[index:index + 2]
+    if args[:1] == ["--list"]:
+        print("\n".join([c[0] for c in CASES] + [s[0] for s in SCENARIOS] + ["meta-rules"]))
+        return 0
     if args[:1] == ["--write"]:
-        for name, files, expected in CASES:
+        for case in CASES:
+            name, files, expected = case[:3]
+            options = case[3] if len(case) > 3 else {}
             folder = Path(args[1]) / name
-            write_case(folder, files)
-            (folder / "expected.txt").write_text("\n".join(expected) + "\n")
+            write_files(folder / "demo", files)
+            (folder / "expected.txt").write_text("".join(e + "\n" for e in sorted(expected)))
+            (folder / "run.json").write_text(json.dumps(
+                {"generate": options.get("generate", True),
+                 "check": ["check", "--json", *options.get("args", []), "demo"]}) + "\n")
         print(f"wrote {len(CASES)} cases to {args[1]}")
         return 0
-    tool = shlex.split(args[1]) if args[:1] == ["--tool"] else [sys.executable, str(TOOL)]
-    reference = [sys.executable, str(TOOL)]
+    runner = Runner(tool)
+    wanted = [a for a in args if not a.startswith("-")]
+    tests = [(c[0], lambda c=c: run_case(runner, c)) for c in CASES]
+    for name, function in SCENARIOS:
+        def scenario(function=function):
+            with tempfile.TemporaryDirectory() as tmp:
+                try:
+                    function(runner, str(Path(tmp).resolve()))
+                except AssertionError as exc:
+                    return str(exc)
+                except (KeyError, IndexError, TypeError, StopIteration, ValueError) as exc:
+                    return f"unexpected output ({type(exc).__name__}: {exc})"
+            return None
+        tests.append((name, scenario))
+    tests.append(("meta-rules", lambda: meta_rules(runner)))
+    if wanted:
+        tests = [t for t in tests if any(w in t[0] for w in wanted)]
     failed = 0
-    for name, files, expected in CASES:
-        with tempfile.TemporaryDirectory() as tmp:
-            folder = Path(tmp).resolve() / "demo"
-            write_case(folder, files)
-            run_tool(reference, "generate", str(folder))
-            deps = ["--deps", str(folder / "deps.json")] if "deps.json" in files else []
-            result = run_tool(tool, "check", "--json", *deps, str(folder))
-            try:
-                found = sorted(f"{f['severity']} {f['rule']} {f['file']}"
-                               for f in json.loads(result.stdout))
-            except json.JSONDecodeError:
-                found = ["no JSON: " + (result.stdout + result.stderr).strip()[:200]]
-            ok = found == sorted(expected)
-            failed += not ok
-            print(("ok   " if ok else "FAIL ") + name)
-            if not ok:
-                print("     expected:", sorted(expected))
-                print("     found:   ", found)
-    print(f"{len(CASES) - failed} of {len(CASES)} cases pass")
+    for name, test in tests:
+        problem = test()
+        failed += bool(problem)
+        if problem or "-v" in args:
+            print(("FAIL " if problem else "ok   ") + name)
+        if problem:
+            print("     " + problem)
+    print(f"{len(tests) - failed} of {len(tests)} tests pass "
+          f"({len(CASES)} cases, {len(SCENARIOS)} scenarios, 1 meta test)")
     return 1 if failed else 0
 
 
