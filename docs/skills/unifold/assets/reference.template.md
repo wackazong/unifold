@@ -4,8 +4,7 @@
 
 ## <Section>
 
-<Facts in the present tense. Tables for things with the same short attributes.
-No reasons (decisions), no work instructions (skills).>
+<Facts in the present tense. Tables for things with the same short attributes. No reasons (decisions), no work instructions (skills).>
 
 ## Examples
 

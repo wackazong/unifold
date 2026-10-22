@@ -2,13 +2,14 @@
 name: <folder-name>
 description: <What the skill does and when to use it, in one or two sentences.>
 ---
+
 # <Title: the task>
 
 <One or two sentences: what the result is and why the procedure exists.>
 
 ## Steps
 
-1. <Step>
+1. <One action, verb first; then what you see.>
 2. <Step>
 
 ## Checks

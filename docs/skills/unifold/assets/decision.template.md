@@ -2,8 +2,8 @@
 status: proposed
 date: <YYYY-MM-DD>
 ---
-<!-- Delete this comment. An agent leaves the status at "proposed". A human who accepts
-     sets "status: accepted" and adds "decision-makers: [name]" to the front matter. -->
+
+<!-- Delete this comment. An agent leaves the status at "proposed". A human who accepts sets "status: accepted" and adds "decision-makers: [name]" to the front matter. -->
 # <Short title that states the decision>
 
 ## Context and Problem Statement

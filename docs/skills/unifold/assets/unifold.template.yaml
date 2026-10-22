@@ -4,7 +4,6 @@
 summary: <what the unit is, in one line>
 # unifold: "0.1"         # root only: the version of the standard
 # name: <project-name>   # root only, and every root should set it; default: the folder name
-# level: full            # this unit and the units below it also follow https://unifold.md/documents
 # status: planned        # planned | active (default) | deprecated
 # kind: <library | service | app | adapter | ...>
 # owner: <team or person>
