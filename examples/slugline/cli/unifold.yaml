@@ -4,11 +4,14 @@ capabilities:
   slugline-command:
     kind: cli
     summary: Prints its arguments as one slug, or one slug for each line of standard input
+    contract: ../docs/references/slugline-command.md
     verified-by: tests/cli.rs
 needs:
   slugify:
     kind: library
     summary: A function that turns one string into one slug, with or without a plug-in
+    contract: ../docs/references/slugify.md
   transliteration:
     kind: library
     summary: A plug-in that replaces letters with diacritics by ASCII letters
+    contract: ../docs/references/transliteration.md

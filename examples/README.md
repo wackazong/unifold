@@ -1,18 +1,24 @@
 # Examples
 
-Two projects that use [unifold](https://unifold.md). Each is a project of
-its own, with its own root `unifold.yaml`, and is checked on its own. Start
-with slugline.
+Two projects that use [unifold](https://unifold.md), for anyone who wants to see the standard applied before reading it. Each is a project of its own, with its own root `unifold.yaml`, and is checked on its own. Start with slugline.
 
-| Example | What it is | What it shows | Level |
-|---|---|---|---|
-| [slugline](slugline/README.md) | A small Cargo workspace with code and tests: 3 crates, 4 units | The whole of level `core` in four manifests; dependencies read from `Cargo.toml`; one unit, `core`, at level `full` with a README that has a `## Why`, a generated `AGENTS.md`, a decision, an invariants file and a context item with a stamp; what `check` prints when the map is wrong | `core`, one unit `full` |
-| [plantwatch](plantwatch/README.md) | The design of a product with firmware, a phone app and cloud services, written before any code: 23 units, all `planned` | Every document convention of level `full`: interfaces, the why in every README, explanation files (reasoning, invariants, runtime, deployment, risks, requirements), 47 decisions, 200 context items with stamps, glossaries, skills, a tutorial for an end user; needs passed up by name; alternatives. Much more than a unit should cost | `full` |
+| Example | What it is | What it shows |
+|---|---|---|
+| [slugline](slugline/README.md) | A small Cargo workspace with code and tests: 3 crates, 4 units | The whole map in four manifests; dependencies read from `Cargo.toml`; a short README per unit, and in `core` a decision, an invariants file and a context item with a stamp; the generated `AGENTS.md`; what `check` prints when the map is wrong |
+| [plantwatch](plantwatch/README.md) | The design of a product with firmware, a phone app and cloud services, written before any code: 22 units, all `planned` | Every document convention: interfaces, the why in every README, explanation files (reasoning, invariants, runtime, deployment, risks, requirements), 48 decisions, 195 context items with stamps, glossaries, skills, a tutorial for an end user; needs passed up by name; alternatives. Much more than a unit should cost |
 
-## Run them
+## Why
 
-`unifold` below is the reference tool. Until the package is published, run
-it from this repository:
+A standard is understood from an example faster than from its text, and every rule here is tried on these two projects before a project outside has to follow it. Two examples, not one, because the questions differ: slugline has code, so it shows the comparison of the map with real dependencies and stays small enough to read in ten minutes; plantwatch has no code, so it shows what the documents of a large design look like when every convention is used, which is more than most units should carry. The repository of the standard itself is not a unit, so the examples are the only projects here that `check` can confirm.
+
+## Out of scope
+
+- A map of an existing open-source repository. Two such maps, kept as overlays of manifests without the code, were removed while the standard was changing and will come back once it has settled: a Rust workspace such as ripgrep, and a set of services in several languages such as Online Boutique, with the calls between services given to `check` as a list. Both are results of the skill `unifold-convert`.
+- Running code for plantwatch. It is a design; its units are `planned`.
+
+## Commands
+
+`unifold` below is the reference tool. Until the package is published, run it from this repository:
 
 ```sh
 alias unifold="python3 $PWD/../docs/skills/unifold/scripts/unifold.py"   # in this folder
@@ -25,14 +31,9 @@ It needs Python 3.9 or newer with PyYAML.
 (cd plantwatch && unifold check --strict)
 ```
 
-Each example has an explorer page, `unifold.html`, written by
-`unifold site`. `unifold show PATH` and `unifold tree` work in every
-example.
+Each example has an explorer page, `unifold.html`, written by `unifold site`. `unifold show PATH` and `unifold tree` work in every example.
 
-## Planned
+## Read next
 
-Maps of existing open-source repositories, kept as overlays of manifests
-without the code, will come back once the standard has settled: one for a
-Rust workspace such as ripgrep, and one for a set of services in several
-languages such as Online Boutique, with the calls between services given
-to `check` as a list. Both are results of the skill `unifold-convert`.
+1. [slugline](slugline/README.md), then its tutorials: the three commands, and what `check` prints when the map is broken.
+2. [plantwatch](plantwatch/README.md), the front page of a product, and one leaf unit of it, such as the alert rules.

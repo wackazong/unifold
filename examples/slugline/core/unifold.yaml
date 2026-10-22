@@ -1,14 +1,13 @@
 summary: Makes slugs and defines what a transliteration plug-in must offer
 kind: library
-level: full
 capabilities:
   slugify:
     kind: library
     summary: Turn a string into a slug with a chosen separator and length
-    contract: src/lib.rs
+    contract: ../docs/references/slugify.md
     verified-by: tests/slugify.rs
   plugin-api:
     kind: library
     summary: The trait a transliteration plug-in implements, and a slugify that uses one
-    contract: src/lib.rs
+    contract: ../docs/references/plugin-api.md
     verified-by: tests/plugin.rs

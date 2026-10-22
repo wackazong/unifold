@@ -4,9 +4,10 @@ capabilities:
   transliteration:
     kind: library
     summary: Replaces Latin letters that have diacritics, and ligatures, by ASCII letters
-    conforms-to: plugin-api
+    contract: ../../docs/references/transliteration.md
     verified-by: tests/latin.rs
 needs:
   plugin-api:
     kind: library
     summary: The trait a transliteration plug-in implements
+    contract: ../../docs/references/plugin-api.md

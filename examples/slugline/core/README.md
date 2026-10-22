@@ -1,13 +1,10 @@
 # core
 
-Turns text into a URL slug and defines the interface of a transliteration
-plug-in.
+Turns text into a URL slug and defines the interface of a transliteration plug-in.
 
 ## Why
 
-Everything that decides what a slug looks like is in this crate, so the
-[format](docs/explanation/context.md) can break in one place only. Character
-tables are large and a matter of taste: they stay outside, behind a trait
+Everything that decides what a slug looks like is in this crate, so the [format](docs/explanation/context.md) can break in one place only. Character tables are large and a matter of taste: they stay outside, behind a trait
 ([decision 0001](docs/decisions/0001-a-plug-in-is-passed-with-each-call.md)).
 
 ## Capabilities
@@ -19,11 +16,11 @@ tables are large and a matter of taste: they stay outside, behind a trait
 - Only `a-z`, `0-9` and `Options::separator` remain.
 - No separator at the start or the end, never two in a row.
 - At most `max_len` characters.
-- Apostrophes and characters outside ASCII are dropped. Any other
-  character ends a word.
+- Apostrophes and characters outside ASCII are dropped. Any other character ends a word.
 - A slug is its own slug.
 
-Tests: [tests/slugify.rs](tests/slugify.rs).
+Contract: [slugify](../docs/references/slugify.md). Tests:
+[tests/slugify.rs](tests/slugify.rs).
 
 ### `plugin-api`
 
@@ -33,7 +30,8 @@ Tests: [tests/slugify.rs](tests/slugify.rs).
 - an answer is treated like typed text, and may have several letters or none;
 - `None` drops the character.
 
-Tests: [tests/plugin.rs](tests/plugin.rs).
+Contract: [plugin-api](../docs/references/plugin-api.md). Tests:
+[tests/plugin.rs](tests/plugin.rs).
 
 ## Out of scope
 

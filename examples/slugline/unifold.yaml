@@ -6,14 +6,17 @@ capabilities:
   slugify:
     kind: library
     summary: Turn a string into a slug
+    contract: docs/references/slugify.md
     verified-by: core/tests/slugify.rs
   plugin-api:
     kind: library
     summary: The trait through which a caller supplies transliteration
+    contract: docs/references/plugin-api.md
     verified-by: core/tests/plugin.rs
   slugline-command:
     kind: cli
     summary: Slugs from arguments or from the lines of standard input
+    contract: docs/references/slugline-command.md
     verified-by: cli/tests/cli.rs
 wiring:
   slugify: core.slugify

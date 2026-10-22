@@ -1,92 +1,45 @@
 # slugline
 
-Turns text into a URL slug: `Crème brûlée` becomes `creme-brulee`. A small
-Cargo workspace with three crates, and the showcase of
-[unifold](https://unifold.md).
+Turns text into a URL slug: `Crème brûlée` becomes `creme-brulee`. A Rust library and a command, in a small Cargo workspace of three crates, for anyone who needs stable, readable identifiers from free text. It is also the small showcase of [unifold](https://unifold.md): four units with code and tests, a map that `check` compares with the `Cargo.toml` files.
 
-Each crate has a `unifold.yaml`; the [root manifest](unifold.yaml) wires
-them. Only [core](core/README.md) is at level `full`, with documents. The
-picture is generated: [component diagram](docs/diagrams/component.md), or
-open `unifold.html`.
+## Why
+
+A slug has to be the same forever once it is in a URL, so the rules that make one are concentrated in one crate and tested as a contract, while the part that is a matter of taste, which letters replace `é` or `ß`, is a plug-in behind a trait. The command is a thin shell over the library. As an example of unifold, the workspace is cut so that every kind of connection appears once: a capability of a child implements one of the root, a need is provided by a sibling, and a plug-in needs the trait that the library defines. Each unit has a short `README.md`; only `core` carries documents beyond it, so a reader can see the smallest unit and a complete one side by side.
+
+## Capabilities
+
+### `slugify`
+
+`slugify("Hello, World!", &Options::default())` returns `hello-world`. Only `a-z`, `0-9` and the separator remain; no separator at the start, the end or twice in a row; at most `max_len` characters; a slug is its own slug. Contract:
+[slugify](docs/references/slugify.md).
+
+### `plugin-api`
+
+The trait a transliteration plug-in implements, and a `slugify_with` that asks the plug-in about every character outside ASCII. Contract:
+[plugin-api](docs/references/plugin-api.md).
+
+### `slugline-command`
+
+`slugline Crème brûlée` prints `creme-brulee`; without arguments it slugs each line of standard input. Exit code 0, 1 for an input or output failure, 2 for a bad option. Contract:
+[slugline-command](docs/references/slugline-command.md).
+
+## Out of scope
+
+- Unique slugs: nothing here knows which slugs exist already.
+- Scripts other than Latin. A Cyrillic or Greek table is another plug-in.
+- A configuration file or locale for the command.
+
+## Commands
 
 ```sh
 cargo test --workspace
 alias unifold='python3 ../../docs/skills/unifold/scripts/unifold.py'
+unifold check
 ```
 
-## Three commands
+## Read next
 
-```console
-$ unifold check
-4 unit(s): 0 error(s), 0 warning(s), 0 info; 3 dependencies observed in code
-```
-
-The three dependencies are read from the `Cargo.toml` files.
-
-```console
-$ unifold show plugins/unicode
-unit      unicode  (plugins/unicode)
-summary   Transliterates Latin letters with diacritics to ASCII
-status    active · library · level core
-manifest  plugins/unicode/unifold.yaml
-parent    slugline
-children  none
-provides
-  transliteration (library): Replaces Latin letters that have diacritics, and ligatures, by ASCII letters  verified by plugins/unicode/tests/latin.rs  conforms to need plugin-api
-      used by cli as need 'transliteration'
-needs
-  plugin-api (library): The trait a transliteration plug-in implements
-      provided by core capability 'plugin-api'  contract core/src/lib.rs  verified by core/tests/plugin.rs
-```
-
-```console
-$ unifold capability plugins/unicode plugin-api
---- plugins/unicode needs 'plugin-api' (library): The trait a transliteration plug-in implements
-
---- core provides 'plugin-api' (library): The trait a transliteration plug-in implements, and a slugify that uses one
-    contract: core/src/lib.rs
-    verified by: core/tests/plugin.rs
-`slugify_with(input, &options, &plugin)` asks a `Transliterate` plug-in:
-
-- only about characters outside ASCII;
-- an answer is treated like typed text, and may have several letters or none;
-- `None` drops the character.
-
-Tests: [tests/plugin.rs](tests/plugin.rs).
-```
-
-## Break it
-
-**Remove a wiring line.** Delete `cli.transliteration:
-unicode.transliteration` from [unifold.yaml](unifold.yaml):
-
-```console
-$ unifold check
-error G1 docs/diagrams/component.md: generated file is out of date
-    fix: Run `unifold generate` (or `unifold check --fix`).
-error D1 unifold.yaml:18: 'cli' depends on 'plugins/unicode', but no need of 'cli' is connected to 'unicode' (cargo: cli/Cargo.toml [dependencies] slugline-unicode)
-    fix: Add a need to cli/unifold.yaml (for example `unicode`), and add `cli.unicode: unicode.transliteration` to the wiring here. Or remove the dependency from the code.
-error W2 unifold.yaml:18: need 'cli.transliteration' has no provider
-    fix: Add `cli.transliteration: unicode.transliteration` to the wiring.
-warn W3 unifold.yaml:18: 'unicode.transliteration' is provided but nothing uses it
-    fix: Wire the unit that should use it, or implement a capability of the parent with it (`capability: child.capability`), or remove the capability.
-4 unit(s): 3 error(s), 1 warning(s), 0 info  [D1×1, G1×1, W2×1, W3×1]; 3 dependencies observed in code
-```
-
-**Add a dependency that no manifest declares.** Let `core` use the table
-of the plug-in. Append to `core/Cargo.toml`:
-
-```toml
-[dependencies]
-slugline-unicode = { path = "../plugins/unicode" }
-```
-
-```console
-$ unifold check
-error D1 unifold.yaml:18: 'core' depends on 'plugins/unicode', but no need of 'core' is connected to 'unicode' (cargo: core/Cargo.toml [dependencies] slugline-unicode)
-    fix: Add a need to core/unifold.yaml (for example `unicode`), and add `core.unicode: unicode.transliteration` to the wiring here. Or remove the dependency from the code.
-4 unit(s): 1 error(s), 0 warning(s), 0 info  [D1×1]; 4 dependencies observed in code
-```
-
-Cargo refuses this particular edit too, because it closes a cycle. unifold
-reports every dependency that is not wired, also those Cargo accepts.
+1. [Three commands](docs/tutorials/three-commands.md): what `check`, `show` and `capability` print for this project.
+2. [Break the map](docs/tutorials/break-the-map.md): what `check` says when a wiring line is missing or the code depends on something unwired.
+3. The generated [component diagram](docs/diagrams/component.md), or `unifold.html` in a browser.
+4. [core](core/README.md), the one unit with documents of its own.
