@@ -1,10 +1,10 @@
 # Writing the documents
 
-[documents.md](documents.md) says which files a unit has and where each kind of knowledge goes. This chapter says how each file is written, what a reviewer checks, and the style that all of them share.
+[documents.md](documents.md) says which files a unit has. This chapter says how each is written, what a reviewer checks, and the style they share.
 
 ## Context items and stamps
 
-`docs/explanation/context.md` lists the decisions, conventions and terms from above that a reader must know to understand the unit. The repetition is deliberate: it keeps the unit understandable when its folder is read alone. Each item:
+`docs/explanation/context.md` lists the decisions, conventions and terms from above that a reader must know to understand the unit. The repetition is deliberate: it keeps the unit understandable when its folder is read alone. Each item is a `###` heading:
 
 ```markdown
 ### [cloud/0002 Each service owns its data](../../../docs/decisions/0002-each-service-owns-its-data.md)
@@ -44,7 +44,7 @@ decision-makers: [name]   # once the status is accepted
 - A decision belongs to the lowest unit whose insides it fully covers. A decision about how two siblings talk belongs to their parent.
 - **Agents propose, humans accept.** An agent writes `status: proposed`. Only a person who may decide for the unit sets `accepted`.
 - Only accepted decisions bind. Tools mark proposed ones where they show them.
-- An accepted decision is not edited, except for its status. To change it, write a new one and set the old one to `superseded by NNNN`.
+- An accepted decision is not edited, except for its status and for links to files that moved. To replace it, write a new one and set the old one to `superseded by NNNN`. To change only a part, write a new one that says "This amends NNNN:" and what changes; the rest of the old one stays in force.
 - `docs/decisions/index.md` is generated for each unit that has decisions.
 
 ## References and the glossary
@@ -87,5 +87,5 @@ The checker compares files with each other. Whoever reviews a change, a person o
 - A sentence makes one statement and SHOULD have at most 25 words; in a step of a skill or a tutorial, at most 20. Split at the colon or semicolon that joins two statements. A paragraph has one topic and at most six sentences; a list item is a paragraph.
 - A step is an instruction: the verb first, one action per sentence, then what the reader sees. "Run `check`. It prints no error." Not: "After running `check`, which should print no error, ...".
 - One term for one thing: the term of [spec.md](spec.md) section 1 or of the unit's glossary, never a synonym. A unit *provides* and *needs*; the parent *connects*; code *depends on* another unit, which is what the tool compares with the wiring. Not "offers" or "exposes" for provides, not "depends on" for needs.
-- One home for every fact; other files link to it.
-- What the reference tool reports is in [rules.md](rules.md).
+
+What the reference tool reports is in [rules.md](rules.md).

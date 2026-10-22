@@ -51,3 +51,4 @@ Only accepted decisions bind.
 | 0043 | [Write one line per paragraph](0043-write-one-line-per-paragraph.md) | accepted | 2026-10-22 |
 | 0044 | [Write machine lines as HTML comments that start with `unifold:`](0044-write-machine-lines-as-html-comments-prefixed-unifold.md) | accepted | 2026-10-22 |
 | 0045 | [Keep the reference chapters directly in docs/references](0045-keep-the-reference-chapters-directly-in-docs-references.md) | accepted | 2026-10-22 |
+| 0046 | [Let a decision amend part of an accepted one](0046-let-a-decision-amend-part-of-an-accepted-one.md) | **proposed** | 2026-10-23 |
