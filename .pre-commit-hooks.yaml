@@ -1,0 +1,15 @@
+# Hooks for https://pre-commit.com; see docs/references/tool.md.
+- id: unifold
+  name: unifold check
+  description: Check the unifold map of the repository against itself and the code.
+  entry: unifold check
+  language: python
+  pass_filenames: false
+  always_run: true
+- id: unifold-fix
+  name: unifold check --fix
+  description: Rewrite the generated files of the unifold map, then check it.
+  entry: unifold check --fix
+  language: python
+  pass_filenames: false
+  always_run: true
