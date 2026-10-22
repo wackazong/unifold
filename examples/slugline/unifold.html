@@ -3,19 +3,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>slugline · unifold</title>
 <style>
-:root{--bg:#fff;--fg:#1c1e21;--mute:#667;--line:#d6d9de;--hi:#0b62d6;--panel:#f6f7f9}
-@media(prefers-color-scheme:dark){:root{--bg:#16181c;--fg:#e6e8eb;--mute:#9aa3ad;--line:#333a44;--hi:#6cb0ff;--panel:#1e2228}}
+:root{--bg:#fff;--fg:#1c1e21;--mute:#667;--line:#d6d9de;--hi:#0b62d6;--panel:#f6f7f9;--warn:#9a5b00;--warnbg:#fff4d6}
+@media(prefers-color-scheme:dark){:root{--bg:#16181c;--fg:#e6e8eb;--mute:#9aa3ad;--line:#333a44;--hi:#6cb0ff;--panel:#1e2228;--warn:#ffcf70;--warnbg:#3a2f12}}
 *{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;min-height:100vh}
-nav{width:250px;flex:none;border-right:1px solid var(--line);background:var(--panel);padding:12px;overflow:auto;max-height:100vh;position:sticky;top:0}
+nav{width:260px;flex:none;border-right:1px solid var(--line);background:var(--panel);padding:12px;overflow:auto;max-height:100vh;position:sticky;top:0}
 nav ul{list-style:none;margin:0;padding-left:14px}nav>ul{padding-left:0}
 nav a{display:block;padding:2px 6px;border-radius:4px;color:var(--fg);text-decoration:none;cursor:pointer}
 nav a.on{background:var(--hi);color:#fff}nav a:hover{outline:1px solid var(--line)}
 main{flex:1;min-width:0;padding:16px 24px}a{color:var(--hi)}
-h1{font-size:22px;margin:.2em 0}.mute{color:var(--mute)}.crumbs a{cursor:pointer}
+h1{font-size:22px;margin:.2em 0}h2{font-size:17px;margin:1.2em 0 .3em}.mute{color:var(--mute)}.crumbs a,.go{cursor:pointer}
+.badge{display:inline-block;font-size:12px;padding:0 7px;border-radius:9px;border:1px solid var(--line);color:var(--mute);vertical-align:middle}
+.badge.planned,.badge.deprecated,.badge.proposed{color:var(--warn);background:var(--warnbg);border-color:var(--warn)}
 .tabs button{font:inherit;padding:4px 12px;margin-right:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
 .tabs button.on{background:var(--hi);color:#fff;border-color:var(--hi)}
-#diagram{border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0;overflow:auto;background:var(--bg)}
-#diagram svg{max-width:none;height:auto}#diagram .pick{cursor:pointer}
+#diagram{border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0;overflow:auto;background:var(--bg);max-height:85vh}
+#diagram svg{max-width:none;height:auto;display:block}#diagram.fit svg{max-width:100%}#diagram .pick{cursor:pointer}#diagram pre{margin:8px 0 0;font-size:12px}
+#diagram .cluster rect{fill:var(--panel)!important;stroke:var(--line)!important}
+#zoom{float:right;font:inherit;font-size:13px;padding:2px 10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
+.st{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:baseline;border:1.5px dashed currentColor;opacity:.75}
+.st.deprecated{border-style:solid;background:linear-gradient(to top right,transparent 44%,currentColor 44% 56%,transparent 56%)}
+nav .legend{margin:14px 6px 0;font-size:12px;color:var(--mute)}nav .legend .st{margin:0 4px 0 0}
 table{border-collapse:collapse;margin:8px 0;width:100%}th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
 th{background:var(--panel)}code{background:var(--panel);padding:0 4px;border-radius:3px}
 @media(max-width:800px){body{display:block}nav{width:auto;max-height:none;position:static}}
@@ -24,70 +31,102 @@ th{background:var(--panel)}code{background:var(--panel);padding:0 4px;border-rad
 <main>
 <div class="crumbs mute" id="crumbs"></div>
 <h1 id="title"></h1><p id="summary"></p><p class="mute" id="meta"></p>
-<div class="tabs" id="tabs"></div>
+<div class="tabs"><button id="zoom" hidden></button><span id="tabs"></span></div>
 <div id="diagram">Loading the diagram renderer…</div>
-<p class="mute">Click a box to open that unit. Arrows point from a need to its provider.</p>
+<div id="shared"></div>
+<p class="mute">Click a box to open that unit. An arrow points from a need to its provider. A dashed border marks a unit that is planned.</p>
 <div id="info"></div>
 </main>
 <script type="module">
-const model = {"name": "slugline", "units": [{"unit": "slugline", "path": ".", "summary": "Turns any string into a URL slug, as a library and on the command line", "kind": "library", "status": "active", "owner": "", "manifest": "unit.yaml", "parent": null, "children": ["cli", "core", "plugins/unicode"], "provides": {"slugify": {"kind": "library", "summary": "Turn a string into a slug", "contract": null, "verified-by": "core/tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slugify"}]}, "slug-cli": {"kind": "cli", "summary": "Slugs on the command line", "contract": null, "verified-by": "cli/tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slug-cli"}]}}, "needs": {}, "skills": [], "decisions": [], "files": ["README.md"], "readme": "README.md", "agents": "AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  u_root[\"slugline\"]\n  p_root___slugify([\"slugify\"])\n  p_root___slugify --> u_root\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slug_dcli --> u_root\n  classDef focus stroke-width:4px\n  class u_root focus", "nodes": {"u_root": "."}}, "component": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slugify --> u_core\n  p_root___slug_dcli --> u_cli\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}, "architecture": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slugify --> u_core\n  p_root___slug_dcli --> u_cli\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}, {"unit": "cli", "path": "cli", "summary": "The slugline command", "kind": "app", "status": "active", "owner": "", "manifest": "cli/unit.yaml", "parent": ".", "children": [], "provides": {"slug-cli": {"kind": "cli", "summary": "Reads lines on standard input and writes slugs on standard output", "contract": null, "verified-by": "tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slug-cli"}]}}, "needs": {"slugify": {"kind": "library", "summary": "A function that turns one string into one slug", "optional": false, "contract": null, "provided-by": [{"unit": "core", "port": "slugify", "contract": "core/src/lib.rs", "config": null}]}, "transliteration": {"kind": "library", "summary": "Maps characters outside ASCII to ASCII before a slug is made", "optional": true, "contract": null, "provided-by": [{"unit": "plugins/unicode", "port": "transliteration", "contract": null, "config": null}]}}, "skills": [], "decisions": [], "files": ["cli/README.md"], "readme": "cli/README.md", "agents": "cli/AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slug_dcli([\"slug-cli\"])\n  p_root___slug_dcli --> u_cli\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3\n  class u_cli focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}, {"unit": "core", "path": "core", "summary": "Makes slugs and defines what a transliteration plug-in must offer", "kind": "library", "status": "active", "owner": "", "manifest": "core/unit.yaml", "parent": ".", "children": [], "provides": {"slugify": {"kind": "library", "summary": "Turn a string into a slug with a chosen separator and length", "contract": "src/lib.rs", "verified-by": "tests", "conforms-to": null, "used-by": [{"outside": true, "root-port": "slugify"}, {"unit": "cli", "need": "slugify", "contract": null}]}, "plugin-api": {"kind": "specification", "summary": "The interface a transliteration plug-in implements", "contract": "src/lib.rs", "verified-by": "tests", "conforms-to": null, "used-by": [{"unit": "plugins/unicode", "need": "plugin-api", "contract": null}]}}, "needs": {}, "skills": [], "decisions": [], "files": ["core/README.md"], "readme": "core/README.md", "agents": "core/AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___slugify --> u_core\n  u_cli -->|\"slugify\"| u_core\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3\n  class u_core focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}, {"unit": "unicode", "path": "plugins/unicode", "summary": "Transliterates Latin characters with diacritics to ASCII", "kind": "library", "status": "active", "owner": "", "manifest": "plugins/unicode/unit.yaml", "parent": ".", "children": [], "provides": {"transliteration": {"kind": "library", "summary": "Maps characters outside ASCII to ASCII before a slug is made", "contract": null, "verified-by": "tests", "conforms-to": "plugin-api", "used-by": [{"unit": "cli", "need": "transliteration", "contract": null}]}}, "needs": {"plugin-api": {"kind": "specification", "summary": "The interface a transliteration plug-in implements", "optional": false, "contract": null, "provided-by": [{"unit": "core", "port": "plugin-api", "contract": "core/src/lib.rs", "config": null}]}}, "skills": [], "decisions": [], "files": ["plugins/unicode/README.md"], "readme": "plugins/unicode/README.md", "agents": "plugins/unicode/AGENTS.md", "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef plain stroke-dasharray:2 3\n  class u_plugins__unicode focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}}}}], "base": "", "up": ""};
+const model = {"name": "slugline", "units": [{"name": "slugline", "path": ".", "summary": "Turns text into URL slugs, as a Rust library and as a command", "kind": null, "status": "active", "owner": null, "level": "core", "manifest": "unifold.yaml", "parent": null, "children": [{"path": "cli", "name": "cli", "status": "active", "summary": "The slugline command"}, {"path": "core", "name": "core", "status": "active", "summary": "Makes slugs and defines what a transliteration plug-in must offer"}, {"path": "plugins/unicode", "name": "unicode", "status": "active", "summary": "Transliterates Latin letters with diacritics to ASCII"}], "nested-projects": [], "capabilities": {"slugify": {"kind": "library", "summary": "Turn a string into a slug", "contract": null, "verified-by": "core/tests/slugify.rs", "conforms-to": null, "used-by": [{"outside": true, "root-capability": "slugify"}]}, "plugin-api": {"kind": "library", "summary": "The trait through which a caller supplies transliteration", "contract": null, "verified-by": "core/tests/plugin.rs", "conforms-to": null, "used-by": [{"outside": true, "root-capability": "plugin-api"}]}, "slugline-command": {"kind": "cli", "summary": "Slugs from arguments or from the lines of standard input", "contract": null, "verified-by": "cli/tests/cli.rs", "conforms-to": null, "used-by": [{"outside": true, "root-capability": "slugline-command"}]}}, "needs": {}, "skills": [], "decisions": [], "documents": {"tutorials": [], "references": ["docs/references/slug.md"], "explanation": []}, "diagrams": {"component": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___plugin_dapi([\"plugin-api\"])\n  p_root___slugline_dcommand([\"slugline-command\"])\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  p_root___slugify --> u_core\n  p_root___plugin_dapi --> u_core\n  p_root___slugline_dcommand --> u_cli\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef deprecated stroke-dasharray:2 2,opacity:0.6\n  classDef plain stroke-dasharray:2 3", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}, "shared": []}}, "files": ["README.md", "docs/references/slug.md"], "readme": "README.md", "agents": "AGENTS.md"}, {"name": "cli", "path": "cli", "summary": "The slugline command", "kind": "app", "status": "active", "owner": null, "level": "core", "manifest": "cli/unifold.yaml", "parent": {"path": ".", "name": "slugline", "status": "active", "summary": "Turns text into URL slugs, as a Rust library and as a command"}, "children": [], "nested-projects": [], "capabilities": {"slugline-command": {"kind": "cli", "summary": "Prints its arguments as one slug, or one slug for each line of standard input", "contract": null, "verified-by": "cli/tests/cli.rs", "conforms-to": null, "used-by": [{"outside": true, "root-capability": "slugline-command"}]}}, "needs": {"slugify": {"kind": "library", "summary": "A function that turns one string into one slug, with or without a plug-in", "contract": null, "verified-by": null, "optional": false, "provided-by": [{"unit": "core", "status": "active", "capability": "slugify", "contract": "core/src/lib.rs", "verified-by": "core/tests/slugify.rs", "config": null, "via": []}]}, "transliteration": {"kind": "library", "summary": "A plug-in that replaces letters with diacritics by ASCII letters", "contract": null, "verified-by": null, "optional": false, "provided-by": [{"unit": "plugins/unicode", "status": "active", "capability": "transliteration", "contract": null, "verified-by": "plugins/unicode/tests/latin.rs", "config": null, "via": []}]}}, "skills": [], "decisions": [], "documents": {"tutorials": [], "references": [], "explanation": []}, "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugline_dcommand([\"slugline-command\"])\n  u_cli -->|\"slugify\"| u_core\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  p_root___slugline_dcommand --> u_cli\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef deprecated stroke-dasharray:2 2,opacity:0.6\n  classDef plain stroke-dasharray:2 3\n  class u_cli focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}, "shared": []}}, "files": [], "readme": null, "agents": null}, {"name": "core", "path": "core", "summary": "Makes slugs and defines what a transliteration plug-in must offer", "kind": "library", "status": "active", "owner": null, "level": "full", "manifest": "core/unifold.yaml", "parent": {"path": ".", "name": "slugline", "status": "active", "summary": "Turns text into URL slugs, as a Rust library and as a command"}, "children": [], "nested-projects": [], "capabilities": {"slugify": {"kind": "library", "summary": "Turn a string into a slug with a chosen separator and length", "contract": "core/src/lib.rs", "verified-by": "core/tests/slugify.rs", "conforms-to": null, "used-by": [{"unit": "cli", "status": "active", "need": "slugify", "contract": null, "config": null}, {"outside": true, "root-capability": "slugify"}]}, "plugin-api": {"kind": "library", "summary": "The trait a transliteration plug-in implements, and a slugify that uses one", "contract": "core/src/lib.rs", "verified-by": "core/tests/plugin.rs", "conforms-to": null, "used-by": [{"unit": "plugins/unicode", "status": "active", "need": "plugin-api", "contract": null, "config": null}, {"outside": true, "root-capability": "plugin-api"}]}}, "needs": {}, "skills": [], "decisions": [{"path": "core/docs/decisions/0001-a-plug-in-is-passed-with-each-call.md", "title": "A plug-in is passed with each call", "status": "proposed"}], "documents": {"tutorials": [], "references": [], "explanation": ["core/docs/explanation/context.md", "core/docs/explanation/invariants.md"]}, "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  p_root___slugify([\"slugify\"])\n  p_root___plugin_dapi([\"plugin-api\"])\n  u_cli -->|\"slugify\"| u_core\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  p_root___slugify --> u_core\n  p_root___plugin_dapi --> u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef deprecated stroke-dasharray:2 2,opacity:0.6\n  classDef plain stroke-dasharray:2 3\n  class u_core focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}, "shared": []}}, "files": ["core/README.md", "core/docs/decisions/0001-a-plug-in-is-passed-with-each-call.md", "core/docs/explanation/context.md", "core/docs/explanation/invariants.md"], "readme": "core/README.md", "agents": "core/AGENTS.md"}, {"name": "unicode", "path": "plugins/unicode", "summary": "Transliterates Latin letters with diacritics to ASCII", "kind": "library", "status": "active", "owner": null, "level": "core", "manifest": "plugins/unicode/unifold.yaml", "parent": {"path": ".", "name": "slugline", "status": "active", "summary": "Turns text into URL slugs, as a Rust library and as a command"}, "children": [], "nested-projects": [], "capabilities": {"transliteration": {"kind": "library", "summary": "Replaces Latin letters that have diacritics, and ligatures, by ASCII letters", "contract": null, "verified-by": "plugins/unicode/tests/latin.rs", "conforms-to": "plugin-api", "used-by": [{"unit": "cli", "status": "active", "need": "transliteration", "contract": null, "config": null}]}}, "needs": {"plugin-api": {"kind": "library", "summary": "The trait a transliteration plug-in implements", "contract": null, "verified-by": null, "optional": false, "provided-by": [{"unit": "core", "status": "active", "capability": "plugin-api", "contract": "core/src/lib.rs", "verified-by": "core/tests/plugin.rs", "config": null, "via": []}]}}, "skills": [], "decisions": [], "documents": {"tutorials": [], "references": [], "explanation": []}, "diagrams": {"context": {"source": "flowchart LR\n  subgraph u_root[\"slugline\"]\n    u_cli[\"cli\"]\n    u_core[\"core\"]\n    u_plugins__unicode[\"unicode\"]\n  end\n  u_cli -->|\"transliteration\"| u_plugins__unicode\n  u_plugins__unicode -->|\"plugin-api\"| u_core\n  classDef focus stroke-width:4px\n  classDef planned stroke-dasharray:6 4\n  classDef deprecated stroke-dasharray:2 2,opacity:0.6\n  classDef plain stroke-dasharray:2 3\n  class u_plugins__unicode focus", "nodes": {"u_root": ".", "u_cli": "cli", "u_core": "core", "u_plugins__unicode": "plugins/unicode"}, "shared": []}}, "files": [], "readme": null, "agents": null}], "base": "", "up": ""};
+const MERMAID = {"url": "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"};
 const units = model.units, byPath = Object.fromEntries(units.map(u => [u.path, u]));
 const el = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const file = p => model.base ? model.base + "/" + p : model.up + p;
-const pick = (p, t) => `<a class="go" data-path="${esc(p)}">${esc(t ?? (p === "." ? model.name : p))}</a>`;
-let mermaid = null, state = {path: ".", kind: null};
+const file = p => model.base ? model.base + "/" + p.split("/").map(encodeURIComponent).join("/") : model.up + p.split("/").map(encodeURIComponent).join("/");
+const badge = s => s && s !== "active" && s !== "accepted" ? ` <span class="badge ${esc(s.split(" ")[0])}">${esc(s)}</span>` : "";
+const pick = (p, t) => `<a class="go" data-path="${esc(p)}">${esc(t ?? (p === "." ? model.name : p))}</a>` + badge(byPath[p] && byPath[p].status);
+const ref = v => v ? (/^[a-z][a-z0-9+.-]*:/i.test(v) ? `<a href="${esc(v)}">${esc(v)}</a>` : `<a href="${esc(file(v))}">${esc(v)}</a>`) : "";
+let mermaid = null, mermaidError = null, fit = null, fitted = false, state = {path: ".", kind: null};
+function zoom(){const box = el("diagram"), svg = box.querySelector("svg"), b = el("zoom");
+  box.classList.remove("fit"); const room = box.clientWidth - 24, width = svg ? svg.getBoundingClientRect().width : 0;
+  const wide = width > room; fitted = wide && (fit ?? width <= room * 1.45);   // a little too wide: shrink; much too wide: scroll
+  b.hidden = !wide; box.classList.toggle("fit", fitted);
+  b.textContent = fitted ? "Full size" : "Fit to width"; box.scrollLeft = 0;}
 function fromHash(){const h = decodeURIComponent(location.hash.slice(1)); const [p, k] = h.split("@");
   state = {path: byPath[p] ? p : ".", kind: k || null};}
 function go(path, kind){location.hash = encodeURIComponent(path + (kind ? "@" + kind : ""));}
-function tree(path){const u = byPath[path]; const kids = u.children.map(tree).join("");
-  return `<li><a data-path="${esc(path)}" class="go${path === state.path ? " on" : ""}">${esc(u.unit)}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
-function who(list, key){return list.map(i => i.outside ? "outside the project"
-  : i["plain-folder"] ? "folder <code>" + esc(i["plain-folder"]) + "</code>"
-  : pick(i.unit) + " · <code>" + esc(i[key]) + "</code>" + (i.config ? " (" + esc(i.config) + ")" : "")).join("<br>") || "–";}
+function tree(path){const u = byPath[path]; const kids = u.children.map(c => tree(c.path)).join("");
+  return `<li><a data-path="${esc(path)}" class="go${path === state.path ? " on" : ""}">${esc(u.name)}${u.status !== "active" ? `<span class="st ${esc(u.status)}" title="${esc(u.status)}"></span>` : ""}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
+const legend = ["planned", "deprecated"].filter(s => units.some(u => u.status === s))
+  .map(s => `<span class="st ${s}"></span>${s}`).join(" &nbsp; ");
+function note(i){const n = [].concat(i.config ? [i.config] : [], i.via || []); return n.length ? " <span class='mute'>(" + esc(n.join("; ")) + ")</span>" : "";}
+function who(list, key){return list.map(i => i.outside ? "outside the project" + note(i)
+  : i["plain-folder"] ? "folder <code>" + esc(i["plain-folder"]) + "</code>" + note(i)
+  : pick(i.unit) + " · <code>" + esc(i[key]) + "</code>" + note(i)).join("<br>") || "–";}
+function code(text){return esc(text).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/^- /, "");}
 async function render(){
   const u = byPath[state.path]; const kinds = Object.keys(u.diagrams);
-  const kind = kinds.includes(state.kind) ? state.kind : (kinds.includes("component") ? "component" : "context");
-  document.title = u.unit + " · " + model.name;
-  el("tree").innerHTML = "<ul>" + tree(".") + "</ul>";
-  const chain = []; for (let p = u.parent; p !== null; p = byPath[p].parent) chain.unshift(p);
-  el("crumbs").innerHTML = chain.map(p => pick(p, byPath[p].unit)).concat(esc(u.unit)).join(" / ");
-  el("title").textContent = u.unit; el("summary").textContent = u.summary;
-  el("meta").innerHTML = [u.status, u.kind, u.owner && "owner " + u.owner].filter(Boolean).map(esc).join(" · ")
-    + ` · <a href="${esc(file(u.readme))}">README</a> · <a href="${esc(file(u.agents))}">AGENTS.md</a>`;
+  const kind = kinds.includes(state.kind) ? state.kind : (kinds.includes("component") ? "component" : kinds[0]);
+  document.title = u.name + " · " + model.name;
+  el("tree").innerHTML = "<ul>" + tree(".") + "</ul>" + (legend ? `<p class="legend">${legend}</p>` : "");
+  const chain = []; for (let p = u.parent; p; p = byPath[p.path].parent) chain.unshift(p.path);
+  el("crumbs").innerHTML = chain.map(p => `<a class="go" data-path="${esc(p)}">${esc(byPath[p].name)}</a>`).concat(esc(u.name)).join(" / ");
+  el("title").innerHTML = esc(u.name) + badge(u.status); el("summary").textContent = u.summary;
+  el("meta").innerHTML = [u.kind, u.owner && "owner " + u.owner, "level " + u.level].filter(Boolean).map(esc)
+    .concat([`<a href="${esc(file(u.manifest))}">manifest</a>`], u.readme ? [`<a href="${esc(file(u.readme))}">README</a>`] : [],
+            u.agents ? [`<a href="${esc(file(u.agents))}">AGENTS.md</a>`] : []).join(" · ");
   el("tabs").innerHTML = kinds.map(k => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${k}</button>`).join("");
   let html = "";
-  const p = Object.entries(u.provides), n = Object.entries(u.needs);
-  if (p.length) html += "<h2>Provides</h2><table><tr><th>Port</th><th>Kind</th><th>Summary</th><th>Used by</th></tr>"
-    + p.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
+  const p = Object.entries(u.capabilities), n = Object.entries(u.needs);
+  if (p.length) html += "<h2>Capabilities</h2><table><tr><th>Capability</th><th>Kind</th><th>Summary</th><th>Contract</th><th>Verified by</th><th>Used by</th></tr>"
+    + p.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}</td><td>${ref(v["verified-by"])}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
   if (n.length) html += "<h2>Needs</h2><table><tr><th>Need</th><th>Kind</th><th>Summary</th><th>Provided by</th></tr>"
-    + n.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["provided-by"], "port")}</td></tr>`).join("") + "</table>";
+    + n.map(([k, v]) => `<tr><td><code>${esc(k)}</code>${v.optional ? " <span class='mute'>optional</span>" : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["provided-by"], "capability")}</td></tr>`).join("") + "</table>";
+  if (u.children.length) html += "<h2>Units inside</h2><table><tr><th>Unit</th><th>Summary</th></tr>"
+    + u.children.map(c => `<tr><td>${pick(c.path, c.name)}</td><td>${esc(c.summary)}</td></tr>`).join("") + "</table>";
   if (u.skills.length) html += "<h2>Skills</h2><ul>" + u.skills.map(s => `<li><a href="${esc(file(s.path))}">${esc(s.name)}</a>: ${esc(s.description)}</li>`).join("") + "</ul>";
-  if (u.decisions.length) html += "<h2>Decisions</h2><ul>" + u.decisions.map(d => `<li><a href="${esc(file(d.path))}">${esc(d.title)}</a> <span class="mute">${esc(d.status)}</span></li>`).join("") + "</ul>";
+  if (u.decisions.length) html += "<h2>Decisions</h2><ul>" + u.decisions.map(d => `<li><a href="${esc(file(d.path))}">${esc(d.title)}</a>${badge(d.status || "no status")}</li>`).join("") + "</ul>";
   el("info").innerHTML = html;
-  if (!mermaid) return;
   const d = u.diagrams[kind];
+  el("shared").innerHTML = d && d.shared.length ? "<p class='mute'>Shared connections, not drawn:</p><ul>" + d.shared.map(s => "<li>" + code(s) + "</li>").join("") + "</ul>" : "";
+  el("zoom").hidden = true;
+  if (!d) { el("diagram").textContent = "No diagram for this unit."; return; }
+  if (!mermaid) {
+    if (mermaidError) el("diagram").innerHTML = "<p>The diagram renderer (Mermaid) could not be loaded" + (MERMAID.url ? " from " + esc(MERMAID.url) : "")
+      + ". The tables below are complete without it. To embed the renderer in this page: <code>unifold site --mermaid path/to/mermaid.min.js</code>.</p><details><summary>Diagram source</summary><pre>" + esc(d.source) + "</pre></details>";
+    return;
+  }
   try {
     const {svg} = await mermaid.render("g" + Date.now(), d.source);
-    el("diagram").innerHTML = svg;
+    el("diagram").innerHTML = svg; zoom();
     for (const node of el("diagram").querySelectorAll("[id]")) {
       const hit = Object.keys(d.nodes).find(id => node.id === id || new RegExp("(^|-)" + id + "(-\\d+)?$").test(node.id));
       if (hit && (node.classList.contains("node") || node.classList.contains("cluster"))) {
         node.classList.add("pick"); node.addEventListener("click", ev => {ev.stopPropagation(); go(d.nodes[hit]);});
       }
     }
-  } catch (err) { el("diagram").textContent = "The diagram could not be drawn: " + err; }
+  } catch (err) { el("diagram").innerHTML = "<p>The diagram could not be drawn: " + esc(err) + "</p><pre>" + esc(d.source) + "</pre>"; }
 }
 document.addEventListener("click", ev => {
   const a = ev.target.closest(".go"); if (a) { go(a.dataset.path); return; }
   const b = ev.target.closest("button[data-kind]"); if (b) go(state.path, b.dataset.kind);
+  if (ev.target.id === "zoom") { fit = !fitted; zoom(); }
 });
 addEventListener("hashchange", () => { fromHash(); render(); });
+async function loadMermaid(){
+  if (window.mermaid) return window.mermaid;
+  if (!MERMAID.url) throw new Error("no renderer");
+  if (/\.mjs(\?|$)/.test(MERMAID.url)) return (await import(MERMAID.url)).default;
+  await new Promise((ok, fail) => { const s = document.createElement("script"); s.src = MERMAID.url;
+    s.onload = ok; s.onerror = () => fail(new Error("not loaded")); document.head.appendChild(s); });
+  return window.mermaid;
+}
 fromHash(); render();
 try {
-  mermaid = (await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs")).default;
-  mermaid.initialize({startOnLoad: false, securityLevel: "loose",
+  mermaid = await loadMermaid();
+  mermaid.initialize({startOnLoad: false, securityLevel: "loose", maxEdges: 2000, flowchart: {useMaxWidth: false},
     theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default"});
-  render();
-} catch (err) { el("diagram").textContent = "The diagram renderer could not be loaded (" + err + "). The tables below still work."; }
+} catch (err) { mermaid = null; mermaidError = err; }
+render();
 </script></body></html>

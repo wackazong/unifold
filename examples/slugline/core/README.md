@@ -1,22 +1,40 @@
 # core
 
-`core` turns a string into a URL slug and defines the interface through which
-other code can teach it to transliterate.
+Turns text into a URL slug and defines the interface of a transliteration
+plug-in.
 
-## Provides
+## Why
+
+Everything that decides what a slug looks like is in this crate, so the
+[format](docs/explanation/context.md) can break in one place only. Character
+tables are large and a matter of taste: they stay outside, behind a trait
+([decision 0001](docs/decisions/0001-a-plug-in-is-passed-with-each-call.md)).
+
+## Capabilities
 
 ### `slugify`
 
-`slugify("Hello World")` returns `hello-world`.
+`slugify("Hello, World!", &Options::default())` returns `hello-world`.
 
-- The result contains only `a-z`, `0-9` and the separator.
-- The result is at most `max_len` bytes long and never ends with the
-  separator.
-- The same input and options always give the same result.
-- Characters outside ASCII are dropped unless a transliterator is given.
+- Only `a-z`, `0-9` and `Options::separator` remain.
+- No separator at the start or the end, never two in a row.
+- At most `max_len` characters.
+- Apostrophes and characters outside ASCII are dropped. Any other
+  character ends a word.
+- A slug is its own slug.
+
+Tests: [tests/slugify.rs](tests/slugify.rs).
 
 ### `plugin-api`
 
-The trait `Transliterator`: one function that maps a character to an ASCII
-string, possibly empty. An implementation must be free of side effects and
-must return the same answer for the same character.
+`slugify_with(input, &options, &plugin)` asks a `Transliterate` plug-in:
+
+- only about characters outside ASCII;
+- an answer is treated like typed text, and may have several letters or none;
+- `None` drops the character.
+
+Tests: [tests/plugin.rs](tests/plugin.rs).
+
+## Out of scope
+
+- Character tables. Unique slugs.

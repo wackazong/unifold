@@ -1,0 +1,7 @@
+[package]
+name = "slugline-core"
+description = "Makes URL slugs and defines the interface of a transliteration plug-in"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true

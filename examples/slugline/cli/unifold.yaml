@@ -1,0 +1,14 @@
+summary: The slugline command
+kind: app
+capabilities:
+  slugline-command:
+    kind: cli
+    summary: Prints its arguments as one slug, or one slug for each line of standard input
+    verified-by: tests/cli.rs
+needs:
+  slugify:
+    kind: library
+    summary: A function that turns one string into one slug, with or without a plug-in
+  transliteration:
+    kind: library
+    summary: A plug-in that replaces letters with diacritics by ASCII letters

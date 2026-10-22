@@ -1,0 +1,11 @@
+[package]
+name = "slugline"
+description = "The slugline command: slugs from arguments or standard input"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+slugline-core = { path = "../core" }
+slugline-unicode = { path = "../plugins/unicode" }

@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://unifold.md/0.1/unifold.schema.json
+unifold: "0.1"
+name: slugline
+summary: Turns text into URL slugs, as a Rust library and as a command
+capabilities:
+  slugify:
+    kind: library
+    summary: Turn a string into a slug
+    verified-by: core/tests/slugify.rs
+  plugin-api:
+    kind: library
+    summary: The trait through which a caller supplies transliteration
+    verified-by: core/tests/plugin.rs
+  slugline-command:
+    kind: cli
+    summary: Slugs from arguments or from the lines of standard input
+    verified-by: cli/tests/cli.rs
+wiring:
+  slugify: core.slugify
+  plugin-api: core.plugin-api
+  slugline-command: cli.slugline-command
+  cli.slugify: core.slugify
+  cli.transliteration: unicode.transliteration
+  unicode.plugin-api: core.plugin-api

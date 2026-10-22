@@ -1,5 +1,0 @@
-[
-  {"from": "cli/src/main.rs", "to": "core/src/lib.rs"},
-  {"from": "cli/src/main.rs", "to": "plugins/unicode/src/lib.rs"},
-  {"from": "plugins/unicode/src/lib.rs", "to": "core/src/lib.rs"}
-]

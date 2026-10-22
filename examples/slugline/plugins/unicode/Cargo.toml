@@ -1,0 +1,10 @@
+[package]
+name = "slugline-unicode"
+description = "Transliterates Latin letters with diacritics to ASCII"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+slugline-core = { path = "../../core" }
