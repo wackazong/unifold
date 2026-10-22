@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unifold.md/0.1/unifold.schema.json",
+  "title": "unifold manifest",
+  "description": "A unifold.yaml: the manifest of a unit. See https://unifold.md/spec. Keys marked 'root only' are allowed in the manifest of the project root, which is the one that has the key `unifold`.",
+  "type": "object",
+  "required": [
+    "summary"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-": {
+      "description": "Project-specific; ignored by tools."
+    }
+  },
+  "properties": {
+    "unifold": {
+      "description": "Root only, and required there: the version of the standard, as a string.",
+      "const": "0.1"
+    },
+    "name": {
+      "description": "Root only. The name of the project. Default: the name of the root folder. Every root manifest should set it, so that generated files do not depend on the folder name.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]*\\S[^\\n]*$"
+    },
+    "summary": {
+      "description": "What the unit is, in one line. `TODO` marks a draft.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]*\\S[^\\n]*\\n?$",
+      "not": {
+        "pattern": "^<[^<>]*>\\s*$"
+      }
+    },
+    "kind": {
+      "description": "Free text, for example library, service, app, adapter.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]*\\S[^\\n]*$"
+    },
+    "status": {
+      "description": "planned: code missing or incomplete. active: the default. deprecated: to be removed.",
+      "enum": [
+        "planned",
+        "active",
+        "deprecated"
+      ],
+      "default": "active"
+    },
+    "owner": {
+      "description": "Team or person responsible. Units below inherit it.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]*\\S[^\\n]*$"
+    },
+    "level": {
+      "description": "core: only manifests are required and checked. full: also README.md, AGENTS.md and the document conventions. Holds for the unit and everything below it until a unit below sets another value.",
+      "enum": [
+        "core",
+        "full"
+      ],
+      "default": "core"
+    },
+    "capabilities": {
+      "description": "The capabilities, keyed by name.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/entryName"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/summary"
+          },
+          {
+            "$ref": "#/$defs/capability"
+          }
+        ]
+      }
+    },
+    "needs": {
+      "description": "The needs, keyed by name. A need says what is required, never who supplies it.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/entryName"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/summary"
+          },
+          {
+            "$ref": "#/$defs/need"
+          }
+        ]
+      }
+    },
+    "wiring": {
+      "description": "Connections inside this unit. Key: `child.need` or a capability of this unit; every unit is written out, there is no wildcard. Value: the provider, or a mapping of named alternatives (the first is the default). A reference is split at its last dot; `child` is a folder name or a path relative to the unit.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^*]+$"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/provider"
+          },
+          {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "$ref": "#/$defs/provider"
+            }
+          }
+        ]
+      }
+    },
+    "ignore": {
+      "description": "Root only. Folders, relative to the root, that are not searched for units.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "diagrams": {
+      "description": "Root only. parents: diagrams for units that have children. all: also a context diagram for every other unit. none: no diagrams.",
+      "enum": [
+        "parents",
+        "all",
+        "none"
+      ],
+      "default": "parents"
+    },
+    "diagram-links": {
+      "description": "Root only. How boxes in generated diagrams link: none, relative, or the base URL of the repository's file view.",
+      "type": "string",
+      "pattern": "^(none|relative|https?://.+)$",
+      "default": "none"
+    },
+    "max-lines": {
+      "description": "Root only. The line limit for hand-written documents at level full.",
+      "type": "integer",
+      "minimum": 1,
+      "default": 200
+    }
+  },
+  "$defs": {
+    "entryName": {
+      "description": "Letters, digits, '-' and '_'. No dot.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    },
+    "summary": {
+      "description": "One line of text. `TODO` marks a draft and is reported as a warning.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]*\\S[^\\n]*\\n?$",
+      "not": {
+        "pattern": "^<[^<>]*>\\s*$"
+      }
+    },
+    "provider": {
+      "description": "`child.capability`, a need of this unit (bare name), or a folder of this unit that is not a unit (`./folder`; `./` is the unit's own code).",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^*]"
+    },
+    "capability": {
+      "type": "object",
+      "required": [
+        "summary"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "kind": {
+          "description": "Free text for the technical nature, for example library, http, events, cli.",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\n]*\\S[^\\n]*$"
+        },
+        "contract": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the exact definition is. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
+        },
+        "verified-by": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What checks the capability against its contract, for example tests. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
+        },
+        "conforms-to": {
+          "description": "The name of a need of the same unit whose definition this capability implements.",
+          "$ref": "#/$defs/entryName"
+        }
+      }
+    },
+    "need": {
+      "type": "object",
+      "required": [
+        "summary"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "kind": {
+          "description": "Free text for the technical nature.",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\n]*\\S[^\\n]*$"
+        },
+        "contract": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The interface this unit expects. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
+        },
+        "verified-by": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What checks a provider against the contract. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
+        },
+        "optional": {
+          "description": "true if the need may stay unconnected.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}
