@@ -1,65 +1,19 @@
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: ingest
 
-This folder is a [unifold](https://unifold.md) unit. The standard and
-its skills `read-docs`, `write-docs` and `check-docs` are in the project
-root, the nearest folder above whose manifest contains `unifold`. From
-there, `python3 doc/skills/check-docs/scripts/unifold.py show cloud/services/ingest`
-prints this unit with its neighbours.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
+says what the unit is for and why it is built this way. Everything else is in
+`docs/`.
 
-## Why
+## Documents
 
-The moment a client uploads is the only chance to take its readings. This
-unit exists to make that moment as hard to fail as possible: it does the
-least that makes a reading safe, which is to check it, to store it durably
-as an event, and to say so. It changes when the checks on an uploaded
-reading change or when readings carry a new quantity.
-
-Everything else is left out on purpose. `ingest` has no database, calls
-no other service and does not know what a plant is. Its only dependency is
-the event bus, which it needs anyway to publish. Even the memory of which
-readings it has accepted lives there
-([0001](doc/decisions/0001-accepted-ranges-are-kept-on-the-event-bus.md)).
-
-`ingest` is also the border for the format of readings. It is the only
-place that reads an uploaded reading. Its events carry the values under
-names of their own, so that a new version of the upload format changes
-this unit and nothing behind it.
-
-The trade-off: recognition of duplicates is exact in normal operation and
-only best effort after a failure or under concurrent uploads of the same
-sensor stick. That is acceptable because every subscriber must tolerate
-repeated events anyway ([context](doc/context.md)).
-
-## Read next
-
-1. [README.md](README.md): what the unit provides and needs
-2. [doc/context.md](doc/context.md): what it inherits from above
-3. [doc/diagrams/context.md](doc/diagrams/context.md): the unit in its
-   surroundings
-4. [doc/decisions/index.md](doc/decisions/index.md): decisions
-5. [doc/references/ingest-api.md](doc/references/ingest-api.md): the
-   upload operation and the checks
-6. [doc/references/reading-events.md](doc/references/reading-events.md):
-   topic and content of the events
-7. [doc/references/accepted-ranges.md](doc/references/accepted-ranges.md):
-   the state with which duplicates are recognised
+| Kind | Files |
+|---|---|
+| Look up | [accepted-ranges](docs/references/accepted-ranges.md), [ingest-api](docs/references/ingest-api.md), [reading-events](docs/references/reading-events.md) |
+| Understand | [context](docs/explanation/context.md), [invariants](docs/explanation/invariants.md), [decisions](docs/decisions/index.md) |
 
 ## Skills
 
-| Skill | Use it when |
+| Skill | Description |
 |---|---|
-| [ingest-add-a-quantity](doc/skills/ingest-add-a-quantity/SKILL.md) | Readings carry a measured quantity that `ingest` does not check and publish yet |
-
-## Rules for work here
-
-- Do not add a dependency. A database, a cache or a call to another
-  service on the upload path defeats the purpose of this unit.
-- Answer only after the event bus has acknowledged every event of the
-  batch and the new state. An answer before that can lose readings.
-- Publish first, record the accepted range second. The other order turns
-  a failure into a lost reading instead of a repeated event.
-- Never change a reading. The `reading` field of an event is what was
-  uploaded, including fields that `ingest` does not know.
-- A rejection is final for the client: it will not send the reading
-  again. Reject only what can never become valid. Answer `503` for
-  everything that might work later.
+| [ingest-add-a-quantity](docs/skills/ingest-add-a-quantity/SKILL.md) | Make the ingest service check and publish a measured quantity that readings newly carry. Use it when the reading format has gained a quantity that the events do not contain yet. |

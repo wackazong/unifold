@@ -1,0 +1,18 @@
+summary: Single entry point of the server side that authenticates callers and routes requests
+kind: service
+status: planned
+capabilities:
+  public-api:
+    kind: http
+    summary: Upload readings and query plants, history and alerts
+    contract: docs/references/public-api.md
+needs:
+  ingest-api:
+    kind: http
+    summary: Serves the upload of a batch of readings as the public API defines it
+  plants-api:
+    kind: http
+    summary: Serves the operations on plants and history as the public API defines them
+  alerts-api:
+    kind: http
+    summary: Serves the operations on alerts as the public API defines them

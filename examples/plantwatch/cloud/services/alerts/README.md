@@ -7,7 +7,30 @@ closes it when the plant has recovered, and has one notification sent to
 the owner for every alert that opens. It answers questions about open and
 past alerts.
 
-## Provides
+## Why
+
+The promise of the product is "one notification when a plant needs
+attention". This unit owns that promise. It is the only place that
+compares a reading with a threshold and the only place that talks to the
+push service. It changes when that promise changes: what counts as needing
+attention, and how and when the owner is told.
+
+Inside, four things change for different reasons, and each is a child. The
+rules by which a reading is judged are pure logic, tested with tables of
+readings ([rules](rules/README.md)). The registry of plants and the push
+service are technologies behind a network; each has an adapter, so that
+the logic names neither
+([0003](docs/decisions/0003-thresholds-reach-the-judging-logic-through-an-adapter.md)).
+Consuming events, storing alerts and answering queries is plumbing with
+transactions ([server](server/README.md)). All are built into one program
+([0001](docs/decisions/0001-evaluation-and-notification-are-libraries-beside-one-process.md)),
+so that an alert and what led to it are stored in one transaction
+([0002](docs/decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md)).
+
+What must stay true: an alert opens once, and an opened alert leads to one
+notification, although events and calls can repeat.
+
+## Capabilities
 
 ### `alerts-api`
 
@@ -60,7 +83,7 @@ Example: `GET /v1/alerts?state=open` with `X-Owner-Id`.
             "notification": "sent"}]}
 ```
 
-Contract: [alerts API](doc/references/alerts-api.md).
+Contract: [alerts API](docs/references/alerts-api.md).
 
 ## Needs
 
@@ -125,16 +148,16 @@ also when several instances of `alerts` share the subscription.
 - Acknowledging or closing an alert by hand.
 - Choosing which phones get a notification.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the service is cut into a process, the
-  judging logic and two adapters
-- [doc/context.md](doc/context.md): what the unit inherits
-- [doc/architecture.md](doc/architecture.md): invariants, the life of an
-  alert, the handling of one reading
-- [Context diagram](doc/diagrams/context.md),
-  [component diagram](doc/diagrams/component.md),
-  [architecture diagram](doc/diagrams/architecture.md)
-- [Decisions](doc/decisions/index.md)
-- References: [alerts API](doc/references/alerts-api.md),
-  [glossary](doc/references/glossary.md)
+1. [docs/explanation/invariants.md](docs/explanation/invariants.md),
+   [runtime.md](docs/explanation/runtime.md): invariants, the life of an
+   alert, the handling of one reading
+2. [docs/references/alerts-api.md](docs/references/alerts-api.md): how the
+   API is served
+3. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
+4. [docs/explanation/context.md](docs/explanation/context.md): what the unit
+   inherits
+5. [Context diagram](docs/diagrams/context.md),
+   [component diagram](docs/diagrams/component.md),
+   [decisions](docs/decisions/index.md)

@@ -6,13 +6,34 @@ and close, sees to it that every opened alert is notified, and answers
 queries about alerts over HTTP. It holds the state and decides nothing
 about readings itself.
 
-## Provides
+## Why
+
+Something must run: hold the subscription, own the database schema,
+listen on a capability. This unit is that program, and it is kept free of
+everything that is not running. It does not know what makes a reading
+alarming and not how an owner is reached. It asks for both through needs
+whose contracts it writes itself. It changes when what is stored about an
+alert, the order of the steps or the queries change.
+
+What it does know is order and durability. It is the one place that
+decides what is written together and what may repeat: a reading's
+outcome, the evaluation state and the owed notification are stored in one
+transaction; the event is confirmed afterwards; notifying is a second
+step that can run again. Every guarantee about "once" rests on these
+few rules, so they are concentrated here instead of being
+spread over the logic.
+
+The trade-off: `server` treats the evaluation state as a value it cannot
+read. It cannot repair or inspect it, only store it, hand it back or
+drop it.
+
+## Capabilities
 
 ### `alerts-api`
 
 The HTTP API for open and past alerts of an owner. Its operations and the
 alert are defined above this unit and cited in
-[doc/context.md](doc/context.md). `server` serves them with these
+[docs/explanation/context.md](docs/explanation/context.md). `server` serves them with these
 guarantees:
 
 - Every alert it returns was decided by `evaluation` or closed by expiry.
@@ -42,7 +63,7 @@ expects the events of one sensor stick in the order in which the readings
 were accepted, every accepted reading at least once, and an event to stay
 available for at least 7 days. It copes with repeats.
 
-Contract: [reading events as server expects them](doc/references/reading-events.md).
+Contract: [reading events as server expects them](docs/references/reading-events.md).
 
 ### `evaluation`
 
@@ -63,7 +84,7 @@ to return within 20 seconds, to return no changes when it is given the
 same reading a second time, and never to ask for an alert to be opened
 that is open according to the state it was given.
 
-Contract: [evaluation as server expects it](doc/references/evaluation.md).
+Contract: [evaluation as server expects it](docs/references/evaluation.md).
 
 ### `notification`
 
@@ -74,7 +95,7 @@ answers within 10 seconds: done, try again later, or failed for good.
 `server` expects that a second call for the same alert replaces the first
 notification on a phone instead of adding one.
 
-Contract: [notification as server expects it](doc/references/notification.md).
+Contract: [notification as server expects it](docs/references/notification.md).
 
 ### `sql-db`
 
@@ -97,14 +118,14 @@ again, and that it continues after a restart where it stopped.
 - Wording a notification or talking to a push service.
 - Changing an alert on request of a caller.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the process is separate from the logic it
-  calls
-- [doc/context.md](doc/context.md): the contract and the decisions that
-  `server` inherits
-- [Context diagram](doc/diagrams/context.md)
-- References: [processing](doc/references/processing.md); what `server`
-  expects of [reading events](doc/references/reading-events.md),
-  [evaluation](doc/references/evaluation.md) and
-  [notification](doc/references/notification.md)
+1. [docs/references/processing.md](docs/references/processing.md): what is
+   stored, the handling of an event, delivery of notifications, expiry
+2. [docs/references/evaluation.md](docs/references/evaluation.md),
+   [docs/references/notification.md](docs/references/notification.md),
+   [docs/references/reading-events.md](docs/references/reading-events.md):
+   the interfaces that the unit expects of its needs
+3. [docs/explanation/context.md](docs/explanation/context.md): what the unit
+   inherits
+4. [Context diagram](docs/diagrams/context.md)

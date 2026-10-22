@@ -4,13 +4,37 @@
 verifies tokens, limits request size and request rate, and passes each
 request on to whoever serves it. It keeps no data and looks into no body.
 
-## Provides
+## Why
+
+Clients need one address and one way to prove for which owner they act.
+`gateway` exists so that this is solved once: it is the only code that
+understands tokens, and everything it passes a request to may trust the
+owner it is told. It changes when the way a client proves its owner
+changes, or when the public API gets a new group of paths.
+
+It is cut as thin as possible. It routes by path prefix and does not look
+into bodies, so a change to a resource never needs a change here. It keeps
+no data, so any number of instances can run and none of them is a reason
+for an upload to fail. That is why tokens
+are self-contained and signed instead of looked up
+([0001](docs/decisions/0001-self-contained-signed-tokens.md)), and why rate
+limits are counted in memory
+([0002](docs/decisions/0002-rate-limits-are-counted-per-instance.md)).
+
+The price of statelessness: a token cannot be withdrawn, and whoever holds
+the signing key can act for every owner. The key is the one secret of this
+unit.
+
+What must stay true: no request reaches a provider without a verified
+token, and no owner id that came from outside is ever passed on.
+
+## Capabilities
 
 ### `public-api`
 
 The complete HTTP API for clients, under one host and the path prefix
 `/v1`. The operations and their bodies are defined above this unit and
-cited in [doc/context.md](doc/context.md). `gateway` adds the following
+cited in [docs/explanation/context.md](docs/explanation/context.md). `gateway` adds the following
 guarantees:
 
 - A request reaches a provider only with a valid token. The provider is
@@ -42,7 +66,7 @@ GET /v1/plants
 {"code": "unauthenticated", "message": "no bearer token"}
 ```
 
-Contract: [public API as served by gateway](doc/references/public-api.md).
+Contract: [public API as served by gateway](docs/references/public-api.md).
 
 ## Needs
 
@@ -75,16 +99,17 @@ Serves alerts: `/v1/alerts` and every path below it.
 - Combining the answers of several providers into one response.
 - Storing anything: no sessions, no owners, no request log beyond the
   process log.
-- Terminating TLS. Whoever publishes the port of `gateway` does that.
+- Terminating TLS. Whoever publishes the capability of `gateway` does that.
 - Deciding what an owner may see. Each provider limits its answers to the
   owner it is told.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the entry point is built this way
-- [doc/context.md](doc/context.md): the public API and the rules that
-  `gateway` inherits
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
-- References: [public API as served by gateway](doc/references/public-api.md),
-  [tokens](doc/references/tokens.md)
+1. [docs/references/public-api.md](docs/references/public-api.md): how a
+   request is handled and where it goes
+2. [docs/references/tokens.md](docs/references/tokens.md): form, signing and
+   verification of tokens
+3. [docs/explanation/context.md](docs/explanation/context.md): what the unit
+   inherits
+4. [Context diagram](docs/diagrams/context.md),
+   [decisions](docs/decisions/index.md)

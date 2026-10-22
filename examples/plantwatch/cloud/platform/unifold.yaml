@@ -1,0 +1,16 @@
+summary: Shared infrastructure of the services - message bus and database
+kind: infrastructure
+status: planned
+capabilities:
+  event-bus:
+    kind: queue
+    summary: Durable publish and subscribe with at-least-once delivery
+    contract: docs/references/event-bus.md
+  sql-db:
+    kind: db
+    summary: Relational database with transactions, one schema per service
+    contract: docs/references/sql-db.md
+needs:
+  container-host:
+    kind: infrastructure
+    summary: Runs containers, gives them a private network and persistent volumes

@@ -5,7 +5,30 @@ share: an event bus and a relational database. It runs them as containers,
 declares topics, schemas and roles, and looks after their data. It contains
 configuration and operating procedures, no service logic.
 
-## Provides
+## Why
+
+A message bus and a database are used by several services and belong to
+none of them. If each service configured its share, no one could say what
+the bus guarantees, who may read which schema, or what is backed up. This
+unit is the one place where the infrastructure is chosen, configured and
+operated, and where its guarantees are written down. It changes when a
+guarantee of the bus or the database changes, when a service needs a new
+topic or schema, or when a product behind a capability is replaced.
+
+Bus and database stay in one unit because they share their operator, their
+host and their backup routine. Two units would hold the same reasons twice.
+
+The main trade-off is weight against guarantees. A database alone could
+carry the small load of version 1 as a queue. A real broker is chosen
+because order per key, replay and durable subscriptions then come
+ready-made
+([0001](docs/decisions/0001-postgresql-and-a-kafka-compatible-broker.md)).
+
+What must stay true: a service relies on the two contracts without knowing
+the products behind them, and the database itself enforces the isolation
+between schemas.
+
+## Capabilities
 
 ### `event-bus`
 
@@ -30,7 +53,7 @@ Example: a subscriber confirms the messages 1 to 7 of a key, handles
 message 8 and stops before it confirms. After its restart it receives
 message 8 again, then 9.
 
-Contract: [event bus](doc/references/event-bus.md).
+Contract: [event bus](docs/references/event-bus.md).
 
 ### `sql-db`
 
@@ -49,7 +72,7 @@ Example: a service named `greenhouse` connects with the role `greenhouse`
 and creates the table `greenhouse.pot`. Its `SELECT` on a table of another
 schema fails with a permission error.
 
-Contract: [SQL database](doc/references/sql-db.md).
+Contract: [SQL database](docs/references/sql-db.md).
 
 ## Needs
 
@@ -72,11 +95,13 @@ outside the private network.
 - Redundancy. Version 1 runs one instance of each.
 - Logs and metrics of services.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why shared infrastructure is a unit
-- [doc/context.md](doc/context.md): what the unit inherits
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
-- References: [event bus](doc/references/event-bus.md),
-  [SQL database](doc/references/sql-db.md)
+1. [docs/references/event-bus.md](docs/references/event-bus.md): contract of
+   `event-bus`
+2. [docs/references/sql-db.md](docs/references/sql-db.md): contract of
+   `sql-db`
+3. [docs/explanation/context.md](docs/explanation/context.md): what the unit
+   inherits
+4. [Context diagram](docs/diagrams/context.md),
+   [decisions](docs/decisions/index.md)
