@@ -1,0 +1,4 @@
+_out/
+node_modules/
+__pycache__/
+shots/
