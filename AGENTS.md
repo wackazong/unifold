@@ -1,65 +1,35 @@
+<!-- unifold:generated - do not edit; run `unifold generate` -->
 # AGENTS.md: unifold
 
-This folder is a [unifold](https://unifold.md) unit, the root of the
-project and the home of the standard. Use the
-[read-docs](doc/skills/read-docs/SKILL.md) skill before anything else.
+unifold unit; run `unifold show` here. Read [README.md](README.md) first: it
+says what the unit is for and why it is built this way. Everything else is in
+`docs/`.
 
-## Why
+## Documents
 
-The standard is written with its own rules, so that every rule is tried on a
-real text before a project has to follow it. It changes when a rule proves
-wrong or missing in use.
-
-The repository is a single unit. The chapters, the skills and the tool are
-not separate parts with interfaces between them; they are one product that
-changes together.
-
-The normative text sits in `doc/references/unifold/` and the tool sits
-inside the `check-docs` skill for one reason: these folders are copied into
-every project that uses the standard. A project then carries the text, the
-procedures and the tool without network access, and an agent finds them at
-the same paths everywhere.
-
-The examples are nested projects. Each has its own root manifest, is checked
-on its own, and can be copied out as a starting point.
-
-## Read next
-
-1. [README.md](README.md): what this repository provides
-2. [doc/references/unifold/index.md](doc/references/unifold/index.md): the standard, with the rules in brief
-3. [doc/architecture.md](doc/architecture.md): where the ideas come from and what the limits are
-4. [doc/decisions/index.md](doc/decisions/index.md): the design decisions
-5. [examples/slugline](examples/slugline/README.md): a small example at level `core`
-6. [examples/plantwatch](examples/plantwatch/README.md): a large example of the full standard
-7. [CONTRIBUTING.md](CONTRIBUTING.md): how a change to the standard is made
+| Kind | Files |
+|---|---|
+| Learn | [first-map](docs/tutorials/first-map.md) |
+| Understand | [requirements](docs/explanation/requirements.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [risks](docs/explanation/risks.md), [wiring](docs/explanation/wiring.md), [decisions](docs/decisions/index.md) |
 
 ## Skills
 
-| Skill | Use it when |
+| Skill | Description |
 |---|---|
-| [read-docs](doc/skills/read-docs/SKILL.md) | You enter this or any other unifold project |
-| [write-docs](doc/skills/write-docs/SKILL.md) | You create or change documents |
-| [check-docs](doc/skills/check-docs/SKILL.md) | You have changed something, or review a change |
+| [unifold](docs/skills/unifold/SKILL.md) | Work in a repository that contains unifold.yaml files. Find out what a folder provides and needs and who is on the other side, change units, capabilities and wiring, record decisions, and check the result. Use it when a task touches the interface or the dependencies of a folder, the architecture, or the documents of a unit, and before you finish any change in such a repository. |
+| [unifold-convert](docs/skills/unifold-convert/SKILL.md) | Convert an existing repository to unifold, or bring a part of one into the map. Find the units in the folder layout and the build files, write one unifold.yaml per unit with capabilities, needs and wiring, and check the result against the code. Use it when a repository has no unifold.yaml yet, when `unifold check` passes but most folders are not units, or when a need is wired to a plain folder. |
 
-## Commands
+<!-- unifold:begin - generated block; run `unifold generate` to refresh -->
+## unifold
 
-```sh
-python3 tests/conformance.py                                         # test the tool
-python3 doc/skills/check-docs/scripts/unifold.py generate           # this project
-python3 doc/skills/check-docs/scripts/unifold.py check --strict
-python3 doc/skills/check-docs/scripts/unifold.py init examples/plantwatch   # refresh the example's copy
-```
+This repository has a [unifold](https://unifold.md) map. A folder with a `unifold.yaml` is a
+unit: the file says what the unit provides and needs, and the unit above connects
+needs to providers. Read the map before you change an interface; keep it true after.
 
-## Rules for work here
+- `python3 docs/skills/unifold/scripts/unifold.py show PATH`: a unit, its capabilities and needs, and who is on the other side
+- `python3 docs/skills/unifold/scripts/unifold.py capability PATH NAME`: both ends of one connection, with contracts
+- `python3 docs/skills/unifold/scripts/unifold.py check`: is the map consistent, and does the code agree (`--fix` rewrites generated files)
 
-- `doc/references/unifold/` and the three skills are copied into other
-  projects. Links inside them MUST stay within these four folders. They must
-  not link to `doc/decisions/`, `doc/architecture.md` or `examples/`.
-- A rule exists in three places that must agree: the chapter that states it,
-  the rule table in `rules-tool.md` or `rules-review.md`, and, for tool
-  rules, `unifold.py` with a case in `tests/conformance.py`.
-- Every change to a rule is recorded as a decision with status `proposed`.
-- A claim about a tool, a study or a product carries a link to its source.
-- The standard is published at `https://unifold.md`. The schema of the
-  manifest must be served at the path that manifests name in their modeline,
-  `/0.1/manifest.schema.json`.
+How to read and write the map: the skill [unifold](docs/skills/unifold/SKILL.md).
+How to bring folders into the map: the skill [unifold-convert](docs/skills/unifold-convert/SKILL.md).
+<!-- unifold:end -->
