@@ -37,5 +37,6 @@ package-dir = { "" = "docs/skills/unifold/scripts" }
 # The skills travel with the package, so that `unifold init --agents` can install them.
 [tool.setuptools.data-files]
 "share/unifold/skills/unifold" = ["docs/skills/unifold/SKILL.md"]
-"share/unifold/skills/unifold/assets" = ["docs/skills/unifold/assets/*"]
+"share/unifold/skills/unifold/assets" = ["docs/skills/unifold/assets/*.md", "docs/skills/unifold/assets/*.yaml"]
+"share/unifold/skills/unifold/assets/explanation" = ["docs/skills/unifold/assets/explanation/*.md"]
 "share/unifold/skills/unifold-convert" = ["docs/skills/unifold-convert/SKILL.md"]
