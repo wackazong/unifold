@@ -1,6 +1,6 @@
 # Requirements of unifold
 
-What the standard must achieve, for whom it is, and which qualities win when they conflict. A unit of a project states the same for itself in its own `docs/explanation/requirements.md`; this file is about the standard.
+What the standard must achieve, for whom, and which qualities win when they conflict.
 
 ## Goals
 
@@ -33,6 +33,7 @@ What the standard must achieve, for whom it is, and which qualities win when the
 | Single package or library | A project of one unit. The map is one box; the value is the root's `README.md` and `docs/`, which hold everything a reader needs in fixed places. |
 | Data pipelines, notebooks | No. The parts are files, and the pipeline tool already has the graph. |
 | System spread over several repositories | Each repository is a project of its own. The map across repositories is not produced. |
+| A design before any code | Good. Planned units, wired, give a diagram to review, and a need that no part can meet shows a missing part ([plantwatch](../../examples/plantwatch/README.md)). |
 
 If the folder layout does not match the architecture, unifold describes the layout. It does not ask you to restructure code.
 
@@ -41,13 +42,8 @@ If the folder layout does not match the architecture, unifold describes the layo
 A map with one capability per package restates the build files. The map becomes worth having with what the build files do not know:
 
 1. Complete summaries, one line each.
-2. The outside world: what the project needs from external systems as needs of the root, and what it offers as capabilities of the root.
-3. Needs named as roles, `matcher` instead of the provider's package name
-   ([wiring](wiring.md)).
+2. The outside world: what the project needs from external systems as needs of the root, and what it provides as capabilities of the root.
+3. Needs named as roles, `matcher` instead of the provider's package name ([wiring](wiring.md)).
 4. Capabilities split where users depend on different parts of a package, with a `contract` and a `verified-by` where a file defines them and tests check them.
-5. Units for parts that are not packages: the modules of one large package, a deployment folder, a shared schema.
+5. Units for parts that are not packages: the modules of one large package, a deployment folder.
 6. The why of every unit, and its documents sorted by what the reader is doing.
-
-## Design before code
-
-unifold also works before any code exists: write the manifests of the planned parts with `status: planned`, wire them, and read the generated diagram as the design. A need that no part can meet shows a missing part. Do not describe three levels of planned units before the first one runs; take one thin path through the system to `active` first. [examples/plantwatch](../../examples/plantwatch/README.md) is such a design.

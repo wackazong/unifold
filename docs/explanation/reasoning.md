@@ -1,7 +1,6 @@
 # Reasoning behind unifold
 
-Why the standard looks the way it does: where its parts come from, what it adds of its own, and the established ideas a reader can use to predict it. Nothing here is a rule; the rules are in the
-[standard](../references/spec.md).
+Why the standard looks the way it does: where its parts come from, what it adds, and the established ideas that predict it. Nothing here is a rule; the rules are in the [standard](../references/spec.md).
 
 ## Where the parts come from
 
@@ -21,26 +20,21 @@ Why the standard looks the way it does: where its parts come from, what it adds 
 
 ## What unifold adds
 
-The first mechanism of its own is **wiring by the parent with a completeness rule**. A unit states needs and never providers; the nearest unit above must connect every need. A search during the third review found no other project that combines a manifest per folder, needs that do not name the provider, wiring by the parent, a completeness check and generated diagrams. Absence in a search is not proof.
+The first is **wiring by the parent with a completeness rule**. A unit states needs and never providers; the nearest unit above must connect every need. We know of no other project that combines a manifest per folder, needs that do not name the provider, wiring by the parent, a completeness check and generated diagrams; absence in a search is not proof.
 
-The second is the pair of **context file and direction rules**
-([0003](../decisions/0003-allow-upward-links-only-in-context.md)).
-Hierarchical documentation normally lets children inherit silently from parents, which makes a child impossible to understand alone. unifold keeps the hierarchy and makes the inheritance explicit in one file per unit, with a stamp that shows when a restatement is stale
-([0026](../decisions/0026-stamp-every-restatement-with-a-hash-of-its-source.md)).
-
-A deliberate split runs through the standard: structure is declared once and generated, because it is cheap to derive and expensive to keep correct by hand; reasons are written, because they cannot be derived.
+The second is the pair of **context file and direction rules** ([0003](../decisions/0003-allow-upward-links-only-in-context.md)). Hierarchical documentation usually lets children inherit silently from parents, which makes a child impossible to understand alone. unifold keeps the hierarchy and makes the inheritance explicit in one file per unit, with a stamp that shows when a restatement is stale ([0026](../decisions/0026-stamp-every-restatement-with-a-hash-of-its-source.md)).
 
 ## Three principles
 
 1. **The folder is the unit.** Units are folders of the real code layout, and a unit holds code. unifold adds no folders of its own except `docs/`. Something that several units share, such as a protocol definition, is a document in the references of the unit above them, which every side names as its contract.
 2. **Knowledge points inward and downward.** A unit knows its own insides and the interfaces of its direct children. It does not know its siblings or its users; what it wants from them is a need. This keeps a parent small and lets a child be understood alone.
-3. **Declare once, generate the rest.** Structure is declared in the manifest, and every picture, table and pointer is generated. Reasons are written: in `README.md`, in the explanation files and in decisions.
+3. **Declare once, generate the rest.** Structure is declared in the manifests, and every picture, table and pointer is generated: structure is cheap to derive and expensive to keep correct by hand. Reasons are written, in `README.md`, the explanation files and the decisions, because they cannot be derived.
 
 ## Ports and adapters
 
 | Idea | In unifold |
 |---|---|
-| A port that the application offers | An entry of `capabilities` |
+| A port that the application provides | An entry of `capabilities` |
 | A port that the application requires, in its own terms | An entry of `needs`. It names the contract that it and its provider share. |
 | Adapter | A unit that needs one thing and provides another, usually of a different `kind` |
 | Composition root | The `wiring` of the parent |
@@ -81,43 +75,11 @@ A unit that holds rules of the domain names its needs in the words of the domain
 
 ## Small steps
 
-The standard does not ask for the whole tree to be described before use. In an existing repository, start with the few units that matter most and improve the parts you touch ([first map](../tutorials/first-map.md)). A first map costs a manifest per unit and one document per connection: the contract that both sides name. In a new design, describe the root and one level, then build one thin path through the system before widening. Manifests of planned units are guesses; the first running path corrects them.
-
-## Four kinds of documents
-
-Diátaxis sorts documentation by what the reader is doing, and says that a text which tries to serve two of these at once serves neither.
-
-| Kind | The reader is | In unifold |
-|---|---|---|
-| Tutorial | Learning, by doing | `docs/tutorials/` |
-| How-to guide | Working on a task | `docs/skills/`: one format for people and agents |
-| Reference | Looking something up while working | The manifest, `README.md`, `docs/references/`, the generated diagrams |
-| Explanation | Studying, to understand | `README.md` `## Why`, `docs/explanation/`, `docs/decisions/` |
-
-The standard's own documents follow the same sorting: reference chapters in `docs/references/`, this and the other explanation files in `docs/explanation/`, a tutorial in `docs/tutorials/`.
-
-## arc42 per unit
-
-| arc42 section | In a unit |
-|---|---|
-| 1 Introduction and goals | `docs/explanation/requirements.md`; the guarantees of each capability in `README.md` |
-| 2 Constraints | From outside: `docs/explanation/context.md`. Own: `invariants.md` and `docs/references/conventions.md` |
-| 3 Context and scope | `README.md` (capabilities, needs, out of scope) and the generated context diagram |
-| 4 Solution strategy | `docs/explanation/reasoning.md` |
-| 5 Building block view | The manifests and the generated diagrams; each child's `README.md` is its blackbox |
-| 6 Runtime view | `docs/explanation/runtime.md` |
-| 7 Deployment view | `docs/explanation/deployment.md` |
-| 8 Crosscutting concepts | References of the unit that covers all the parts, cited by the children's `context.md` |
-| 9 Architecture decisions | `docs/decisions/` |
-| 10 Quality requirements | `requirements.md`, and the guarantees in `README.md` |
-| 11 Risks and technical debt | `docs/explanation/risks.md` |
-| 12 Glossary | `docs/references/glossary.md` |
+The standard does not ask for the whole tree to be described before use. In an existing repository, start with the few units that matter most and improve the parts you touch ([first map](../tutorials/first-map.md)). A first map costs a manifest per unit and one document per connection: the contract that both sides name. In a new design, describe the root and one level with `status: planned`, then build one thin path through the system to `active` before widening. Manifests of planned units are guesses; the first running path corrects them.
 
 ## Why three ways in for agents
 
-A skill alone is not enough. In an evaluation by Vercel, agents did not call an available skill in 56 % of the cases and passed 53 % of the tasks; with a compact index in `AGENTS.md` they passed all of them
-([source](https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals)).
-In another study, 58 % of the trials never called an available dependency-graph tool ([CodeCompass](https://arxiv.org/abs/2602.20048)). So there is a generated `AGENTS.md` with the index, a skill, and a tool that every agent with a shell can run.
+A skill alone is not enough. In an evaluation by Vercel, agents did not call an available skill in 56 % of the cases and passed 53 % of the tasks; with a compact index in `AGENTS.md` they passed all of them ([source](https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals)). In another study, 58 % of the trials never called an available dependency-graph tool ([CodeCompass](https://arxiv.org/abs/2602.20048)). So there is a generated `AGENTS.md` with the index, a skill, and a tool that every agent with a shell can run.
 
 What studies say about instruction files, and what unifold does with it:
 

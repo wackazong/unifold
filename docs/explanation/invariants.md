@@ -5,7 +5,7 @@ What is true of the standard, the skills and the tool at every moment. A change 
 - Everything normative about manifests, wiring, generated files and the comparison with code is in [spec.md](../references/spec.md), which has at most 200 lines. The document conventions are in [documents.md](../references/documents.md) and [writing.md](../references/writing.md); the other chapters explain and add no rule.
 - No finding depends on the meaning of a prose file: the checker reads links, headings, front matter and length.
 - The standard depends on no programming language, build system or code host. The extractors are features of the reference tool.
-- The chapters in `docs/references/` are published at `https://unifold.md`. They link only to each other, to the explanation and tutorial files of this repository that are published beside them, and to full URLs. The skills are installed into other projects and link to the site only by `https://unifold.md/...` URL. Both can be used outside this repository.
+- The reference chapters, the explanation files and the tutorial are published at `https://unifold.md`; a relative link to any other file of this repository becomes a link to the repository there. The skills are installed into other projects, so they link outside themselves only by `https://unifold.md/...` URL.
 - A finding of the tool exists in three places that agree: [rules.md](../references/rules.md), the tool, and a case in `tests/conformance.py`. Prose chapters do not cite rule ids.
 - Every change to the standard is recorded as a decision with `status: proposed`. Only a person sets `accepted`.
 - A claim about a tool, a study or a product carries a link to its source.

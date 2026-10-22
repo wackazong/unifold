@@ -1,6 +1,6 @@
 # Wiring in practice
 
-The rules of wiring are in the [standard](../references/spec.md), section 3. This chapter shows how to use them: what to declare, how to name it, and the patterns that come up in real repositories.
+The rules of wiring are in the [standard](../references/spec.md), section 3. This chapter shows how to use them: what to declare, how to name it, and the patterns of real repositories.
 
 ## Reading a line
 
@@ -22,7 +22,7 @@ Do not declare a need for what every unit of that sort has anyway: the language 
 ## Names
 
 - Name a need after what is needed, in the words of the unit that has it: `clock`, `cart-store`, `matcher`. Not after who provides it today.
-- Name a capability after what it offers, not after a technology.
+- Name a capability after what it provides, not after a technology.
 - A first map tends to name capabilities and needs after packages, because that is what the build files show ([requirements](requirements.md)). Rename them to roles as soon as you know better; the comparison with code works per pair of units, not by name.
 - In YAML, write a summary that contains `:` or a comma inside `{...}` in quotes. The short form `name: summary text` on a line of its own avoids most of these cases.
 
@@ -83,9 +83,11 @@ If a need and its provider state different kinds, for example `library` and `htt
 
 ## Contracts of a connection
 
-A connection carries information in some form: a wire format, a schema, a trait, a command line. That form is the contract of the connection, a document, and both sides name it. A need names the contract it expects; the capability names the contract it offers; the checker reports a connection whose two sides name different documents, or none.
+A connection carries information in some form: a wire format, a schema, a trait, a command line. That form is the contract of the connection, a document that both sides name. The checker reports a connection whose two sides name different documents, or none.
 
-Because a manifest never points into a sibling, the document of a connection between two children lives in the references of the unit that wires them, or higher: `docs/references/clock.md` of the parent, named as `../docs/references/clock.md` by both. A protocol that several parts implement, such as a radio profile served by a device and by its emulator, is such a document, not a unit: a unit holds code. A capability that a parent passes through (`public-api: gateway.public-api`) names the same document at both levels, and a chain that no sibling uses may keep it in the implementing child. A format that travels inside another contract, for example a reading inside an upload, is a reference that the context files of its users cite, not a contract of its own. A definition from outside the project is a URL.
+A manifest never points into a sibling, so the contract of a connection between two children lives in the references of the unit that wires them, or higher: `docs/references/clock.md` of the parent, named as `../docs/references/clock.md` by both. A protocol that several parts implement, such as a radio profile served by a device and by its emulator, is such a document, not a unit: a unit holds code. A definition from outside the project is a URL.
+
+A capability that a parent passes through (`public-api: gateway.public-api`) names the same document at both levels; a chain that no sibling uses may keep it in the implementing child. A format that travels inside another contract, such as a reading inside an upload, is not a contract of its own: it is a reference that the context files of its users cite.
 
 ## A capability implemented by a child
 
