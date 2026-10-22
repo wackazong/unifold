@@ -12,7 +12,7 @@ against itself and against the dependencies it finds in the code.
 
   init [DIR] [--agents]       start a project: root manifest, generated files; --agents adds the skills
   check [PATH] [--fix]        report findings; --fix first writes the generated files
-  generate [PATH]             write diagrams, decision indexes, AGENTS.md (level full), skill stubs
+  generate [PATH]             write diagrams, decision indexes, AGENTS.md, skill stubs
   show [PATH]                 one unit with its resolved neighbours
   capability PATH NAME        both ends of every connection of one entry
   impact PATH [CAPABILITY]    everything that depends on a unit or capability
@@ -36,6 +36,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from urllib.parse import quote, unquote
 
@@ -76,14 +77,49 @@ NEVER_SCANNED = {"node_modules", "__pycache__"}
 STUB_DIRS = (".agents/skills", ".claude/skills")
 DOC_KINDS = ("tutorials", "skills", "references", "explanation", "decisions", "diagrams")
 EXPLANATION_ORDER = ("context", "requirements", "reasoning", "invariants", "runtime", "deployment", "risks")
-AGENTS_FIX = ("AGENTS.md is generated at level full. Move its content into README.md (`## Why`) and "
+AGENTS_FIX = ("AGENTS.md is generated. Move its content into README.md (`## Why`) and "
               "docs/, delete the file, then run `unifold check --fix`.")
+README_TEMPLATE = """# <folder-name>
+
+<One paragraph: what this unit is, what it is for, and for whom. A reader who knows nothing else about the project must be able to decide from it whether this is the unit they are looking for. Say what the unit does, not how.>
+
+## Why
+
+<Why this unit exists and why it is cut this way: the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them.>
+
+## Capabilities
+
+<One `###` section for each capability whose summary does not say everything. Delete the ones that are self-explanatory, and the whole section if none is left.>
+
+### `<capability-name>`
+
+<What a user can rely on, each guarantee in a form a test could check: a value, a limit, an order, a response. One short example. End with the link to the contract both sides name: `Contract: [name](docs/references/name.md).`>
+
+## Needs
+
+<One `###` section for each need that the one-line summary does not explain.>
+
+### `<need-name>`
+
+<What this unit expects from whoever provides this, in this unit's own words: what is required, never who supplies it. For an optional need: what the unit does without it.>
+
+## Out of scope
+
+- <What this unit deliberately does not do, so that nobody asks for it here.>
+
+## Commands
+
+<!-- Optional: the few commands to build, test and run this unit. Delete the section otherwise. -->
+
+## Read next
+
+<!-- Optional: a few links into docs/ whose order matters. Delete the section otherwise. -->
+"""   # the same text as the skill asset assets/README.template.md
 ROOT_KEYS = ("unifold", "name", "ignore", "diagrams", "diagram-links", "max-lines")
-UNIT_KEYS = ("summary", "kind", "status", "owner", "capabilities", "needs", "wiring", "level")
-CAPABILITY_KEYS = ("summary", "kind", "contract", "verified-by", "conforms-to")
+UNIT_KEYS = ("summary", "kind", "status", "owner", "capabilities", "needs", "wiring")
+CAPABILITY_KEYS = ("summary", "kind", "contract", "verified-by")
 NEED_KEYS = ("summary", "kind", "contract", "verified-by", "optional")
 STATUSES = ("planned", "active", "deprecated")
-LEVELS = ("core", "full")
 DIAGRAM_MODES = ("parents", "all", "none")
 DECISION_STATUS = re.compile(r"^(proposed|accepted|rejected|deprecated|superseded by (\d{4}))$")
 DECISION_FILE = re.compile(r"^(\d{4})-[a-z0-9][a-z0-9-]*\.md$")
@@ -102,63 +138,63 @@ FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 TABLE_RULE = re.compile(r"^\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?$")
 ATX = re.compile(r"^ {0,3}(#{1,6})(?:\s+(.*?))?\s*#*\s*$")
 
-# rule id: (severity, level, what the rule demands, how to fix a finding)
+# rule id: (severity, what the rule demands, how to fix a finding)
 RULES = {
-    "S1": ("error", "core", "The root manifest states a version of the standard that this tool supports, as a string.",
+    "S1": ("error", "The root manifest states a version of the standard that this tool supports, as a string.",
            "Write `unifold: \"0.1\"` in the root `unifold.yaml`."),
-    "S3": ("error", "full", "A unit at level `full` has a `README.md`.",
-           "Write the file (template in the `unifold` skill), or leave the unit at level `core`."),
-    "S7": ("error", "full", "Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`.",
+    "S3": ("error", "Every unit has a `README.md`.",
+           "Write the file (template in the `unifold` skill)."),
+    "S7": ("error", "Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`.",
            "Correct the front matter."),
-    "S9": ("error", "full", "A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has a valid `status` and an ISO `date`; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision.",
+    "S9": ("error", "A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has a valid `status` and an ISO `date`; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision.",
            "Correct the file name or the front matter."),
-    "S12": ("info", "full", "Every entry directly in `docs/` of a unit at level `full` is one of `tutorials`, `skills`, `references`, `explanation`, `decisions`, `diagrams`.",
+    "S12": ("info", "Every entry directly in `docs/` is one of `tutorials`, `skills`, `references`, `explanation`, `decisions`, `diagrams`.",
             "Move the file or folder into the folder of its kind: tutorials (learn), skills (do), references (look up), explanation (understand)."),
-    "M1": ("error", "core", "A manifest is a YAML mapping without duplicate keys.",
+    "M1": ("error", "A manifest is a YAML mapping without duplicate keys.",
            "Correct the YAML. The unit and its wiring are not checked until it parses."),
-    "M2": ("error", "core", "A manifest has a one-line `summary` and otherwise only the keys, types and values of the standard; root-only keys are in the root; names of capabilities and needs use letters, digits, `-` and `_` and start with a letter or digit; no summary is a placeholder (`<...>`).",
+    "M2": ("error", "A manifest has a one-line `summary` and otherwise only the keys, types and values of the standard; root-only keys are in the root; names of capabilities and needs use letters, digits, `-` and `_` and start with a letter or digit; no summary is a placeholder (`<...>`).",
            "Correct the key or value named in the message. Project-specific keys start with `x-`."),
-    "M7": ("error", "core", "`contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and stays inside the project.",
-           "Correct the path, create the file, or remove the key until there is something to point at."),
-    "M10": ("warn", "core", "No summary is still `TODO`.",
+    "M7": ("error", "`contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and lies in this unit, a unit above it or a unit below it, never in a sibling.",
+           "Correct the path, create the file, or remove the key until there is something to point at. A definition that two siblings share lies in the unit above both."),
+    "M10": ("warn", "No summary is still `TODO`.",
             "Replace `TODO` with one line that says what the unit, capability or need is."),
-    "W1": ("error", "core", "Every wiring line has an allowed form and names an existing direct child, capability, need or plain folder, on the correct side.",
+    "W1": ("error", "Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A connection joins two units; a folder is never a provider.",
            "Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.capability`)."),
-    "W2": ("error", "core", "Every need of every child has a provider, unless it is `optional`: a wiring line, or a need of the same name in the parent (implicit pass-up).",
+    "W2": ("error", "Every need of every child has a provider, unless it is `optional`: a wiring line, or a need of the same name in the parent (implicit pass-up).",
            "Add `child.need: provider` to the parent's wiring, or declare a need of the same name in the parent to pass it up. Do not mark a need optional to silence this."),
-    "W3": ("warn", "core", "Every capability of a child is used: a wiring line names it as provider, a capability of the parent is implemented by it, or code of the parent itself is observed to depend on the child.",
+    "W3": ("warn", "Every capability of a child is used: a wiring line names it as provider, a capability of the parent is implemented by it, or code of the parent itself is observed to depend on the child.",
            "Wire the unit that should use it, or implement a capability of the parent with it (`capability: child.capability`), or remove the capability."),
-    "W4": ("warn", "core", "A need and its provider have the same `kind`, if both state one.",
+    "W4": ("warn", "A need and its provider have the same `kind`, if both state one.",
            "Put an adapter unit between the two, or correct the kind that is wrong."),
-    "W7": ("warn", "core", "The children of a unit do not need each other in a cycle.",
+    "W7": ("warn", "The children of a unit do not need each other in a cycle.",
            "Move what both need into a third unit, or turn one direction around (the other side subscribes)."),
-    "W8": ("info", "core", "A need that is met by a plain folder (`./folder`) or by code of the unit itself (`./`) is listed: that code is not described as a unit yet.",
-           "Nothing to do now. Give the code a folder with a `unifold.yaml` when its interface matters."),
-    "W9": ("warn", "core", "An `active` unit does not get a mandatory need from a provider that is `planned` or `deprecated` (default alternative).",
+    "W9": ("warn", "An `active` unit does not get a mandatory need from a provider that is `planned` or `deprecated` (default alternative).",
            "Correct the status, or wire a provider that exists."),
-    "L1": ("error", "full", "The target of every relative link in a hand-written document exists, including its anchor: a heading, or the first cell of a table row.",
+    "W11": ("error", "Every side of a connection names a contract, and both sides name the same document.",
+            "Write the definition as a reference of this unit, the one that holds the wiring, or of a unit above it, and point both sides at it with `contract`."),
+    "L1": ("error", "The target of every relative link in a hand-written document exists, including its anchor: a heading, or the first cell of a table row.",
            "Correct the link."),
-    "L2": ("error", "full", "A link stays inside the unit, or goes down to a direct child (its folder or its `README.md`), or goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references. No link goes sideways, deeper, out of the project, or is an absolute path.",
+    "L2": ("error", "A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract` or `verified-by`. No other link goes sideways, deeper, out of the project, or is an absolute path.",
            "Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`."),
-    "L7": ("warn", "full", "`docs/explanation/context.md` cites no decision that is rejected, deprecated or superseded, and an `active` unit cites no decision that is still `proposed`.",
+    "L7": ("warn", "`docs/explanation/context.md` cites no decision that is rejected, deprecated or superseded, and an `active` unit cites no decision that is still `proposed`.",
            "Cite the successor, or have the decision accepted."),
-    "L9": ("warn", "full", "Every item of `docs/explanation/context.md` is a `###` heading with a link, followed by a paragraph that starts with `Says` and one that starts with `Here`.",
+    "L9": ("warn", "Every item of `docs/explanation/context.md` is a `###` heading with a link, followed by a paragraph that starts with `Says` and one that starts with `Here`.",
            "Complete the item."),
-    "L10": ("warn", "full", "Every context item carries a stamp, and the cited part (the file, or the section or table row that the fragment of the link names) has not changed since the stamp was written.",
+    "L10": ("warn", "Every context item carries a stamp, and the cited part (the file, or the section or table row that the fragment of the link names) has not changed since the stamp was written.",
             "Read the cited source again, correct `Says`, then run `unifold stamp`. Only `unifold stamp` writes stamps; `check --fix` never does."),
-    "T1": ("warn", "full", "A hand-written document has at most `max-lines` lines (default 200).",
+    "T1": ("warn", "A hand-written document has at most `max-lines` lines (default 200).",
            "Split the file: a reference into parts, the long why into `docs/explanation/reasoning.md`, a procedure into a skill."),
-    "T4": ("warn", "full", "The `## Why` section of `README.md` has at most 20 lines that are not blank.",
+    "T4": ("warn", "The `## Why` section of `README.md` has at most 20 lines that are not blank.",
            "Move the long form to `docs/explanation/reasoning.md`."),
-    "T5": ("warn", "full", "A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest.",
+    "T5": ("warn", "A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest.",
            "Rename or remove the section; the manifest is the list of capabilities and needs."),
-    "G1": ("error", "core", "Every generated file exists and equals what the generator writes now; no leftover generated file remains; at level `full`, `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
+    "G1": ("error", "Every generated file exists and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
            "Run `unifold generate` (or `unifold check --fix`)."),
-    "D1": ("error", "core", "Code in one unit depends on code in another unit only where a connection covers it. A dependency that only tests have is exempt.",
-           "Declare the need and wire it, or remove the dependency from the code."),
-    "D2": ("warn", "core", "For every connection between two units whose dependencies are extracted, a dependency is found in code.",
+    "D1": ("error", "Code in one unit depends on code in another unit only where a connection covers it. A dependency that only tests have is exempt.",
+           "Declare the need and wire it, give the code a manifest if it has none, or remove the dependency from the code."),
+    "D2": ("warn", "For every connection between two units whose dependencies are extracted, a dependency is found in code.",
            "Remove the stale wiring line and need, or pass the dependency that the extractor cannot see with `--deps FILE`."),
-    "D3": ("error", "core", "A dependency list given with `--deps` is a JSON list of `{\"from\", \"to\"}` whose paths exist in the project.",
+    "D3": ("error", "A dependency list given with `--deps` is a JSON list of `{\"from\", \"to\"}` whose paths exist in the project.",
            "Correct the list; paths are relative to the project root."),
 }
 SEVERITY_ORDER = {"error": 0, "warn": 1, "info": 2}
@@ -616,7 +652,7 @@ def content_hash(lines) -> str:
 # ------------------------------------------------------------------ model
 
 class Entry:
-    """One provider of a connection: a capability of a child, an own need, or a plain folder."""
+    """One provider of a connection: a capability of a child or an own need."""
     __slots__ = ("config", "kind", "unit", "capability", "path", "raw")
 
     def __init__(self, config, kind, raw, unit=None, capability="", path=""):
@@ -652,8 +688,6 @@ class Unit:
         status = manifest.get("status")
         self.status = status if status in STATUSES else "active"
         self.own_owner = _text(manifest.get("owner"))
-        level = manifest.get("level")
-        self.level = level if level in LEVELS else (parent.level if parent else "core")
         self.capabilities = self._entries("capabilities")
         self.needs = self._entries("needs")
         self.conn: dict = {}                    # (child, need) -> Conn
@@ -676,7 +710,6 @@ class Unit:
                     "kind": _text(spec.get("kind")),
                     "contract": _text(spec.get("contract")) or None,
                     "verified-by": _text(spec.get("verified-by")) or None,
-                    "conforms-to": _text(spec.get("conforms-to")) or None,
                     "optional": spec.get("optional") is True}
         return out
 
@@ -757,7 +790,8 @@ class Project:
         self.by_path: dict = {}
         self.root_unit = None
         self.usable = False                     # False: only `check` can say something
-        self.ignore: set = set()
+        self.ignore: set = set()                # folders named by `ignore` in the root manifest
+        self.git_ignored: set = git_ignored(root)   # files and folders that git ignores
         self.links, self.diagrams, self.max_lines = "none", "parents", MAX_LINES
         self._texts: dict = {}
         self._docs: dict = {}
@@ -859,7 +893,7 @@ class Project:
     def add(self, rule: str, path: str, message: str, line=None, fix=None, severity=None):
         self.findings.append({"rule": rule, "severity": severity or RULES[rule][0],
                               "file": self.rel(path), "line": line, "message": message,
-                              "fix": fix or RULES[rule][3],
+                              "fix": fix or RULES[rule][2],
                               "url": f"{SITE_URL}/rules#{rule.lower()}"})
 
     # ----- the unit tree
@@ -883,7 +917,7 @@ class Project:
                 path = entry.path
                 if name == "docs" and folder == owner.path:
                     continue
-                if self.rel(path) in self.ignore or is_build_output(path):
+                if self.is_ignored(path) or is_build_output(path):
                     continue
                 current = owner
                 manifest = os.path.join(path, MANIFEST)
@@ -932,8 +966,24 @@ class Project:
         return owner if kind == "unit" else self.root_unit
 
     def is_ignored(self, path: str) -> bool:
+        """Named by `ignore` in the root manifest, or ignored by git: not part of the project."""
         rel = self.rel(path)
-        return any(rel == item or rel.startswith(item + "/") for item in self.ignore)
+        return any(rel == item or rel.startswith(item + "/") for item in self.ignore) \
+            or rel in self.git_ignored \
+            or any(rel.startswith(item) for item in self.git_ignored if item.endswith("/"))
+
+    def ignored_paths(self) -> set:
+        """What the dependency scan skips: the `ignore` folders and what git ignores."""
+        return self.ignore | {item.rstrip("/") for item in self.git_ignored}
+
+    def listdir(self, folder: str) -> list:
+        """The visible entries of a folder, sorted: no dot files, nothing ignored."""
+        try:
+            names = sorted(os.listdir(folder))
+        except OSError:
+            return []
+        return [n for n in names if not n.startswith(".")
+                and not self.is_ignored(os.path.join(folder, n))]
 
     # ----- wiring
 
@@ -942,20 +992,9 @@ class Project:
         if not isinstance(value, str) or not value.strip():
             return None, f"the provider must be a reference, not {show_value(value)}"
         value = value.strip()
-        if value == ".":
-            return None, "code of the unit itself is written './'"
-        if value.startswith("./"):
-            target = os.path.normpath(os.path.join(unit.path, value))
-            kind, owner = self.owner_of(target)
-            if not under(target, unit.path) or self.kind_of(target) != "dir":
-                return None, f"'{value}' is not a folder inside this unit"
-            if kind != "unit" or owner is not unit:
-                whose = f"unit '{owner.rel}'" if kind == "unit" else "a nested project"
-                return None, f"'{value}' belongs to {whose}; name its capability instead"
-            if for_port:
-                return None, "a capability of the unit is implemented by a child (`child.capability`); " \
-                             "code of the unit itself needs no line"
-            return Entry(config, "plain", value, path=target), None
+        if value == "." or value.startswith("./"):
+            return None, f"'{value}' names a folder; a connection joins two units. Give that " \
+                         "code a folder with a unifold.yaml and wire its capability"
         if value.startswith("*"):
             return None, "'*' is not allowed; name the unit"
         if "." in value:
@@ -976,8 +1015,7 @@ class Project:
             return None, f"a capability cannot be wired to an own need ('{value}'); " \
                          "a capability is implemented by a child (`child.capability`)"
         if value not in unit.needs:
-            hint = "; a folder is written './" + value + "'" if "/" in value else \
-                "; a capability of a child is written 'child." + value + "'" \
+            hint = "; a capability of a child is written 'child." + value + "'" \
                 if any(value in c.capabilities for c in unit.children[:500]) else ""
             return None, f"'{value}' is not a need of this unit{hint}"
         return Entry(config, "own", value, capability=value), None
@@ -1058,6 +1096,26 @@ class Project:
 
 
 ROOT_LINE = re.compile(r"^[\"']?unifold[\"']?\s*:", re.M)
+
+
+def git_ignored(root: str) -> set:
+    """Paths under `root` that git ignores, relative to it with `/`: files, and folders with
+    a trailing slash. Empty when git is missing or `root` is not in a work tree. Only
+    untracked paths are listed: a file that is committed is part of the project even if a
+    pattern matches it."""
+    try:
+        done = subprocess.run(
+            ["git", "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"],
+            cwd=root, capture_output=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if done.returncode != 0:
+        return set()
+    out = set()
+    for item in done.stdout.decode("utf-8", "surrogateescape").split("\0"):
+        if item and item != "./":
+            out.add(item.replace(os.sep, "/"))
+    return out
 
 
 def is_build_output(path: str) -> bool:
@@ -1142,10 +1200,7 @@ def providers_of(unit: Unit, need: str) -> list:
     via = [] if conn.origin == "explicit" else [conn.origin]
     out = []
     for entry in conn.entries:
-        if entry.kind == "plain":
-            out.append({"where": "plain", "path": entry.path, "capability": "",
-                        "config": entry.config, "via": via})
-        elif entry.kind == "child":
+        if entry.kind == "child":
             for target, capability in implementers(entry.unit, entry.capability):
                 out.append({"where": "unit", "unit": target, "capability": capability,
                             "config": entry.config, "via": via})
@@ -1264,7 +1319,7 @@ def check_manifest(project: Project, unit: Unit):
     for key in ("kind", "owner", "name", "diagram-links"):
         if key in manifest and not _text(manifest[key]):
             bad(f"'{key}' must be text, not {show_value(manifest[key])}", key)
-    for key, allowed in (("status", STATUSES), ("level", LEVELS), ("diagrams", DIAGRAM_MODES)):
+    for key, allowed in (("status", STATUSES), ("diagrams", DIAGRAM_MODES)):
         value = manifest.get(key, allowed[0])
         if key in manifest and (not isinstance(value, str) or value not in allowed):
             hint = " (YAML reads yes, no, on and off as true and false)" \
@@ -1310,9 +1365,8 @@ def check_manifest(project: Project, unit: Unit):
                     bad(f"{label}: '{key}' is read as a key. A comma inside `{{...}}` ends "
                         "the value: quote the summary, or write the entry on separate lines",
                         section, name)
-                elif key in ("optional", "conforms-to"):
-                    bad(f"{label}: '{key}' is allowed on a "
-                        f"{'need' if key == 'optional' else 'capability'} only", section, name, key)
+                elif key == "optional":
+                    bad(f"{label}: 'optional' is allowed on a need only", section, name, key)
                 else:
                     close = difflib.get_close_matches(str(key).lower(), allowed, 1)
                     hint = f"; did you mean '{close[0]}'?" if close else ""
@@ -1323,11 +1377,6 @@ def check_manifest(project: Project, unit: Unit):
             if "optional" in spec and not isinstance(spec["optional"], bool):
                 bad(f"{label}: 'optional' must be true or false, not "
                     f"{show_value(spec['optional'])}", section, name, "optional")
-            conforms = spec.get("conforms-to")
-            if section == "capabilities" and "conforms-to" in spec and \
-                    (not isinstance(conforms, str) or conforms not in unit.needs):
-                bad(f"{label}: 'conforms-to' must name a need of this unit, not "
-                    f"{show_value(conforms)}", section, name, "conforms-to")
             for field in ("contract", "verified-by"):
                 if field not in spec:
                     continue
@@ -1361,6 +1410,11 @@ def path_problem(project: Project, unit: Unit, value: str):
         return "points outside the project"
     if not project.kind_of(target):
         return "does not exist"
+    kind, owner = project.owner_of(target)
+    if kind == "foreign":
+        return "lies in a nested project"
+    if owner is not unit and owner not in unit.ancestors() and unit not in owner.ancestors():
+        return f"lies in the sibling unit '{owner.rel}'"
     return None
 
 
@@ -1382,7 +1436,27 @@ def check_wiring(project: Project, unit: Unit, parent_uses=frozenset()):
     if unit.broken:
         return
     graph: dict = {}
-    listed = set()
+    reported = set()
+
+    def contract_of(owner: Unit, spec: dict):
+        shown, target, url = contract_target(project, owner, spec.get("contract"))
+        return url or target or None
+
+    def contracts_agree(key: str, side: Unit, side_spec: dict, side_text: str,
+                        other: Unit, other_spec: dict, other_text: str, line):
+        mine, theirs = contract_of(side, side_spec), contract_of(other, other_spec)
+        if mine is None and key not in reported:
+            reported.add(key)
+            project.add("W11", where, f"{side_text} names no contract", line)
+        if theirs is None and other_text not in reported:
+            reported.add(other_text)
+            project.add("W11", where, f"{other_text} names no contract", line)
+        if mine is not None and theirs is not None and mine != theirs:
+            project.add("W11", where, f"{side_text} names the contract "
+                                      f"{project.rel(mine) if os.path.isabs(mine) else mine}, "
+                                      f"{other_text} names {project.rel(theirs) if os.path.isabs(theirs) else theirs}",
+                        line)
+
     for child in unit.children:
         if child.broken:
             continue
@@ -1403,17 +1477,16 @@ def check_wiring(project: Project, unit: Unit, parent_uses=frozenset()):
             for entry in conn.entries:
                 if entry.kind == "child":
                     graph.setdefault(ref, set()).add(entry.unit.ref_in_parent())
-                    other = entry.unit.capabilities.get(entry.capability, {}).get("kind", "")
-                elif entry.kind == "own":
-                    other = unit.needs[entry.capability]["kind"]
+                    other_spec = entry.unit.capabilities.get(entry.capability, {})
+                    other = other_spec.get("kind", "")
+                    contracts_agree(f"{ref}.{need}", child, spec, f"need '{ref}.{need}'",
+                                    entry.unit, other_spec, f"capability '{entry.raw}'", conn.line)
                 else:
-                    other = ""
-                    if (id(conn), entry.raw) not in listed:
-                        listed.add((id(conn), entry.raw))
-                        what = "code of this unit itself" if entry.path == unit.path \
-                            else f"the folder {entry.raw}"
-                        project.add("W8", where, f"'{conn.key}' is provided by {what}, which "
-                                                 "is not described as a unit", conn.line)
+                    other_spec = unit.needs[entry.capability]
+                    other = other_spec["kind"]
+                    contracts_agree(f"{ref}.{need}", child, spec, f"need '{ref}.{need}'",
+                                    unit, other_spec, f"need '{entry.capability}' of this unit",
+                                    conn.line)
                 if spec["kind"] and other and spec["kind"] != other:
                     project.add("W4", where, f"'{ref}.{need}' is of kind '{spec['kind']}', its "
                                              f"provider '{entry.raw}' of kind '{other}'", conn.line)
@@ -1431,9 +1504,13 @@ def check_wiring(project: Project, unit: Unit, parent_uses=frozenset()):
                 project.add("W3", where, f"'{ref}.{capability}' is provided but nothing uses it",
                             wiring_line)
     for capability, conn in unit.impl.items():
-        kind = unit.capabilities[capability]["kind"]
+        spec = unit.capabilities[capability]
+        kind = spec["kind"]
         for entry in conn.entries:
-            other = entry.unit.capabilities.get(entry.capability, {}).get("kind", "")
+            other_spec = entry.unit.capabilities.get(entry.capability, {})
+            other = other_spec.get("kind", "")
+            contracts_agree(capability, unit, spec, f"capability '{capability}' of this unit",
+                            entry.unit, other_spec, f"capability '{entry.raw}'", conn.line)
             if kind and other and kind != other:
                 project.add("W4", where, f"capability '{capability}' is of kind '{kind}', the capability "
                                          f"'{entry.raw}' that implements it of kind '{other}'",
@@ -1443,12 +1520,12 @@ def check_wiring(project: Project, unit: Unit, parent_uses=frozenset()):
                     + " -> ".join(cycle + [cycle[0]]), wiring_line)
 
 
-# ----- documents (level full)
+# ----- documents
 
 def managed_files(project: Project, unit: Unit) -> list:
     """The hand-written Markdown files of a unit that the document rules cover: README.md
     and the files in docs/decisions, docs/explanation, docs/references, docs/skills and
-    docs/tutorials. AGENTS.md is generated at level full and not among them."""
+    docs/tutorials. AGENTS.md is generated and not among them."""
     readme = os.path.join(unit.path, "README.md")
     files = [readme] if project.kind_of(readme) == "file" else []
     doc = os.path.join(unit.path, "docs")
@@ -1459,20 +1536,22 @@ def managed_files(project: Project, unit: Unit) -> list:
         for folder, subs, names in os.walk(top):
             subs[:] = sorted(s for s in subs if not s.startswith(".") and not (
                 name == "skills" and s in ("assets", "scripts")
-                and os.path.dirname(folder) == top))
+                and os.path.dirname(folder) == top)
+                and not project.is_ignored(os.path.join(folder, s)))
             for file_name in sorted(names):
-                if file_name.endswith(".md"):
-                    files.append(os.path.join(folder, file_name))
+                path = os.path.join(folder, file_name)
+                if file_name.endswith(".md") and not project.is_ignored(path):
+                    files.append(path)
     return files
 
 
 def generated_location(unit: Unit, path: str) -> bool:
-    """Whether the generator owns this path of the unit: diagrams, the decision index and,
-    at level full, AGENTS.md."""
+    """Whether the generator owns this path of the unit: diagrams, the decision index and
+    AGENTS.md."""
     doc = os.path.join(unit.path, "docs")
     return os.path.dirname(path) == os.path.join(doc, "diagrams") \
         or path == os.path.join(doc, "decisions", "index.md") \
-        or (unit.level == "full" and path == os.path.join(unit.path, "AGENTS.md"))
+        or path == os.path.join(unit.path, "AGENTS.md")
 
 
 def documents_of(project: Project, unit: Unit) -> dict:
@@ -1488,9 +1567,7 @@ def documents_of(project: Project, unit: Unit) -> dict:
     docs = os.path.join(unit.path, "docs")
 
     def entries(folder: str) -> list:
-        if project.kind_of(folder) != "dir":
-            return []
-        return [n for n in sorted(os.listdir(folder)) if not n.startswith(".")]
+        return project.listdir(folder) if project.kind_of(folder) == "dir" else []
 
     def md_files(folder: str) -> list:
         return [n for n in entries(folder)
@@ -1518,9 +1595,9 @@ def skills_of(project: Project, unit: Unit) -> list:
     out, folder = [], os.path.join(unit.path, "docs", "skills")
     if project.kind_of(folder) != "dir":
         return out
-    for name in sorted(os.listdir(folder)):
+    for name in project.listdir(folder):
         path = os.path.join(folder, name)
-        if name.startswith(".") or not os.path.isdir(path):
+        if not os.path.isdir(path):
             continue
         skill = os.path.join(path, "SKILL.md")
         meta = project.doc(skill).meta if project.kind_of(skill) == "file" else None
@@ -1537,7 +1614,7 @@ def decisions_of(project: Project, unit: Unit) -> list:
     if project.kind_of(folder) != "dir":
         return []
     out = []
-    for name in sorted(os.listdir(folder)):
+    for name in project.listdir(folder):
         path = os.path.join(folder, name)
         if name.endswith(".md") and name != "index.md" and os.path.isfile(path):
             out.append(decision_info(project, path))
@@ -1622,17 +1699,17 @@ def cited_hash(project: Project, context_path: str, link: str):
 
 
 def check_documents(project: Project, unit: Unit):
-    """Level full: the document conventions for the files of one unit."""
+    """The document conventions for the files of one unit."""
     if unit.broken:
         return
     readme = os.path.join(unit.path, "README.md")
     docs = os.path.join(unit.path, "docs")
     context = os.path.join(docs, "explanation", "context.md")
     if project.kind_of(readme) != "file":
-        project.add("S3", unit.path, "the unit is at level full and has no README.md")
+        project.add("S3", unit.path, "the unit has no README.md")
     if project.kind_of(docs) == "dir":
-        for name in sorted(os.listdir(docs)):
-            if not name.startswith(".") and name not in DOC_KINDS:
+        for name in project.listdir(docs):
+            if name not in DOC_KINDS:
                 project.add("S12", os.path.join(docs, name),
                             f"'{name}' is not one of the folders of docs/: " + ", ".join(DOC_KINDS))
     for skill in skills_of(project, unit):
@@ -1716,6 +1793,18 @@ def check_decisions(project: Project, unit: Unit):
             project.add("S9", path, "an accepted decision names its `decision-makers`", 2)
 
 
+def manifest_targets(project: Project, unit: Unit) -> set:
+    """The files that the manifest of `unit` names as contract or verified-by."""
+    out = set()
+    for entries in (unit.capabilities, unit.needs):
+        for spec in entries.values():
+            for field in ("contract", "verified-by"):
+                target = contract_target(project, unit, spec.get(field))[1]
+                if target:
+                    out.add(target)
+    return out
+
+
 def check_links(project: Project, unit: Unit, path: str, doc: Doc, is_context: bool):
     base = os.path.dirname(path)
     for line, link in doc.links:
@@ -1743,6 +1832,8 @@ def check_links(project: Project, unit: Unit, path: str, doc: Doc, is_context: b
         if anchor and kind == "file" and target.endswith(".md") \
                 and anchor.lower() not in project.doc(target).anchors():
             project.add("L1", path, f"no heading or table row for the anchor in {link}", line)
+        if target in manifest_targets(project, unit):
+            continue
         owner_kind, owner = project.owner_of(target)
         if owner_kind is None:
             project.add("L2", path, f"link leaves the project: {link}", line,
@@ -1848,7 +1939,7 @@ def stamp_all(project: Project, below: str = None) -> list:
     rows = []
     for unit in project.units:
         path = os.path.join(unit.path, "docs", "explanation", "context.md")
-        if unit.level == "full" and os.path.isfile(path) and \
+        if os.path.isfile(path) and \
                 (below is None or unit.path == below or unit.path.startswith(below + os.sep)):
             rows += stamp_file(project, path)
     return rows
@@ -1867,14 +1958,10 @@ def check_generated(project: Project):
         text = project.text(path)
         if text == content:
             continue
-        agents = os.path.basename(path) == "AGENTS.md"
-        if agents and not agents_generated(project, path):
-            project.add("G1", path, "the unifold block (unit index) is out of date",
-                        block_line(text))
-        elif MARK_PREFIX in text[:2000]:
+        if MARK_PREFIX in text[:2000]:
             project.add("G1", path, "generated file is out of date")
-        elif agents:
-            project.add("G1", path, "AGENTS.md is generated at level full, and this one is "
+        elif os.path.basename(path) == "AGENTS.md":
+            project.add("G1", path, "AGENTS.md is generated, and this one is "
                                     "hand-written (no generated marker)", fix=AGENTS_FIX)
         else:
             project.add("G1", path, "this path is written by the generator, but the file has "
@@ -1896,14 +1983,14 @@ def leftovers(project: Project, expected: dict) -> list:
         folder = os.path.join(doc, "diagrams")
         candidates = []
         if project.kind_of(folder) == "dir":
-            candidates = [os.path.join(folder, n) for n in sorted(os.listdir(folder))
+            candidates = [os.path.join(folder, n) for n in project.listdir(folder)
                           if n.endswith(".md")]
         candidates.append(os.path.join(doc, "decisions", "index.md"))
         for path in candidates:
             if path in expected or project.kind_of(path) != "file":
                 continue
             marked = project.doc(path).generated
-            if marked or (unit.level == "full" and os.path.dirname(path) == folder):
+            if marked or os.path.dirname(path) == folder:
                 out.append((path, marked))
     for stub_dir in STUB_DIRS:
         folder = os.path.join(project.root, *stub_dir.split("/"))
@@ -1914,19 +2001,6 @@ def leftovers(project: Project, expected: dict) -> list:
             if path not in expected and os.path.isfile(path) and STUB_MARK in project.text(path):
                 out.append((path, True))
     return out
-
-
-def agents_generated(project: Project, path: str) -> bool:
-    """Whether this AGENTS.md is written whole by the generator: its unit is at level full."""
-    unit = project.by_path.get(os.path.dirname(path))
-    return unit is not None and unit.level == "full"
-
-
-def block_line(text: str):
-    for number, line in enumerate(text.split("\n"), 1):
-        if line.startswith(BLOCK_BEGIN_PREFIX):
-            return number
-    return None
 
 
 # ----- dependencies in code
@@ -2057,22 +2131,16 @@ def check_deps(project: Project, mapped, covered: dict):
                     f"to '{ref_b}' ({evidence_text(real_items)})",
                     common.lines.get(("wiring",)), steps)
     for (common, first), items in upward.items():
-        real_items = [i for i in items if not is_dev(i[0])]
-        folders = [e.path for (child, _), conn in common.conn.items() if child is first
-                   for e in conn.entries if e.kind == "plain"]
-        open_items = [i for i in real_items
-                      if not any(i[2] == f or i[2].startswith(f + os.sep) for f in folders)
-                      and not (i[2] == common.path and folders)]
+        open_items = [i for i in items if not is_dev(i[0])]
         if not open_items or first.broken:
             continue
         _, a, dst = open_items[0]
         project.add("D1", common.manifest_path,
-                    f"'{a.rel}' depends on code of its ancestor '{common.rel}' that no "
-                    f"`./folder` line provides ({evidence_text(open_items)})",
+                    f"'{a.rel}' depends on code of its ancestor '{common.rel}' that lies in "
+                    f"no unit ({evidence_text(open_items)})",
                     common.lines.get(("wiring",)),
-                    f"Declare a need in {a.rel}/{MANIFEST} and wire it here to the plain "
-                    "folder that holds the code (`child.need: ./folder`), or move that code "
-                    "into a unit.")
+                    f"Give that code a folder with a {MANIFEST} and a capability, declare a "
+                    f"need in {a.rel}/{MANIFEST} and wire the two here; or remove the dependency.")
     for (unit, child, provider), conn in wired.items():
         if (unit, child, provider) in between or conn.origin == "implicit":
             continue
@@ -2179,7 +2247,6 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
 
     edges: dict = {}
     frame_sides: dict = {}
-    plain: dict = {}
     touched: set = set()
     shared: list = []
 
@@ -2211,12 +2278,7 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
             for index, entry in enumerate(conn.entries):
                 if focus is not None and child is not focus and entry.unit is not focus:
                     continue
-                if entry.kind == "plain":
-                    pid = "x_" + safe_id(project.rel(entry.path))
-                    plain[pid] = os.path.relpath(entry.path, frame.path).replace(os.sep, "/") \
-                        if entry.path != frame.path else "(own code)"
-                    tos, capability = [pid], need
-                elif entry.kind == "child":
+                if entry.kind == "child":
                     tos, capability = [node_id(t) for t in targets(entry.unit, entry.capability)], entry.capability
                     touched.add(entry.unit)
                 elif unit is frame:
@@ -2280,8 +2342,6 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
     for child in frame.children:
         if focus is None or child is focus or child in touched:
             emit(child, "    ")
-    for pid, text in plain.items():
-        lines.append(f'    {pid}["{label(text)}"]:::plain')
     lines.append("  end")
     for pid, shape in frame_sides.items():
         lines.append(f"  {pid}{shape}")
@@ -2363,52 +2423,46 @@ def connection_tables(project: Project, unit: Unit, out_dir: str) -> list:
     rows = []
     if unit.needs:
         rows += ["", "### Who provides what this unit needs", "",
-                 "| Need | Kind | Own contract | Provided by | Capability | Their contract | Verified by |",
-                 "|---|---|---|---|---|---|---|"]
+                 "| Need | Kind | Contract | Provided by | Capability | Verified by |",
+                 "|---|---|---|---|---|---|"]
         for need, spec in unit.needs.items():
             head = f"| {need} | {cell(spec['kind'])} | " \
                    f"{path_link(project, unit, spec['contract'], out_dir, 'contract')} | "
             found = providers_of(unit, need)
             if not found:
                 note = "nobody (optional)" if spec["optional"] else "**no provider**"
-                rows.append(head + f"{note} | | | |")
+                rows.append(head + f"{note} | | |")
             for item in found:
                 note = via_note(item)
                 if item["where"] == "outside":
                     rows.append(head + f"outside the project, as need `{item['capability']}` of the "
-                                       f"root{note} | | | |")
-                elif item["where"] == "plain":
-                    rows.append(head + f"folder `{project.rel(item['path'])}`, not a unit"
-                                       f"{note} | | | |")
+                                       f"root{note} | | |")
                 else:
                     target = item["unit"]
                     theirs = target.capabilities.get(item["capability"], {})
                     rows.append(
                         head + f"{unit_ref(project, target, out_dir)}{note} | {item['capability']} | "
-                        f"{path_link(project, target, theirs.get('contract'), out_dir, 'contract')} | "
                         f"{path_link(project, target, theirs.get('verified-by'), out_dir, 'checks')} |")
     if unit.capabilities:
         rows += ["", "### Who uses what this unit provides", "",
-                 "| Capability | Kind | Contract | Verified by | Used by | As need | Their contract |",
-                 "|---|---|---|---|---|---|---|"]
+                 "| Capability | Kind | Contract | Verified by | Used by | As need |",
+                 "|---|---|---|---|---|---|"]
         for capability, spec in unit.capabilities.items():
             head = f"| {capability} | {cell(spec['kind'])} | " \
                    f"{path_link(project, unit, spec['contract'], out_dir, 'contract')} | " \
                    f"{path_link(project, unit, spec['verified-by'], out_dir, 'checks')} | "
             found = users_of(unit, capability)
             if not found:
-                rows.append(head + "nobody | | |")
+                rows.append(head + "nobody | |")
             for item in found:
                 if item["where"] == "outside":
                     rows.append(head + f"outside the project, as capability `{item['need']}` of the "
-                                       "root | | |")
+                                       "root | |")
                 else:
                     user = item["unit"]
-                    theirs = user.needs.get(item["need"], {})
                     rows.append(
                         head + f"{unit_ref(project, user, out_dir)}{via_note(item)} | "
-                        f"{item['need']} | "
-                        f"{path_link(project, user, theirs.get('contract'), out_dir, 'contract')} |")
+                        f"{item['need']} |")
     return rows
 
 
@@ -2512,7 +2566,7 @@ def stub_text(project: Project, name: str, unit: Unit, skill: dict, folder: str)
         "description: " + json.dumps(skill["description"] or f"Skill {skill['name']} of {unit.name}",
                                      ensure_ascii=False),
         "---", STUB_MARK, "",
-        f"Read [{project.rel(skill['path'])}]({target}) and follow it.",
+        f"Read [{project.rel(skill['path'])}]({target}) and follow it. "
         f"The skill belongs to {owner}; relative paths in it start from that file.", ""])
 
 
@@ -2530,8 +2584,8 @@ def agents_block(project: Project) -> str:
         BLOCK_BEGIN,
         "## unifold",
         "",
-        f"This repository has a [unifold]({SITE_URL}) map. A folder with a `{MANIFEST}` is a",
-        "unit: the file says what the unit provides and needs, and the unit above connects",
+        f"This repository has a [unifold]({SITE_URL}) map. A folder with a `{MANIFEST}` is a "
+        "unit: the file says what the unit provides and needs, and the unit above connects "
         "needs to providers. Read the map before you change an interface; keep it true after.",
         "",
         f"- `{tool} show PATH`: a unit, its capabilities and needs, and who is on the other side",
@@ -2542,7 +2596,7 @@ def agents_block(project: Project) -> str:
                                   ("unifold-convert", "How to bring folders into the map"))
               if os.path.isfile(os.path.join(project.root, "docs", "skills", n, "SKILL.md"))]
     if skills:
-        lines += [""] + [f"{t}: the skill [{n}](docs/skills/{n}/SKILL.md)." for n, t in skills]
+        lines += ["", " ".join(f"{t}: the skill [{n}](docs/skills/{n}/SKILL.md)." for n, t in skills)]
     units = [u for u in project.units if u.parent is not None]
     if units and len(units) <= INDEX_LIMIT:
         lines += ["", "| Unit | Path | Summary |", "|---|---|---|"]
@@ -2556,7 +2610,7 @@ def agents_block(project: Project) -> str:
 
 
 def agents_text(project: Project, unit: Unit) -> str:
-    """The AGENTS.md of a unit at level full: where the documents and skills are.
+    """The AGENTS.md of a unit: where the documents and skills are.
 
     No project knowledge, only the way to it. The root's file also carries the unifold
     block with the unit index.
@@ -2577,8 +2631,8 @@ def agents_text(project: Project, unit: Unit) -> str:
         if parts or extra:
             rows.append(f"| {kind} | {', '.join(parts + extra)} |")
     lines = [MARK, f"# AGENTS.md: {unit.name}", "",
-             "unifold unit; run `unifold show` here. Read [README.md](README.md) first: it",
-             "says what the unit is for and why it is built this way. Everything else is in",
+             "unifold unit; run `unifold show` here. Read [README.md](README.md) first: it "
+             "says what the unit is for and why it is built this way. Everything else is in "
              "`docs/`."]
     if rows:
         lines += ["", "## Documents", "", "| Kind | Files |", "|---|---|", *rows]
@@ -2592,23 +2646,11 @@ def agents_text(project: Project, unit: Unit) -> str:
     return "\n".join(lines) + "\n"
 
 
-def with_block(text: str, block: str) -> str:
-    """`text` with its unifold block replaced, or with the block appended."""
-    lines = text.split("\n")
-    start = next((i for i, l in enumerate(lines) if l.startswith(BLOCK_BEGIN_PREFIX)), None)
-    if start is None:
-        return text.rstrip("\n") + ("\n\n" if text.strip() else "") + block + "\n"
-    end = next((i for i in range(start, len(lines)) if lines[i].startswith(BLOCK_END)), None)
-    tail = lines[end + 1:] if end is not None else [""]
-    return "\n".join(lines[:start] + block.split("\n") + tail)
-
-
 def generate(project: Project, force=()) -> dict:
     """Return {path: content} for every generated file of the project.
 
-    `force` may contain "stubs" and "block": write skill stubs and the root AGENTS.md block
-    even where the folders or the block do not exist yet. At level full, AGENTS.md is
-    written whole for every unit, the root's with the block.
+    `force` may contain "stubs": write skill stubs even where the folders do not exist
+    yet. AGENTS.md is written whole for every unit, the root's with the unifold block.
     """
     out: dict = {}
     if not project.usable:
@@ -2649,8 +2691,6 @@ def generate(project: Project, force=()) -> dict:
                 project, unit, kinds, "architecture", f"Architecture diagram: {name}", intro,
                 chart, after)
     for unit in project.units:
-        if unit.level != "full":
-            continue
         infos = decisions_of(project, unit)
         if not infos:
             continue
@@ -2679,13 +2719,7 @@ def generate(project: Project, force=()) -> dict:
                 continue                        # a skill somebody wrote there: not ours
             out[path] = stub_text(project, name, unit, skill, folder)
     for unit in project.units:
-        if unit.level == "full":
-            out[os.path.join(unit.path, "AGENTS.md")] = agents_text(project, unit)
-    agents = os.path.join(project.root, "AGENTS.md")
-    if agents not in out:                            # level core: only the block, in an existing file
-        current = project.text(agents) if project.kind_of(agents) == "file" else ""
-        if "block" in force or BLOCK_BEGIN_PREFIX in current:
-            out[agents] = with_block(current, agents_block(project))
+        out[os.path.join(unit.path, "AGENTS.md")] = agents_text(project, unit)
     return out
 
 
@@ -2700,8 +2734,7 @@ def write_generated(project: Project, force=()) -> dict:
             text = project.text(path)
             if text == content:
                 continue
-            block_only = os.path.basename(path) == "AGENTS.md" and not agents_generated(project, path)
-            if not block_only and MARK_PREFIX not in text[:2000]:
+            if MARK_PREFIX not in text[:2000]:
                 result["refused"].append(project.rel(path))
                 continue
         elif kind == "dir":
@@ -2740,12 +2773,9 @@ def describe(project: Project, unit: Unit) -> dict:
         if item["where"] == "outside":
             return {"outside": True, "root-need": item["capability"], "config": item["config"],
                     "via": via}
-        if item["where"] == "plain":
-            return {"plain-folder": rel(item["path"]), "config": item["config"], "via": via}
         target = item["unit"]
         spec = target.capabilities.get(item["capability"], {})
         return {"unit": target.rel, "status": target.status, "capability": item["capability"],
-                "contract": contract_target(project, target, spec.get("contract"))[0] or None,
                 "verified-by": contract_target(project, target, spec.get("verified-by"))[0] or None,
                 "config": item["config"], "via": via}
 
@@ -2753,9 +2783,7 @@ def describe(project: Project, unit: Unit) -> dict:
         if item["where"] == "outside":
             return {"outside": True, "root-capability": item["need"]}
         other = item["unit"]
-        spec = other.needs.get(item["need"], {})
         return {"unit": other.rel, "status": other.status, "need": item["need"],
-                "contract": contract_target(project, other, spec.get("contract"))[0] or None,
                 "config": item["config"]}
 
     def entry(spec: dict) -> dict:
@@ -2767,11 +2795,11 @@ def describe(project: Project, unit: Unit) -> dict:
     return {
         "name": unit.name, "path": unit.rel, "summary": unit.summary,
         "kind": unit.kind or None, "status": unit.status, "owner": unit.owner or None,
-        "level": unit.level, "manifest": rel(unit.manifest_path),
+        "manifest": rel(unit.manifest_path),
         "parent": brief(unit.parent) if unit.parent else None,
         "children": [brief(c) for c in unit.children],
         "nested-projects": [rel(p) for p in unit.foreign],
-        "capabilities": {capability: {**entry(spec), "conforms-to": spec["conforms-to"],
+        "capabilities": {capability: {**entry(spec),
                             "used-by": [user(i) for i in users_of(unit, capability)]}
                      for capability, spec in unit.capabilities.items()},
         "needs": {need: {**entry(spec), "optional": spec["optional"],
@@ -2801,8 +2829,7 @@ def print_show(info: dict):
     line("unit", f"{info['name']}  ({info['path']}){mark(info['status'])}")
     line("summary", info["summary"])
     line("status", " · ".join(x for x in (
-        info["status"], info["kind"], info["owner"] and "owner " + info["owner"],
-        "level " + info["level"]) if x))
+        info["status"], info["kind"], info["owner"] and "owner " + info["owner"]) if x))
     line("manifest", info["manifest"])
     parent = info["parent"]
     line("parent", (parent["name"] if parent["path"] == "." else parent["path"])
@@ -2813,8 +2840,7 @@ def print_show(info: dict):
         print("capabilities")
     for capability, spec in info["capabilities"].items():
         extra = "".join(f"  {name} {spec[key]}" for key, name in (
-            ("contract", "contract"), ("verified-by", "verified by"),
-            ("conforms-to", "conforms to need")) if spec[key])
+            ("contract", "contract"), ("verified-by", "verified by")) if spec[key])
         kind = f" ({spec['kind']})" if spec["kind"] else ""
         print(f"  {capability}{kind}: {spec['summary']}{extra}")
         for item in spec["used-by"] or [None]:
@@ -2823,10 +2849,9 @@ def print_show(info: dict):
             elif item.get("outside"):
                 print(f"      used from outside the project (capability '{item['root-capability']}' of the root)")
             else:
-                contract = f"  contract {item['contract']}" if item.get("contract") else ""
                 config = f" [{item['config']}]" if item.get("config") else ""
                 print(f"      used by {item['unit']}{mark(item['status'])} as need "
-                      f"'{item['need']}'{config}{contract}")
+                      f"'{item['need']}'{config}")
     if info["needs"]:
         print("needs")
     for need, spec in info["needs"].items():
@@ -2844,11 +2869,9 @@ def print_show(info: dict):
             if item.get("outside"):
                 print(f"      provided from outside the project (need '{item['root-need']}' "
                       f"of the root){note}")
-            elif "plain-folder" in item:
-                print(f"      provided by the folder {item['plain-folder']}, not a unit{note}")
             else:
                 more = "".join(f"  {name} {item[key]}" for key, name in (
-                    ("contract", "contract"), ("verified-by", "verified by")) if item.get(key))
+                    ("verified-by", "verified by"),) if item.get(key))
                 print(f"      provided by {item['unit']}{mark(item['status'])} capability "
                       f"'{item['capability']}'{note}{more}")
     for skill in info["skills"]:
@@ -2883,9 +2906,7 @@ def capability_data(project: Project, unit: Unit, name: str) -> dict:
                 "kind": spec.get("kind") or None, "summary": spec.get("summary", ""),
                 "contract": contract_target(project, owner, spec.get("contract"))[0] or None,
                 "verified-by": contract_target(project, owner, spec.get("verified-by"))[0] or None,
-                "conforms-to": spec.get("conforms-to"),
                 "optional": bool(spec.get("optional")) if side == "needs" else None,
-                "level": owner.level,
                 "readme": readme_section(project, owner, entry) or None, **(extra or {})}
 
     if name in unit.capabilities:
@@ -2904,15 +2925,12 @@ def capability_data(project: Project, unit: Unit, name: str) -> dict:
                      "via": [{"implicit": "passed up by name"}[v] for v in item["via"]]}
             if item["where"] == "unit":
                 ends.append(end(item["unit"], item["capability"], "capabilities", extra))
-            elif item["where"] == "outside":
+            else:
                 root_need = project.root_unit.needs.get(item["capability"], {})
                 ends.append({"outside": True, "side": "capabilities", "name": item["capability"],
                              "summary": "provided from outside the project, as need "
                                         f"'{item['capability']}' of the root: "
                                         f"{root_need.get('summary', '')}", **extra})
-            else:
-                ends.append({"plain-folder": project.rel(item["path"]), "side": "capabilities",
-                             "name": "", "summary": "a folder that is not a unit", **extra})
     else:
         names = list(unit.capabilities) + list(unit.needs)
         close = difflib.get_close_matches(name, names, 1)
@@ -2924,9 +2942,8 @@ def capability_data(project: Project, unit: Unit, name: str) -> dict:
 
 def print_capability(data: dict):
     for item in data["ends"]:
-        if item.get("outside") or "plain-folder" in item:
-            where = item.get("plain-folder") or "outside"
-            print(f"--- {where}: {item['summary']}\n")
+        if item.get("outside"):
+            print(f"--- outside: {item['summary']}\n")
             continue
         notes = [n for n in ([item.get("config")] + list(item.get("via") or [])) if n]
         note = f" ({'; '.join(notes)})" if notes else ""
@@ -2934,15 +2951,14 @@ def print_capability(data: dict):
         side = "capabilities" if item["side"] == "capabilities" else "needs"
         print(f"--- {item['unit']}{mark(item['status'])} {side} '{item['name']}'"
               f"{kind}{note}: {item['summary']}")
-        for key, text in (("contract", "contract"), ("verified-by", "verified by"),
-                          ("conforms-to", "conforms to need")):
+        for key, text in (("contract", "contract"), ("verified-by", "verified by")):
             if item.get(key):
                 print(f"    {text}: {item[key]}")
         if item.get("optional"):
             print("    optional")
         if item["readme"]:
             print(item["readme"])
-        elif item.get("level") == "full":
+        else:
             print("    (no section for it in README.md)")
         print()
 
@@ -3071,7 +3087,7 @@ def tree_data(project: Project, depth=None) -> list:
         if depth is not None and level > depth:
             continue
         out.append({"path": unit.rel, "name": unit.name, "depth": level,
-                    "status": unit.status, "kind": unit.kind or None, "level": unit.level,
+                    "status": unit.status, "kind": unit.kind or None,
                     "summary": unit.summary, "parent": unit.parent.rel if unit.parent else None,
                     "capabilities": list(unit.capabilities), "needs": list(unit.needs),
                     "children": [c.rel for c in unit.children],
@@ -3140,6 +3156,8 @@ class Scan:
                 keep.append(sub)
             subs[:] = keep
             for name in names:
+                if (f"{rel}/{name}" if rel else name) in ignore:
+                    continue
                 if name in BUILD_FILES:
                     self.named[name].append(os.path.join(folder, name))
                 elif name.endswith(".go"):
@@ -3624,20 +3642,15 @@ description: Read and maintain the unifold architecture map of this repository, 
 ---
 # unifold
 
-This repository has a [unifold](https://unifold.md) map. A folder with a
-`unifold.yaml` is a unit. The file says what the unit provides and what it
-needs; the unit above connects needs to providers in `wiring`.
+This repository has a [unifold](https://unifold.md) map. A folder with a `unifold.yaml` is a unit. The file says what the unit provides and what it needs; the unit above connects needs to providers in `wiring`.
 
-The tool is `scripts/unifold.py` in this folder (Python 3.9+, PyYAML;
-`uv run` installs the dependency by itself).
+The tool is `scripts/unifold.py` in this folder (Python 3.9+, PyYAML; `uv run` installs the dependency by itself).
 
 1. Before you work in a folder: `unifold.py show PATH`.
 2. Before you change a capability: `unifold.py capability PATH NAME` and `unifold.py impact PATH NAME`.
-3. After a change: `unifold.py check --fix`, then correct every error it reports.
-   Each finding names a rule; `unifold.py rules ID` explains it.
+3. After a change: `unifold.py check --fix`, then correct every error it reports. Each finding names a rule; `unifold.py rules ID` explains it.
 
-The standard: https://unifold.md/spec. How agents use it:
-https://unifold.md/agents. The rules: https://unifold.md/rules.
+The standard: https://unifold.md/spec. How agents use it: https://unifold.md/agents. The rules: https://unifold.md/rules.
 """
 
 
@@ -3683,15 +3696,12 @@ def install_agents(root: str) -> list:
     except OSError as exc:
         raise Fail("not-writable", f"cannot install the skills into {skills_dir}: {exc}")
     project = Project(root)
-    result = write_generated(project, force=("stubs", "block"))
+    result = write_generated(project, force=("stubs",))
     stubs = sum(1 for p in result["written"] if p.endswith("SKILL.md"))
-    if project.root_unit is not None and project.root_unit.level == "full":
-        what = "wrote AGENTS.md (generated whole at level full, with the unifold block)" \
-            if "AGENTS.md" in result["written"] else "AGENTS.md is current"
-        if "AGENTS.md" in result["refused"]:
-            what = "did not overwrite the hand-written AGENTS.md; " + AGENTS_FIX
-    else:
-        what = "wrote the unifold block into AGENTS.md"
+    what = "wrote AGENTS.md (generated, with the unifold block)" \
+        if "AGENTS.md" in result["written"] else "AGENTS.md is current"
+    if "AGENTS.md" in result["refused"]:
+        what = "the hand-written AGENTS.md stays"
     notes.append(f"{what}; {stubs} skill stub(s) written into {' and '.join(STUB_DIRS)}")
     claude = os.path.join(root, "CLAUDE.md")
     if os.path.isfile(claude) and "AGENTS.md" not in read_text(claude):
@@ -3708,11 +3718,24 @@ def root_manifest_text(name: str) -> str:
             f"unifold: \"{SPEC_VERSIONS[-1]}\"\nname: {name}\nsummary: TODO\n")
 
 
-def init_project(target: str, agents=False) -> dict:
-    """Start a project in `target`: the root manifest if there is none, then the generated files.
+def ask(question: str) -> bool:
+    """Ask a yes/no question on the terminal. False when nobody can answer."""
+    try:
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
+            return False
+        answer = input(question + " [y/N] ")
+    except (EOFError, OSError, KeyboardInterrupt):
+        return False
+    return answer.strip().lower() in ("y", "yes")
+
+
+def init_project(target: str, agents=False, interactive=False) -> dict:
+    """Start a project in `target`: the root manifest and `README.md` if there is none, then
+    the generated files.
 
     No other manifest is written. The units of a repository are chosen by a person or by an
-    agent with the skill `unifold-convert`; this tool only checks them against the code.
+    agent with the skill `unifold-convert`; this tool only checks them against the code. A
+    hand-written `AGENTS.md` is replaced only when `interactive` and the person says yes.
     """
     root = real(target)
     try:
@@ -3740,6 +3763,21 @@ def init_project(target: str, agents=False) -> dict:
         result["notes"].append("the root manifest says `summary: TODO`. The units of the "
                                "repository are written by hand or with the skill "
                                "`unifold-convert`; this tool drafts none from the code")
+    readme = os.path.join(root, "README.md")
+    if not os.path.exists(readme):
+        write_text(readme, README_TEMPLATE.replace("<folder-name>", os.path.basename(root), 1))
+        result["written"].append("README.md")
+        result["notes"].append("README.md was written from the template: replace every <...> "
+                               "with what the project is and why, and delete what does not apply")
+    agents_file = os.path.join(root, "AGENTS.md")
+    if os.path.isfile(agents_file) and MARK_PREFIX not in read_text(agents_file)[:2000]:
+        if interactive and ask(f"{agents_file} is hand-written, and unifold generates AGENTS.md. "
+                               "Replace it? Its content is lost unless you have moved it into "
+                               "README.md and docs/."):
+            os.remove(agents_file)
+            result["notes"].append("replaced the hand-written AGENTS.md")
+        else:
+            result["notes"].append("kept the hand-written AGENTS.md; " + AGENTS_FIX)
     project = Project(root)
     if not project.usable:
         first = project.findings[0]
@@ -3818,7 +3856,6 @@ const legend = ["planned", "deprecated"].filter(s => units.some(u => u.status ==
   .map(s => `<span class="st ${s}"></span>${s}`).join(" &nbsp; ");
 function note(i){const n = [].concat(i.config ? [i.config] : [], i.via || []); return n.length ? " <span class='mute'>(" + esc(n.join("; ")) + ")</span>" : "";}
 function who(list, key){return list.map(i => i.outside ? "outside the project" + note(i)
-  : i["plain-folder"] ? "folder <code>" + esc(i["plain-folder"]) + "</code>" + note(i)
   : pick(i.unit) + " · <code>" + esc(i[key]) + "</code>" + note(i)).join("<br>") || "–";}
 function code(text){return esc(text).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/^- /, "");}
 async function render(){
@@ -3829,7 +3866,7 @@ async function render(){
   const chain = []; for (let p = u.parent; p; p = byPath[p.path].parent) chain.unshift(p.path);
   el("crumbs").innerHTML = chain.map(p => `<a class="go" data-path="${esc(p)}">${esc(byPath[p].name)}</a>`).concat(esc(u.name)).join(" / ");
   el("title").innerHTML = esc(u.name) + badge(u.status); el("summary").textContent = u.summary;
-  el("meta").innerHTML = [u.kind, u.owner && "owner " + u.owner, "level " + u.level].filter(Boolean).map(esc)
+  el("meta").innerHTML = [u.kind, u.owner && "owner " + u.owner].filter(Boolean).map(esc)
     .concat([`<a href="${esc(file(u.manifest))}">manifest</a>`], u.readme ? [`<a href="${esc(file(u.readme))}">README</a>`] : [],
             u.agents ? [`<a href="${esc(file(u.agents))}">AGENTS.md</a>`] : []).join(" · ");
   el("tabs").innerHTML = kinds.map(k => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${k}</button>`).join("");
@@ -3945,7 +3982,8 @@ def gather_deps(project: Project, deps_file=None, no_deps=False):
     """Observed dependencies: extracted, plus a given list. Returns (edges, covered units)."""
     edges, covered = [], {}
     if not no_deps and len(project.units) > 1:
-        found = extract(project.root, project.ignore, owner=lambda f: project.owner_of(f)[1])
+        found = extract(project.root, project.ignored_paths(),
+                        owner=lambda f: project.owner_of(f)[1])
         edges += found["edges"]
         covered = covered_units(project, found["covered"])
         project.deps_notes = found["notes"]
@@ -3976,8 +4014,7 @@ def run_check(path: str, fix=False, deps_file=None, no_deps=False, strict=False,
                 check_manifest(project, unit)
             check_wiring(project, unit, mapped[2])
         for unit in project.units:
-            if unit.level == "full":
-                check_documents(project, unit)
+            check_documents(project, unit)
         check_generated(project)
         check_deps(project, mapped, covered)
     seen, findings = set(), []
@@ -4085,7 +4122,7 @@ MCP_TOOLS = [
          "path": {"type": "string", "description": "Folder of the unit, or a file in it."},
          "capability": {"type": "string", "description": "Limit to one capability of the unit."}}}},
     {"name": "check", "description": "Check the map: manifests, wiring, generated files, "
-     "documents at level full, and the comparison with dependencies found in code. Returns "
+     "documents, and the comparison with dependencies found in code. Returns "
      "findings with rule, severity, file, line, message and fix. Changes nothing.",
      "inputSchema": {"type": "object", "properties": {
          "path": {"type": "string", "description": "Any folder inside the project."},
@@ -4196,11 +4233,12 @@ def serve_mcp(base: str) -> int:
 # ----- command line
 
 COMMANDS = {
-    "init": "start a project in DIR (default: here): the root manifest if there is none, and the "
-            "generated files; with --agents also install the skills, skill stubs and the AGENTS.md block",
+    "init": "start a project in DIR (default: here): the root manifest and README.md if there "
+            "are none, and the generated files; with --agents also install the skills and the "
+            "skill stubs",
     "check": "check manifests, wiring, generated files, documents and the comparison with code",
-    "generate": "write diagrams, decision indexes, the AGENTS.md of every unit at level full and, "
-                "where they exist, skill stubs and the root AGENTS.md block (level core)",
+    "generate": "write diagrams, decision indexes, the AGENTS.md of every unit and, "
+                "where they exist, skill stubs",
     "show": "describe the unit that contains PATH, with its resolved neighbours",
     "capability": "print both ends of every connection of one capability or need",
     "impact": "list everything that depends on a unit or capability, and who cites its files",
@@ -4237,8 +4275,7 @@ def build_parser() -> argparse.ArgumentParser:
     cmd = command("init", path=False)
     cmd.add_argument("target", nargs="?", default=".", metavar="DIR")
     cmd.add_argument("--agents", action="store_true",
-                     help="install the skills `unifold` and `unifold-convert`, skill stubs and "
-                          "the AGENTS.md block (at level full, AGENTS.md is generated whole)")
+                     help="install the skills `unifold` and `unifold-convert` and the skill stubs")
     cmd = command("check")
     cmd.add_argument("--fix", action="store_true",
                      help="first write the generated files (what `generate` writes); "
@@ -4294,8 +4331,8 @@ def emit(args, data, text):
 def run(args) -> int:
     name = args.command
     if name == "rules":
-        rows = [{"id": rule, "severity": spec[0], "level": spec[1], "what": spec[2],
-                 "fix": spec[3], "url": f"{SITE_URL}/rules#{rule.lower()}"}
+        rows = [{"id": rule, "severity": spec[0], "what": spec[1],
+                 "fix": spec[2], "url": f"{SITE_URL}/rules#{rule.lower()}"}
                 for rule, spec in RULES.items()]
         if args.id:
             rows = [r for r in rows if r["id"] == args.id.upper()]
@@ -4305,20 +4342,22 @@ def run(args) -> int:
         def text():
             for row in rows:
                 if args.id:
-                    print(f"{row['id']} ({row['severity']}, level {row['level']})\n{row['what']}\n"
+                    print(f"{row['id']} ({row['severity']})\n{row['what']}\n"
                           f"Fix: {row['fix']}\n{row['url']}")
                 else:
-                    print(f"{row['id']:<4}{row['severity']:<6}{row['level']:<5} {row['what']}")
+                    print(f"{row['id']:<4}{row['severity']:<6} {row['what']}")
         emit(args, rows, text)
         return 0
     if name == "init":
-        result = init_project(args.target, args.agents)
+        result = init_project(args.target, args.agents, interactive=not args.json)
 
         def text():
             wrote = MANIFEST in result["written"]
+            readme = "README.md" in result["written"]
             print(f"{result['root']}: {result['units']} unit(s); root manifest "
                   f"{'written' if wrote else 'kept'}; "
-                  f"{len(result['written']) - int(wrote)} generated file(s) written")
+                  f"{'README.md written from the template; ' if readme else ''}"
+                  f"{len(result['written']) - int(wrote) - int(readme)} generated file(s) written")
             for note in result["notes"]:
                 print(f"note: {note}")
             print("Next: describe the parts of the repository as units, by hand or with the "
@@ -4372,7 +4411,7 @@ def run(args) -> int:
         raise Fail("no-such-path", f"{args.path} does not exist")
     if name == "deps":
         project = open_project(args.path)
-        found = extract(project.root, project.ignore)
+        found = extract(project.root, project.ignored_paths())
         text = json.dumps(found["edges"], indent=1, ensure_ascii=False) + "\n"
         for note in found["notes"]:
             sys.stderr.write(f"note: {note}\n")
