@@ -19,7 +19,7 @@ Once published: `uvx unifold check`. The examples below write `unifold`. `PATH` 
 |---|---|
 | `init [DIR] [--agents]` | Starts a project in `DIR`: writes the root manifest and a `README.md` from the template where there is none, then the generated files. Changes no existing manifest. |
 | `check [PATH]` | Reports findings. Changes nothing, unless `--fix` is given. |
-| `generate [PATH]` | Writes diagrams, decision indexes and the `AGENTS.md` of every unit; refreshes skill stubs where they exist. |
+| `generate [PATH]` | Writes diagrams, decision indexes and the `AGENTS.md` of every unit; writes the skill stubs where their folders exist. |
 | `show [PATH]` | One unit: capabilities, needs, who finally provides and uses them, with status. |
 | `capability PATH NAME` | Both ends of every connection of one capability or need, with contracts and README sections. |
 | `impact PATH [CAPABILITY]` | Every unit that depends on the unit or capability, transitively, and the context items that cite its files. |
@@ -27,7 +27,7 @@ Once published: `uvx unifold check`. The examples below write `unifold`. `PATH` 
 | `deps [PATH] [--write FILE]` | The dependencies between folders that the extractors find, as JSON. |
 | `stamp [PATH]` | Writes or refreshes the stamps of the context items at or below `PATH`, and prints each with file, line and the source it cites. |
 | `cited-by FILE` | Context items and links that cite `FILE`, with line and `Says` text. `FILE` may be deleted already. |
-| `skills [sync] [PATH]` | Lists all skills; `sync` writes stubs into `.agents/skills` and `.claude/skills` ([agents.md](agents.md)). |
+| `skills [sync] [PATH]` | Lists all skills; `sync` writes their stubs into `.agents/skills` and `.claude/skills`, and the other generated files as `generate` does ([agents.md](agents.md)). |
 | `site [PATH] [-o FILE]` | Writes the HTML explorer. |
 | `rules [ID]` | Prints the rule table, or one rule with its fix. |
 
@@ -73,9 +73,9 @@ Generated files are built in memory and compared, so a stale diagram is an error
 | Go | `go.mod` | an import of another folder of the same or another module of the repository | `go`; `go-dev` from `_test.go` files |
 | Python | `pyproject.toml`, `setup.py`, `setup.cfg`, folders with `__init__.py` | an import, absolute or relative, that resolves to another folder of the repository | `python`; `python-dev` from test files |
 
-- Cargo and npm give one entry per pair of packages, Go and Python one per pair of folders, each with its `evidence`.
+- Cargo and npm give one entry per pair of packages and kind, Go and Python one per pair of folders, each with its `evidence`.
 - A kind that ends in `-dev` exists only in tests: listed, never demanding wiring.
-- Not read: packages outside a workspace, `testdata`, `vendor`, `third_party`, `node_modules`, ignored folders, nested projects. An import that could mean two packages of the repository is not guessed.
+- Not read: npm packages outside a workspace, `testdata`, `vendor`, `third_party`, `node_modules`, ignored folders, nested projects. An import that could mean two packages of the repository is not guessed.
 - TOML is read with `tomllib` (Python 3.11), else `tomli`, else a built-in reader; a file it cannot read is reported as a note and skipped.
 
 For dependencies no extractor sees, such as calls between services, pass a list. It adds to what is extracted:
@@ -88,11 +88,11 @@ For dependencies no extractor sees, such as calls between services, pass a list.
 
 ## init
 
-`unifold init` starts a project. If `DIR` has no `unifold.yaml`, it writes the root manifest: the version of the standard, `name` from the folder name, and `summary: TODO`, which `check` reports until a person has written it. If `DIR` has no `README.md`, it writes one from the template of the `unifold` skill, with placeholders in angle brackets that `check` reports until they are replaced. Then it runs `generate`. A hand-written `AGENTS.md` is in the way of the generated one: on a terminal `init` asks whether to replace it, otherwise it keeps the file and says so. A project of one unit conforms once the placeholders are gone.
+`unifold init` starts a project. If `DIR` has no `unifold.yaml`, it writes the root manifest: the version of the standard, `name` from the folder name, and `summary: TODO`, which `check` reports until a person has replaced it. If `DIR` has no `README.md`, it writes one from the template of the `unifold` skill, with placeholders in angle brackets to replace; `check` reports only its two example headings. Then it runs `generate`. A hand-written `AGENTS.md` is in the way of the generated one: on a terminal `init` asks whether to replace it, otherwise it keeps the file and says so. A project of one unit conforms at once: `check` reports warnings and no error.
 
 `init` reads no code and writes no other manifest. The units of an existing repository are a judgement about its architecture; a build file knows packages, not units. A person makes that judgement, or an agent with the skill `unifold-convert` ([first map](../tutorials/first-map.md)); `check` then compares the result with the dependencies in the code.
 
-`init --agents` also installs the skills `unifold` and `unifold-convert` into `docs/skills/` (text, templates and this tool), runs `skills sync`, and regenerates the root `AGENTS.md`, which carries the unifold block: about 15 lines, plus one row per unit in projects up to 40 units. `generate` keeps the block and the stubs current. It prints a hint if a `CLAUDE.md` would hide `AGENTS.md` from Claude Code.
+The root `AGENTS.md` always carries the unifold block: about 15 lines, plus one row per unit when the project has at most 40 units below the root. `init --agents` also installs the skills `unifold` and `unifold-convert` into `docs/skills/` (text, templates and this tool) and runs `skills sync`; the block then names the installed tool and links the skills. It prints a hint if a `CLAUDE.md` at the root does not mention `AGENTS.md`, which hides it from Claude Code.
 
 ## Generated files
 
@@ -104,7 +104,7 @@ For dependencies no extractor sees, such as calls between services, pass a list.
 
 GitHub Actions: after `actions/checkout`, add the step `- uses: <owner>/unifold@<tag>` (this repository; inputs `path`, `strict`, `args`). Findings appear as annotations on the pull request.
 
-[pre-commit](https://pre-commit.com): this repository offers the hooks `unifold` (check) and `unifold-fix` (rewrite generated files, then check):
+[pre-commit](https://pre-commit.com): this repository provides the hooks `unifold` (check) and `unifold-fix` (rewrite generated files, then check):
 
 ```yaml
 repos:
@@ -117,7 +117,7 @@ A coding agent should check when it stops, not after every edit: a unit that is 
 
 ```json
 {"hooks": {"Stop": [{"hooks": [{"type": "command", "timeout": 60,
-  "command": "cd \"$CLAUDE_PROJECT_DIR\" && uvx unifold check --fix --quiet >&2 || exit 2"}]}]}}
+  "command": "cd \"$CLAUDE_PROJECT_DIR\" && uv run docs/skills/unifold/scripts/unifold.py check --fix --quiet >&2 || exit 2"}]}]}}
 ```
 
 ## What the tool does not read

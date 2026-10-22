@@ -37,10 +37,10 @@ For `check`, the object also has `summary` and an empty `findings` list, so that
 ```
 
 - `ok` is true when the exit code is 0: no error, and with `--strict` no warning.
-- `severity` is `error`, `warn` or `info`. `line` is a number or `null`. `file` is the file to change; for a missing file of a unit it is the folder of the unit.
+- `severity` is `error`, `warn` or `info`. `line` is a number or `null`. `file` is the file to change; for a missing `README.md` or `SKILL.md` it is the folder.
 - `fix` says what to do, specific to the finding where the tool can tell.
 - With `--fix`, `summary.fixed` has `written`, `removed` and `refused` (lists of paths). `--fix` writes generated files only, never a stamp.
-- `--format github` prints the same findings as lines `::error file=cloud/unifold.yaml,line=14,title=unifold W2::message`, with paths relative to the current folder.
+- `--format github` prints the same findings as lines `::error file=cloud/unifold.yaml,line=14,title=unifold W2::message Fix: ...`, with paths relative to the current folder, then the summary line.
 
 ## show
 
@@ -63,6 +63,7 @@ For `check`, the object also has `summary` and an empty `findings` list, so that
                     "config": null, "via": []}]}},
  "skills": [{"name": "add-a-quantity", "path": "...", "description": "..."}],
  "decisions": [{"path": "...", "title": "...", "status": "proposed"}],
+ "documents": {"tutorials": [], "references": ["..."], "explanation": ["..."]},
  "diagrams": ["cloud/services/alerts/rules/docs/diagrams/context.md"],
  "files": ["cloud/services/alerts/rules/README.md", "..."]}
 ```
@@ -100,7 +101,7 @@ The first end is the capability or need asked for; the others are every final us
                 "says": "...", "stamp": "current"}]}
 ```
 
-`distance` 1 is a direct user; higher numbers depend on a dependent. `exposed-as` lists the units above that offer the capability as their own; `outside` the capabilities of the root through which the world uses it directly; `root-capabilities-affected` every capability of the root that depends on it. `stamp` is `current`, `stale` or `missing`.
+`distance` 1 is a direct user; higher numbers depend on a dependent. `exposed-as` lists the units above that provide the capability as their own; `outside` the capabilities of the root through which the world uses it directly; `root-capabilities-affected` every capability of the root that depends on it. `stamp` is `current`, `stale` or `missing`.
 
 ## tree, deps, cited-by, skills, rules
 

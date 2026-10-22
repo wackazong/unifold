@@ -1,6 +1,6 @@
 # Documents
 
-The [standard](spec.md) asks every unit for a manifest and a `README.md`. This chapter and [writing.md](writing.md) say where the rest of a unit's written knowledge goes. The layout puts written knowledge in fixed places, so that whoever opens a folder finds the same files everywhere, and it holds all documentation of the unit: for the people who use it, for the people and agents who work inside it, and for the end users of a product. A project of one unit keeps all of this in its root.
+The [standard](spec.md) asks every unit for a manifest and a `README.md`. This chapter says where the rest of a unit's written knowledge goes; [writing.md](writing.md) says how each file is written. Every unit keeps its knowledge in the same places, for the people who use it, the people and agents who work on it, and the end users of the product. A project of one unit keeps all of it in its root.
 
 ## The files of a unit
 
@@ -23,7 +23,7 @@ The checker reads the hand-written files in these places and nothing else in `do
 
 ## Four kinds of knowledge
 
-The folders follow [Diátaxis](https://diataxis.fr). Each kind serves one thing the reader is doing, and is written in its own way.
+The folders follow [Diátaxis](https://diataxis.fr). Each kind serves one thing the reader is doing and is written in its own way.
 
 | The reader wants to | Kind | Where | How it is written |
 |---|---|---|---|
@@ -32,7 +32,7 @@ The folders follow [Diátaxis](https://diataxis.fr). Each kind serves one thing 
 | Find a fact: a contract, a format, a term | Look up | `docs/references/`, the manifest, `README.md`, the generated diagrams | Facts in the present tense, complete, with examples. No reasons, no steps. |
 | Know why it is so | Understand | `docs/explanation/`, `docs/decisions/` | Reasons, forces, trade-offs. No instructions, no facts that a reference states. |
 
-A fact has one home; other files link to it. A text that wants to teach, instruct, state and reason at once is four texts.
+A fact has one home; other files link to it. A text that teaches, instructs, states and reasons at once is four texts.
 
 ## README.md: the front page
 
@@ -47,17 +47,17 @@ A fact has one home; other files link to it. A text that wants to teach, instruc
 | `## Commands` | Optional. The few commands to build, test and run the unit. |
 | `## Read next` | Optional. A few links into `docs/` whose order matters. |
 
-- Every `README.md` follows this template, in this order, the root's included; the template with its guidance is in the `unifold` skill, and `unifold init` writes it for a root that has none. A section without content is deleted, not left empty.
-- It MUST NOT describe how the unit works inside, and it SHOULD NOT name the units around it or list child units, capabilities or connections: the manifest and the generated diagrams hold those, and `unifold show` prints them.
-- The root's `README.md` is also the front page of the project and adds what a front page needs between `## Why` and `## Capabilities`, or after `## Read next`: how to install, how the project compares, a licence. A `README.md` that a package registry publishes keeps its usual content and links to the project by full URLs.
+- Every `README.md`, the root's included, has these sections in this order. A section without content is deleted, not left empty. The template is in the `unifold` skill; `unifold init` writes it for a root that has no `README.md`.
+- A `README.md` MUST NOT describe how the unit works inside, and SHOULD NOT name the units around it or list children, capabilities or connections: the manifest and the generated diagrams hold those, and `unifold show` prints them.
+- The root's `README.md` is also the front page of the project. It adds what a front page needs, such as installation, a comparison or a licence, between `## Why` and `## Capabilities` or after `## Read next`. A `README.md` that a package registry publishes keeps its usual content and links to the project by full URLs.
 
 ## AGENTS.md: generated
 
-Coding agents load this file when they work in the folder ([agents.md](agents.md)). It holds no project knowledge, only the way to it: the line "unifold unit; run `unifold show` here", a pointer to `README.md`, the documents of the unit by kind, and the skills with their descriptions. At the root it also carries the unifold block with the unit index. The generator writes it; the checker reports it when it is stale, like a diagram. A hand-written `AGENTS.md` without the generated marker is never overwritten: move its content to `README.md` and `docs/`, delete it, and run `unifold check --fix`.
+Coding agents load this file when they work in the folder ([agents.md](agents.md)). It holds no knowledge of the project, only the way to it: the line "unifold unit; run `unifold show` here", a pointer to `README.md`, the documents of the unit by kind, and the skills with their descriptions. At the root it also carries the unifold block with the index of units. The generator writes it, and the checker reports it when it is stale. A hand-written `AGENTS.md` without the generated marker is never overwritten: move its content to `README.md` and `docs/`, delete it, and run `unifold check --fix`.
 
 ## docs/explanation: the architecture of the unit
 
-The explanation files are modelled on [arc42](https://arc42.org) and cut down to what the folder tree and the manifests do not already say. Each has a fixed name, so that it is found in every unit; each exists only when it has content.
+The explanation files are [arc42](https://arc42.org) cut down to what the folder tree and the manifests do not already say. Each has a fixed name, so that it is found in every unit, and exists only when it has content.
 
 | File | Content | arc42 |
 |---|---|---|
@@ -69,10 +69,10 @@ The explanation files are modelled on [arc42](https://arc42.org) and cut down to
 | `deployment.md` | Where things run, instances, volumes, what survives a restart, what is reachable from outside. | 7 |
 | `risks.md` | Risks, known limits and technical debt, each with what would remove it. | 11 |
 
-- Context and scope are `README.md` and the generated context diagram; they are written nowhere else. Building blocks are the manifests and the generated diagrams. Decisions have their own folder, the glossary is a reference.
+- The other sections of arc42 have homes outside this folder: context and scope (3) are `README.md` and the generated context diagram; building blocks (5) are the manifests and the generated diagrams; decisions (9) are `docs/decisions/`; the glossary (12) is `docs/references/glossary.md`.
 - A topic file beside the fixed ones, `docs/explanation/<topic>.md`, holds explanation that users of the unit need and that fits no fixed file.
 - No explanation file lists units, capabilities or connections, and none repeats a generated diagram by hand.
-- Something that several children must obey is written as a decision or a reference of the parent, because those are the files a child can cite in its `context.md`.
+- What several children must obey, such as a crosscutting concept (8), is a decision or a reference of the parent, because those are the files a child can cite in its `context.md`.
 
 ## Where a file may point
 
@@ -85,7 +85,7 @@ These rules keep a parent small and a child understandable alone. They hold for 
 | Up | Only from `docs/explanation/context.md`, and only to an ancestor's `README.md`, decisions and references. Each link comes with a restatement and a stamp ([writing.md](writing.md)). |
 | Sideways | Never. What the unit wants from a sibling is a need in the manifest. |
 | To a contract | Free. A file that the unit's manifest names as `contract` or `verified-by` may be linked from any file of the unit, wherever it lies. |
-| Outside the project | Full URLs. The standard is cited as `https://unifold.md`. A nested project is cited by its `README.md` only. |
+| Outside the project | Full URLs. The standard is cited as `https://unifold.md`. A nested project is linked by its `README.md` only. |
 
 ## What belongs where
 
@@ -108,6 +108,6 @@ These rules keep a parent small and a child understandable alone. They hold for 
 - **Published packages.** `unifold.yaml`, `AGENTS.md` and `docs/` lie inside package folders. Exclude them where the build tool packs the folder for publication, for example with `exclude` in a `Cargo.toml`.
 - **Existing decision records** in [MADR](https://adr.github.io/madr/) format move to `docs/decisions/` of the unit they concern. Whether [adr-tools](https://github.com/npryce/adr-tools) or [log4brains](https://github.com/thomvaill/log4brains) work on such a folder has not been tested.
 - **Owners files.** The `owner` key names who is responsible for a unit and is inherited downward; a CODEOWNERS file can be written from it. A change to a wiring line concerns the owners of both sides.
-- **Generated files in version control.** Commit them. Mark `docs/diagrams/*.md` and `AGENTS.md` as generated for the code host, for example with `linguist-generated` in `.gitattributes`, so that reviews fold them, and run `unifold check --fix` before a commit.
+- **Generated files in version control.** Commit them. Mark `docs/diagrams/*.md`, `docs/decisions/index.md` and `AGENTS.md` as generated for the code host, for example with `linguist-generated` in `.gitattributes`, so that reviews fold them, and run `unifold check --fix` before a commit.
 
-What the reference tool reports for this chapter is in [rules.md](rules.md); how each file is written is in [writing.md](writing.md).
+What the reference tool reports for this chapter is in [rules.md](rules.md).

@@ -1,6 +1,6 @@
 # Rules of the reference tool
 
-`unifold check` applies these rules. Each finding names one of them. The standard says what a checker must report ([spec.md](spec.md)); this table says how the reference tool reports it. What no tool can check is in the review checklist of [documents.md](documents.md).
+`unifold check` applies these rules, and each finding names one of them. The [standard](spec.md) says what a checker must report; this chapter says how the reference tool reports it. What no tool can check is in the [review checklist](writing.md#review-checklist).
 
 ## Reading a finding
 
@@ -35,7 +35,7 @@ No finding means consistent, not correct: the tool does not judge whether a summ
 |---|---|---|---|
 | <a id="m1"></a>`M1` | error | A manifest is a YAML mapping without duplicate keys. | Correct the YAML. The unit and its wiring are not checked until it parses. |
 | <a id="m2"></a>`M2` | error | A manifest has a one-line `summary` and otherwise only the keys, types and values of the standard; root-only keys are in the root; names of capabilities and needs use letters, digits, `-` and `_` and start with a letter or digit; no summary is a placeholder (`<...>`). | Correct the key or value named in the message. Project-specific keys start with `x-`. |
-| <a id="m7"></a>`M7` | error | `contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and lies in this unit, a unit above it or a unit below it, never in a sibling. | Correct the path, create the file, or remove the key until there is something to point at. A definition that two siblings share lies in the unit above both. |
+| <a id="m7"></a>`M7` | error | `contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and lies in this unit, an ancestor or a descendant. | Correct the path, create the file, or remove the key until there is something to point at. A definition that two siblings share lies in the unit above both. |
 | <a id="m10"></a>`M10` | warn | No summary is still `TODO`. | Replace `TODO` with one line that says what the unit, capability or need is. |
 
 ## W: wiring
@@ -44,7 +44,7 @@ A finding about wiring names the manifest that holds the wiring: the parent's.
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
-| <a id="w1"></a>`W1` | error | Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A connection joins two units; a folder is never a provider. | Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.capability`). Code that is not a unit gets a folder with a `unifold.yaml`. |
+| <a id="w1"></a>`W1` | error | Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A connection joins two units; a folder is never a provider. | Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`. |
 | <a id="w2"></a>`W2` | error | Every need of every child has a provider, unless it is `optional`: a wiring line, or a need of the same name in the parent (implicit pass-up). | Add `child.need: provider` to the parent's wiring, or declare a need of the same name in the parent to pass it up. Do not mark a need optional to silence this. |
 | <a id="w3"></a>`W3` | warn | Every capability of a child is used: a wiring line names it as provider, a capability of the parent is implemented by it, or code of the parent itself is observed to depend on the child. | Wire the unit that should use it, or implement a capability of the parent with it (`capability: child.capability`), or remove the capability. |
 | <a id="w4"></a>`W4` | warn | A need and its provider have the same `kind`, if both state one. | Put an adapter unit between the two, or correct the kind that is wrong. |
@@ -54,7 +54,7 @@ A finding about wiring names the manifest that holds the wiring: the parent's.
 
 ## L: links and context items
 
-These rules read the hand-written documents of a unit ([documents.md](documents.md)): `README.md` and the Markdown files in `docs/tutorials/`, `docs/explanation/`, `docs/decisions/`, `docs/references/` and `docs/skills/`. Links inside code blocks and code spans are ignored.
+These rules read the hand-written documents of a unit ([documents.md](documents.md)): `README.md` and the Markdown files in `docs/tutorials/`, `docs/explanation/`, `docs/decisions/`, `docs/references/` and `docs/skills/` (not the `assets/` and `scripts/` of a skill). Links inside code blocks and code spans are ignored.
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
@@ -102,4 +102,4 @@ A project MAY add checks of its own in its build. It SHOULD NOT silence a rule o
 
 ## Changes to this table
 
-Rule ids are not reused. Removed with draft 0.1: `S2`, `S4` to `S6`, `S8`, `S10`, `S11`, `M3` to `M6`, `M8`, `M9`, `W5`, `W6`, `W8`, `W10`, `L3` to `L6`, `L8`, `T2`, `T3`, `T6`, `G2`. `S7` now covers the former `S8`, `S9` the former `S10`, `M2` the former `M3` to `M6` and `M9`, `L2` the former `L3` and `L4`, `L7` the former `L8`, `G1` the former `G2`. `S12` was added when the `docs` folder was sorted by kind; `S3`, `S7` and `T4` changed when `AGENTS.md` became a generated file. `W11` was added, `W8` removed and `M7`, `W1` and `L2` changed when a contract became the document of a connection and a folder stopped being a provider.
+Rule ids are never reused. The gaps in the numbering are rules that were merged or removed before draft 0.1.
