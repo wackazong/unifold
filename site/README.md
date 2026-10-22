@@ -12,7 +12,7 @@ python3 site/build.py --serve             # build; serve as GitHub Pages would (
 
 | Address | File | From |
 |---|---|---|
-| `/` | `index.html` | `README.md`; the part before the first `##` becomes the first screen |
+| `/` | `index.html` | `README.md`: the bold first sentence, the quote and the first paragraph become the first screen, the manifests of `## How it works` the folded sheet beside it; its text block becomes the terminal, and its root manifest the drawn diagram. Known sections get their own layout (`Why`, `What a unit has`, `Questions`, `Capabilities`, `Read next`, ...); any other section is shown as prose. |
 | `/spec`, `/documents`, `/reasoning`, `/first-map`, ... | `spec.html`, ... | the reference chapters from `docs/references/`, the explanation files from `docs/explanation/` and the tutorial from `docs/tutorials/`; `/guide`, `/adopting` and `/design` redirect |
 | `/spec.md`, ... | the same chapters as plain Markdown | |
 | `/0.1/unifold.schema.json` | | the schema; the build stops if it is missing |
@@ -30,7 +30,7 @@ npm install --prefix site @mermaid-js/mermaid-cli   # or set MMDC=/path/to/mmdc
 python3 site/build.py                                # then commit site/diagrams/
 ```
 
-`MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. `shots.py` (needs Playwright) takes screenshots and rewrites `static/og.png`; the build does not use it.
+`MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. Files in `site/static/`, if the folder exists, are copied as they are; an `og.png` there becomes the preview image of every page.
 
 ## Domain
 

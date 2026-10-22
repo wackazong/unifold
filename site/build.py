@@ -131,21 +131,27 @@ def split_fences(text: str) -> list[tuple]:
     return out
 
 
-def highlight(code: str, lang: str, mark_wiring: bool = False) -> str:
-    """A very small highlighter: YAML keys and comments, console prompts and findings."""
+def highlight(code: str, lang: str, mark_wiring: bool = False, mark_names=()) -> str:
+    """A very small highlighter: YAML keys and comments, console prompts and findings. With
+    mark_wiring, the wiring lines and the needs and capabilities they name are marked."""
     out = []
     in_wiring = False
+    block = entry = ""
     for line in code.split("\n"):
         e = esc(line, quote=False)
         if lang in ("yaml", "yml"):
             is_wiring_entry = in_wiring and line.startswith((" ", "\t")) and line.strip()
             if re.match(r"^\S", line):
                 in_wiring = line.startswith("wiring:")
+                block = line.split(":", 1)[0]
+            if block in ("needs", "capabilities") and re.match(r"^  \S", line):
+                entry = line.strip().split(":", 1)[0]
+            named = block in ("needs", "capabilities") and line.startswith("  ") and entry in mark_names
             m = re.match(r"^(.*?)((?:^|\s)#.*)$", e)
             body, comment = (m.group(1), m.group(2)) if m else (e, "")
             body = re.sub(r"^(\s*(?:- )?)([^\s:#][^:#]*?)(:)(\s|$)", r'\1<span class="k">\2</span>\3\4', body)
             e = body + (f'<span class="c">{comment}</span>' if comment else "")
-            if mark_wiring and is_wiring_entry:
+            if mark_wiring and (is_wiring_entry or named):
                 e = f'<span class="hl">{e}</span>'
         elif lang in ("console", "text", "sh", "bash", "shell"):
             if lang == "console" and e.startswith("$ "):
@@ -160,9 +166,9 @@ def highlight(code: str, lang: str, mark_wiring: bool = False) -> str:
     return "\n".join(out)
 
 
-def code_block(code: str, lang: str, mark_wiring: bool = False) -> str:
+def code_block(code: str, lang: str, mark_wiring: bool = False, mark_names=()) -> str:
     cls = f' class="language-{esc(lang)}"' if lang else ""
-    return f"<pre><code{cls}>{highlight(code, lang, mark_wiring)}\n</code></pre>"
+    return f"<pre><code{cls}>{highlight(code, lang, mark_wiring, mark_names)}\n</code></pre>"
 
 
 # ---- Mermaid ---------------------------------------------------------------
@@ -280,7 +286,7 @@ def render_md(text: str, base: Path, version: str, permalinks: bool = True) -> t
 # --------------------------------------------------------------------------
 def page(*, title: str, description: str, path: str, body: str, css_href: str, version: str,
          current: str = "", body_class: str = "", noindex: bool = False) -> str:
-    nav = [("spec", "Standard"), ("documents", "Documents"), ("tool", "Tool")]
+    nav = [("spec", "Standard"), ("documents", "Documents"), ("tool", "Tool"), ("first-map", "First map")]
     links = "".join(
         f'<a href="/{s}"{CUR if s == current else ""}>{n}</a>' for s, n in nav)
     url = SITE_URL + path
@@ -308,17 +314,20 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <body class="{body_class}">
 <a class="skip" href="#main">Skip to content</a>
 <header class="top"><div class="wrap">
-<a class="brand" href="/">{LOGO.format(s=26)}<span>unifold</span></a>
-<span class="draft" title="This is a draft. It is not stable.">draft {esc(version)}</span>
-<nav aria-label="Site">{links}<a href="{REPO_URL}" rel="noopener">GitHub</a></nav>
+<a class="brand" href="/">{LOGO.format(s=24)}<span>unifold</span></a>
+<span class="draft" title="This is a draft. It is not stable.">{esc(version)} draft</span>
+<nav aria-label="Site">{links}<a class="gh" href="{REPO_URL}" rel="noopener" aria-label="unifold on GitHub">{icon("github", "icon sm")}<span>GitHub</span></a></nav>
 </div></header>
 {body}
 <footer class="bottom"><div class="wrap">
-<p>unifold {esc(version)} is a draft. The text, the skill and the tool are licensed under
-<a href="/LICENSE-MIT.txt">MIT</a> or <a href="/LICENSE-APACHE.txt">Apache-2.0</a>, at your option.</p>
-<p><a href="/spec">Standard</a> <a href="/guide">Guide</a> <a href="/{esc(version)}/unifold.schema.json">JSON Schema</a>
-<a href="/skill/SKILL.md">Skill</a> <a href="/llms.txt">llms.txt</a> <a href="{REPO_URL}" rel="noopener">GitHub</a></p>
-<p class="quiet">No scripts, no trackers, no fonts from elsewhere.</p>
+<div class="foot-brand"><a class="brand" href="/">{LOGO.format(s=22)}<span>unifold</span></a>
+<p>Architecture as code: a map kept in the folders and checked against the code. Draft {esc(version)}.</p></div>
+<nav class="foot-cols" aria-label="Footer">
+<div><h2>Standard</h2><a href="/spec">The standard</a><a href="/documents">Documents</a><a href="/writing">Writing</a><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></div>
+<div><h2>Tool</h2><a href="/tool">Commands</a><a href="/rules">Rules</a><a href="/tool-json">JSON output</a><a href="/first-map">Your first map</a></div>
+<div><h2>Agents</h2><a href="/agents">How agents use it</a><a href="/skill/SKILL.md">The skill</a><a href="/skill/unifold-convert/SKILL.md">The convert skill</a><a href="/llms.txt">llms.txt</a></div>
+</nav>
+<p class="fine">The text, the skills and the tool are licensed under <a href="/LICENSE-MIT.txt">MIT</a> or <a href="/LICENSE-APACHE.txt">Apache-2.0</a>, at your option. No scripts, no trackers, no fonts from elsewhere.</p>
 </div></footer>
 </body>
 </html>
@@ -360,7 +369,7 @@ def chapter_page(slug: str, src: Path, text: str, css_href: str, version: str) -
 </main>
 </div>"""
     return page(title=title, description=desc, path=f"/{slug}", body=main, css_href=css_href,
-                version=version, current=slug if slug in ("spec", "documents", "tool") else "")
+                version=version, current=slug if slug in ("spec", "documents", "tool", "first-map") else "")
 
 
 # --------------------------------------------------------------------------
@@ -371,82 +380,319 @@ def inline_md(text: str, version: str) -> str:
     return out
 
 
-def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, version: str) -> str:
-    readme = re.sub(r"^#\s+.*\n", "", readme, count=1)          # the name is in the header
-    pre, _, rest = readme.partition("\n## ")
-    rest = "## " + rest if rest else ""
+def strip_p(fragment: str) -> str:
+    """The inner HTML of a single paragraph."""
+    return re.sub(r"^<p>(.*)</p>$", r"\1", fragment.strip(), flags=re.S)
 
-    # --- first screen: promise, lede, then every code block of the preamble as a figure
-    segs = split_fences(pre)
-    promise, lede = "", ""
-    if segs and segs[0][0] == "md":
-        paras = [p.strip() for p in re.split(r"\n\s*\n", segs[0][1]) if p.strip()]
-        if paras:
-            promise = re.sub(r"\s+", " ", paras[0].strip("*"))
-            lede = "\n\n".join(paras[1:])
-        segs = segs[1:]
-    panels, figures, caption = [], [], ""
-    for seg in segs:
-        if seg[0] == "md":
-            caption = seg[1].strip()
+
+def slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+# Small line icons, drawn on a 24 grid; they take the colour of the text.
+ICONS = {
+    "standard": '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+    "skills": '<path d="M12 3l2.2 5.3L20 9l-4.4 3.7L17 18.5 12 15.6 7 18.5l1.4-5.8L4 9l5.8-.7z"/>',
+    "tool": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10l3 2-3 2M12 15h5"/>',
+    "people": '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>',
+    "agents": '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01M2 13v2M22 13v2"/>',
+    "file": '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/>',
+    "folder": '<path d="M3 6h6l2 2h10v11H3z"/>',
+    "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    "github": '<path d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.1.7-.2.7-.5v-1.7c-2.7.6-3.3-1.2-3.3-1.2-.4-1.1-1-1.4-1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.1-.2-4.4-1.1-4.4-4.8 0-1 .4-1.9 1-2.6-.1-.3-.4-1.2.1-2.6 0 0 .8-.3 2.6 1a9 9 0 0 1 4.8 0c1.8-1.3 2.6-1 2.6-1 .5 1.4.2 2.3.1 2.6.6.7 1 1.6 1 2.6 0 3.7-2.3 4.6-4.4 4.8.3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A9.5 9.5 0 0 0 12 2.5z"/>',
+}
+
+
+def icon(name: str, cls: str = "icon") -> str:
+    return (f'<svg class="{cls}" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" '
+            f'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{ICONS[name]}</svg>')
+
+
+def icon_for(heading: str) -> str:
+    h = heading.lower()
+    for key in ("standard", "skill", "tool", "people", "agent"):
+        if key in h:
+            return {"skill": "skills", "agent": "agents"}.get(key, key)
+    return "file"
+
+
+def wiring_diagram(manifests: list[tuple[str, dict]]) -> str:
+    """An SVG of the connections that the root manifest wires, drawn as the generated
+    component diagram draws them: the framing unit, its children, an arrow from need to provider."""
+    root = next((m for _, m in manifests if isinstance(m.get("wiring"), dict)), None)
+    if root is None:
+        return ""
+    summaries = {label.split("/")[0]: m.get("summary", "") for label, m in manifests if "/" in label}
+    units, edges = [], []
+    for key, value in root["wiring"].items():
+        if not (isinstance(value, str) and "." in key and "." in value):
             continue
-        _, lang, body = seg
-        if lang in ("yaml", "yml") and not caption and not figures:
-            label = ""
-            first, _, tail = body.partition("\n")
-            if first.startswith("#"):
-                label, body = first.lstrip("# ").strip(), tail
-            name = re.match(r"^(\S+)(.*)$", label)
-            tab = f'<figcaption><code>{esc(name.group(1))}</code>{esc(name.group(2))}</figcaption>' if name else ""
-            panels.append(f'<figure class="panel">{tab}{code_block(body, lang, mark_wiring=True)}</figure>')
-        else:
-            cap = f"<figcaption>{inline_md(caption, version)}</figcaption>" if caption else ""
-            inner = render_mermaid(body) if lang == "mermaid" else code_block(body, lang)
-            kind = "drawn" if lang == "mermaid" else "checked"
-            figures.append(f'<div class="step {kind}">{cap}{inner}</div>')
-            caption = ""
-    hero = f"""<section class="hero"><div class="wrap">
-<h1>{esc(promise)}</h1>
-<div class="lede">{inline_md(lede, version)}</div>
-<p class="actions"><a class="button" href="/spec">Read the standard</a>
-<a href="/adopting">Try it on a repository</a>
-<a href="{REPO_URL}" rel="noopener">Source on GitHub</a></p>
+        (src, need), dst = key.rsplit(".", 1), value.rsplit(".", 1)[0]
+        for u in (src, dst):
+            if u not in units:
+                units.append(u)
+        edges.append((src, dst, need))
+    if not units:
+        return ""
+    w, h, gap, pad, top = 184, 64, 120, 28, 52
+    width = pad * 2 + len(units) * w + (len(units) - 1) * gap
+    height = top + h + pad + 8
+    x = {u: pad + i * (w + gap) for i, u in enumerate(units)}
+    y = top
+    out = [f'<svg class="wiring" viewBox="0 0 {width} {height}" role="img" '
+           f'aria-label="{esc(root.get("name", "root"))}: ' +
+           esc(", ".join(f"{s} needs {n} from {d}" for s, d, n in edges)) + '">',
+           '<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
+           'orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="head"/></marker></defs>',
+           f'<rect class="frame" x="1" y="1" width="{width - 2}" height="{height - 2}" rx="14"/>',
+           f'<text class="frame-name" x="{pad - 6}" y="32">{esc(str(root.get("name", "root")))}</text>',
+           f'<text class="frame-summary" x="{width - pad + 6}" y="32" text-anchor="end">'
+           f'{esc(str(root.get("summary", "")))}</text>']
+    for u in units:
+        out.append(f'<rect class="box" x="{x[u]}" y="{y}" width="{w}" height="{h}" rx="10"/>'
+                   f'<text class="box-name" x="{x[u] + w / 2}" y="{y + 27}" text-anchor="middle">{esc(u)}</text>'
+                   f'<text class="box-summary" x="{x[u] + w / 2}" y="{y + 46}" text-anchor="middle">'
+                   f'{esc(str(summaries.get(u, ""))[:30])}</text>')
+    for src, dst, need in edges:
+        forward = x[src] < x[dst]
+        x1 = x[src] + (w if forward else 0)
+        x2 = x[dst] + (0 if forward else w)
+        mid, ly = (x1 + x2) / 2, y + h / 2
+        out.append(f'<path class="edge" d="M{x1 + (4 if forward else -4)} {ly}H{x2 + (-4 if forward else 4)}" '
+                   f'marker-end="url(#arrowhead)"/>'
+                   f'<text class="edge-label" x="{mid}" y="{ly - 10}" text-anchor="middle">{esc(need)}</text>')
+    out.append("</svg>")
+    return "".join(out)
+
+
+def terminal(code: str, command: str, title: str = "") -> str:
+    lines = [f'<span class="prompt">$</span> <span class="cmd">{esc(command)}</span>']
+    for line in code.rstrip("\n").split("\n"):
+        e = esc(line, quote=False)
+        e = re.sub(r"^(error)(\s+\S+)", r'<span class="err">\1\2</span>', e)
+        e = re.sub(r"^(warn)(\s+\S+)", r'<span class="wrn">\1\2</span>', e)
+        e = re.sub(r"^(\s+)(fix:)", r'\1<span class="fix">\2</span>', e)
+        e = re.sub(r"`([^`]+)`", r'<span class="tick">\1</span>', e)
+        lines.append(f'<span class="line">{e}</span>')
+    return (f'<figure class="card terminal"><figcaption><span class="dots" aria-hidden="true"><i></i><i></i><i></i>'
+            f'</span><span>{esc(title or command)}</span></figcaption><pre><code>{"".join(lines)}</code></pre></figure>')
+
+
+def parse_sections(text: str) -> list[tuple[str, str]]:
+    """(heading, body) for every ## section."""
+    out = []
+    for sec in re.split(r"(?m)^(?=## )", text):
+        m = re.match(r"## (.+)\n", sec)
+        if m:
+            out.append((m.group(1).strip(), sec[m.end():].strip()))
+    return out
+
+
+def table_rows(md: str) -> list[list[str]]:
+    rows = [r for r in md.splitlines() if r.startswith("|")]
+    out = []
+    for r in rows[2:]:
+        out.append([c.strip() for c in r.strip().strip("|").split("|")])
+    return out
+
+
+def subsections(md: str) -> list[tuple[str, str]]:
+    out = []
+    for sec in re.split(r"(?m)^(?=### )", md):
+        m = re.match(r"### (.+)\n", sec)
+        if m:
+            out.append((m.group(1).strip().strip("`"), sec[m.end():].strip()))
+    return out
+
+
+def section_shell(sid: str, heading: str, inner: str, cls: str = "", rail: bool = False) -> str:
+    head = f'<h2>{esc(heading)}</h2>'
+    if rail:
+        return (f'<section class="band rail {cls}" id="{sid}"><div class="wrap"><div class="rail-head">{head}</div>'
+                f'<div class="rail-body">{inner}</div></div></section>')
+    return f'<section class="band {cls}" id="{sid}"><div class="wrap">{head}{inner}</div></section>'
+
+
+def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, version: str) -> str:
+    m = re.match(r"^#\s+(.+)\n", readme)
+    title = m.group(1).strip() if m else "unifold"
+    pre, _, rest = (readme[m.end():] if m else readme).partition("\n## ")
+    sections = parse_sections("## " + rest) if rest else []
+
+    # --- the first screen: the bold lead sentence is the promise, the blockquote the tagline
+    tagline, lead, lede = "", "", []
+    for para in (p.strip() for p in re.split(r"\n\s*\n", pre) if p.strip()):
+        if para.startswith(">"):
+            tagline = re.sub(r"(?m)^>\s?", "", para).strip()
+            continue
+        bold = re.match(r"^\*\*(.+?)\*\*\s*(.*)$", para, re.S)
+        if bold and not lead:
+            lead = bold.group(1).strip()
+            para = bold.group(2)
+        if para:
+            lede.append(para)
+    promise = lead or tagline or title
+    words = promise.rstrip(".").rsplit(" ", 1)
+    h1 = (f'{esc(words[0])} <span class="grad">{esc(words[1])}</span>{"." if promise.endswith(".") else ""}'
+          if len(words) == 2 else esc(promise))
+    eyebrow = title.split(":", 1)[1].strip() if ":" in title else "An open standard"
+    eyebrow = eyebrow[:1].upper() + eyebrow[1:]
+
+    # --- How it works: the manifests become the folded sheet, the text block the terminal
+    how = next(((h, b) for h, b in sections if h.lower().startswith("how it works")), None)
+    panels, manifests, term, prose = [], [], "", []
+    if how:
+        for seg in split_fences(how[1]):
+            if seg[0] == "md":
+                if seg[1].strip():
+                    prose.append(seg[1].strip())
+                continue
+            _, lang, body = seg
+            if lang in ("yaml", "yml"):
+                first, _, tail = body.partition("\n")
+                label = first.lstrip("# ").strip() if first.startswith("#") else ""
+                body = tail if label else body
+                try:
+                    data = yaml.safe_load(body) or {}
+                except yaml.YAMLError:
+                    data = {}
+                manifests.append((label, data))
+                panels.append((label, body, data))
+            elif not term:
+                term = body
+    names = set()
+    for _, data in manifests:
+        for key in (data.get("wiring") or {}) if isinstance(data, dict) else {}:
+            names.add(key.rsplit(".", 1)[-1])
+    sheet = []
+    for label, body, data in panels:
+        role = "connects" if "wiring" in data else "provides" if "capabilities" in data else "needs" if "needs" in data else ""
+        file_name, _, note = label.partition(" ")
+        sheet.append(f'<figure class="panel"><figcaption>{icon("file")}<code>{esc(file_name)}</code>'
+                     f'<span class="note">{esc(note)}</span>'
+                     f'{f"<span class={chr(34)}role {role}{chr(34)}>{role}</span>" if role else ""}</figcaption>'
+                     f'{code_block(body.rstrip(), "yaml", mark_wiring=True, mark_names=names)}</figure>')
+
+    facts = []
+    rules_md = REF / "rules.md"
+    if rules_md.exists():
+        n = len(re.findall(r"(?m)^\| <a id=", rules_md.read_text(encoding="utf-8")))
+        facts.append(f"{n} rules, each with a fix")
+    facts.append(f"The standard in {len((REF / 'spec.md').read_text(encoding='utf-8').splitlines())} lines")
+    facts.append("Agent Skills included")
+    hero = f"""<section class="hero"><div class="wrap hero-grid">
+<div class="hero-copy">
+<p class="eyebrow"><span class="dot" aria-hidden="true"></span>{esc(eyebrow)} <span class="sep">·</span> draft {esc(version)}</p>
+<h1>{h1}</h1>
+{f'<p class="tagline">{strip_p(inline_md(tagline, version))}</p>' if tagline else ''}
+<div class="lede">{inline_md(chr(10).join(lede), version)}</div>
+<p class="actions"><a class="button primary" href="/spec">Read the standard {icon("arrow", "icon sm")}</a>
+<a class="button" href="/first-map">Your first map</a>
+<a class="button ghost" href="{REPO_URL}" rel="noopener">{icon("github", "icon sm")} GitHub</a></p>
+<ul class="facts">{"".join(f"<li>{esc(f)}</li>" for f in facts)}</ul>
 </div>
-<div class="wrap">
-<div class="fold" role="group" aria-label="Three manifests">{''.join(panels)}</div>
-<div class="steps">{''.join(figures)}</div>
+<div class="sheet" role="group" aria-label="Three manifests">{''.join(sheet)}</div>
 </div></section>"""
 
-    # --- sections of the README
-    sections = re.split(r"(?m)^(?=## )", rest)
-    html_sections = []
-    for i, sec in enumerate(s for s in sections if s.strip()):
-        body, _ = render_md(sec, ROOT, version)
-        heading = re.match(r"## (.+)", sec).group(1).strip()
-        sid = re.sub(r"[^a-z0-9]+", "-", heading.lower()).strip("-")
-        extra = ""
-        if heading.lower().startswith("example") and explorers:
-            items = "".join(f'<li><a href="/examples/{esc(n)}/">{esc(n)}</a>{"" if t == n else ": " + esc(t)}</li>' for n, t in explorers)
-            extra = f'<p>Each map can be explored in the browser, as written by <code>unifold site</code>:</p><ul class="explorers">{items}</ul>'
-        cls = "band start" if i == 0 else "band"
-        html_sections.append(f'<section class="{cls}" data-s="{sid}"><div class="wrap prose">{body}{extra}</div></section>')
-        if i == 0:
-            html_sections.append(read_on(explorers, version))
-    main = f'<main id="main">{hero}{"".join(html_sections)}</main>'
-    return page(title="unifold: an architecture map kept in the folders and checked against the code",
-                description=promise + " A draft open standard for documenting repository architecture, for people and AI agents.",
+    blocks = [hero]
+    if how:
+        diagram = wiring_diagram(manifests)
+        root_name = next((str(m.get("name")) for _, m in manifests if m.get("name")), "")
+        term = terminal(term, "unifold check", f"~/{root_name}" if root_name else "") if term else ""
+        right = term + (f'<figure class="card diagram-card"><figcaption>{icon("file")}<code>docs/diagrams/component.md</code>'
+                        f'<span class="role generated">generated</span></figcaption>{diagram}</figure>' if diagram else "")
+        body = "".join(inline_md(p, version) for p in prose)
+        blocks.append(f'<section class="band how" id="{slug(how[0])}"><div class="wrap how-grid">'
+                      f'<div class="how-copy"><h2>{esc(how[0])}</h2><div class="prose">{body}</div></div>'
+                      f'<div class="how-figures">{right}</div></div></section>')
+
+    rest_sections = [(h, b) for h, b in sections if not h.lower().startswith("how it works")]
+    i = 0
+    while i < len(rest_sections):
+        heading, body = rest_sections[i]
+        low, sid = heading.lower(), slug(heading)
+        nxt = rest_sections[i + 1] if i + 1 < len(rest_sections) else None
+        if low == "why":
+            paras = [p for p in re.split(r"\n\s*\n", body) if p.strip()]
+            first, _, more = paras[0].partition(". ") if paras else ("", "", "")
+            paras = ([first + ".", more] if more else paras[:1]) + paras[1:]
+            inner = "".join(f'<p{" class=" + chr(34) + "statement" + chr(34) if k == 0 else ""}>{strip_p(inline_md(p, version))}</p>'
+                            for k, p in enumerate(paras))
+            blocks.append(section_shell(sid, heading, inner, "why", rail=True))
+        elif low.startswith("what a unit has") and table_rows(body):
+            rows = []
+            for name, what in (r[:2] for r in table_rows(body) if len(r) >= 2):
+                plain = name.strip("`")
+                generated = what.lower().startswith("generated")
+                what = re.sub(r"^Generated:\s*", "", what)
+                what = what[:1].upper() + what[1:]
+                rows.append(f'<li>{icon("folder" if plain.endswith("/") else "file")}<code>{esc(plain)}</code>'
+                            f'{"<span class=" + chr(34) + "role generated" + chr(34) + ">generated</span>" if generated else ""}'
+                            f'<span class="what">{strip_p(inline_md(what, version))}</span></li>')
+            intro = re.split(r"(?m)^\|", body, maxsplit=1)[0].strip()
+            inner = (inline_md(intro, version) if intro else "") + \
+                f'<div class="card explorer"><p class="explorer-head">{icon("folder")}<code>&lt;unit&gt;/</code></p>' \
+                f'<ul>{"".join(rows)}</ul></div>'
+            blocks.append(section_shell(sid, heading, inner, "anatomy", rail=True))
+        elif low.startswith("how people") and nxt and nxt[0].lower().startswith("how agents"):
+            cards = "".join(
+                f'<article class="card feature" id="{slug(h)}">{icon(icon_for(h), "icon lg")}<h3>{esc(h)}</h3>'
+                f'{inline_md(b, version)}</article>' for h, b in (rest_sections[i], nxt))
+            blocks.append(f'<section class="band readers"><div class="wrap"><div class="pair">{cards}</div></div></section>')
+            i += 1
+        elif low == "questions":
+            items = []
+            for p in (p.strip() for p in re.split(r"\n\s*\n", body) if p.strip()):
+                q = re.match(r"^\*\*(.+?)\*\*\s*(.*)$", p, re.S)
+                if q:
+                    items.append(f'<details><summary><span>{strip_p(inline_md(q.group(1), version))}</span></summary>'
+                                 f'<div class="answer">{inline_md(q.group(2), version)}</div></details>')
+                else:
+                    items.append(inline_md(p, version))
+            blocks.append(section_shell(sid, heading, f'<div class="faq">{"".join(items)}</div>', "questions", rail=True))
+        elif low == "capabilities" and subsections(body):
+            intro = re.split(r"(?m)^### ", body, maxsplit=1)[0].strip()
+            cards = "".join(
+                f'<article class="card feature">{icon(icon_for(h), "icon lg")}<h3>{esc(h)}</h3>{inline_md(b, version)}</article>'
+                for h, b in subsections(body))
+            inner = (f'<p class="section-lede">{strip_p(inline_md(intro, version))}</p>' if intro else "") + \
+                f'<div class="trio">{cards}</div>'
+            blocks.append(section_shell(sid, heading, inner, "capabilities"))
+        elif low == "needs" and nxt and nxt[0].lower() == "commands":
+            needs = "".join(f'<p><strong>{esc(h)}.</strong> {strip_p(inline_md(b, version))}</p>' for h, b in subsections(body)) \
+                or inline_md(body, version)
+            cmd = render_md(nxt[1], ROOT, version, permalinks=False)[0]
+            inner = f'<div class="run">{cmd}<div class="needs"><h3>{esc(heading)}</h3>{needs}</div></div>'
+            blocks.append(section_shell(slug(nxt[0]), nxt[0], inner, "commands", rail=True))
+            i += 1
+        elif low == "read next" and table_rows(body):
+            cards = []
+            for row in table_rows(body):
+                if len(row) < 2:
+                    continue
+                parts = [p.strip() for p in row[1].split(";" if ";" in row[1] else ",") if p.strip()]
+                items = "".join(f"<li>{strip_p(inline_md(p, version))}</li>" for p in parts)
+                maps = ""
+                if row[0].lower().startswith("example") and explorers:
+                    maps = "<p>Click through their maps: " + ", ".join(
+                        f'<a href="/examples/{esc(n)}/">{esc(n)}</a>' for n, _ in explorers) + ".</p>"
+                cards.append(f'<article class="card index{" accent" if maps else ""}">'
+                             f'<h3>{strip_p(inline_md(row[0], version))}</h3><ul>{items}</ul>{maps}</article>')
+            cards.append(f'<article class="card index"><h3>For agents</h3><ul><li><a href="/skill/SKILL.md">The skill</a></li>'
+                         f'<li><a href="/llms.txt">llms.txt</a></li><li><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></li></ul>'
+                         f'<p>Every chapter is also plain Markdown, for example <code>/spec.md</code>.</p></article>')
+            blocks.append(section_shell(sid, heading, f'<div class="index-grid">{"".join(cards)}</div>', "read-next"))
+        else:
+            inner, _ = render_md(body, ROOT, version, permalinks=False)
+            cls = "closing" if i == len(rest_sections) - 1 else ""
+            blocks.append(section_shell(sid, heading, f'<div class="prose">{inner}</div>', cls, rail=True))
+        i += 1
+
+    main = f'<main id="main">{"".join(blocks)}</main>'
+    description = (promise + " " + (tagline or "")).strip() + \
+        " A draft open standard for repository architecture, checked against the code, for people and coding agents."
+    return page(title=f"unifold: {eyebrow.lower()}", description=description,
                 path="/", body=main, css_href=css_href, version=version, body_class="home")
-
-
-def read_on(explorers: list[tuple[str, str]], version: str) -> str:
-    ex = "".join(f'<a href="/examples/{esc(n)}/">{esc(n)}</a>' for n, _ in explorers)
-    ex_card = f'<div><h3>Explore an example</h3><p>The map of a repository, as a page you can click through.</p><p class="links">{ex}</p></div>' if explorers else ""
-    return f"""<section class="band readon"><div class="wrap"><div class="cards">
-<div><h3><a href="/spec">The standard</a></h3><p>One page: the manifest, wiring, what a checker guarantees. Read this first.</p></div>
-<div><h3><a href="/first-map">Your first map</a></h3><p>A tutorial, then the reference: <a href="/documents">documents</a>, <a href="/agents">agents</a>, the <a href="/tool">tool</a> and its <a href="/rules">rules</a>; and the explanation: <a href="/requirements">requirements</a>, <a href="/reasoning">reasoning</a>, <a href="/wiring">wiring</a>, <a href="/risks">risks</a>.</p></div>
-{ex_card}
-<div><h3>For agents and editors</h3><p class="links"><a href="/skill/SKILL.md">The skill</a><a href="/llms.txt">llms.txt</a><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></p><p>Every chapter is also plain Markdown: <code>/spec.md</code>.</p></div>
-</div></div></section>"""
 
 
 # --------------------------------------------------------------------------

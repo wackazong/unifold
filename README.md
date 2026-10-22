@@ -16,14 +16,18 @@ The standard is explainable in one minute and adoptable in five. That is why the
 # billing/unifold.yaml
 summary: Creates invoices
 needs:
-  clock: {summary: A time source, contract: ../docs/references/clock.md}
+  clock:
+    summary: A time source
+    contract: ../docs/references/clock.md
 ```
 
 ```yaml
 # platform/unifold.yaml
 summary: Shared runtime services
 capabilities:
-  clock: {summary: The current time, contract: ../docs/references/clock.md}
+  clock:
+    summary: The current time
+    contract: ../docs/references/clock.md
 ```
 
 ```yaml
@@ -104,9 +108,12 @@ Python 3.9 or newer with PyYAML, for the tool and the tests. The standard itself
 ## Commands
 
 ```sh
-python3 tests/conformance.py                                              # test the tool
-python3 docs/skills/unifold/scripts/unifold.py check examples/plantwatch  # check an example
-python3 site/build.py --check                                             # build the site
+# test the tool
+python3 tests/conformance.py
+# check an example
+python3 docs/skills/unifold/scripts/unifold.py check examples/plantwatch
+# build the site and check its links
+python3 site/build.py --check
 ```
 
 ## Read next
