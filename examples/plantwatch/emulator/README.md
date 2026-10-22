@@ -40,6 +40,8 @@ Limits:
 - One process simulates one sensor stick.
 - At start the program loads the built-in scenario `steady` (constant mid-range values, sampling interval 900 s) and runs simulated time at rate 1. It then behaves like a sensor stick with nobody controlling it. Loading a scenario replaces `steady`.
 
+Contract: [BLE profile](../docs/references/ble-profile/index.md).
+
 ### `scenario-control`
 
 An HTTP API on the local machine. A client loads a scenario, moves simulated time forward, takes the simulated sensor stick out of radio range or cuts a transfer, and looks at what the program has done.
@@ -61,8 +63,6 @@ curl localhost:8650/state
 ```
 
 Contract: [scenario control](../docs/references/scenario-control.md); it links the scenario format, the second part of this contract.
-
-## Needs
 
 ## Out of scope
 

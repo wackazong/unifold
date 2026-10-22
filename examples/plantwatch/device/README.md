@@ -39,6 +39,8 @@ Limits:
 - A new firmware image is written through the programming header of the board, not over the air.
 - A sensor stick gives readings for 16 383 starts.
 
+Contract: [BLE profile](../docs/references/ble-profile/index.md).
+
 ## Needs
 
 ### `soil-probe`
@@ -64,6 +66,5 @@ One sensor for light and temperature on an I2C bus at 100 kHz, in a place that s
 4. [docs/references/energy-budget.md](docs/references/energy-budget.md): where the 20 µA go
 5. [docs/references/glossary.md](docs/references/glossary.md): the terms only the firmware uses
 6. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above
-7. [Context diagram](docs/diagrams/context.md),
-   [component diagram](docs/diagrams/component.md)
+7. [Context diagram](docs/diagrams/context.md), [component diagram](docs/diagrams/component.md)
 8. [Decisions](docs/decisions/index.md)

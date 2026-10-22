@@ -1,6 +1,6 @@
 # Context of sync
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From mobile
 
@@ -26,7 +26,7 @@ Says: a reading arrives with a UTC time and an estimated flag; both never change
 Here: sync stores, uploads and returns time, flag and tick count as received. Of a reading that arrives twice it keeps the one stored first.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=87485fb7 -->
+<!-- unifold:cites sha=3bb1e1f6 -->
 
 Says, as far as sync implements it:
 
@@ -39,12 +39,11 @@ Says, as far as sync implements it:
 Here: the store holds these things and `plant-data` returns them under these names. sync computes no alert. "Leave" waits for the upload.
 
 ### [mobile: glossary](../../../docs/references/glossary.md)
-<!-- unifold:cites sha=61301927 -->
+<!-- unifold:cites sha=ec81296b -->
 
 Says: an exchange is one round with the server: the phone sends what waits on it, then takes plants, alerts and history. The store is what the app keeps.
 
-Here: sync runs every exchange and owns the store. Its own terms are in its
-[glossary](../references/glossary.md).
+Here: sync runs every exchange and owns the store. Its own terms are in its [glossary](../references/glossary.md).
 
 ## From plantwatch
 
@@ -88,8 +87,7 @@ Here: a command with a limit outside the range of its quantity fails.
 
 Says: 90 days of history on the phone, up to 50 plants per owner and 20 sensor sticks per phone, sampling interval from 5 to 60 minutes.
 
-Here: retention and size of the store: at most 20 × 90 days × 288 readings a day
-([local-store.md](../references/local-store.md)).
+Here: retention and size of the store: at most 20 × 90 days × 288 readings a day ([local-store.md](../references/local-store.md)).
 
 ### [plantwatch: glossary](../../../../docs/references/glossary.md)
 <!-- unifold:cites sha=082ae761 -->

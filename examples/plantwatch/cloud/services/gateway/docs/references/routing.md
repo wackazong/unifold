@@ -1,7 +1,6 @@
-# Public API as served by gateway
+# Routing
 
-The contract of the capability `public-api` from the point of view of this unit: what `gateway` does with a request. The operations, bodies, error codes and limits themselves are defined above this unit and cited in
-[context](../explanation/context.md).
+What `gateway` does with a request to its capability `public-api`. The operations, bodies, error codes and limits themselves are defined in its contract, the [public API](../../../../../docs/references/public-api/index.md), and cited in [context](../explanation/context.md).
 
 ## Order of handling
 

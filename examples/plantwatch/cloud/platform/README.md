@@ -8,8 +8,7 @@ A message bus and a database are used by several services and belong to none of 
 
 Bus and database stay in one unit because they share their operator, their host and their backup routine. Two units would hold the same reasons twice.
 
-The main trade-off is weight against guarantees. A database alone could carry the small load of version 1 as a queue. A real broker is chosen because order per key, replay and durable subscriptions then come ready-made
-([0001](docs/decisions/0001-postgresql-and-a-kafka-compatible-broker.md)).
+The main trade-off is weight against guarantees. A database alone could carry the small load of version 1 as a queue. A real broker is chosen because order per key, replay and durable subscriptions then come ready-made ([0001](docs/decisions/0001-postgresql-and-a-kafka-compatible-broker.md)).
 
 What must stay true: a service relies on the two contracts without knowing the products behind them, and the database itself enforces the isolation between schemas.
 
@@ -57,8 +56,7 @@ Contract: [SQL database](../docs/references/sql-db.md).
 
 ## Read next
 
-1. [docs/references/event-bus.md](../docs/references/event-bus.md): contract of `event-bus`
-2. [docs/references/sql-db.md](../docs/references/sql-db.md): contract of `sql-db`
+1. [event bus](../docs/references/event-bus.md): contract of `event-bus`
+2. [SQL database](../docs/references/sql-db.md): contract of `sql-db`
 3. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-4. [Context diagram](docs/diagrams/context.md),
-   [decisions](docs/decisions/index.md)
+4. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)

@@ -1,8 +1,6 @@
 # Events between services
 
-The envelope, the topic names and the rules that every service of `cloud` follows when it publishes or consumes events. The terms are in the [glossary](glossary.md), the reasons in
-[0001](../decisions/0001-services-learn-about-readings-through-events.md)
-and [0004](../decisions/0004-every-event-consumer-is-idempotent.md).
+The envelope, the topic names and the rules that every service of `cloud` follows when it publishes or consumes events. The terms are in the [glossary](glossary.md), the reasons in [0001](../decisions/0001-services-learn-about-readings-through-events.md) and [0004](../decisions/0004-every-event-consumer-is-idempotent.md).
 
 ## Envelope
 
@@ -26,12 +24,11 @@ Every event is one JSON object in UTF-8:
 | `source` | The unit name of the service that published the event |
 | `time` | When the service published the event. Not the time of what the event describes. |
 | `key` | The ordering key. Events with the same `key` reach a subscriber in the order in which they were published. The publisher also uses it as the key of the message on the event bus. |
-| `data` | The content. Each event type has its own form, defined by the publishing service in the contract of its event capability. That contract also states key, order and delivery of the stream. |
+| `data` | The content. Each event type has its own form, defined in the contract of its stream, which the publisher and every subscriber name. That contract also states key, order and delivery of the stream. |
 
 Rules for `data`:
 
-- Field names, identifiers and times follow the project conventions
-  ([context](../explanation/context.md)).
+- Field names, identifiers and times follow the project conventions ([context](../explanation/context.md)).
 - Within one topic a publisher only adds optional fields. A consumer ignores fields it does not know.
 - An event states facts that were true when it was published. It carries no commands.
 - An event is at most 16 kB long.
@@ -64,8 +61,7 @@ A service that subscribes states what it relies on in a contract of its need: th
 
 ## Rules for a consumer
 
-- Its result is the same when an event arrives again
-  ([0004](../decisions/0004-every-event-consumer-is-idempotent.md)).
+- Its result is the same when an event arrives again ([0004](../decisions/0004-every-event-consumer-is-idempotent.md)).
 - It confirms an event only after its own change is durable.
 - It handles the events of one `key` in the order of delivery. It may handle events of different keys at the same time.
 - It leaves an event unconfirmed when it cannot handle it for a reason that passes, such as a database that is down. The event bus delivers it again.

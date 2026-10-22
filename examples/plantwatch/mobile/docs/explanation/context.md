@@ -1,6 +1,6 @@
 # Context of mobile
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From plantwatch
 
@@ -19,7 +19,7 @@ Says: a reading has a sensor id, a sequence number, a tick count, a time with a 
 Here: the app stores and uploads readings in the JSON form and gives a reading its `taken_at` from the tick count before it is stored.
 
 ### [plantwatch: README, `app-ui`](../../../README.md#app-ui)
-<!-- unifold:cites sha=55715f0d -->
+<!-- unifold:cites sha=4c39645d -->
 
 Says: per plant the app shows the latest reading, the history and what the plant needs; it works offline; a plant in need produces one notification.
 
@@ -30,8 +30,7 @@ Here: the capability `app-ui` of this unit is that promise. The app shows and re
 
 Says: a sensor stick talks only to a phone. The phone app carries the readings to the server.
 
-Here: the app is the only way for a reading to leave a sensor stick, so it fetches in the background
-([0002](../decisions/0002-fetch-when-the-system-reports-a-paired-sensor-stick.md)).
+Here: the app is the only way for a reading to leave a sensor stick, so it fetches in the background ([0002](../decisions/0002-fetch-when-the-system-reports-a-paired-sensor-stick.md)).
 
 ### [plantwatch/0004 Readings are immutable and identified by sensor id and sequence number](../../../docs/decisions/0004-readings-are-immutable-and-identified-by-sensor-and-sequence.md)
 <!-- unifold:cites sha=cdc44cc5 -->
@@ -45,9 +44,7 @@ Here: the app stores a reading under this pair, keeps the copy it stored first, 
 
 Says: a reading carries a tick count. The phone converts it to UTC when it fetches; a time it cannot compute is estimated and marked.
 
-Here: the app assigns the time of every reading
-([0003](../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)).
-The phone's clock is the time source of all history.
+Here: the app assigns the time of every reading ([0003](../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)). The phone's clock is the time source of all history.
 
 ### [plantwatch/0006 The server side alone decides whether a plant needs attention](../../../docs/decisions/0006-the-server-side-alone-decides-what-needs-attention.md)
 <!-- unifold:cites sha=1298b1e1 -->
@@ -75,8 +72,7 @@ Here: the forms in the [data model](../references/data-model.md). The app conver
 
 Says: a transfer may deliver an item more than once and the receiver reports success. A sender deletes an item only after the receiver confirmed.
 
-Here: the order "store, then confirm, then delete" at both ends of the app
-([invariants](invariants.md)).
+Here: the order "store, then confirm, then delete" at both ends of the app ([invariants](invariants.md)).
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
 <!-- unifold:cites sha=b11fccd4 -->

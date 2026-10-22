@@ -1,11 +1,8 @@
 # Reasoning of cloud
 
-The long form of the why in [README.md](../../README.md). Which services exist and how they are wired is shown in the
-[component diagram](../diagrams/component.md).
+The long form of the why in [README.md](../../README.md). Which services exist and how they are wired is shown in the [component diagram](../diagrams/component.md).
 
-**Accepting is separated from using.** A client is online rarely and briefly. The moment it uploads is the only chance to take its readings, so that path has as few dependencies as possible. The service that accepts readings validates them, recognises duplicates and announces each reading as an event. It calls nobody
-([0001](../decisions/0001-services-learn-about-readings-through-events.md)).
-It is also the only service that depends on the format of an uploaded reading. The others see readings only as events.
+**Accepting is separated from using.** A client is online rarely and briefly. The moment it uploads is the only chance to take its readings, so that path has as few dependencies as possible. The service that accepts readings validates them, recognises duplicates and announces each reading as an event. It calls nobody ([0001](../decisions/0001-services-learn-about-readings-through-events.md)). It is also the only service that depends on the format of an uploaded reading. The others see readings only as events.
 
 **History and alerts are separate consumers.** Both follow the same events and neither waits for the other. A slow history query does not delay an alert, and a fault in evaluation does not lose history. Each consumer keeps its own position on the event stream and catches up after a restart.
 

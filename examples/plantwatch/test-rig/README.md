@@ -1,14 +1,12 @@
 # test-rig
 
-test-rig checks the promises that no single part can check alone: a reading taken by a sensor stick arrives in the history once, and a plant that needs attention gets exactly one alert. It runs on a developer machine or a CI runner. It plays the central itself: it fetches readings from a device under test over BLE, uploads them to the public API under test, and observes the result through that API.
+`test-rig` checks the promises that no single part can check alone: a reading taken by a sensor stick arrives in the history once, and a plant that needs attention gets exactly one alert. It runs on a developer machine or a CI runner. It plays the central itself: it fetches readings from a device under test over BLE, uploads them to the public API under test, and observes the result through that API.
 
 ## Why
 
 Some promises hold only if several separately built things agree: a reading arrives once, a plant that needs attention gets one alert. Each thing can pass its own tests while the chain is broken at a seam. The rig exists to test the seams, and it is a unit of its own because these promises belong to none of the things it tests. It changes when such a promise is added or changed, or when one of the public interfaces it uses changes.
 
-Three choices shape it. It touches only public interfaces, so its tests survive any rewrite behind them ([0002](docs/decisions/0002-tests-observe-only-public-interfaces.md)). One catalogue runs against a real sensor stick and a simulated device, so a difference between the two is a finding in itself
-([0001](docs/decisions/0001-one-catalogue-for-real-and-simulated-devices.md)).
-And it plays the central itself instead of driving a phone ([0003](docs/decisions/0003-the-rig-is-its-own-central.md)): runs are fast and repeatable, and nothing that happens on a phone is covered.
+Three choices shape it. It touches only public interfaces, so its tests survive any rewrite behind them ([0002](docs/decisions/0002-tests-observe-only-public-interfaces.md)). One catalogue runs against a real sensor stick and a simulated device, so a difference between the two is a finding in itself ([0001](docs/decisions/0001-one-catalogue-for-real-and-simulated-devices.md)). And it plays the central itself instead of driving a phone ([0003](docs/decisions/0003-the-rig-is-its-own-central.md)): runs are fast and repeatable, and nothing that happens on a phone is covered.
 
 What must stay true: a test that cannot run is reported as skipped with a reason. It is never dropped and never counted as passed.
 
@@ -32,7 +30,7 @@ Contract: [test-report](docs/references/test-report.md).
 
 ## Needs
 
-The rig defines none of these interfaces. It takes each as its provider defines it and states here what it relies on.
+Each need names the same contract as its provider. This section states what the rig relies on.
 
 ### `device-under-test`
 
@@ -79,8 +77,7 @@ The rig removes every plant of this owner at the start of a run, creates the pla
 ## Read next
 
 1. [docs/references/test-catalogue.md](docs/references/test-catalogue.md): the promises under test
-2. [docs/references/configurations.md](docs/references/configurations.md):
-   `real` and `simulated`, settings, waiting times
+2. [docs/references/configurations.md](docs/references/configurations.md): `real` and `simulated`, settings, waiting times
 3. [docs/references/test-report.md](docs/references/test-report.md): the contract of the report
 4. [docs/references/glossary.md](docs/references/glossary.md): promise, stimulus, configuration, group
 5. [Context diagram](docs/diagrams/context.md)

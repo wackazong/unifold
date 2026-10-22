@@ -1,6 +1,6 @@
 # Context of gateway
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From cloud
 
@@ -25,7 +25,7 @@ Says, as far as this unit implements it:
 Here: the contract of the capability `public-api`. `gateway` implements the token operations, the limits and these errors itself. It passes the three groups of paths on to the needs `ingest-api`, `plants-api` and `alerts-api` without looking at their bodies.
 
 ### [cloud: calls between services](../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=7282b622 -->
+<!-- unifold:cites sha=f87b1f71 -->
 
 Says, as the rules that this unit implements: the service that verified the token sets `X-Owner-Id`; the first service sets `X-Request-Id`. A caller waits at most 5 seconds and repeats a failed call at most twice, after 0.2 and 1 second. Paths below `/internal/` are never served to a client. Every service answers `GET /healthz`.
 

@@ -1,6 +1,6 @@
 # Context of ble-client
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From mobile
 
@@ -16,8 +16,7 @@ Here: the client owns the standing requests. It sets one at pairing, holds it ba
 
 Says: the part that fetches converts tick counts to UTC. Every reading that leaves it has a time and an estimated flag; the tick count stays in it.
 
-Here: the client converts and hands the tick count on unchanged
-([0002](../decisions/0002-keep-a-time-anchor-per-boot.md)).
+Here: the client converts and hands the tick count on unchanged ([0002](../decisions/0002-keep-a-time-anchor-per-boot.md)).
 
 ### [mobile/0004 One codebase for both platforms](../../../docs/decisions/0004-one-codebase-for-both-platforms.md)
 <!-- unifold:cites sha=7c2b0ce8 -->
@@ -34,19 +33,18 @@ Says: iOS wakes the app through a pending connection, Android through a companio
 Here: the sizes, timeouts and triggers in [fetch-session.md](../references/fetch-session.md). The values are unverified design assumptions, as their source says.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=87485fb7 -->
+<!-- unifold:cites sha=3bb1e1f6 -->
 
 Says: a reading has sensor id, sequence number, tick count, soil moisture, light, temperature, a UTC time and an estimated flag. A paired sensor stick has sensor id, time of pairing, time of the last complete fetch and the protocol version it states.
 
 Here: the client delivers readings and lists paired sensor sticks with exactly these fields.
 
 ### [mobile: glossary](../../../docs/references/glossary.md)
-<!-- unifold:cites sha=61301927 -->
+<!-- unifold:cites sha=ec81296b -->
 
-Says: a fetch takes the stored readings of one sensor stick onto the phone and confirms them. A background slot is the run time after a wake-up.
+Says: a fetch takes the stored readings of one sensor stick onto the phone and changes nothing there; the app confirms them once stored. A background slot is the run time after a wake-up.
 
-Here: the client carries out every fetch. Its own terms are in its
-[glossary](../references/glossary.md).
+Here: the client carries out every fetch. Its own terms are in its [glossary](../references/glossary.md).
 
 ## From plantwatch
 
@@ -62,8 +60,7 @@ Here: the client may deliver a reading twice and says so in its contract. It nev
 
 Says: a reading carries a boot counter and the seconds since that boot. A time of an earlier boot that cannot be computed is estimated and marked.
 
-Here: the conversion the client performs, in
-[fetch-session.md](../references/fetch-session.md).
+Here: the conversion the client performs, in [fetch-session.md](../references/fetch-session.md).
 
 ### [plantwatch: conventions](../../../../docs/references/conventions.md)
 <!-- unifold:cites sha=27c608e6 -->

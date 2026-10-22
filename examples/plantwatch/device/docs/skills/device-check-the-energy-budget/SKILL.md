@@ -31,5 +31,4 @@ The result is an updated energy budget and a clear answer: the change fits, or i
 ## Reference
 
 - [Energy budget](../../references/energy-budget.md): the table to update and the limits that follow from it
-- [Decision 0001](../../decisions/0001-sleep-between-events-and-advertise-all-the-time.md):
-  why advertising takes the largest share
+- [Decision 0001](../../decisions/0001-sleep-between-events-and-advertise-all-the-time.md): why advertising takes the largest share

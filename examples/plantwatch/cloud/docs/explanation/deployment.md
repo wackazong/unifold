@@ -4,7 +4,7 @@ Every service is one container image. The table shows what the folder tree canno
 
 | Part | Instances | Volume | Reachable from outside |
 |---|---|---|---|
-| [gateway](../../services/gateway/README.md) | 2 or more | none | yes, one capability |
+| [gateway](../../services/gateway/README.md) | 2 or more | none | yes, one port |
 | [ingest](../../services/ingest/README.md) | 2 or more | none | no |
 | [plants](../../services/plants/README.md) | 1 or more | none | no |
 | [alerts](../../services/alerts/README.md) | 1 or more | none | no |

@@ -1,6 +1,6 @@
 # Context of platform
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From cloud
 
@@ -26,14 +26,14 @@ Says: delivery is at least once. A consumer produces the same result when an eve
 Here: `event-bus` may deliver a message more than once. It never loses one and never reorders the messages of a key.
 
 ### [cloud: events between services](../../../docs/references/events.md)
-<!-- unifold:cites sha=b3af8439 -->
+<!-- unifold:cites sha=0f4bf135 -->
 
 Says: a topic is named `<service>.<stream>.v<major>`, a subscription `<service>`. Events of one key arrive in order. An event is at most 16 kB.
 
 Here: topic and subscription names follow this form. The bus orders by message key. Its limit for a message, 64 kB, lies above 16 kB.
 
 ### [cloud: calls between services](../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=7282b622 -->
+<!-- unifold:cites sha=f87b1f71 -->
 
 Says: a service is reachable only from the private network and therefore trusts its callers.
 

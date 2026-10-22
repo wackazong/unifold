@@ -49,6 +49,8 @@ light             12 000 lx
 temperature       21.4 °C
 ```
 
+Contract: [readings](../docs/references/readings.md).
+
 ## Needs
 
 ### `sensor-io`
@@ -70,9 +72,7 @@ A tick count whose boot counter is higher at every start than ever before and wh
 ## Read next
 
 1. [docs/references/calibration.md](docs/references/calibration.md): formulas, constants and test cases
-2. What `sampling` expects of its needs:
-   [sensor-io](../docs/references/sensor-io.md),
-   [timer](../docs/references/timer.md)
+2. What `sampling` expects of its needs: [sensor-io](../docs/references/sensor-io.md), [timer](../docs/references/timer.md)
 3. [docs/explanation/context.md](docs/explanation/context.md): what `sampling` inherits from above
 4. [Context diagram](docs/diagrams/context.md)
 5. [Decisions](docs/decisions/index.md)

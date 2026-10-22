@@ -13,7 +13,7 @@ A standard is understood from an example faster than from its text, and every ru
 
 ## Out of scope
 
-- A map of an existing open-source repository. Two such maps, kept as overlays of manifests without the code, were removed while the standard was changing and will come back once it has settled: a Rust workspace such as ripgrep, and a set of services in several languages such as Online Boutique, with the calls between services given to `check` as a list. Both are results of the skill `unifold-convert`.
+- A map of an existing open-source repository. Two such maps are planned for when the standard is stable, as overlays of manifests without the code: a Rust workspace such as ripgrep, and a set of services in several languages such as Online Boutique, with the calls between services given to `check` as a list. The skill `unifold-convert` writes both.
 - Running code for plantwatch. It is a design; its units are `planned`.
 
 ## Commands

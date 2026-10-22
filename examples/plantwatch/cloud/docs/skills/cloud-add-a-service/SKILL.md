@@ -12,7 +12,7 @@ The result is a new child unit of `cloud` with `status: planned`, wired to the o
 1. **Check that it is a service.** A new service is justified when the job has its own load, its own failure behaviour or its own data. Otherwise extend an existing service inside that service.
 2. **Create the unit.** Add the folder below the plain folder `services/` of this unit, with a manifest `unifold.yaml` and a `README.md` with a `## Why`. The folder name is the unit name and becomes the `source` of its events and the prefix of its topics ([events](../../references/events.md)).
 3. **Declare capabilities without looking at the other services.** State what the service provides. State as needs what it requires: an event stream it consumes, an API it calls, the database, the event bus. Name each need after what is needed.
-4. **Wire it.** Add one line per need to `wiring` in [README.md](../../../README.md). If no child provides what is needed, either add a capability to the child that should provide it, using that child's own skills, or add a need to `cloud` and pass it up. If the kinds of a need and its provider differ, an adapter is missing. Read both ends of every line you add: what the need expects must be covered by what the provider's `README.md` offers.
+4. **Wire it.** Add one line per need to `wiring` in [unifold.yaml](../../../unifold.yaml). If no child provides what is needed, either add a capability to the child that should provide it, using that child's own skills, or add a need to `cloud` and pass it up. If the kinds of a need and its provider differ, an adapter is missing. Read both ends of every line you add: what the need expects must be covered by what the provider's `README.md` promises, and both must name the same contract.
 5. **Make it reachable, if clients shall use it.** Describe the new operations in the [public API](../../../../docs/references/public-api/index.md) first. Then let [gateway](../../../services/gateway/README.md) state a need for the new capability and wire that need. Follow the skills of that unit.
 6. **Give it infrastructure.** If the service stores data, it needs a schema of its own ([0002](../../decisions/0002-each-service-owns-its-data.md)). If it publishes events, its topics must exist. Both are set up in [platform](../../../platform/README.md) with the skills of that unit.
 7. **Write its context.** In the new unit's `docs/explanation/context.md`, cite the decisions of `cloud` and the references [events](../../references/events.md) and [service calls](../../references/service-calls.md) as far as they apply.
@@ -30,7 +30,4 @@ The result is a new child unit of `cloud` with `status: planned`, wired to the o
 
 - [events](../../references/events.md): envelope, topic and subscription names
 - [service calls](../../references/service-calls.md): headers, paths, time limits
-- [0001](../../decisions/0001-services-learn-about-readings-through-events.md),
-  [0002](../../decisions/0002-each-service-owns-its-data.md),
-  [0003](../../decisions/0003-one-gateway-is-the-only-public-entry.md),
-  [0004](../../decisions/0004-every-event-consumer-is-idempotent.md)
+- [0001](../../decisions/0001-services-learn-about-readings-through-events.md), [0002](../../decisions/0002-each-service-owns-its-data.md), [0003](../../decisions/0003-one-gateway-is-the-only-public-entry.md), [0004](../../decisions/0004-every-event-consumer-is-idempotent.md)

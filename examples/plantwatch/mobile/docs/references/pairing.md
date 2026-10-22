@@ -1,7 +1,6 @@
 # Contract of `pairing`
 
-The operations, data and guarantees of the capability through which a sensor stick is found and bound to this phone. The description is independent of a programming language. The fields of a paired sensor stick are those cited in
-[context.md](../explanation/context.md).
+The operations, data and guarantees of the capability through which a sensor stick is found and bound to this phone. The description is independent of a programming language. The fields of a paired sensor stick are those cited in [context.md](../explanation/context.md).
 
 ## Operations
 

@@ -1,7 +1,6 @@
 # Accepted ranges
 
-The state with which `ingest` recognises a reading it has accepted before. It is internal: no capability exposes it. The reasons are in
-[0001](../decisions/0001-accepted-ranges-are-kept-on-the-event-bus.md).
+The state with which `ingest` recognises a reading it has accepted before. It is internal: no capability exposes it. The reasons are in [0001](../decisions/0001-accepted-ranges-are-kept-on-the-event-bus.md).
 
 ## Content
 

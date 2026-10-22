@@ -1,7 +1,6 @@
 # What the owner can rely on: contract of `app-ui`
 
-The promises the app makes to its owner, independent of how a screen looks. The screens and the way between them are defined by [ui](../../ui/README.md). The things named here are those of the
-[data model](data-model.md).
+The promises the app makes to its owner, independent of how a screen looks. The screens and the way between them are defined by [ui](../../ui/README.md). The things named here are those of the [data model](data-model.md).
 
 ## What the owner can do
 
@@ -63,8 +62,7 @@ Each case starts from a phone with one plant, "Monstera", whose sensor stick is 
 | Languages | English and German |
 | Screen orientation | Portrait |
 
-The first three values are inherited; see
-[context.md](../explanation/context.md).
+The first three values are inherited; see [context.md](../explanation/context.md).
 
 ## Permissions
 

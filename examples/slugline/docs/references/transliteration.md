@@ -1,7 +1,6 @@
 # transliteration
 
-The contract of `transliteration`: a plug-in that replaces Latin letters with diacritics, and ligatures, by ASCII letters. It implements the trait of
-[plugin-api](plugin-api.md).
+The contract of `transliteration`: a plug-in that replaces Latin letters with diacritics, and ligatures, by ASCII letters. It implements the trait of [plugin-api](plugin-api.md).
 
 ## Coverage
 

@@ -1,7 +1,6 @@
 # Exchange with the server
 
-The steps, sizes and pauses of one exchange between the [local store](local-store.md) and the server behind `cloud-api`. The reasons are in the [decisions](../decisions/index.md), the terms in the
-[glossary](glossary.md).
+The steps, sizes and pauses of one exchange between the [local store](local-store.md) and the server behind `cloud-api`. The reasons are in the [decisions](../decisions/index.md), the terms in the [glossary](glossary.md).
 
 ## What starts an exchange
 

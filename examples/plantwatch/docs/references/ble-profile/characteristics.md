@@ -1,7 +1,6 @@
 # Service and characteristics
 
-The GATT attributes of a sensor stick and the layout of their values. Part of the [BLE profile](index.md). The UUIDs are listed in the
-[index](index.md).
+The GATT attributes of a sensor stick and the layout of their values. Part of the [BLE profile](index.md). The UUIDs are listed in the [index](index.md).
 
 ## The Reading service
 
@@ -121,5 +120,4 @@ Info of a sensor stick with the sensor id `00a1b2c3d4e5f607`, all three quantiti
 0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
 ```
 
-Requests and results on Transfer control, as bytes, are in the
-[procedures](procedures.md).
+Requests and results on Transfer control, as bytes, are in the [procedures](procedures.md).

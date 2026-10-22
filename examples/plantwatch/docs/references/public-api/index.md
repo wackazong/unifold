@@ -4,8 +4,7 @@ The contract of the capability `public-api`: the HTTP API through which a client
 
 ## Parts
 
-A reading inside an upload or a history has the form of the
-[reading schema](../reading-schema.md).
+A reading inside an upload or a history has the form of the [reading schema](../reading-schema.md).
 
 | Part | Content |
 |---|---|
@@ -32,8 +31,7 @@ A reading inside an upload or a history has the form of the
 ## General rules
 
 - Every path starts with `/v1`. A change that would break a client gets a new prefix; `/v1` stays available beside it.
-- Bodies, field names, identifiers and times follow the project
-  [conventions](../conventions.md).
+- Bodies, field names, identifiers and times follow the project [conventions](../conventions.md).
 - A client ignores response fields it does not know.
 - A field without a value is absent. `null` is not used.
 

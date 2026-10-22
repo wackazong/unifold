@@ -6,7 +6,7 @@
 
 Readings have to wait on the sensor stick, for weeks if need be, and the cell can be pulled at any moment. `store` exists so that the harsh rules of the memory that makes this possible stay in one unit: bits only fall from 1 to 0, erasing takes whole blocks, blocks wear out, and any write can be cut off. It changes when the kind or the size of that memory changes, or the number of readings to keep.
 
-`store` offers a log with a "delivered" mark and not a general storage, because only one question is ever asked of it: which readings have not been delivered yet, in order. A log answers it without an index and without cleaning up in the background, and appending is the access pattern that flash memory tolerates best.
+`store` provides a log with a "delivered" mark and not a general storage, because only one question is ever asked of it: which readings have not been delivered yet, in order. A log answers it without an index and without cleaning up in the background, and appending is the access pattern that flash memory tolerates best.
 
 `store` never decides by itself that a reading is done. It is told, or it runs out of room. The trade-off of the log is coarse release: room comes back a block at a time.
 
@@ -46,12 +46,13 @@ mark up to 3145824  -> ok
 summary             -> stored 0, oldest 0, newest 0, highest received 3145824
 ```
 
+Contract: [reading log](../docs/references/reading-log.md).
+
 ## Needs
 
 ### `flash`
 
-At least 20 blocks of 4096 bytes that keep their content without power, with the usual properties of flash memory: a write changes whole 4-byte words and only turns bits from 1 to 0, an erase works on a whole block, and a block endures at least 10 000 erases. What has returned survives power loss, and power loss damages only what was being written or erased. `store` erases each block at most once in 12 days. Contract:
-[flash](../docs/references/flash.md).
+At least 20 blocks of 4096 bytes that keep their content without power, with the usual properties of flash memory: a write changes whole 4-byte words and only turns bits from 1 to 0, an erase works on a whole block, and a block endures at least 10 000 erases. What has returned survives power loss, and power loss damages only what was being written or erased. `store` erases each block at most once in 12 days. Contract: [flash](../docs/references/flash.md).
 
 ### `readings`
 
@@ -67,7 +68,7 @@ Every new reading, once, in ascending order of sequence number, at the moment it
 ## Read next
 
 1. [docs/references/flash-layout.md](docs/references/flash-layout.md): blocks, slots, recovery, test cases
-2. [docs/references/flash.md](../docs/references/flash.md): what `store` expects of the memory
+2. [flash](../docs/references/flash.md): what `store` expects of the memory
 3. [docs/explanation/context.md](docs/explanation/context.md): what `store` inherits from above
 4. [Context diagram](docs/diagrams/context.md)
 5. [Decisions](docs/decisions/index.md)

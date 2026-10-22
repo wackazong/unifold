@@ -1,7 +1,6 @@
 # Runtime of alerts
 
-Scenarios that cross the children of this unit and that no single child can tell. Which children exist is in the
-[component diagram](../diagrams/component.md).
+Scenarios that cross the children of this unit and that no single child can tell. Which children exist is in the [component diagram](../diagrams/component.md).
 
 ## The life of an alert
 

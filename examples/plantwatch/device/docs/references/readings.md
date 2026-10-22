@@ -1,6 +1,6 @@
 # Readings
 
-The contract of the connections `readings` and `live-readings`: every new reading at the moment it is taken, as `sampling` hands it out and `store` and `link` receive it.
+The contract of the connections `readings` and `live-readings`: every new reading at the moment it is taken, as the provider hands it to each subscriber.
 
 ## A reading
 

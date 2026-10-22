@@ -1,6 +1,6 @@
 # Reading log
 
-The contract of the connection `reading-log`: the stored readings of the sensor stick, as `store` keeps them and `link` serves them. "Stored" means: received by `store`, and neither marked as delivered nor discarded.
+The contract of the connection `reading-log`: the stored readings of the sensor stick and the mark that releases them. "Stored" means: received by the provider, and neither marked as delivered nor discarded.
 
 ## Operations
 

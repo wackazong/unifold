@@ -1,7 +1,6 @@
 # Conventions
 
-Rules that hold in every unit of plantwatch. The terms are defined in the
-[glossary](glossary.md).
+Rules that hold in every unit of plantwatch. The terms are defined in the [glossary](glossary.md).
 
 ## Measured quantities
 
@@ -57,7 +56,6 @@ A reading is identified by sensor id and sequence number together.
 ## Working in this repository
 
 - The project is in its design phase. Nobody writes product code for a unit before a person has accepted the decisions that unit depends on.
-- A change to the radio protocol or to the reading format follows
-  [Changing a shared definition](#changing-a-shared-definition).
+- A change to the radio protocol or to the reading format follows [Changing a shared definition](#changing-a-shared-definition).
 - Every file uses the terms of the [glossary](glossary.md) unchanged. In particular, a "reading" is one measurement set, never a single value.
 - Every change ends with `unifold check --fix`, then `unifold check`.

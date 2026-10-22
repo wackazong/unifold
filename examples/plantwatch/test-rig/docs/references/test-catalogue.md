@@ -1,7 +1,6 @@
 # Test catalogue
 
-The end-to-end promises the rig tests. Each test has an id that is never reused and stays when the wording changes, the promise it verifies, a stimulus, the expected observation, and the configurations it runs in: `real`, `simulated` or both ([configurations.md](configurations.md)). The numbers come from the items cited in [context.md](../explanation/context.md); the terms are in the
-[glossary](glossary.md).
+The end-to-end promises the rig tests. Each test has an id that is never reused and stays when the wording changes, the promise it verifies, a stimulus, the expected observation, and the configurations it runs in: `real`, `simulated` or both ([configurations.md](configurations.md)). The numbers come from the items cited in [context.md](../explanation/context.md); the terms are in the [glossary](glossary.md).
 
 ## The product promise behind the tests
 

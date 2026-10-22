@@ -1,6 +1,6 @@
 # Context of plant-lookup
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From alerts
 
@@ -21,7 +21,7 @@ Says: a service that needs state that changes rarely, such as the thresholds of 
 Here: `plant-lookup` asks when it is called. A copy of all thresholds is not an option inside this unit.
 
 ### [cloud: calls between services](../../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=7282b622 -->
+<!-- unifold:cites sha=f87b1f71 -->
 
 Says: an internal operation lies below `/internal/v1/` and carries no owner. A caller waits 5 seconds and repeats a failure at most twice, after 0.2 and 1 s.
 

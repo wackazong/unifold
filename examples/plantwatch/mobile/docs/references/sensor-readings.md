@@ -1,6 +1,6 @@
 # Contract of `sensor-readings`
 
-The operations, data and guarantees of the capability through which the client hands fetched readings to its consumer. The description is independent of a programming language. The fields of a reading and of a paired sensor stick are those cited in [context.md](../explanation/context.md); the unit's own terms are in the glossary of `ble-client`.
+The operations, data and guarantees of the capability through which the client hands fetched readings to its consumer. The description is independent of a programming language. The fields of a reading and of a paired sensor stick are those cited in [context.md](../explanation/context.md). The consumer is the one receiver attached to the capability; it acknowledges a batch once it has stored it. An anchor is a time reference that the client keeps for one boot of a sensor stick.
 
 ## Operations
 
@@ -82,7 +82,7 @@ A failure never surfaces as an error of an operation. It appears as the reason o
 |---|---|---|
 | `bluetooth off` | Bluetooth is switched off on the phone | Waits until it is switched on |
 | `permission missing` | The program lacks a permission for Bluetooth | Waits until the program is on the screen again |
-| `connection lost` | The connection broke during a fetch | Reconnects as described in the fetch session of `ble-client` |
+| `connection lost` | The connection broke during a fetch | Reconnects and starts over at the oldest unconfirmed reading |
 | `not acknowledged` | The consumer did not acknowledge in time | Ends the fetch without confirming the batch |
 | `unsupported version` | The sensor stick states a major protocol version other than 1 | Does not fetch from this sensor stick |
 | `not paired any more` | The sensor stick refuses this phone | Does not fetch; the pairing stays listed until it is removed |

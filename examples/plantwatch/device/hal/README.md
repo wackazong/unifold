@@ -1,6 +1,6 @@
 # hal
 
-`hal` is the hardware abstraction of the sensor stick board. It is the only code that touches pins, peripherals and the radio stack of the microcontroller. It offers what the board can do as four small libraries whose meaning does not depend on the board: raw sensor values, a BLE peripheral, durable blocks of memory, and time. Code that uses only these four libraries runs unchanged on another board, or on a development machine with substitutes.
+`hal` is the hardware abstraction of the sensor stick board. It is the only code that touches pins, peripherals and the radio stack of the microcontroller. It provides what the board can do as four small libraries whose meaning does not depend on the board: raw sensor values, a BLE peripheral, durable blocks of memory, and time. Code that uses only these four libraries runs unchanged on another board, or on a development machine with substitutes.
 
 ## Why
 
@@ -41,8 +41,7 @@ Limits: 16 characteristics, transmit power 0 dBm. `hal` knows nothing about the 
 
 20 blocks of 4096 bytes that keep their content without power. A write takes whole 4-byte words and can only change bits from 1 to 0; an erase takes a whole block and leaves every byte `0xFF`. A read returns within 1 ms, a write within 1 ms per word, an erase within 100 ms. Each block endures at least 10 000 erases.
 
-When a call has returned, its effect survives power loss. Power loss during a write leaves only the words of that write undefined, power loss during an erase only that block. While the supply is below 2.1 V, `hal` refuses to write or erase, and nothing changes. Contract:
-[flash](../docs/references/flash.md).
+When a call has returned, its effect survives power loss. Power loss during a write leaves only the words of that write undefined, power loss during an erase only that block. While the supply is below 2.1 V, `hal` refuses to write or erase, and nothing changes. Contract: [flash](../docs/references/flash.md).
 
 ### `timer`
 
@@ -68,7 +67,7 @@ One device on an I2C bus at 100 kHz that measures light up to at least 100 000 l
 - Converting raw values to percent, lux or degrees.
 - Deciding when to measure, what to keep and what to send.
 - The meaning of GATT attributes and the layout of data in the blocks.
-- Measuring the cell voltage for others. No capability offers it.
+- Measuring the cell voltage for others. No capability provides it.
 - Replacing the program of the board over the radio.
 
 ## Read next

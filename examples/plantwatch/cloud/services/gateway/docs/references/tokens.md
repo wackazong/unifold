@@ -1,7 +1,6 @@
 # Tokens
 
-The form of the tokens that `gateway` issues and verifies. For a client a token is an opaque string; nothing here is part of the public contract. The reasons are in
-[0001](../decisions/0001-self-contained-signed-tokens.md).
+The form of the tokens that `gateway` issues and verifies. For a client a token is an opaque string; nothing here is part of the public contract. The reasons are in [0001](../decisions/0001-self-contained-signed-tokens.md).
 
 ## Form
 

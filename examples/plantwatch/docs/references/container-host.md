@@ -7,7 +7,7 @@ The contract of the need `container-host`: what runs the containers of the serve
 | Containers | Runs every container of the server side and restarts one that stops |
 | Network | A private network in which containers find each other by name. Nothing in it is reachable from outside unless published. |
 | Volumes | A container that asks for a volume gets one that survives restart and replacement of the container. Two volumes can be placed on separate storage devices. |
-| Publishing | Exactly one capability is reachable from outside the private network. Whoever publishes it terminates TLS. |
+| Publishing | Exactly one network port is reachable from outside the private network. Whoever publishes it terminates TLS. |
 | Clocks | The clock of every container stays within 10 seconds of UTC |
 
 ## Examples

@@ -1,7 +1,6 @@
 # Glossary of cloud
 
-The terms that have one fixed meaning inside `cloud` and that the project glossary does not define. The project terms that `cloud` uses are cited in
-[context](../explanation/context.md).
+The terms that have one fixed meaning inside `cloud` and that the project glossary does not define. The project terms that `cloud` uses are cited in [context](../explanation/context.md).
 
 | Term | Meaning |
 |---|---|

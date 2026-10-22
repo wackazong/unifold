@@ -1,7 +1,6 @@
 # Configurations of a run
 
-The two configurations the rig runs in, the settings that select them, and the waiting times. The tests are in the [test catalogue](test-catalogue.md), the terms in the [glossary](glossary.md). The reasons are in
-[decision 0001](../decisions/0001-one-catalogue-for-real-and-simulated-devices.md).
+The two configurations the rig runs in, the settings that select them, and the waiting times. The tests are in the [test catalogue](test-catalogue.md), the terms in the [glossary](glossary.md). The reasons are in [decision 0001](../decisions/0001-one-catalogue-for-real-and-simulated-devices.md).
 
 ## The two configurations
 

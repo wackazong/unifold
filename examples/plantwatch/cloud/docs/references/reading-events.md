@@ -54,8 +54,7 @@ The contract of the capability `reading-events`: the stream on which `ingest` an
 | `light` | Light |
 | `temperature` | Temperature |
 
-Units, ranges and resolutions are those of the project conventions
-([context](../explanation/context.md)).
+Units, ranges and resolutions are those of the project conventions ([context](../explanation/context.md)).
 
 ## Key, order, delivery
 

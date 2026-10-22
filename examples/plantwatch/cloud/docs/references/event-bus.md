@@ -13,7 +13,7 @@ The contract of the capability `event-bus`: what a service that publishes or sub
 
 ## Topics
 
-A topic exists when it is declared in this unit, with the skill the skill `platform-add-a-topic` of `platform`. Publishing or subscribing to a topic that is not declared fails.
+A topic exists when it is declared in this unit, with the skill `platform-add-a-topic` of `platform`. Publishing or subscribing to a topic that is not declared fails.
 
 | Kind | Keeps | Meant for |
 |---|---|---|

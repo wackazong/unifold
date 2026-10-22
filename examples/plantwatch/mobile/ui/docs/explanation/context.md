@@ -1,6 +1,6 @@
 # Context of ui
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From mobile
 
@@ -31,10 +31,10 @@ Says, as far as the screens deliver it:
 - Limits: 20 sensor sticks, 50 plants, one owner, English and German, portrait. Without Bluetooth, notification or camera permission the rest keeps working.
 - No state by colour alone, a label on every control, system text size.
 
-Here: the screens in [app-ui.md](../references/screens.md) deliver these promises. A new screen starts with a promise there.
+Here: the screens in [screens](../references/screens.md) deliver these promises. A new screen starts with a promise there.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=87485fb7 -->
+<!-- unifold:cites sha=3bb1e1f6 -->
 
 Says, as far as the screens show it:
 
@@ -51,10 +51,10 @@ Here: the screens show these things under these names. The plant form edits the 
 
 Says: Bluetooth, notification and camera permissions are asked at run time. Pairing on Android shows a system dialog per sensor stick.
 
-Here: the permission steps in [app-ui.md](../references/screens.md). The source marks its values as unverified design assumptions.
+Here: the permission steps in [screens](../references/screens.md). The source marks its values as unverified design assumptions.
 
 ### [mobile: glossary](../../../docs/references/glossary.md)
-<!-- unifold:cites sha=61301927 -->
+<!-- unifold:cites sha=ec81296b -->
 
 Says: a fetch takes the readings of a sensor stick onto the phone; an exchange is one round with the server.
 

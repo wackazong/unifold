@@ -6,10 +6,9 @@
 
 When an alert opens and closes is the part of the product that owners feel and that changes most. This unit holds exactly that logic and nothing else, so that it can be read in one sitting and tested with a table of readings and expected alerts. It changes when the rules of judging change: a new quantity, a different margin, another way to look at light.
 
-To stay testable it has no state and knows no technology. What it concluded from earlier readings travels in a value that the caller keeps. Plant and thresholds come through a need that it states in its own words; a test meets that need with a table ([context](docs/explanation/context.md)).
+To stay testable it has no state and knows no technology. What it concluded from earlier readings travels in a value that the caller keeps. Plant and thresholds come through a need whose contract the provider names too; a test meets that need with a table ([context](docs/explanation/context.md)).
 
-An alert must not flap when a value hovers at its threshold, and it must not wait when a plant runs dry. Both are met by opening at the threshold and closing only beyond a margin
-([0001](docs/decisions/0001-flapping-is-prevented-by-a-margin-on-closing.md)).
+An alert must not flap when a value hovers at its threshold, and it must not wait when a plant runs dry. Both are met by opening at the threshold and closing only beyond a margin ([0001](docs/decisions/0001-flapping-is-prevented-by-a-margin-on-closing.md)).
 
 Light shows why judging needs memory: a reading at night is dark for every plant, so light is judged by the brightest reading of a day.
 
@@ -57,8 +56,7 @@ A function `lookup(sensor_id)` with three answers. `attached` names the plant to
 
 `rules` expects an answer that is at most 60 seconds old, within 18 seconds, and never an error. Where the answer comes from is not its business.
 
-Contract:
-[thresholds lookup as rules expects it](../docs/references/thresholds.md).
+Contract: [thresholds lookup](../docs/references/thresholds.md).
 
 ## Out of scope
 
@@ -70,8 +68,7 @@ Contract:
 
 ## Read next
 
-1. [docs/references/evaluation.md](../docs/references/evaluation.md): the function, the rules, the margins, the state
-2. [docs/references/thresholds.md](../docs/references/thresholds.md): the lookup that the unit expects to be given
+1. [evaluation](../docs/references/evaluation.md): the function, the rules, the margins, the state
+2. [thresholds lookup](../docs/references/thresholds.md): the lookup that the unit expects to be given
 3. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-4. [Context diagram](docs/diagrams/context.md),
-   [decisions](docs/decisions/index.md)
+4. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)

@@ -1,6 +1,6 @@
 # Context of notifier
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From alerts
 
@@ -16,9 +16,7 @@ Here: `notifier` keeps nothing between calls and reports its outcome to the call
 
 Says: an alert is stored as owing a notification. Delivery repeats for at most 24 hours. Whatever notifies makes a repeat harmless for the owner.
 
-Here: `notify` is called more than once for the same alert. Making the repeat harmless is the duty of this unit, see
-[0001](../decisions/0001-once-means-repeatable-with-a-collapse-identifier.md).
-The time to live of a notification is the same 24 hours.
+Here: `notify` is called more than once for the same alert. Making the repeat harmless is the duty of this unit, see [0001](../decisions/0001-once-means-repeatable-with-a-collapse-identifier.md). The time to live of a notification is the same 24 hours.
 
 ## From cloud
 

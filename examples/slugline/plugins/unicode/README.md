@@ -12,8 +12,7 @@ Character tables are large and a matter of taste, so they live outside the libra
 
 `transliterate('é')` returns `"e"`, `'ß'` returns `"ss"`, `'æ'` returns `"ae"`. A character that is not a Latin letter with a diacritic or a ligature is returned unchanged. The table covers Latin-1 Supplement and Latin Extended-A.
 
-Contract: [transliteration](../../docs/references/transliteration.md). Tests:
-[tests/latin.rs](tests/latin.rs).
+Contract: [transliteration](../../docs/references/transliteration.md). Tests: [tests/latin.rs](tests/latin.rs).
 
 ## Needs
 

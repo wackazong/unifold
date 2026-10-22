@@ -1,6 +1,6 @@
 # Threshold presets
 
-The presets the plant form offers. A preset fills in the three thresholds of the form; the owner may change them before saving. A saved plant keeps its thresholds and no link to the preset. The thresholds and their meaning are cited in [context.md](../explanation/context.md).
+The presets the owner can pick in the plant form. A preset fills in the three thresholds of the form; the owner may change them before saving. A saved plant keeps its thresholds and no link to the preset. The thresholds and their meaning are cited in [context.md](../explanation/context.md).
 
 ## Presets
 

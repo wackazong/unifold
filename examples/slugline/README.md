@@ -4,24 +4,21 @@ Turns text into a URL slug: `Crème brûlée` becomes `creme-brulee`. A Rust lib
 
 ## Why
 
-A slug has to be the same forever once it is in a URL, so the rules that make one are concentrated in one crate and tested as a contract, while the part that is a matter of taste, which letters replace `é` or `ß`, is a plug-in behind a trait. The command is a thin shell over the library. As an example of unifold, the workspace is cut so that every kind of connection appears once: a capability of a child implements one of the root, a need is provided by a sibling, and a plug-in needs the trait that the library defines. Each unit has a short `README.md`; only `core` carries documents beyond it, so a reader can see the smallest unit and a complete one side by side.
+A slug has to be the same forever once it is in a URL, so the rules that make one are concentrated in one crate and tested as a contract, while the part that is a matter of taste, which letters replace `é` or `ß`, is a plug-in behind a trait. The command is a thin shell over the library. As an example of unifold, the workspace is cut so that every kind of connection appears once; the [component diagram](docs/diagrams/component.md) shows them. Each child has a short `README.md`, and `core` also has a decision, invariants and a context item, so a reader can see the smallest unit and a complete one side by side.
 
 ## Capabilities
 
 ### `slugify`
 
-`slugify("Hello, World!", &Options::default())` returns `hello-world`. Only `a-z`, `0-9` and the separator remain; no separator at the start, the end or twice in a row; at most `max_len` characters; a slug is its own slug. Contract:
-[slugify](docs/references/slugify.md).
+`slugify("Hello, World!", &Options::default())` returns `hello-world`. Only `a-z`, `0-9` and the separator remain; no separator at the start, the end or twice in a row; at most `max_len` characters; a slug is its own slug. Contract: [slugify](docs/references/slugify.md).
 
 ### `plugin-api`
 
-The trait a transliteration plug-in implements, and a `slugify_with` that asks the plug-in about every character outside ASCII. Contract:
-[plugin-api](docs/references/plugin-api.md).
+The trait a transliteration plug-in implements, and a `slugify_with` that asks the plug-in about every character outside ASCII. Contract: [plugin-api](docs/references/plugin-api.md).
 
 ### `slugline-command`
 
-`slugline Crème brûlée` prints `creme-brulee`; without arguments it slugs each line of standard input. Exit code 0, 1 for an input or output failure, 2 for a bad option. Contract:
-[slugline-command](docs/references/slugline-command.md).
+`slugline Crème brûlée` prints `creme-brulee`; without arguments it slugs each line of standard input. Exit code 0, 1 for an input or output failure, 2 for a bad option. Contract: [slugline-command](docs/references/slugline-command.md).
 
 ## Out of scope
 
@@ -42,4 +39,4 @@ unifold check
 1. [Three commands](docs/tutorials/three-commands.md): what `check`, `show` and `capability` print for this project.
 2. [Break the map](docs/tutorials/break-the-map.md): what `check` says when a wiring line is missing or the code depends on something unwired.
 3. The generated [component diagram](docs/diagrams/component.md), or `unifold.html` in a browser.
-4. [core](core/README.md), the one unit with documents of its own.
+4. [core](core/README.md), the child with a decision, invariants and a context item.

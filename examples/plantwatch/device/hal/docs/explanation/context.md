@@ -1,13 +1,13 @@
 # Context of hal
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From device
 
 ### [device/0002 Only one part of the firmware touches the hardware](../../../docs/decisions/0002-only-one-part-touches-the-hardware.md)
 <!-- unifold:cites sha=c5740edf -->
 
-Says: one part owns all access to registers, pins and the radio stack and offers it as libraries without hardware types. The other parts run on a development machine.
+Says: one part owns all access to registers, pins and the radio stack and provides it as libraries without hardware types. The other parts run on a development machine.
 
 Here: `hal` is that part. No function of its four libraries hands out a board-specific type, so each can be replaced by a substitute.
 
@@ -16,7 +16,7 @@ Here: `hal` is that part. No function of its four libraries hands out a board-sp
 
 Says: the firmware has no loop that waits. It sleeps unless an alarm or the radio wakes it, and it advertises every 1285 ms.
 
-Here: `hal` owns the sleep state and enters it whenever no event is being handled. 1285 ms lies inside the range `radio` offers.
+Here: `hal` owns the sleep state and enters it whenever no event is being handled. 1285 ms lies inside the range that `radio` allows.
 
 ### [device/0003 Sequence numbers are derived from the tick count](../../../docs/decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md)
 <!-- unifold:cites sha=f6e3de04 -->

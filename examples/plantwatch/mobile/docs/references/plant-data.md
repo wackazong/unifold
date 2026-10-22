@@ -1,6 +1,6 @@
 # Contract of `plant-data`
 
-The queries, commands and guarantees of the capability through which the data on the phone is read and changed. The description is independent of a programming language. Reading, plant, thresholds, change state, alert, session and the ages of data are the things cited in [context.md](../explanation/context.md); the unit's own terms are in the glossary of `sync`.
+The queries, commands and guarantees of the capability through which the data on the phone is read and changed. The description is independent of a programming language. Reading, plant, thresholds, change state, alert, session and the ages of data are the things cited in [context.md](../explanation/context.md).
 
 ## Queries
 

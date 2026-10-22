@@ -48,15 +48,14 @@ A chunk in which every reading was dropped as invalid is confirmed without a del
 | Sessions at a time | 1 | One radio, short slots |
 | Disconnect after `Done` | At once | The sensor stick saves energy when no central is connected |
 
-The background slot and its length are cited in
-[context.md](../explanation/context.md).
+The background slot and its length are cited in [context.md](../explanation/context.md).
 
 ## What triggers a session
 
 | Trigger | Sensor sticks |
 |---|---|
 | The operating system reports a paired sensor stick | That one |
-| The operating system grants a slot of scheduled background work | All paired ones in range whose next reading is due |
+| The operating system grants a slot of scheduled background work | All paired ones in range whose last complete fetch began at least 6 hours ago |
 | "Fetch now" of the [sensor-readings](../../../docs/references/sensor-readings.md) capability | The named one, or all paired ones in range |
 | The program comes onto the screen, or a consumer attaches while it is there | All paired ones in range |
 | A pairing succeeds | The new one |
@@ -69,14 +68,14 @@ A sensor stick advertises whenever no central is connected. A standing request t
 
 | Situation | The client |
 |---|---|
-| A session ended in `Done` | Sets the standing request for this sensor stick again when its next reading is due: one sampling interval after its newest reading. The sensor stick states its sampling interval. |
-| The program is suspended before that moment | Sets the request at its next wake-up for any reason, if the reading is due by then |
+| A session ended in `Done` | Sets the standing request for this sensor stick again 6 hours after the session began, so that the sensor stick is fetched in the background at most 4 times a day |
+| The program is suspended before that moment | Sets the request at its next wake-up for any reason, if the 6 hours have passed by then |
 | A session ended early | Sets the request again at once |
 | "Fetch now", or the program is on the screen | Fetches regardless of what is due |
 
 ## Time of a reading
 
-the BLE profile defines how a central computes the time of a reading from a time reference, and when a time counts as estimated. The client adds:
+The BLE profile defines how a central computes the time of a reading from a time reference, and when a time counts as estimated. The client adds:
 
 | Open point | The client |
 |---|---|

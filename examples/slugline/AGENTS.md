@@ -22,6 +22,6 @@ This repository has a [unifold](https://unifold.md) map. A folder with a `unifol
 | Unit | Path | Summary |
 |---|---|---|
 | cli | `cli` | The slugline command |
-| core | `core` | Makes slugs and defines what a transliteration plug-in must offer |
+| core | `core` | Makes slugs and defines what a transliteration plug-in must provide |
 | unicode | `plugins/unicode` | Transliterates Latin letters with diacritics to ASCII |
 <!-- unifold:end -->

@@ -1,7 +1,6 @@
 # Processing in server
 
-What `server` stores and what it does in each of its four activities. It is internal to this unit. The alert and its life as a caller sees them are cited in
-[context](../explanation/context.md).
+What `server` stores and what it does in each of its four activities. It is internal to this unit. The alert and its life as a caller sees them are cited in [context](../explanation/context.md).
 
 ## What is stored
 

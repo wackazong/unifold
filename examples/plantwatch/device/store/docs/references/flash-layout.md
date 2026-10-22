@@ -26,7 +26,7 @@ A block whose header is erased is empty. A block whose header is neither erased 
 
 ## Ring
 
-A ring block holds 204 slots of 20 bytes after the header. `store` fills the slots of a block in ascending order and the blocks in ascending order of block number, from 17 back to 0.
+A ring block holds 204 slots of 20 bytes after the header. `store` fills the slots of a block in ascending order and the blocks in ascending order of block number, from 0 to 17 and then from 0 again.
 
 ### Slot
 

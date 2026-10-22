@@ -10,7 +10,7 @@ The contract of the capability `flash`: 20 blocks of durable memory of 4096 byte
 | Write | Whole 4-byte words at an offset that is a multiple of 4, inside one block. A write only changes bits from 1 to 0: afterwards a word holds the old value AND the written value. | 1 ms per word |
 | Erase | One whole block. Afterwards every byte is `0xFF`. | 100 ms |
 
-`hal` fits a write or an erase between radio events. The times include that wait.
+The provider fits a write or an erase between radio events. The times include that wait.
 
 ## Guarantees
 
@@ -18,8 +18,8 @@ The contract of the capability `flash`: 20 blocks of durable memory of 4096 byte
 - Power loss during a write leaves the words of that write undefined and every other word unchanged.
 - Power loss during an erase leaves that block undefined and every other block unchanged.
 - Each block endures at least 10 000 erases.
-- `hal` refuses a write or an erase while the supply is below 2.1 V, and any call whose range leaves the block or whose offset or length is not a multiple of 4. A refused call changes nothing and says so.
-- `hal` itself never writes to these blocks.
+- The provider refuses a write or an erase while the supply is below 2.1 V, and any call whose range leaves the block or whose offset or length is not a multiple of 4. A refused call changes nothing and says so.
+- The provider itself never writes to these blocks.
 
 ## Examples
 

@@ -29,6 +29,5 @@ The result: a reading that violates a threshold of the new quantity opens an ale
 
 ## Reference
 
-- [invariants](../../explanation/invariants.md),
-  [runtime](../../explanation/runtime.md): invariants and the life of an alert
+- [invariants](../../explanation/invariants.md), [runtime](../../explanation/runtime.md): invariants and the life of an alert
 - [context](../../explanation/context.md): the contract of alerts, the measured quantities

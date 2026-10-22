@@ -1,7 +1,6 @@
 # Conventions of test-rig
 
-How work on the rig is done. What must hold at every moment is in
-[invariants.md](../explanation/invariants.md).
+How work on the rig is done. What must hold at every moment is in [invariants.md](../explanation/invariants.md).
 
 - A test states a promise from the [catalogue](test-catalogue.md). Add its entry there before writing the test. A test without an entry tests an implementation detail.
 - If the rig and something under test disagree, first check the definition; the rig can be the one that is wrong.

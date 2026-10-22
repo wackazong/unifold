@@ -1,6 +1,6 @@
 # BLE profile of the sensor stick
 
-Defines how a sensor stick offers its readings to a central over Bluetooth Low Energy: what it advertises, which GATT attributes it has, and which procedures a central runs. Both sides of the radio link are built from this text. Version 1.0.
+Defines how a sensor stick serves its readings to a central over Bluetooth Low Energy: what it advertises, which GATT attributes it has, and which procedures a central runs. Both sides of the radio link are built from this text. Version 1.0.
 
 ## Parts
 

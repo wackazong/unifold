@@ -1,6 +1,6 @@
 # Requirements of cloud
 
-`cloud` must turn the readings that phones upload into the history of every plant and into alerts, and tell an owner once when a plant needs attention, while no client is online. It is for the phone app that acts for an owner and for whoever operates the containers. It is not for sensor sticks, which never reach it, and not for a caller without a token.
+`cloud` must turn the readings that clients upload into the history of every plant and into alerts, and tell an owner once when a plant needs attention, while no client is online. It is for clients that act for an owner and for whoever operates the containers. It is not for sensor sticks, which never reach it, and not for a caller without a token.
 
 ## Goals
 

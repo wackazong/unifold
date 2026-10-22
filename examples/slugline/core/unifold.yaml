@@ -1,4 +1,4 @@
-summary: Makes slugs and defines what a transliteration plug-in must offer
+summary: Makes slugs and defines what a transliteration plug-in must provide
 kind: library
 capabilities:
   slugify:

@@ -17,13 +17,11 @@ A test of the rig guards a promise that is visible at public interfaces. The pro
 6. **Write the test** so that it does exactly what the entry says. It
    - uses the waiting times of [configurations.md](../../references/configurations.md) and has none of its own,
    - creates what it needs and leaves nothing behind,
-   - does not branch on the configuration to check something different
-     ([0001](../../decisions/0001-one-catalogue-for-real-and-simulated-devices.md)),
+   - does not branch on the configuration to check something different ([0001](../../decisions/0001-one-catalogue-for-real-and-simulated-devices.md)),
    - words its failure as "expected … observed …" in terms of the entry.
 7. **See it fail.** Run the test against a simulated device with the stimulus changed so that the promise is broken, for example a threshold that is not crossed. A test that cannot fail guards nothing.
 8. **Run it in `simulated`,** ten times in a row. One failure in ten is a failing test.
-9. **Run it in `real`** if the catalogue entry says so; follow
-   [test-rig-run-against-real-hardware](../test-rig-run-against-real-hardware/SKILL.md).
+9. **Run it in `real`** if the catalogue entry says so; follow [test-rig-run-against-real-hardware](../test-rig-run-against-real-hardware/SKILL.md).
 10. **Update the counts** of tests per configuration in [configurations.md](../../references/configurations.md) and in the example of [README.md](../../../README.md).
 11. **Finish.** Run the generator and the checker of the project and review the files you changed.
 

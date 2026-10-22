@@ -1,8 +1,6 @@
 # Platform limits
 
-What iOS and Android let the app do, as far as the design depends on it. The values are design assumptions for the system versions named here. None of them has been confirmed against the vendors' documentation or on a phone yet; confirm each one before code relies on it. The
-[mobile-review-a-new-os-version](../skills/mobile-review-a-new-os-version/SKILL.md)
-skill keeps this file current.
+What iOS and Android let the app do, as far as the design depends on it. The values are design assumptions for the system versions named here. None of them has been confirmed against the vendors' documentation or on a phone yet; confirm each one before code relies on it. The [mobile-review-a-new-os-version](../skills/mobile-review-a-new-os-version/SKILL.md) skill keeps this file current.
 
 ## Supported systems
 

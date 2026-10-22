@@ -30,7 +30,7 @@ flowchart LR
 | Unit | Kind | Summary | Status |
 |---|---|---|---|
 | [cli](../../cli/README.md) | app | The slugline command | active |
-| [core](../../core/README.md) | library | Makes slugs and defines what a transliteration plug-in must offer | active |
+| [core](../../core/README.md) | library | Makes slugs and defines what a transliteration plug-in must provide | active |
 | [unicode](../../plugins/unicode/README.md) | library | Transliterates Latin letters with diacritics to ASCII | active |
 
 ### Connections

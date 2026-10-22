@@ -45,8 +45,7 @@ A reading that passes all checks is `new`.
 
 For the new readings of a batch `ingest` does the following before it answers:
 
-- It publishes one event per reading, in ascending order of sequence number
-  ([reading events](reading-events.md)).
+- It publishes one event per reading, in ascending order of sequence number ([reading events](reading-events.md)).
 - It waits until the event bus has acknowledged every event.
 - It records the sequence numbers in the accepted ranges that `ingest` keeps and waits for that acknowledgement too.
 

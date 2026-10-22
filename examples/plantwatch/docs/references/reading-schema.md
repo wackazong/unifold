@@ -1,7 +1,6 @@
 # Reading schema
 
-Defines what a reading is: its fields, its identity, its JSON form and its binary form. Everything that produces, stores or transfers a reading conforms to this schema. Version 1.0. The terms are defined in the
-[glossary](glossary.md).
+Defines what a reading is: its fields, its identity, its JSON form and its binary form. Everything that produces, stores or transfers a reading conforms to this schema. Version 1.0. The terms are defined in the [glossary](glossary.md).
 
 ## Fields
 

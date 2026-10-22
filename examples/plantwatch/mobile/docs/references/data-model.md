@@ -2,8 +2,7 @@
 
 The things the app handles, with their fields, their origin and who may change them. Every part of the app uses these names. How the things are laid out in the store on the phone is not defined here.
 
-Terms, units, ranges and identifier forms are inherited; see
-[context.md](../explanation/context.md).
+Terms, units, ranges and identifier forms are inherited; see [context.md](../explanation/context.md).
 
 ## Overview
 
@@ -30,10 +29,9 @@ Terms, units, ranges and identifier forms are inherited; see
 
 Sensor id and sequence number together identify a reading. Two readings with the same pair are the same reading; the one stored first stays.
 
-The tick count is carried along because the reading schema contains it. Only the part that fetches computes with it
-([0003](../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)).
+The tick count is carried along because the reading schema contains it. Only the part that fetches computes with it ([0003](../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)).
 
-The field names in stored documents and uploads are those of the the reading schema. This table names what the app relies on.
+The field names in stored documents and uploads are those of the reading schema. This table names what the app relies on.
 
 ## Plant
 

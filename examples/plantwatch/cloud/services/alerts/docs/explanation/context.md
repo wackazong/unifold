@@ -1,6 +1,6 @@
 # Context of alerts
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From cloud
 
@@ -23,18 +23,17 @@ Here: alerts and evaluation state live in the schema of `alerts`. Plants are rea
 
 Says: events arrive at least once, and a consumer's result must not change with a repeat. An effect outside the databases needs its own safeguard.
 
-Here: a reading is judged once. The notification is the outside effect; see
-[0002](../decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md).
+Here: a reading is judged once. The notification is the outside effect; see [0002](../decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md).
 
 ### [cloud: events between services](../../../../docs/references/events.md)
-<!-- unifold:cites sha=b3af8439 -->
+<!-- unifold:cites sha=0f4bf135 -->
 
 Says: events with the same `key` arrive in order. A subscription is named after its service. An event that fails for a passing reason stays unconfirmed.
 
 Here: the subscription is named `alerts`. An event stays unconfirmed while plant and thresholds cannot be had.
 
 ### [cloud: calls between services](../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=7282b622 -->
+<!-- unifold:cites sha=f87b1f71 -->
 
 Says: a public operation keeps its path and requires `X-Owner-Id`. A caller waits at most 5 seconds and repeats a failed call at most twice.
 
@@ -65,8 +64,7 @@ Here: the time budget of `alerts`, and the longest time an answer about threshol
 
 Says: a bound is the side of a threshold. The judged value is what is compared with it. A collapse identifier merges two notifications into one.
 
-Here: `alerts` uses these terms, and "registry" and "margin", as defined there. Its own terms are in its
-[glossary](../references/glossary.md).
+Here: `alerts` uses these terms, and "registry" and "margin", as defined there. Its own terms are in its [glossary](../references/glossary.md).
 
 ## From plantwatch
 

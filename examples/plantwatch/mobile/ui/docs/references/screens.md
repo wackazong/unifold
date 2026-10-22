@@ -1,9 +1,6 @@
-# Screens and navigation: contract of `app-ui`
+# Screens and navigation
 
-The screens, the ways between them, and what each screen shows in each state. The things shown are those of the data model cited in [context.md](../explanation/context.md); the unit's own terms are in the [glossary](glossary.md). The reasons for the navigation are in
-[decision 0001](../decisions/0001-the-plant-list-is-home-and-alerts-have-no-screen-of-their-own.md).
-The prepared data with which every state is checked is in
-[plant-data.md](../../../docs/references/plant-data.md).
+The screens, the ways between them, and what each screen shows in each state. The things shown are those of the data model cited in [context.md](../explanation/context.md); the unit's own terms are in the [glossary](glossary.md). The reasons for the navigation are in [decision 0001](../decisions/0001-the-plant-list-is-home-and-alerts-have-no-screen-of-their-own.md). Every state is checked with the cases of the [examples of `plant-data`](../../../docs/references/plant-data.md#examples).
 
 ## Screens
 
@@ -120,4 +117,4 @@ One quantity is drawn at a time; the owner switches between soil moisture, light
 |---|---|---|
 | Bluetooth | The owner first opens "Find sensor stick" | One screen that says why |
 | Camera | The owner first chooses "join" on "Welcome" | One sentence that says why |
-| Notifications | The first plant has been saved | One screen that says why; "Not now" is offered |
+| Notifications | The first plant has been saved | One screen that says why, with the choice "Not now" |

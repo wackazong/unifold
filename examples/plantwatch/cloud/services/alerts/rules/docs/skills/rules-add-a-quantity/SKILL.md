@@ -15,8 +15,7 @@ The result: `evaluate` returns "open" and "close" for the new quantity, with a m
 ## Steps
 
 1. **Cite the quantity** with unit and resolution in the item on measured quantities in [context](../../explanation/context.md).
-2. **Add the judged value** as a row to the table "Judged value" in
-   [evaluation](../../../../docs/references/evaluation.md).
+2. **Add the judged value** as a row to the table "Judged value" in [evaluation](../../../../docs/references/evaluation.md).
 3. **Choose the margin.** It is in the unit of the quantity, at least five times its resolution, and small against the usual distance between a threshold and the normal value. Add it to the table "Margins". Have a human confirm the number.
 4. **If the quantity needs memory**, add a field to the state, describe it in the section "State", and keep `v` at its value as long as an old state without the field is still read correctly. Otherwise raise `v` and write the code that reads both forms.
 5. **Write the tests first**, each as a sequence of readings with the expected changes, and add the first of them to the table "Examples": see "Checks". The tests meet the need `thresholds` with a table of answers, not with a network.
@@ -38,5 +37,4 @@ Each is a test with a sequence of readings:
 ## Reference
 
 - [evaluation](../../../../docs/references/evaluation.md): judged values, opening and closing, margins, state
-- [0001](../../decisions/0001-flapping-is-prevented-by-a-margin-on-closing.md):
-  what a margin is for and how large it must be
+- [0001](../../decisions/0001-flapping-is-prevented-by-a-margin-on-closing.md): what a margin is for and how large it must be

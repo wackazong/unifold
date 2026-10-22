@@ -4,7 +4,7 @@
 
 ## Why
 
-Something must run: hold the subscription, own the database schema, listen on a capability. This unit is that program, and it is kept free of everything that is not running. It does not know what makes a reading alarming and not how an owner is reached. It asks for both through needs whose contracts it writes itself. It changes when what is stored about an alert, the order of the steps or the queries change.
+Something must run: hold the subscription, own the database schema, listen on a network port. This unit is that program, and it is kept free of everything that is not running. It does not know what makes a reading alarming and not how an owner is reached. It asks for both through needs, each defined by a contract that the provider names too. It changes when what is stored about an alert, the order of the steps or the queries change.
 
 What it does know is order and durability. It is the one place that decides what is written together and what may repeat: a reading's outcome, the evaluation state and the owed notification are stored in one transaction; the event is confirmed afterwards; notifying is a second step that can run again. Every guarantee about "once" rests on these few rules, so they are concentrated here instead of being spread over the logic.
 
@@ -26,14 +26,15 @@ Limit: while `evaluation` cannot decide, events of the affected sensor stick wai
 
 Example: `GET /v1/alerts/7d2c1c1e-52a0-4b0b-8a3e-1f2d3c4b5a69` with the `X-Owner-Id` of another owner answers `404` with the code `not_found`.
 
+Contract: [alerts API](../../../docs/references/alerts-api.md).
+
 ## Needs
 
 ### `reading-events`
 
 Events of accepted readings, each with sensor id, sequence number, time, a flag for an estimated time and the measured values by name. `server` expects the events of one sensor stick in the order in which the readings were accepted, every accepted reading at least once, and an event to stay available for at least 7 days. It copes with repeats.
 
-Contract:
-[reading events as server expects them](../../../docs/references/reading-events.md).
+Contract: [reading events](../../../docs/references/reading-events.md).
 
 ### `evaluation`
 
@@ -46,14 +47,13 @@ A function that takes one reading and the evaluation state that the same functio
 
 `server` expects the function to change nothing outside its return value, to return within 20 seconds, to return no changes when it is given the same reading a second time, and never to ask for an alert to be opened that is open according to the state it was given.
 
-Contract: [evaluation as server expects it](../docs/references/evaluation.md).
+Contract: [evaluation](../docs/references/evaluation.md).
 
 ### `notification`
 
 A function that takes one opened alert, with alert id, owner id, plant id, plant name, quantity, bound, judged value, threshold and the time of the reading, and tells the owner about it. `server` expects one of three answers within 10 seconds: done, try again later, or failed for good. `server` expects that a second call for the same alert replaces the first notification on a phone instead of adding one.
 
-Contract:
-[notification as server expects it](../docs/references/notification.md).
+Contract: [notification](../docs/references/notification.md).
 
 ### `sql-db`
 
@@ -73,9 +73,6 @@ A broker with a durable subscription that all instances of `server` share. `serv
 ## Read next
 
 1. [docs/references/processing.md](docs/references/processing.md): what is stored, the handling of an event, delivery of notifications, expiry
-2. [docs/references/evaluation.md](../docs/references/evaluation.md),
-   [docs/references/notification.md](../docs/references/notification.md),
-   [docs/references/reading-events.md](../../../docs/references/reading-events.md):
-   the interfaces that the unit expects of its needs
+2. [evaluation](../docs/references/evaluation.md), [notification](../docs/references/notification.md), [reading events](../../../docs/references/reading-events.md): the contracts of its needs
 3. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
 4. [Context diagram](docs/diagrams/context.md)

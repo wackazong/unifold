@@ -1,6 +1,6 @@
 # Context of cloud
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From plantwatch
 
@@ -30,8 +30,7 @@ Here: readings arrive late and in batches. `cloud` judges them by the time they 
 
 Says: every hop delivers at least once. Sensor id and sequence number identify a reading; it never changes, and a receiver accepts one it has.
 
-Here: an upload reports a duplicate as success and no operation changes a reading. The same rule holds between the services, see
-[0004](../decisions/0004-every-event-consumer-is-idempotent.md).
+Here: an upload reports a duplicate as success and no operation changes a reading. The same rule holds between the services, see [0004](../decisions/0004-every-event-consumer-is-idempotent.md).
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
 <!-- unifold:cites sha=ad1b9b71 -->
@@ -80,5 +79,4 @@ Here: readings are evaluated as they arrive. History and closed alerts are kept 
 
 Says: a reading is one set of measurements of one sensor stick; a batch is a group of them. An alert is the state "this plant needs attention".
 
-Here: `cloud` uses plant, owner, sensor stick, attached, reading, batch, threshold, alert and notification as defined there. The terms it adds are in its own
-[glossary](../references/glossary.md).
+Here: `cloud` uses plant, owner, sensor stick, attached, reading, batch, threshold, alert and notification as defined there. The terms it adds are in its own [glossary](../references/glossary.md).

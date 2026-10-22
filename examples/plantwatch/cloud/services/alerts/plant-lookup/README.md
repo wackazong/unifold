@@ -8,9 +8,7 @@ The logic that judges a reading must not know that thresholds live behind a netw
 
 It is cut as an adapter with a plain function on one side and HTTP on the other, so that its caller can be tested with a stand-in that returns fixed answers, and so that a different source of thresholds replaces this unit and nothing else.
 
-The one real choice is what to do between asking every time and answering from memory. Answers are kept for at most 60 seconds, and an outage of the registry yields `unavailable` instead of an old answer
-([0001](docs/decisions/0001-keep-an-answer-for-at-most-60-seconds.md)).
-A late alert is better than an alert judged by thresholds that the owner has already changed.
+The one real choice is what to do between asking every time and answering from memory. Answers are kept for at most 60 seconds, and an outage of the registry yields `unavailable` instead of an old answer ([0001](docs/decisions/0001-keep-an-answer-for-at-most-60-seconds.md)). A late alert is better than an alert judged by thresholds that the owner has already changed.
 
 What must stay true: no answer is older than 60 seconds, and no failure reaches the caller as anything but `unavailable`.
 
@@ -73,7 +71,6 @@ An HTTP service inside the private network with one operation that `plant-lookup
 
 ## Read next
 
-1. [docs/references/thresholds.md](../docs/references/thresholds.md): the function, how answers of the registry are mapped, the kept answers
+1. [thresholds lookup](../docs/references/thresholds.md): the function, how answers of the registry are mapped, the kept answers
 2. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-3. [Context diagram](docs/diagrams/context.md),
-   [decisions](docs/decisions/index.md)
+3. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)

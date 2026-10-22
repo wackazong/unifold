@@ -6,12 +6,7 @@
 
 The promise of the product is "one notification when a plant needs attention". This unit owns that promise. It is the only place that compares a reading with a threshold and the only place that talks to the push service. It changes when that promise changes: what counts as needing attention, and how and when the owner is told.
 
-Inside, four things change for different reasons, and each is a child. The rules by which a reading is judged are pure logic, tested with tables of readings ([rules](rules/README.md)). The registry of plants and the push service are technologies behind a network; each has an adapter, so that the logic names neither
-([0003](docs/decisions/0003-thresholds-reach-the-judging-logic-through-an-adapter.md)).
-Consuming events, storing alerts and answering queries is plumbing with transactions ([server](server/README.md)). All are built into one program
-([0001](docs/decisions/0001-evaluation-and-notification-are-libraries-beside-one-process.md)),
-so that an alert and what led to it are stored in one transaction
-([0002](docs/decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md)).
+Inside, the logic of judging, the technologies behind a network and the plumbing with transactions change for different reasons, so each lives in a child of its own. The logic is tested with tables of readings and names no technology ([0003](docs/decisions/0003-thresholds-reach-the-judging-logic-through-an-adapter.md)). All children are built into one program ([0001](docs/decisions/0001-evaluation-and-notification-are-libraries-beside-one-process.md)), so that an alert and what led to it are stored in one transaction ([0002](docs/decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md)).
 
 What must stay true: an alert opens once, and an opened alert leads to one notification, although events and calls can repeat.
 
@@ -97,11 +92,8 @@ A broker with a durable subscription: `alerts` continues where it stopped after 
 
 ## Read next
 
-1. [docs/explanation/invariants.md](docs/explanation/invariants.md),
-   [runtime.md](docs/explanation/runtime.md): invariants, the life of an alert, the handling of one reading
-2. [docs/references/alerts-api.md](../../docs/references/alerts-api.md): how the API is served
+1. [docs/explanation/invariants.md](docs/explanation/invariants.md), [runtime.md](docs/explanation/runtime.md): invariants, the life of an alert, the handling of one reading
+2. [alerts API](../../docs/references/alerts-api.md): how the API is served
 3. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
 4. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-5. [Context diagram](docs/diagrams/context.md),
-   [component diagram](docs/diagrams/component.md),
-   [decisions](docs/decisions/index.md)
+5. [Context diagram](docs/diagrams/context.md), [component diagram](docs/diagrams/component.md), [decisions](docs/decisions/index.md)

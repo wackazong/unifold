@@ -6,7 +6,7 @@ The contract of the capability `scenario-control`: the HTTP API with which a cli
 
 | Property | Value |
 |---|---|
-| Address | `http://127.0.0.1:8650`. The capability is set with the command-line option `--control-capability`. |
+| Address | `http://127.0.0.1:8650`. The port is set with the command-line option `--control-port`. |
 | Bodies | JSON in UTF-8, member names lower-case with underscores |
 | Authentication | None. The API is reachable from the local machine only. |
 | Concurrency | The program handles one request at a time, in the order of arrival |

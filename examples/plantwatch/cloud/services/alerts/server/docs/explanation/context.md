@@ -1,6 +1,6 @@
 # Context of server
 
-What this unit inherits from the levels above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
+What this unit inherits from the units above. This is the only file of the unit that links upward. Each item is restated so that the unit can be understood when the link is not available.
 
 ## From alerts
 
@@ -56,14 +56,14 @@ Says: an event can arrive again. The consumer's change and its record of the han
 Here: the evaluation state is that record. It is stored in the same transaction as the alerts.
 
 ### [cloud: events between services](../../../../../docs/references/events.md)
-<!-- unifold:cites sha=b3af8439 -->
+<!-- unifold:cites sha=0f4bf135 -->
 
 Says: a subscription is named after its service. A consumer confirms an event it can never handle and leaves one unconfirmed that fails for a passing reason.
 
 Here: the subscription is named `alerts`. Events of an unknown type are confirmed and counted.
 
 ### [cloud: calls between services](../../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=7282b622 -->
+<!-- unifold:cites sha=f87b1f71 -->
 
 Says: a public operation is served under its public path and requires `X-Owner-Id`. Every service answers `GET /healthz` and listens on port 8080.
 

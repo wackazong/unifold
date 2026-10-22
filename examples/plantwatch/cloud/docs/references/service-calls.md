@@ -1,7 +1,6 @@
 # Calls between services
 
-Rules for HTTP calls from one service of `cloud` to another inside the private network. The reason for trusting the caller is in
-[0003](../decisions/0003-one-gateway-is-the-only-public-entry.md).
+Rules for HTTP calls from one service of `cloud` to another inside the private network. The reason for trusting the caller is in [0003](../decisions/0003-one-gateway-is-the-only-public-entry.md).
 
 ## Headers
 
@@ -12,7 +11,7 @@ Rules for HTTP calls from one service of `cloud` to another inside the private n
 
 - A service that serves an operation of the [public API](../../../docs/references/public-api/index.md) requires `X-Owner-Id` and limits its answer to that owner. Without the header it answers `400` with `invalid_request`.
 - A service does not verify tokens. It trusts `X-Owner-Id`, because it is reachable only from the private network.
-- A `X-Owner-Id` header that arrives from outside the private network is removed before the request is passed on.
+- An `X-Owner-Id` header that arrives from outside the private network is removed before the request is passed on.
 
 ## Paths
 
@@ -28,8 +27,7 @@ Rules for HTTP calls from one service of `cloud` to another inside the private n
 
 ## Errors
 
-- Error bodies and codes are those of the
-  [public API](../../../docs/references/public-api/index.md).
+- Error bodies and codes are those of the [public API](../../../docs/references/public-api/index.md).
 - A service that cannot reach something it needs answers `503` with `unavailable`.
 - A service passes on the error of a service it called for a client unchanged.
 
@@ -37,5 +35,4 @@ Rules for HTTP calls from one service of `cloud` to another inside the private n
 
 - A caller waits at most 5 seconds for a response.
 - Every operation can be repeated. A caller repeats a call that timed out or answered `503` at most twice, after 0.2 and after 1 second. Then it reports `503` to its own caller.
-- An event consumer that cannot complete a call leaves the event unconfirmed
-  ([events](events.md)).
+- An event consumer that cannot complete a call leaves the event unconfirmed ([events](events.md)).

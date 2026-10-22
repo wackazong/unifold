@@ -1,7 +1,6 @@
 # Scenario format
 
-Defines the scenario document: the course of sensor values over simulated time that the program plays instead of reading sensors. A scenario is one JSON document. It is the same in a file and in the body of a request to the
-[scenario-control API](scenario-control.md).
+Defines the scenario document: the course of sensor values over simulated time that the program plays instead of reading sensors. A scenario is one JSON document. It is the same in a file and in the body of a request to the [scenario-control API](scenario-control.md).
 
 ## File
 

@@ -6,8 +6,7 @@
 
 The moment a client uploads is the only chance to take its readings. This unit exists to make that moment as hard to fail as possible: it does the least that makes a reading safe, which is to check it, to store it durably as an event, and to say so. It changes when the checks on an uploaded reading change or when readings carry a new quantity.
 
-Everything else is left out on purpose. `ingest` has no database, calls no other service and does not know what a plant is. Its only dependency is the event bus, which it needs anyway to publish. Even the memory of which readings it has accepted lives there
-([0001](docs/decisions/0001-accepted-ranges-are-kept-on-the-event-bus.md)).
+Everything else is left out on purpose. `ingest` has no database, calls no other service and does not know what a plant is. Its only dependency is the event bus, which it needs anyway to publish. Even the memory of which readings it has accepted lives there ([0001](docs/decisions/0001-accepted-ranges-are-kept-on-the-event-bus.md)).
 
 `ingest` is also the border for the format of readings. It is the only place that reads an uploaded reading. Its events carry the values under names of their own, so that a new version of the upload format changes this unit and nothing behind it.
 
@@ -76,7 +75,7 @@ Contract: [reading events](../../docs/references/reading-events.md).
 - acknowledges a message only after it has stored it durably, and acknowledges 500 messages of up to 16 kB within 1 second,
 - delivers messages with the same key in the order of publication,
 - keeps every message of a topic for at least 7 days, also for subscribers that `ingest` does not know and that connect later,
-- offers a second kind of topic that keeps the latest message per key without a time limit and can be read from the beginning.
+- provides a second kind of topic that keeps the latest message per key without a time limit and can be read from the beginning.
 
 `ingest` expects the topics it uses to exist; it does not create them. Without the event bus it accepts nothing and answers `503`.
 
@@ -90,11 +89,8 @@ Contract: [reading events](../../docs/references/reading-events.md).
 
 ## Read next
 
-1. [docs/references/ingest-api.md](../../docs/references/ingest-api.md): the upload operation and the checks
-2. [docs/references/reading-events.md](../../docs/references/reading-events.md):
-   topic and content of the events
-3. [docs/references/accepted-ranges.md](docs/references/accepted-ranges.md):
-   the state with which duplicates are recognised
+1. [ingest API](../../docs/references/ingest-api.md): the upload operation and the checks
+2. [reading events](../../docs/references/reading-events.md): topic and content of the events
+3. [docs/references/accepted-ranges.md](docs/references/accepted-ranges.md): the state with which duplicates are recognised
 4. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-5. [Context diagram](docs/diagrams/context.md),
-   [decisions](docs/decisions/index.md)
+5. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
