@@ -1,0 +1,41 @@
+# The package is built from the single file that also ships inside the skill:
+# docs/skills/unifold/scripts/unifold.py. Not yet published; see README.md.
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unifold"
+version = "0.1.0"
+description = "Check, draw and query the unifold architecture map of a repository"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+dependencies = ["pyyaml>=6"]
+keywords = ["architecture", "documentation", "monorepo", "dependencies", "agents"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Documentation",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://unifold.md"
+Documentation = "https://unifold.md/tool"
+
+[project.scripts]
+unifold = "unifold:cli"
+
+[tool.setuptools]
+py-modules = ["unifold"]
+package-dir = { "" = "docs/skills/unifold/scripts" }
+
+# The skills travel with the package, so that `unifold init --agents` can install them.
+[tool.setuptools.data-files]
+"share/unifold/skills/unifold" = ["docs/skills/unifold/SKILL.md"]
+"share/unifold/skills/unifold/assets" = ["docs/skills/unifold/assets/*"]
+"share/unifold/skills/unifold-convert" = ["docs/skills/unifold-convert/SKILL.md"]
