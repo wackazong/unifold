@@ -54,14 +54,6 @@
       "minLength": 1,
       "pattern": "^[^\\n]*\\S[^\\n]*$"
     },
-    "level": {
-      "description": "core: only manifests are required and checked. full: also README.md, AGENTS.md and the document conventions. Holds for the unit and everything below it until a unit below sets another value.",
-      "enum": [
-        "core",
-        "full"
-      ],
-      "default": "core"
-    },
     "capabilities": {
       "description": "The capabilities, keyed by name.",
       "type": "object",
@@ -143,7 +135,7 @@
       "default": "none"
     },
     "max-lines": {
-      "description": "Root only. The line limit for hand-written documents at level full.",
+      "description": "Root only. The line limit for hand-written documents.",
       "type": "integer",
       "minimum": 1,
       "default": 200
@@ -165,7 +157,7 @@
       }
     },
     "provider": {
-      "description": "`child.capability`, a need of this unit (bare name), or a folder of this unit that is not a unit (`./folder`; `./` is the unit's own code).",
+      "description": "`child.capability`, or a need of this unit (bare name). A connection joins two units; a folder is never a provider.",
       "type": "string",
       "minLength": 1,
       "pattern": "^[^*]"
@@ -192,16 +184,12 @@
         "contract": {
           "type": "string",
           "minLength": 1,
-          "description": "Where the exact definition is. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
+          "description": "Where the exact definition is. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, a unit above it or a unit below it, never in a sibling. Required when the capability is used: both sides of a connection name the same document."
         },
         "verified-by": {
           "type": "string",
           "minLength": 1,
-          "description": "What checks the capability against its contract, for example tests. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
-        },
-        "conforms-to": {
-          "description": "The name of a need of the same unit whose definition this capability implements.",
-          "$ref": "#/$defs/entryName"
+          "description": "What checks the capability against its contract, for example tests. A URL, or a path as for `contract`. Never required."
         }
       }
     },
@@ -227,12 +215,12 @@
         "contract": {
           "type": "string",
           "minLength": 1,
-          "description": "The interface this unit expects. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
+          "description": "The definition this need and its provider share. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, a unit above it or a unit below it, never in a sibling. Required when the need is wired: both sides of a connection name the same document."
         },
         "verified-by": {
           "type": "string",
           "minLength": 1,
-          "description": "What checks a provider against the contract. A URL, or a path relative to the folder of the manifest. The path may point anywhere inside the project and must exist."
+          "description": "What checks a provider against the contract. A URL, or a path as for `contract`. Never required."
         },
         "optional": {
           "description": "true if the need may stay unconnected.",

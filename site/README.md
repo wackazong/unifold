@@ -1,8 +1,6 @@
 # The site unifold.md
 
-`build.py` writes the whole site into `site/_out/` from `README.md`,
-`docs/references/unifold/*.md`, the skill and the examples. Nothing is
-converted by hand; `_out/` is not committed.
+`build.py` writes the whole site into `site/_out/` from `README.md`, `docs/references/unifold/*.md`, the skill and the examples. Nothing is converted by hand; `_out/` is not committed.
 
 ## Build
 
@@ -25,33 +23,23 @@ GitHub Pages serves `spec.html` at `/spec`; `spec/index.html` would redirect to 
 
 ## Diagrams
 
-A Mermaid block is replaced by an inline SVG from `site/diagrams/<hash>.svg`
-(hash of the Mermaid source), coloured by `style.css` for light and dark.
-These files are committed, so continuous integration needs no browser. When
-a block changes, the build renders the missing file if it finds Mermaid CLI,
-and otherwise warns and shows the Mermaid source:
+A Mermaid block is replaced by an inline SVG from `site/diagrams/<hash>.svg` (hash of the Mermaid source), coloured by `style.css` for light and dark. These files are committed, so continuous integration needs no browser. When a block changes, the build renders the missing file if it finds Mermaid CLI, and otherwise warns and shows the Mermaid source:
 
 ```sh
 npm install --prefix site @mermaid-js/mermaid-cli   # or set MMDC=/path/to/mmdc
 python3 site/build.py                                # then commit site/diagrams/
 ```
 
-`MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. `shots.py` (needs
-Playwright) takes screenshots and rewrites `static/og.png`; the build does not use it.
+`MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. `shots.py` (needs Playwright) takes screenshots and rewrites `static/og.png`; the build does not use it.
 
 ## Domain
 
-In the repository: Settings, Pages, source "GitHub Actions", custom domain
-`unifold.md`, then "Enforce HTTPS". With deployment from a workflow the
-`CNAME` file in `_out/` is ignored; the setting counts. At the DNS provider
-of `unifold.md`, as documented by GitHub
+In the repository: Settings, Pages, source "GitHub Actions", custom domain `unifold.md`, then "Enforce HTTPS". With deployment from a workflow the `CNAME` file in `_out/` is ignored; the setting counts. At the DNS provider of `unifold.md`, as documented by GitHub
 (<https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site>,
 read 2026-10-07):
 
-- `A` records for the apex: `185.199.108.153`, `185.199.109.153`,
-  `185.199.110.153`, `185.199.111.153`
-- `AAAA` records for the apex: `2606:50c0:8000::153`, `2606:50c0:8001::153`,
-  `2606:50c0:8002::153`, `2606:50c0:8003::153`
+- `A` records for the apex: `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
+- `AAAA` records for the apex: `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153`
 - `CNAME` for `www` to `<owner>.github.io`, so that `www.unifold.md` redirects.
 
 ## Placeholders

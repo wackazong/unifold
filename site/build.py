@@ -46,8 +46,8 @@ TUT = ROOT / "docs" / "tutorials"
 
 # slug (the URL), source file, name in the navigation, one line for indexes, kind
 CHAPTERS = [
-    ("spec", REF / "spec.md", "The standard", "The whole standard on one page: manifest, wiring, levels, what a checker guarantees.", "Standard"),
-    ("documents", REF / "documents.md", "Documents", "Level full: the files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, where a file may point.", "Reference"),
+    ("spec", REF / "spec.md", "The standard", "The whole standard on one page: manifest, wiring, documents, what a checker guarantees.", "Standard"),
+    ("documents", REF / "documents.md", "Documents", "The files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, where a file may point.", "Reference"),
     ("writing", REF / "writing.md", "Writing", "How each document is written: context items, decisions, references, skills, tutorials, explanation files, the review checklist.", "Reference"),
     ("agents", REF / "agents.md", "Agents", "How coding agents find and use unifold, per agent.", "Reference"),
     ("tool", REF / "tool.md", "Tool", "The reference tool: commands, output, hooks, continuous integration.", "Reference"),
