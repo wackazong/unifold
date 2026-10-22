@@ -23,7 +23,6 @@ against itself and against the dependencies it finds in the code.
   skills [sync] [PATH]        list skills, or write stubs where agents look for them
   site [PATH]                 write the HTML explorer
   rules [ID]                  the rules that `check` applies
-  mcp [PATH]                  serve show, capability, impact, check, tree over MCP (stdio)
 
 Documentation: https://unifold.md
 """
@@ -4102,134 +4101,6 @@ def skills_list(project: Project) -> list:
             for u in project.units for s in skills_of(project, u) if s["exists"]]
 
 
-# ----- MCP
-
-MCP_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
-MCP_TOOLS = [
-    {"name": "show", "description": "One unit of the unifold map: summary, status, capabilities and "
-     "needs, who finally provides each need and who uses each capability, skills, decisions, "
-     "documents by kind (tutorials, references, explanation), files.",
-     "inputSchema": {"type": "object", "properties": {"path": {
-         "type": "string", "description": "Folder or file inside the project. Default: the project root."}}}},
-    {"name": "capability", "description": "Both ends of every connection of one capability or need: "
-     "summaries, contracts, verified-by, status, and the README section of each side.",
-     "inputSchema": {"type": "object", "required": ["name"], "properties": {
-         "path": {"type": "string", "description": "Folder of the unit."},
-         "name": {"type": "string", "description": "Name of a capability or need of that unit."}}}},
-    {"name": "impact", "description": "Everything that depends on a unit, or on one of its "
-     "capabilities, transitively, with status; and the context items that cite its files.",
-     "inputSchema": {"type": "object", "properties": {
-         "path": {"type": "string", "description": "Folder of the unit, or a file in it."},
-         "capability": {"type": "string", "description": "Limit to one capability of the unit."}}}},
-    {"name": "check", "description": "Check the map: manifests, wiring, generated files, "
-     "documents, and the comparison with dependencies found in code. Returns "
-     "findings with rule, severity, file, line, message and fix. Changes nothing.",
-     "inputSchema": {"type": "object", "properties": {
-         "path": {"type": "string", "description": "Any folder inside the project."},
-         "no_deps": {"type": "boolean", "description": "Skip the comparison with code."}}}},
-    {"name": "tree", "description": "The unit tree: path, name, status, summary, capabilities and "
-     "needs of every unit.",
-     "inputSchema": {"type": "object", "properties": {
-         "path": {"type": "string", "description": "Any folder inside the project."},
-         "depth": {"type": "integer", "description": "Levels below the root to list."}}}},
-]
-
-
-def mcp_call(name: str, args: dict, base: str):
-    path = args.get("path") or "."
-    if not isinstance(path, str):
-        raise Fail("bad-argument", "'path' must be a string")
-    path = path if os.path.isabs(path) else os.path.join(base, path)
-    if name == "check":
-        return run_check(path, no_deps=bool(args.get("no_deps")))
-    project = open_project(path)
-    if name == "tree":
-        depth = args.get("depth")
-        return {"units": tree_data(project, depth if isinstance(depth, int) else None)}
-    unit = unit_for(project, path)
-    if name == "show":
-        return describe(project, unit)
-    if name == "capability":
-        if not isinstance(args.get("name"), str):
-            raise Fail("bad-argument", "'name' is required: the name of a capability or need")
-        return capability_data(project, unit, args["name"])
-    if name == "impact":
-        target = real(path)
-        return impact(project, unit, args.get("capability"), target if os.path.isfile(target) else None)
-    raise Fail("unknown-tool", f"unknown tool '{name}'")
-
-
-def mcp_handle(message, base: str):
-    """Answer one JSON-RPC message. Returns the response, or None for a notification."""
-    if not isinstance(message, dict) or message.get("jsonrpc") != "2.0" \
-            or not isinstance(message.get("method"), str):
-        if isinstance(message, dict) and "method" not in message and "id" in message:
-            return None                               # a response to us: nothing to do
-        return {"jsonrpc": "2.0", "id": message.get("id") if isinstance(message, dict) else None,
-                "error": {"code": -32600, "message": "not a JSON-RPC 2.0 request"}}
-    method, params = message["method"], message.get("params")
-    params = params if isinstance(params, dict) else {}
-    if "id" not in message:
-        return None
-    reply = {"jsonrpc": "2.0", "id": message["id"]}
-    if method == "initialize":
-        wanted = params.get("protocolVersion")
-        reply["result"] = {
-            "protocolVersion": wanted if wanted in MCP_VERSIONS else MCP_VERSIONS[0],
-            "capabilities": {"tools": {"listChanged": False}},
-            "serverInfo": {"name": "unifold", "version": TOOL_VERSION},
-            "instructions": "Read-only access to the unifold architecture map of this "
-                            "repository. Start with `tree`, then `show` for a unit."}
-    elif method == "ping":
-        reply["result"] = {}
-    elif method == "tools/list":
-        reply["result"] = {"tools": [{**tool, "annotations": {"readOnlyHint": True}}
-                                     for tool in MCP_TOOLS]}
-    elif method == "tools/call":
-        name, args = params.get("name"), params.get("arguments")
-        if name not in [tool["name"] for tool in MCP_TOOLS]:
-            reply["error"] = {"code": -32602, "message": f"unknown tool: {name}"}
-            return reply
-        try:
-            data = mcp_call(name, args if isinstance(args, dict) else {}, base)
-            failed = False
-        except Fail as exc:
-            data, failed = {"ok": False, "error": {"code": exc.code, "message": exc.message}}, True
-        except Exception as exc:                      # the server must survive any call
-            data, failed = {"ok": False, "error": {"code": "internal",
-                                                   "message": f"{type(exc).__name__}: {exc}"}}, True
-        reply["result"] = {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}],
-                           "structuredContent": data, "isError": failed}
-    else:
-        reply["error"] = {"code": -32601, "message": f"method not found: {method}"}
-    return reply
-
-
-def serve_mcp(base: str) -> int:
-    """Model Context Protocol over stdio: one JSON-RPC message per line."""
-    stdin = sys.stdin.buffer
-    while True:
-        raw = stdin.readline()
-        if not raw:
-            return 0
-        line = raw.decode("utf-8", errors="replace").strip()
-        if not line:
-            continue
-        try:
-            message = json.loads(line)
-        except ValueError:
-            reply = {"jsonrpc": "2.0", "id": None,
-                     "error": {"code": -32700, "message": "parse error"}}
-        else:
-            if isinstance(message, list):
-                reply = [r for r in (mcp_handle(m, base) for m in message) if r is not None] or None
-            else:
-                reply = mcp_handle(message, base)
-        if reply is not None:
-            sys.stdout.write(json.dumps(reply, ensure_ascii=False) + "\n")
-            sys.stdout.flush()
-
-
 # ----- command line
 
 COMMANDS = {
@@ -4250,7 +4121,6 @@ COMMANDS = {
     "skills": "list every skill; `skills sync` writes stubs into .agents/skills and .claude/skills",
     "site": "write the HTML explorer",
     "rules": "print the rules that `check` applies, or one rule",
-    "mcp": "serve show, capability, impact, check and tree as MCP tools over stdio",
 }
 
 
@@ -4316,7 +4186,6 @@ def build_parser() -> argparse.ArgumentParser:
                           "mermaid.min.js, which is embedded so that the page works offline")
     cmd = command("rules", path=False)
     cmd.add_argument("id", nargs="?", help="a rule id, for example W2")
-    command("mcp", as_json=False)
     return parser
 
 
@@ -4365,8 +4234,6 @@ def run(args) -> int:
                   ("" if args.agents else " `unifold init --agents` sets up coding agents."))
         emit(args, {"ok": True, **result}, text)
         return 0
-    if name == "mcp":
-        return serve_mcp(os.path.abspath(args.path))
     if name == "check":
         if args.format == "json":
             args.json = True

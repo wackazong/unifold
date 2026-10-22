@@ -1,6 +1,6 @@
 # JSON output of the reference tool
 
-Every command of the [tool](tool.md) except `mcp` accepts `--json` and then prints one JSON value on standard output. Paths are relative to the project root, with forward slashes; the root itself is `"."`. Later versions may add keys.
+Every command of the [tool](tool.md) accepts `--json` and then prints one JSON value on standard output. Paths are relative to the project root, with forward slashes; the root itself is `"."`. Later versions may add keys.
 
 ## Failure
 
@@ -17,7 +17,6 @@ When a command cannot run, it prints this object, a message on standard error, a
 | `bad-root` | The root manifest does not parse or states an unsupported version; `check` reports it as a finding instead |
 | `no-such-path`, `not-a-folder`, `not-a-root` | The path given does not fit the command |
 | `unknown-capability`, `unknown-rule`, `nested-project` | The thing asked for does not exist here |
-| `bad-argument` | MCP only: an argument of a tool has the wrong type or is missing |
 | `not-writable`, `io`, `no-mermaid` | A file could not be read or written |
 | `internal` | A bug in the tool |
 
@@ -126,17 +125,3 @@ The first end is the capability or need asked for; the others are every final us
   {"file": "web/docs/explanation/context.md", "line": 12, "cites": "db/README.md",
    "title": "db: storage rules", "action": "refreshed"}]}
 ```
-
-## MCP
-
-`unifold mcp` answers `initialize`, `ping`, `tools/list` and `tools/call` as JSON-RPC 2.0, one message per line. A tool result carries the JSON of the command twice: as text in `content[0].text` and as `structuredContent`; the list of `tree` is wrapped as `{"units": [...]}`. A command that fails gives a result with `"isError": true` and the failure object above; an unknown tool gives error `-32602`, an unknown method `-32601`.
-
-| Tool | Arguments |
-|---|---|
-| `show` | `path` |
-| `capability` | `path`, `name` (required) |
-| `impact` | `path`, `capability` |
-| `check` | `path`, `no_deps` |
-| `tree` | `path`, `depth` |
-
-`path` is relative to the folder the server was started for.

@@ -8,7 +8,7 @@ How a coding agent finds out that a repository uses unifold, what it reads, and 
 |---|---|---|
 | `AGENTS.md` | A generated file per unit: a pointer to `README.md`, the documents of the unit by kind, its skills. The root file also carries the unifold block: what unifold is, the commands `show`, `capability` and `check`, and an index of the units (name, path, summary) for projects up to 40 units | Always, where the agent loads `AGENTS.md` |
 | The skills | `unifold-convert`, the procedure that brings a repository into the format, and `unifold`, the procedures for reading and changing a unifold project | When the agent decides that the task calls for it |
-| The tool | `unifold show`, `capability`, `impact` and `check`, each with `--json`; optionally as an MCP server | When the agent runs it |
+| The tool | `unifold show`, `capability`, `impact` and `check`, each with `--json` | When the agent runs it |
 
 `unifold init --agents` sets up all three: it installs the skills in `docs/skills/` of the root, writes the stubs described below, and adds the block to the root `AGENTS.md` ([tool.md](tool.md)). Why there are three ways and not one is in [reasoning.md](../../explanation/reasoning.md).
 
@@ -61,10 +61,9 @@ Consequences:
 
 `show` and `capability` print the status of every unit they mention and mark planned units and proposed decisions.
 
-## Hooks, continuous integration, MCP
+## Hooks and continuous integration
 
 - Run `unifold check` at the end of an agent's turn, not after every edit: a unit that is being added is broken for a moment. `check --fix` writes the generated files and no stamp: a stamp is written only by `unifold stamp`, after `Says` was compared with its source. `check --json` gives findings with file, line and a proposed fix.
-- `unifold mcp` is an optional MCP server over standard input and output with the tools `show`, `capability`, `impact`, `check` and `tree`, for agents that should read the map without shell access.
 
 The commands, the JSON shapes, a pre-commit hook and a CI job are in
 [tool.md](tool.md).

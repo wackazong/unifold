@@ -30,9 +30,8 @@ Once published: `uvx unifold check`. The examples below write `unifold`. `PATH` 
 | `skills [sync] [PATH]` | Lists all skills; `sync` writes stubs into `.agents/skills` and `.claude/skills` ([agents.md](agents.md)). |
 | `site [PATH] [-o FILE]` | Writes the HTML explorer. |
 | `rules [ID]` | Prints the rule table, or one rule with its fix. |
-| `mcp [PATH]` | Serves `show`, `capability`, `impact`, `check` and `tree` over MCP. |
 
-Every command except `mcp` accepts `--json`. With `--json`, a failure also prints JSON ([tool-json.md](tool-json.md)).
+Every command accepts `--json`. With `--json`, a failure also prints JSON ([tool-json.md](tool-json.md)).
 
 | Exit code | Meaning |
 |---|---|
@@ -121,10 +120,6 @@ A coding agent should check when it stops, not after every edit: a unit that is 
   "command": "cd \"$CLAUDE_PROJECT_DIR\" && uvx unifold check --fix --quiet >&2 || exit 2"}]}]}}
 ```
 
-## MCP
-
-`unifold mcp [PATH]` is a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio, for agents that should read the map without a shell. It offers five read-only tools, `show`, `capability`, `impact`, `check` and `tree`, with the arguments of the commands and their JSON as the result. It speaks protocol versions 2024-11-05, 2025-03-26 and 2025-06-18 and needs no further package. To register it, give the client the command `uvx unifold mcp`, for example in `.mcp.json`.
-
 ## What the tool does not read
 
 - Folders whose name starts with a dot, the `docs` folder of a unit, `node_modules`, `__pycache__`, Cargo build folders, Python virtual environments, symbolic links to folders, the `ignore` folders, and every file and folder that git ignores (`.gitignore`, `.git/info/exclude` and the global excludes; a committed file is read even if a pattern matches it). List third-party code that is committed under `ignore` in the root manifest.
@@ -134,4 +129,4 @@ A coding agent should check when it stops, not after every edit: a unit that is 
 
 ## Testing another implementation
 
-[conformance.py](../../../tests/conformance.py) holds the test cases as data: small projects with the findings that `check --json` must report, as rule, severity and file, and scenarios for `init`, stamps, `--fix`, JSON on failure and MCP. `python3 tests/conformance.py --tool "CMD"` runs them against another tool; `--write DIR` writes the cases as files. An implementation conforms when all cases pass. Cases for generated files run without the reference generator, so a second generator is tested too.
+[conformance.py](../../../tests/conformance.py) holds the test cases as data: small projects with the findings that `check --json` must report, as rule, severity and file, and scenarios for `init`, stamps, `--fix` and JSON on failure. `python3 tests/conformance.py --tool "CMD"` runs them against another tool; `--write DIR` writes the cases as files. An implementation conforms when all cases pass. Cases for generated files run without the reference generator, so a second generator is tested too.

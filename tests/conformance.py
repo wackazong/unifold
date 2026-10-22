@@ -9,7 +9,7 @@ implementation can be tested with `--tool`:
   `check --json` must report for it, as "severity rule file". The comparison
   is exact: nothing missing, nothing extra.
 - SCENARIOS: a sequence of commands with assertions (init, stamps, --fix,
-  JSON on failure, idempotent generation, MCP, ...).
+  JSON on failure, idempotent generation, ...).
 
     python3 tests/conformance.py                 all tests against the reference tool
     python3 tests/conformance.py NAME ...        only tests whose name contains NAME
@@ -1033,64 +1033,6 @@ def scenario_stub_names(runner: Runner, tmp: str):
     check(runner.findings(folder) == [], f"clean after skills sync: {runner.findings(folder)}")
 
 
-def scenario_mcp(runner: Runner, tmp: str):
-    folder = new_project(tmp, project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}))
-    runner.run("generate", str(folder))
-    messages = [
-        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
-            "protocolVersion": "2025-03-26", "capabilities": {},
-            "clientInfo": {"name": "test", "version": "0"}}},
-        {"jsonrpc": "2.0", "method": "notifications/initialized"},
-        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
-        {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
-         "params": {"name": "show", "arguments": {"path": "a"}}},
-        {"jsonrpc": "2.0", "id": 4, "method": "tools/call",
-         "params": {"name": "capability", "arguments": {"path": "b", "name": "x"}}},
-        {"jsonrpc": "2.0", "id": 5, "method": "tools/call",
-         "params": {"name": "impact", "arguments": {"path": "b"}}},
-        {"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "check"}},
-        {"jsonrpc": "2.0", "id": 7, "method": "tools/call",
-         "params": {"name": "tree", "arguments": {"depth": 0}}},
-        {"jsonrpc": "2.0", "id": 8, "method": "tools/call",
-         "params": {"name": "capability", "arguments": {"path": "b", "name": "nothing"}}},
-        {"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": "delete"}},
-        {"jsonrpc": "2.0", "id": 10, "method": "resources/list"},
-        {"jsonrpc": "2.0", "id": 11, "method": "ping"},
-    ]
-    stdin = "\n".join(json.dumps(m) for m in messages[:2]) + "\nnot json\n" \
-        + "\n".join(json.dumps(m) for m in messages[2:]) + "\n"
-    done = runner.run("mcp", str(folder), stdin=stdin)
-    check(done.returncode == 0, f"mcp exit: {done.returncode} {done.stderr}")
-    replies = [json.loads(line) for line in done.stdout.splitlines() if line.strip()]
-    by_id = {r.get("id"): r for r in replies}
-    check(len(replies) == 12 and all(r["jsonrpc"] == "2.0" for r in replies),
-          f"one reply per request, none for the notification: {len(replies)}")
-    init = by_id[1]["result"]
-    check(init["protocolVersion"] == "2025-03-26" and "tools" in init["capabilities"]
-          and init["serverInfo"]["name"] == "unifold", f"initialize: {init}")
-    check(by_id[None]["error"]["code"] == -32700, "parse error")
-    tools = by_id[2]["result"]["tools"]
-    check([t["name"] for t in tools] == ["show", "capability", "impact", "check", "tree"]
-          and all(t["inputSchema"]["type"] == "object" for t in tools), f"tools/list: {tools}")
-
-    def content(reply):
-        return json.loads(reply["result"]["content"][0]["text"])
-    check(content(by_id[3])["needs"]["x"]["provided-by"][0]["unit"] == "b", "tools/call show")
-    check(len(content(by_id[4])["ends"]) == 2, "tools/call capability")
-    check(content(by_id[5])["dependents"][0]["unit"] == "a", "tools/call impact")
-    check(content(by_id[6])["ok"] is True and by_id[6]["result"]["isError"] is False, "tools/call check")
-    check([u["path"] for u in content(by_id[7])["units"]] == ["."], "tools/call tree")
-    check(by_id[8]["result"]["isError"] is True and "nothing" in content(by_id[8])["error"]["message"],
-          "a failing tool call is a result with isError")
-    check(by_id[9]["error"]["code"] == -32602 and by_id[10]["error"]["code"] == -32601
-          and by_id[11]["result"] == {}, "unknown tool, unknown method, ping")
-    newer = runner.run("mcp", str(folder), stdin=json.dumps(
-        {"jsonrpc": "2.0", "id": 1, "method": "initialize",
-         "params": {"protocolVersion": "2099-01-01"}}) + "\n")
-    check(json.loads(newer.stdout)["result"]["protocolVersion"] == "2025-06-18",
-          "an unknown protocol version is answered with the newest one the server speaks")
-
-
 def scenario_site(runner: Runner, tmp: str):
     folder = new_project(tmp, project("wiring:\n  a.x: b.x\n",
                                    {"a": NEEDS_X, "b": CAPABILITY_X + "status: planned\n"}))
@@ -1190,7 +1132,6 @@ SCENARIOS = [
     ("scenario-hints-d1-and-capability", scenario_hints),
     ("scenario-init-agents-and-skill-stubs", scenario_agents),
     ("scenario-skill-stub-names", scenario_stub_names),
-    ("scenario-mcp-exchange", scenario_mcp),
     ("scenario-site", scenario_site),
     ("scenario-robustness", scenario_robustness),
 ]
