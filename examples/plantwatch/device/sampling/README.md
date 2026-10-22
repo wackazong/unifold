@@ -5,7 +5,29 @@ interval it asks for raw sensor values, converts them into soil moisture,
 light and temperature, gives the reading its sequence number and tick
 count, and hands it to everyone who has subscribed.
 
-## Provides
+## Why
+
+A reading is made in exactly one place, and this is it. `sampling` changes
+when what is measured changes, or how a raw value becomes a quantity: a
+sensor part, a probe type, the housing, a new quantity.
+
+Before `sampling` there are only raw signals; after it, a reading is kept or
+passed on, never altered. Measuring, converting and numbering are one unit
+so that the rule "a reading is complete and final when it leaves" has one
+owner. `sampling` does not know where its readings go, and it does not know
+the board: it converts numbers into numbers, which makes the calibration
+testable with a table of values.
+
+The main tension is identity. A reading must carry its sequence number
+from the first moment, but this unit has no memory that survives a start.
+The number is therefore computed from the tick count
+(see [context](docs/explanation/context.md)). The price is a jump at every start.
+
+What must stay true: one reading per interval, whatever the sensors do.
+A reading with absent quantities says "alive, but could not measure",
+which a missing reading cannot say.
+
+## Capabilities
 
 ### `readings`
 
@@ -36,7 +58,7 @@ What a subscriber can rely on:
   start.
 - **Absent, not wrong.** A quantity is absent when its raw value is
   unavailable or outside the plausible limits of the
-  [calibration](doc/references/calibration.md). No quantity is ever
+  [calibration](docs/references/calibration.md). No quantity is ever
   outside its range.
 - **Order of delivery.** `sampling` calls the subscribers one after another,
   in the order in which they registered. All of them have returned before
@@ -66,14 +88,14 @@ On request, one set of raw values within 300 ms: a soil value as a share
 of the probe's supply, a light value in counts of 0.01 lux, a temperature
 value in counts of 1/16 °C. Each can be reported as unavailable on its
 own. `sampling` asks once per reading and expects the sensors to draw no
-current in between. Contract: [sensor-io](doc/references/sensor-io.md).
+current in between. Contract: [sensor-io](docs/references/sensor-io.md).
 
 ### `timer`
 
 A tick count whose boot counter is higher at every start than ever before
 and whose seconds go on while the board sleeps, wrong by at most 100 ppm;
 and an alarm that calls `sampling` not before the second it names and at
-most 1 s after it. Contract: [timer](doc/references/timer.md).
+most 1 s after it. Contract: [timer](docs/references/timer.md).
 
 ## Out of scope
 
@@ -83,10 +105,12 @@ most 1 s after it. Contract: [timer](doc/references/timer.md).
 - Smoothing over several readings. Every reading stands for one moment.
 - Judging whether a value is good or bad for a plant.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why readings are made here and numbered this way
-- [doc/context.md](doc/context.md): what `sampling` inherits from above
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
-- [Calibration](doc/references/calibration.md): from raw values to percent, lux and degrees
+1. [docs/references/calibration.md](docs/references/calibration.md): formulas, constants and test cases
+2. What `sampling` expects of its needs:
+   [sensor-io](docs/references/sensor-io.md),
+   [timer](docs/references/timer.md)
+3. [docs/explanation/context.md](docs/explanation/context.md): what `sampling` inherits from above
+4. [Context diagram](docs/diagrams/context.md)
+5. [Decisions](docs/decisions/index.md)

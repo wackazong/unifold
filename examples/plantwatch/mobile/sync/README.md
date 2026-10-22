@@ -6,7 +6,31 @@ fetched from sensor sticks, uploads them to the server, and brings what the
 server knows back to the phone. Whoever reads from it never waits for a
 network.
 
-## Provides
+## Why
+
+A phone is offline in cellars and stairwells and comes online at moments
+nobody controls. This library exists so that neither fact reaches a reader
+of the data. It owns the one store on the phone, and it alone speaks to the
+server. A reader asks the store; the exchange with the server runs behind
+the store, on its own schedule.
+
+The unit changes when the phone shall keep something new or keep it
+differently, or when `cloud-api` changes. A change of wording or of the
+radio does not reach it.
+
+Readings and plant settings flow in opposite directions and are kept apart
+on purpose. Readings are immutable and only ever travel towards the server,
+so repeating a transfer is always safe. Plant settings can change at both
+ends, so they need a rule for collisions
+([0002](docs/decisions/0002-the-change-that-reaches-the-server-last-wins.md)).
+
+The main trade-off: the phone holds a copy that can be days behind the
+server. sync does not hide this; it reports the age of what it holds.
+
+What must stay true: sync acknowledges a batch only after it is stored
+durably, and a reading in the store never changes.
+
+## Capabilities
 
 ### `plant-data`
 
@@ -22,14 +46,14 @@ commands that change a plant.
   when it returns, and survives a restart. The plant is marked `waiting`
   until the server has confirmed the change, and `refused` if the server
   refuses it.
-- The port reports how old the data is: the age of each plant's readings
-  and the time of the last successful exchange with the server. It also
-  gives the id of the owner the phone acts for.
+- The capability reports how old the data is: the age of each plant's
+  readings and the time of the last successful exchange with the server. It
+  also gives the id of the owner the phone acts for.
 - The store keeps 90 days of history per plant.
 - The exchange with the server runs by itself: after new readings, after a
   command, when a network connection appears, and when it is asked for.
-- The port works from the first start without an account and without a
-  network connection. It lets the server create the owner at the first
+- The capability works from the first start without an account and without
+  a network connection. It lets the server create the owner at the first
   exchange, and it lets a further phone join the same owner.
 
 Limits: alerts come from the server only; without an exchange the phone
@@ -41,7 +65,7 @@ next query for the plant returns the new threshold, marked `waiting`.
 Back upstairs the change goes to the server, and observers receive the
 plant again, now `in step`.
 
-Contract: [plant-data](doc/references/plant-data.md), with example cases.
+Contract: [plant-data](docs/references/plant-data.md), with example cases.
 
 ## Needs
 
@@ -106,14 +130,15 @@ other.
 - Showing anything, including notifications.
 - History older than 90 days.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why sync is built this way
-- [Context diagram](doc/diagrams/context.md)
-- [doc/context.md](doc/context.md): what sync inherits from above
-- [Local store](doc/references/local-store.md): what is kept, for how long,
-  and the states of a reading and of a change
-- [Exchange with the server](doc/references/exchange.md): order, sizes and
-  pauses
-- [Decisions](doc/decisions/index.md)
-- [Glossary](doc/references/glossary.md): sync's own terms
+1. [docs/references/local-store.md](docs/references/local-store.md): what is
+   kept and in which states
+2. [docs/references/exchange.md](docs/references/exchange.md): the exchange with the server
+3. [docs/references/plant-data.md](docs/references/plant-data.md): the
+   contract of the provided port
+4. [docs/references/glossary.md](docs/references/glossary.md): query and
+   command, upload state, waiting change, pause
+5. [Context diagram](docs/diagrams/context.md)
+6. [docs/explanation/context.md](docs/explanation/context.md): what sync inherits from above
+7. [Decisions](docs/decisions/index.md)

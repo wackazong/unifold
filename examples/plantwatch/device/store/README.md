@@ -5,7 +5,30 @@ until someone has confirmed that they are safe elsewhere. It keeps them
 through power loss, hands them out oldest first, and when its memory is
 full it gives up the oldest readings in favour of new ones.
 
-## Provides
+## Why
+
+Readings have to wait on the sensor stick, for weeks if need be, and the
+cell can be pulled at any moment. `store` exists so that the harsh rules of
+the memory that makes this possible stay in one unit: bits only fall from
+1 to 0, erasing takes whole blocks, blocks wear out, and any write can be
+cut off. It changes when the kind or the size of that memory changes, or
+the number of readings to keep.
+
+`store` offers a log with a "delivered" mark and not a general storage,
+because only one question is ever asked of it: which readings have not
+been delivered yet, in order. A log answers it without an index and
+without cleaning up in the background, and appending is the access
+pattern that flash memory tolerates best.
+
+`store` never decides by itself that a reading is done. It is told, or it
+runs out of room. The trade-off of the log is coarse release: room comes
+back a block at a time.
+
+What must stay true: a reading is written once and never touched again;
+whatever the moment of power loss, recovery finds a consistent log; and a
+mark that has been reported as done is never forgotten.
+
+## Capabilities
 
 ### `reading-log`
 
@@ -65,7 +88,7 @@ words and only turns bits from 1 to 0, an erase works on a whole block,
 and a block endures at least 10 000 erases. What has returned survives
 power loss, and power loss damages only what was being written or erased.
 `store` erases each block at most once in 12 days. Contract:
-[flash](doc/references/flash.md).
+[flash](docs/references/flash.md).
 
 ### `readings`
 
@@ -84,10 +107,10 @@ highest it has received.
 - Storing anything that is not a reading: no settings, no keys.
 - Changing or correcting a stored reading.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why readings are kept in a log of this shape
-- [doc/context.md](doc/context.md): what `store` inherits from above
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
-- [Flash layout](doc/references/flash-layout.md): blocks, records and recovery
+1. [docs/references/flash-layout.md](docs/references/flash-layout.md): blocks, slots, recovery, test cases
+2. [docs/references/flash.md](docs/references/flash.md): what `store` expects of the memory
+3. [docs/explanation/context.md](docs/explanation/context.md): what `store` inherits from above
+4. [Context diagram](docs/diagrams/context.md)
+5. [Decisions](docs/decisions/index.md)

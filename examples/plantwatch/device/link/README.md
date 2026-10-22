@@ -6,7 +6,29 @@ I, what is my state, what is the newest reading, give me the stored
 readings, I have them. `link` holds no readings itself. It translates
 between GATT operations and the sources of readings it is given.
 
-## Provides
+## Why
+
+Everything that knows the profile is in this unit: UUIDs, byte layouts, op
+codes, the state of a running procedure. `link` exists so that a change of
+the profile changes one unit, and a change of the profile is the only
+thing that makes it change. Nothing else in the program sees a GATT
+attribute.
+
+`link` owns no data. It reads stored readings where they are kept and has
+them marked there. So there is one owner of "what is delivered", and a
+connection that breaks leaves nothing behind in `link` that could disagree
+with it. The only state `link` has is the state of the current connection,
+and that is meant to vanish with the connection.
+
+The price is that `link` depends on four needs and is mostly a state machine
+between them. Its correctness is its agreement with a text it does not
+own.
+
+What must stay true: a fetch changes nothing; a confirm result goes out
+only after the mark is durable; and nothing outside `link` builds or parses
+a record of the profile.
+
+## Capabilities
 
 ### `ble-link`
 
@@ -51,7 +73,7 @@ data and interval of `link`'s choice, characteristics that `link` declares
 and whose reads and writes `link` answers, notifications with
 back-pressure, bonding that `link` opens for a time, an identifier of 8
 bytes that never changes, and the tick count of every event. `link` has no
-other source of time. Contract: [radio](doc/references/radio.md).
+other source of time. Contract: [radio](docs/references/radio.md).
 
 ### `reading-log`
 
@@ -88,9 +110,9 @@ takes it as it is defined.
 - Deciding what the profile should say.
 - Anything a central does with a reading.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the profile lives in one unit that owns no data
-- [doc/context.md](doc/context.md): what `link` inherits from above
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
+1. [docs/references/radio.md](docs/references/radio.md): what `link` expects of the radio
+2. [docs/explanation/context.md](docs/explanation/context.md): what `link` inherits from above
+3. [Context diagram](docs/diagrams/context.md)
+4. [Decisions](docs/decisions/index.md)

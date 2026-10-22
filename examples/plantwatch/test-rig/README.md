@@ -7,13 +7,35 @@ or a CI runner. It plays the central itself: it fetches readings from a
 device under test over BLE, uploads them to the public API under test, and
 observes the result through that API.
 
-## Provides
+## Why
+
+Some promises hold only if several separately built things agree: a reading
+arrives once, a plant that needs attention gets one alert. Each thing can
+pass its own tests while the chain is broken at a seam. The rig exists to
+test the seams, and it is a unit of its own because these promises belong
+to none of the things it tests. It changes when such a promise is added or
+changed, or when one of the public interfaces it uses changes.
+
+Three choices shape it. It touches only public interfaces, so its tests
+survive any rewrite behind them
+([0002](docs/decisions/0002-tests-observe-only-public-interfaces.md)). One
+catalogue runs against a real sensor stick and a simulated device, so a
+difference between the two is a finding in itself
+([0001](docs/decisions/0001-one-catalogue-for-real-and-simulated-devices.md)).
+And it plays the central itself instead of driving a phone
+([0003](docs/decisions/0003-the-rig-is-its-own-central.md)): runs are fast
+and repeatable, and nothing that happens on a phone is covered.
+
+What must stay true: a test that cannot run is reported as skipped with a
+reason. It is never dropped and never counted as passed.
+
+## Capabilities
 
 ### `test-report`
 
 One JUnit XML file per run.
 
-- Every test of the [catalogue](doc/references/test-catalogue.md) that
+- Every test of the [catalogue](docs/references/test-catalogue.md) that
   belongs to the run appears in the report as passed, failed, in error or
   skipped. A test is never left out.
 - A skipped test names the reason, for example that the configuration
@@ -33,7 +55,7 @@ Example: a run in `simulated` reports 16 passed tests. The same commit in
 `real` reports 9 passed and 7 skipped with the reason "needs
 scenario-control".
 
-Contract: [test-report](doc/references/test-report.md).
+Contract: [test-report](docs/references/test-report.md).
 
 ## Needs
 
@@ -121,14 +143,12 @@ the public API returns.
 - Load, endurance and energy measurements.
 - Starting or deploying what it tests. Device and API exist before a run.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the rig is built this way
-- [Context diagram](doc/diagrams/context.md)
-- [doc/context.md](doc/context.md): what the rig inherits from above
-- [Test catalogue](doc/references/test-catalogue.md): the promises under
-  test
-- [Configurations](doc/references/configurations.md): `real` and
-  `simulated`, and the settings of a run
-- [Glossary](doc/references/glossary.md): the rig's own terms
-- [Decisions](doc/decisions/index.md)
+1. [docs/references/test-catalogue.md](docs/references/test-catalogue.md): the promises under test
+2. [docs/references/configurations.md](docs/references/configurations.md): `real` and `simulated`, settings, waiting times
+3. [docs/references/test-report.md](docs/references/test-report.md): the contract of the report
+4. [docs/references/glossary.md](docs/references/glossary.md): promise, stimulus, configuration, group
+5. [Context diagram](docs/diagrams/context.md)
+6. [docs/explanation/context.md](docs/explanation/context.md): what the rig inherits from above
+7. [Decisions](docs/decisions/index.md)

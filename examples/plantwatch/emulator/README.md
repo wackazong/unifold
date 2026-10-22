@@ -8,7 +8,31 @@ readings takes seconds. The program exists so that everything that talks
 to a sensor stick can be developed and tried out without hardware and
 without waiting.
 
-## Provides
+## Why
+
+A sensor stick is slow to work with: one reading in 15 minutes, a full
+memory after a month, and a board on the desk. The emulator exists to
+remove the board and the waiting and to keep everything else, so that what
+is developed against it also works with a sensor stick. It changes when
+the definition it implements changes, or when a situation has to be
+reproduced that no scenario can express yet.
+
+That gives the program two faces. The radio face must be indistinguishable
+from a sensor stick, so it speaks real BLE and has nothing of its own. The
+control face is what a sensor stick does not have: a way to dictate values
+and time. It is kept off the radio, on a local HTTP port.
+
+The program is built from the profile definition alone. A second,
+independent reading of that text is half of the program's value: where it
+behaves differently from a sensor stick, either the text has a gap or one
+of the two is wrong.
+
+The price: the host needs a Bluetooth controller, and the program says
+nothing about energy, memory wear or radio timing. What must stay true: the
+radio face follows the definition and nothing else, and a run is
+reproducible.
+
+## Capabilities
 
 ### `ble-link`
 
@@ -37,7 +61,7 @@ choice or sets only a bound, a central observes this:
 Limits:
 
 - The host needs a Bluetooth LE controller that can act as a peripheral: a
-  real adapter, or a virtual controller. Without one the port does not
+  real adapter, or a virtual controller. Without one the capability does not
   exist.
 - Advertising, connections and the bonding handshake run in real time.
   Sampling, the tick count and the time in which bonding is open follow
@@ -79,9 +103,9 @@ curl -X PUT localhost:8650/time --data '{"elapsed_s": 259200}'
 curl localhost:8650/state
 ```
 
-Contract: [scenario-control API](doc/references/scenario-control-api.md).
+Contract: [scenario-control API](docs/references/scenario-control-api.md).
 The scenario document is defined in the
-[scenario format](doc/references/scenario-format.md).
+[scenario format](docs/references/scenario-format.md).
 
 ## Needs
 
@@ -102,11 +126,12 @@ every byte layout, every result code, and the behaviour on every failure.
 - Deciding whether a plant needs attention. The program produces readings
   and knows no thresholds.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the program is built this way
-- [doc/context.md](doc/context.md): what it inherits from above
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
-- [Glossary](doc/references/glossary.md): the terms of scenarios and simulated time
-- [Writing a scenario](doc/skills/emulator-write-a-scenario/SKILL.md)
+1. [docs/references/scenario-format.md](docs/references/scenario-format.md): the scenario document
+2. [docs/references/scenario-control-api.md](docs/references/scenario-control-api.md): the HTTP API
+3. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
+4. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above
+5. [Context diagram](docs/diagrams/context.md)
+6. [Decisions](docs/decisions/index.md)
+7. [Writing a scenario](docs/skills/emulator-write-a-scenario/SKILL.md)

@@ -5,7 +5,30 @@ plants, the state and history of one plant, the forms for a plant and its
 thresholds, and the steps that put a sensor stick to a plant. It shows what
 it is given and passes on what the owner does. It holds no data of its own.
 
-## Provides
+## Why
+
+The screens are the part that changes most often and for reasons that have
+nothing to do with radios or servers: wording, layout, a new chart, a new
+thing the owner can do. They are a unit of their own so that such a change
+touches nothing else, and so that they can be built and tested against
+prepared data alone.
+
+The screens are deliberately dumb. They draw what `plant-data` holds and
+hand the owner's actions to `plant-data` and `pairing`. They keep no copy,
+compute no state of a plant and wait for nothing. This is what makes them
+behave the same with and without a network connection. Notifications are
+no exception: ui registers the phone and follows a tap to a plant, takes
+nothing else from a notification, and shows what `plant-data` holds.
+
+The main trade-off: the screens cannot be cleverer than their data. A
+reading far below a threshold is not shown as a problem until an alert
+exists. The owner gets one consistent answer to "does this plant need me",
+and the price is that the answer can be late. The screens make up for it by
+always saying how old their data is. The navigation follows from the same
+question
+([0001](docs/decisions/0001-the-plant-list-is-home-and-alerts-have-no-screen-of-their-own.md)).
+
+## Capabilities
 
 ### `app-ui`
 
@@ -39,7 +62,7 @@ Example: the owner taps "Monstera" in the list. The plant's screen shows
 "Soil moisture 23 %, 2 hours ago", the alert "Needs water since Tuesday",
 and the chart of the last week.
 
-Contract: [app-ui](doc/references/app-ui.md): every screen, its states
+Contract: [app-ui](docs/references/app-ui.md): every screen, its states
 and the ways between the screens.
 
 ## Needs
@@ -48,7 +71,7 @@ and the ways between the screens.
 
 The owner's plants, history and alerts, and the commands that change a
 plant. ui defines this interface itself, as the customer of whoever
-provides it: [what the screens expect](doc/references/plant-data.md). In
+provides it: [what the screens expect](docs/references/plant-data.md). In
 short, ui expects that
 
 - every query answers from data on the phone within 100 milliseconds, with
@@ -98,12 +121,15 @@ shows every alert that `plant-data` contains on its screens.
 - Layouts for landscape, tablets or watches.
 - Units other than percent, lux and degrees Celsius.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the screens are built this way
-- [Context diagram](doc/diagrams/context.md)
-- [doc/context.md](doc/context.md): what ui inherits from above
-- [Presets](doc/references/presets.md): the threshold presets the plant
-  form offers
-- [Decisions](doc/decisions/index.md)
-- [Glossary](doc/references/glossary.md): ui's own terms
+1. [docs/references/app-ui.md](docs/references/app-ui.md): the screens, the
+   ways between them, and the states every screen has
+2. [docs/references/plant-data.md](docs/references/plant-data.md): what the
+   screens expect of `plant-data`, and the prepared data they are tested
+   with
+3. [docs/references/presets.md](docs/references/presets.md): threshold presets
+4. [docs/references/glossary.md](docs/references/glossary.md): screen, state, mark, bar, span
+5. [Context diagram](docs/diagrams/context.md)
+6. [docs/explanation/context.md](docs/explanation/context.md): what ui inherits from above
+7. [Decisions](docs/decisions/index.md)

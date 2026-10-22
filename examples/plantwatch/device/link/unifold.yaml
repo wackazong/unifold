@@ -1,0 +1,22 @@
+summary: Implements the BLE profile on top of the radio
+kind: library
+status: planned
+capabilities:
+  ble-link:
+    kind: protocol
+    summary: Serves live and stored readings to a nearby central over BLE
+    conforms-to: link-profile
+needs:
+  radio:
+    kind: library
+    summary: BLE peripheral role with GATT server primitives
+    contract: docs/references/radio.md
+  reading-log:
+    kind: library
+    summary: Stored readings in order, with a way to mark them as delivered
+  live-readings:
+    kind: library
+    summary: The newest reading as soon as it exists
+  link-profile:
+    kind: specification
+    summary: The definition of the BLE services to implement

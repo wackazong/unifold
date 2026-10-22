@@ -7,7 +7,28 @@ the sensor stick. The unit contains documents and no code. Whoever
 implements one side of the radio link, or stores or transfers readings,
 builds against these documents.
 
-## Provides
+## Why
+
+The radio link and the reading are each implemented more than once, by
+parts that are built and released separately; this unit exists so that
+their definition belongs to none of them. It changes when what a sensor
+stick and a central exchange changes, or what a reading contains, and
+never because an implementation changed.
+
+Both definitions are in one unit because the record on the radio link is
+an encoding of the reading. Defined apart, the two would drift.
+
+Two forces shape the text. It must be exact enough that two implementers
+who never talk build parts that work together, so it uses byte tables,
+numbered procedures and worked examples. And it must be changeable without
+replacing all parts at once, so each contract has a version and rules for
+what a minor version may do.
+
+The trade-off: prose and tables are easy to review, but no tool checks
+code against them. What must stay true: the text never depends on an
+implementation, and behaviour that is not in the text is undefined.
+
+## Capabilities
 
 ### `ble-profile`
 
@@ -47,7 +68,7 @@ central → sensor stick  Transfer control  02 C6 12 00 00
 sensor stick → central  Transfer control  80 02 00 00 00 00 00 00 00
 ```
 
-Contract: [BLE profile](doc/references/ble-profile/index.md).
+Contract: [BLE profile](docs/references/ble-profile/index.md).
 
 ### `reading-schema`
 
@@ -80,7 +101,7 @@ What an implementer can rely on:
 }
 ```
 
-Contract: [reading schema](doc/references/reading-schema.md).
+Contract: [reading schema](docs/references/reading-schema.md).
 
 ## Out of scope
 
@@ -91,11 +112,12 @@ Contract: [reading schema](doc/references/reading-schema.md).
 - Machine-readable definitions. Version 1 is prose and tables; nothing
   generates code from it.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the definitions are a unit of their own
-- [doc/context.md](doc/context.md): what the definitions inherit
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
-- [Glossary](doc/references/glossary.md): the terms of both contracts
-- [Changing a definition](doc/skills/protocol-change-a-definition/SKILL.md)
+1. [docs/references/glossary.md](docs/references/glossary.md): the terms of both contracts
+2. [docs/references/ble-profile/index.md](docs/references/ble-profile/index.md): the BLE profile
+3. [docs/references/reading-schema.md](docs/references/reading-schema.md): the reading schema
+4. [docs/explanation/context.md](docs/explanation/context.md): what the definitions inherit
+5. [Context diagram](docs/diagrams/context.md)
+6. [Decisions](docs/decisions/index.md)
+7. [Changing a definition](docs/skills/protocol-change-a-definition/SKILL.md)

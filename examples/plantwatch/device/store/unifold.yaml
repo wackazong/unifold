@@ -1,0 +1,15 @@
+summary: Keeps readings on the sensor stick until they have been delivered
+kind: library
+status: planned
+capabilities:
+  reading-log:
+    kind: library
+    summary: Stored readings oldest first, with a way to mark them as delivered
+needs:
+  flash:
+    kind: library
+    summary: Block storage that survives power loss
+    contract: docs/references/flash.md
+  readings:
+    kind: library
+    summary: Every new reading as soon as it has been taken

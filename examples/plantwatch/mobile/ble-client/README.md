@@ -5,7 +5,30 @@ Android. It finds sensor sticks, pairs them with the phone, fetches their
 stored readings whenever a paired one is in range, and gives every reading a
 UTC time. Whoever uses it sees readings and sensor ids, never BLE.
 
-## Provides
+## Why
+
+The radio is the part of a phone program that fails most often and differs
+most between iOS and Android: sensor sticks go out of range in the middle of
+a transfer, the operating system suspends the program after seconds, the
+owner switches Bluetooth off. This library exists so that all of that stays
+in one place. Its consumer gets a plain promise: here is a batch of
+readings, tell me when you have stored it.
+
+The unit changes for two reasons that both come from the radio:
+`link-profile` gets a new version, or iOS or Android change what a program
+may do with BLE in the background. Nothing else should reach it.
+
+The main trade-off: the client stores no readings. A reading exists on the
+sensor stick until the consumer has acknowledged it, so there is no third
+place where readings could wait or get lost. The price is that a fetch
+depends on a consumer that answers within seconds, and that an interrupted
+fetch repeats work
+([0001](docs/decisions/0001-confirm-in-chunks-and-resume-at-the-oldest-unconfirmed-reading.md)).
+
+What must stay true: the client never confirms a reading to a sensor stick
+before the consumer has acknowledged it.
+
+## Capabilities
 
 ### `sensor-readings`
 
@@ -38,7 +61,7 @@ receives three batches of 200, 200 and 50 readings and acknowledges each.
 If the connection drops during the second batch, the next fetch starts with
 reading 201.
 
-Contract: [sensor-readings](doc/references/sensor-readings.md), with
+Contract: [sensor-readings](docs/references/sensor-readings.md), with
 example cases.
 
 ### `pairing`
@@ -53,15 +76,15 @@ one to it.
   its readings. The binding survives restarts of the program and the phone.
 - Pairing answers `paired` or one of seven stated failures. After a
   failure the sensor stick is not listed as paired and is not fetched.
-- The port lists the paired sensor sticks and unpairs one on request.
+- The capability lists the paired sensor sticks and unpairs one on request.
 
 Limits: a search runs only while the program is on the screen and ends by
 itself after 60 seconds. A sensor stick is open for pairing only at the
 times `link-profile` defines; outside them the search does not show it.
-This port binds a sensor stick to the phone. Which plant the sensor stick
-belongs to is not its business.
+This capability binds a sensor stick to the phone. Which plant the sensor
+stick belongs to is not its business.
 
-Contract: [pairing](doc/references/pairing.md), with example cases.
+Contract: [pairing](docs/references/pairing.md), with example cases.
 
 ## Needs
 
@@ -103,12 +126,14 @@ every identifier, format and timing from it.
 - Live values. The client fetches stored readings only.
 - Updating or configuring a sensor stick.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the client is built this way
-- [Context diagram](doc/diagrams/context.md)
-- [doc/context.md](doc/context.md): what the client inherits from above
-- [Fetch session](doc/references/fetch-session.md): states, sizes and
-  timeouts of a fetch
-- [Decisions](doc/decisions/index.md)
-- [Glossary](doc/references/glossary.md): the client's own terms
+1. [docs/references/fetch-session.md](docs/references/fetch-session.md): a
+   fetch as a state machine, with sizes and timeouts
+2. [docs/references/sensor-readings.md](docs/references/sensor-readings.md)
+   and [docs/references/pairing.md](docs/references/pairing.md): the contracts
+3. [docs/references/glossary.md](docs/references/glossary.md): acknowledge
+   and confirm, chunk, session, anchor
+4. [Context diagram](docs/diagrams/context.md)
+5. [docs/explanation/context.md](docs/explanation/context.md): what the client inherits from above
+6. [Decisions](docs/decisions/index.md)

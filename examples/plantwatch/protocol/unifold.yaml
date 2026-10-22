@@ -1,0 +1,12 @@
+summary: Defines the BLE profile of the sensor stick and the format of a reading
+kind: specification
+status: planned
+capabilities:
+  ble-profile:
+    kind: specification
+    summary: GATT services, characteristics and procedures of the sensor stick
+    contract: docs/references/ble-profile/index.md
+  reading-schema:
+    kind: specification
+    summary: Fields, units and identity of a reading as it is stored and uploaded
+    contract: docs/references/reading-schema.md

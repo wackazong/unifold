@@ -8,13 +8,33 @@ peripheral, durable blocks of memory, and time. Code that uses only these
 four libraries runs unchanged on another board, or on a development
 machine with substitutes.
 
-## Provides
+## Why
+
+`hal` exists so that exactly one place knows the board. It changes when the
+board changes: a pin, a sensor part, the microcontroller, the radio stack
+of its vendor. Nothing else is a reason to touch it.
+
+Three forces lead there. Testing: logic that is reached only through a
+soldered board is tested late and seldom; behind four narrow libraries a
+substitute can stand in for the board. Energy: with one owner of the power
+state, no two parts can each keep something awake. The radio stack: it
+comes as a binary, owns the radio and dictates when memory may be written;
+`hal` absorbs these constraints, so that its callers see plain calls.
+
+The interface is four libraries and not one, so that a caller states only
+what it uses. The level is chosen so that `hal` needs no knowledge of the
+product: raw values instead of percent, GATT primitives instead of a
+profile, blocks instead of records. What must stay true: nothing outside
+this folder includes a vendor header, and nothing inside knows what a
+reading is.
+
+## Capabilities
 
 `hal` delivers the events and alarms of all four libraries one after
 another, never two at the same time. Whenever no event is being handled,
 `hal` puts the board to sleep; a caller does nothing for that. Asleep, the
 board keeps counting time and keeps the radio schedule, and draws the
-sleep current stated in the [board](doc/references/board.md) reference.
+sleep current stated in the [board](docs/references/board.md) reference.
 
 ### `sensor-io`
 
@@ -28,7 +48,7 @@ powers both off and returns three raw values within 300 ms:
 
 Each value can be "unavailable" on its own, for example when the ambient
 sensor does not answer. `hal` does not calibrate, filter, clamp or judge a
-value. Contract: [sensor-io](doc/references/sensor-io.md).
+value. Contract: [sensor-io](docs/references/sensor-io.md).
 
 ### `radio`
 
@@ -54,7 +74,7 @@ and write. `hal` does what lies below:
   happened.
 
 Limits: 16 characteristics, transmit power 0 dBm. `hal` knows nothing about
-the meaning of an attribute. Contract: [radio](doc/references/radio.md).
+the meaning of an attribute. Contract: [radio](docs/references/radio.md).
 
 ### `flash`
 
@@ -68,7 +88,7 @@ When a call has returned, its effect survives power loss. Power loss
 during a write leaves only the words of that write undefined, power loss
 during an erase only that block. While the supply is below 2.1 V, `hal`
 refuses to write or erase, and nothing changes. Contract:
-[flash](doc/references/flash.md).
+[flash](docs/references/flash.md).
 
 ### `timer`
 
@@ -85,7 +105,7 @@ refuses to write or erase, and nothing changes. Contract:
 therefore does not use up boot counters in a loop.
 
 Limit: the boot counter ends at 65 535. `hal` does not start the board after
-that. Contract: [timer](doc/references/timer.md).
+that. Contract: [timer](docs/references/timer.md).
 
 ## Needs
 
@@ -108,13 +128,17 @@ most 1 µA when idle.
 - Converting raw values to percent, lux or degrees.
 - Deciding when to measure, what to keep and what to send.
 - The meaning of GATT attributes and the layout of data in the blocks.
-- Measuring the cell voltage for others. No port offers it.
+- Measuring the cell voltage for others. No capability offers it.
 - Replacing the program of the board over the radio.
 
-## More
+## Read next
 
-- [AGENTS.md](AGENTS.md): why the board is hidden behind four libraries
-- [doc/context.md](doc/context.md): what `hal` inherits from above
-- [Context diagram](doc/diagrams/context.md)
-- [Decisions](doc/decisions/index.md)
-- [Board](doc/references/board.md): pins, peripherals and memory map as planned
+1. The contracts of the four capabilities:
+   [sensor-io](docs/references/sensor-io.md),
+   [radio](docs/references/radio.md),
+   [flash](docs/references/flash.md),
+   [timer](docs/references/timer.md)
+2. [docs/references/board.md](docs/references/board.md): pins, peripherals, memory map
+3. [docs/explanation/context.md](docs/explanation/context.md): what `hal` inherits from above
+4. [Context diagram](docs/diagrams/context.md)
+5. [Decisions](docs/decisions/index.md)
