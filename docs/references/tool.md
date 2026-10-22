@@ -1,6 +1,6 @@
 # The reference tool
 
-`unifold` is one Python file, [unifold.py](../../skills/unifold/scripts/unifold.py). It checks a project against the [standard](spec.md), compares the wiring with the dependencies it finds in code, generates the diagrams, and answers questions about the map. Its findings: [rules.md](rules.md). Its JSON: [tool-json.md](tool-json.md).
+`unifold` is one Python file, [unifold.py](../skills/unifold/scripts/unifold.py). It checks a project against the [standard](spec.md), compares the wiring with the dependencies it finds in code, generates the diagrams, and answers questions about the map. Its findings: [rules.md](rules.md). Its JSON: [tool-json.md](tool-json.md).
 
 ## Running it
 
@@ -90,7 +90,7 @@ For dependencies no extractor sees, such as calls between services, pass a list.
 
 `unifold init` starts a project. If `DIR` has no `unifold.yaml`, it writes the root manifest: the version of the standard, `name` from the folder name, and `summary: TODO`, which `check` reports until a person has written it. If `DIR` has no `README.md`, it writes one from the template of the `unifold` skill, with placeholders in angle brackets that `check` reports until they are replaced. Then it runs `generate`. A hand-written `AGENTS.md` is in the way of the generated one: on a terminal `init` asks whether to replace it, otherwise it keeps the file and says so. A project of one unit conforms once the placeholders are gone.
 
-`init` reads no code and writes no other manifest. The units of an existing repository are a judgement about its architecture; a build file knows packages, not units. A person makes that judgement, or an agent with the skill `unifold-convert` ([first map](../../tutorials/first-map.md)); `check` then compares the result with the dependencies in the code.
+`init` reads no code and writes no other manifest. The units of an existing repository are a judgement about its architecture; a build file knows packages, not units. A person makes that judgement, or an agent with the skill `unifold-convert` ([first map](../tutorials/first-map.md)); `check` then compares the result with the dependencies in the code.
 
 `init --agents` also installs the skills `unifold` and `unifold-convert` into `docs/skills/` (text, templates and this tool), runs `skills sync`, and regenerates the root `AGENTS.md`, which carries the unifold block: about 15 lines, plus one row per unit in projects up to 40 units. `generate` keeps the block and the stubs current. It prints a hint if a `CLAUDE.md` would hide `AGENTS.md` from Claude Code.
 
@@ -129,4 +129,4 @@ A coding agent should check when it stops, not after every edit: a unit that is 
 
 ## Testing another implementation
 
-[conformance.py](../../../tests/conformance.py) holds the test cases as data: small projects with the findings that `check --json` must report, as rule, severity and file, and scenarios for `init`, stamps, `--fix` and JSON on failure. `python3 tests/conformance.py --tool "CMD"` runs them against another tool; `--write DIR` writes the cases as files. An implementation conforms when all cases pass. Cases for generated files run without the reference generator, so a second generator is tested too.
+[conformance.py](../../tests/conformance.py) holds the test cases as data: small projects with the findings that `check --json` must report, as rule, severity and file, and scenarios for `init`, stamps, `--fix` and JSON on failure. `python3 tests/conformance.py --tool "CMD"` runs them against another tool; `--write DIR` writes the cases as files. An implementation conforms when all cases pass. Cases for generated files run without the reference generator, so a second generator is tested too.

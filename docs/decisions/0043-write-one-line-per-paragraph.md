@@ -20,7 +20,7 @@ Prose was wrapped by hand at about 80 characters, and the generator wrote `AGENT
 
 Chosen option: "one line per paragraph", because a paragraph is the unit on which a formatter, a diff and a reader agree. No two tools have to agree on a width.
 
-- [writing.md](../references/unifold/writing.md) says so, and the generator and the templates of the skill follow it.
+- [writing.md](../references/writing.md) says so, and the generator and the templates of the skill follow it.
 - A formatter that reflows paragraphs is welcome; one that wraps them is not.
 
 ### Consequences

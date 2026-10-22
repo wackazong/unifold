@@ -22,7 +22,7 @@ The documents here are of two kinds. The skills and the tutorial are procedures,
 
 Chosen option: "the rules without the dictionary and without a lint", because the rules are what makes a procedure easy to follow. The dictionary is what makes an argument hard to write, and a lint would be a style rule that the standard itself refuses to carry.
 
-- [writing.md](../references/unifold/writing.md) gains four rules. A sentence has at most 25 words, 20 in a step. A paragraph has at most six sentences. A step is an instruction. A defined term has no synonym.
+- [writing.md](../references/writing.md) gains four rules. A sentence has at most 25 words, 20 in a step. A paragraph has at most six sentences. A step is an instruction. A defined term has no synonym.
 - The two skills and the tutorial follow the rules. The other files follow them when they are next edited.
 
 ### Consequences

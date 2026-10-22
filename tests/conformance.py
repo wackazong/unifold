@@ -23,7 +23,7 @@ G1, where the test is what `check` says about files nobody generated); then
 `CMD check --json [args] demo`. With `--tool`, the generator under test runs,
 never the reference generator.
 
-A meta test compares the rule table in docs/references/unifold/rules.md with
+A meta test compares the rule table in docs/references/rules.md with
 the tool (`CMD rules --json`) and demands a failing case for every rule.
 """
 from __future__ import annotations
@@ -40,7 +40,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "docs/skills/unifold/scripts/unifold.py"
-RULES_MD = REPO / "docs/references/unifold/rules.md"
+RULES_MD = REPO / "docs/references/rules.md"
 README_TEMPLATE = REPO / "docs/skills/unifold/assets/README.template.md"
 MARK = "<!-- unifold:generated - do not edit; run `unifold generate` -->"
 

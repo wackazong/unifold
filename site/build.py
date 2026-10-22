@@ -9,7 +9,7 @@
     python3 site/build.py --serve    # build, then serve on http://localhost:8000
     python3 site/build.py --check    # build, then check links, HTML and page weight
 
-Everything is derived from README.md, docs/references/unifold/*.md and the
+Everything is derived from README.md, docs/references/*.md and the
 skill. Nothing is converted by hand: change the Markdown and run this again.
 """
 from __future__ import annotations
@@ -34,7 +34,7 @@ DOMAIN = "unifold.md"
 
 SITE = Path(__file__).resolve().parent
 ROOT = SITE.parent
-REF = ROOT / "docs" / "references" / "unifold"
+REF = ROOT / "docs" / "references"
 SKILL = ROOT / "docs" / "skills" / "unifold" / "SKILL.md"
 CONVERT_SKILL = ROOT / "docs" / "skills" / "unifold-convert" / "SKILL.md"
 OUT = SITE / "_out"

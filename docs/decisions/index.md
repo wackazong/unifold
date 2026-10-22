@@ -50,3 +50,4 @@ Only accepted decisions bind.
 | 0042 | [Take the writing rules of ASD-STE100 and not its dictionary](0042-take-the-writing-rules-of-ste-and-not-its-dictionary.md) | accepted | 2026-10-22 |
 | 0043 | [Write one line per paragraph](0043-write-one-line-per-paragraph.md) | accepted | 2026-10-22 |
 | 0044 | [Write machine lines as HTML comments that start with `unifold:`](0044-write-machine-lines-as-html-comments-prefixed-unifold.md) | accepted | 2026-10-22 |
+| 0045 | [Keep the reference chapters directly in docs/references](0045-keep-the-reference-chapters-directly-in-docs-references.md) | accepted | 2026-10-22 |

@@ -2,11 +2,11 @@
 
 What is true of the standard, the skills and the tool at every moment. A change that breaks one of these lines is a change to the standard and needs a decision.
 
-- Everything normative about manifests, wiring, generated files and the comparison with code is in [spec.md](../references/unifold/spec.md), which has at most 200 lines. The document conventions are in [documents.md](../references/unifold/documents.md) and [writing.md](../references/unifold/writing.md); the other chapters explain and add no rule.
+- Everything normative about manifests, wiring, generated files and the comparison with code is in [spec.md](../references/spec.md), which has at most 200 lines. The document conventions are in [documents.md](../references/documents.md) and [writing.md](../references/writing.md); the other chapters explain and add no rule.
 - No finding depends on the meaning of a prose file: the checker reads links, headings, front matter and length.
 - The standard depends on no programming language, build system or code host. The extractors are features of the reference tool.
-- The chapters in `docs/references/unifold/` are published at `https://unifold.md`. They link only to each other, to the explanation and tutorial files of this repository that are published beside them, and to full URLs. The skills are installed into other projects and link to the site only by `https://unifold.md/...` URL. Both can be used outside this repository.
-- A finding of the tool exists in three places that agree: [rules.md](../references/unifold/rules.md), the tool, and a case in `tests/conformance.py`. Prose chapters do not cite rule ids.
+- The chapters in `docs/references/` are published at `https://unifold.md`. They link only to each other, to the explanation and tutorial files of this repository that are published beside them, and to full URLs. The skills are installed into other projects and link to the site only by `https://unifold.md/...` URL. Both can be used outside this repository.
+- A finding of the tool exists in three places that agree: [rules.md](../references/rules.md), the tool, and a case in `tests/conformance.py`. Prose chapters do not cite rule ids.
 - Every change to the standard is recorded as a decision with `status: proposed`. Only a person sets `accepted`.
 - A claim about a tool, a study or a product carries a link to its source.
 - The schema of the manifest is served at `https://unifold.md/0.1/unifold.schema.json`.

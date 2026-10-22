@@ -1,6 +1,6 @@
 # Wiring in practice
 
-The rules of wiring are in the [standard](../references/unifold/spec.md), section 3. This chapter shows how to use them: what to declare, how to name it, and the patterns that come up in real repositories.
+The rules of wiring are in the [standard](../references/spec.md), section 3. This chapter shows how to use them: what to declare, how to name it, and the patterns that come up in real repositories.
 
 ## Reading a line
 
@@ -100,7 +100,7 @@ The capability then appears in two manifests. Each describes it at its own level
 
 ## Code of the unit itself
 
-A unit with children MAY have code of its own, for example a main program that calls three libraries. That code may use anything below the unit, and the comparison with code accepts it without a wiring line. A capability of a child that only this code uses is reported as unused, unless an observed dependency shows the use ([rules](../references/unifold/rules.md)).
+A unit with children MAY have code of its own, for example a main program that calls three libraries. That code may use anything below the unit, and the comparison with code accepts it without a wiring line. A capability of a child that only this code uses is reported as unused, unless an observed dependency shows the use ([rules](../references/rules.md)).
 
 The other direction is not covered. When a child depends on code of the unit above it, that code gets a folder with a manifest and a capability, and the child's need is wired to it like any other connection. A connection always joins two units; there is no line that names a folder. Until the manifest exists, the checker reports the dependency.
 
@@ -115,5 +115,5 @@ For a set of services in one repository:
 
 - Each service folder is a unit. A folder such as `src/` that only groups them stays plain.
 - A database or a queue with no folder of its own is either a need of the root (somebody outside operates it) or a capability of the unit whose files define it, such as a deployment folder.
-- Calls between services are not in any build file. Give the checker a list of observed calls, taken for example from service addresses in the deployment files or from client stubs ([tool](../references/unifold/tool.md)).
+- Calls between services are not in any build file. Give the checker a list of observed calls, taken for example from service addresses in the deployment files or from client stubs ([tool](../references/tool.md)).
 - With a flat set of services, all wiring is in one manifest, and every new call between two services changes it. That manifest is the map of the system; expect it to be the file with the most changes.

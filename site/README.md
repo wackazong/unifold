@@ -1,6 +1,6 @@
 # The site unifold.md
 
-`build.py` writes the whole site into `site/_out/` from `README.md`, `docs/references/unifold/*.md`, the skill and the examples. Nothing is converted by hand; `_out/` is not committed.
+`build.py` writes the whole site into `site/_out/` from `README.md`, `docs/references/*.md`, the skill and the examples. Nothing is converted by hand; `_out/` is not committed.
 
 ## Build
 
@@ -13,7 +13,7 @@ python3 site/build.py --serve             # build; serve as GitHub Pages would (
 | Address | File | From |
 |---|---|---|
 | `/` | `index.html` | `README.md`; the part before the first `##` becomes the first screen |
-| `/spec`, `/documents`, `/reasoning`, `/first-map`, ... | `spec.html`, ... | the reference chapters from `docs/references/unifold/`, the explanation files from `docs/explanation/` and the tutorial from `docs/tutorials/`; `/guide`, `/adopting` and `/design` redirect |
+| `/spec`, `/documents`, `/reasoning`, `/first-map`, ... | `spec.html`, ... | the reference chapters from `docs/references/`, the explanation files from `docs/explanation/` and the tutorial from `docs/tutorials/`; `/guide`, `/adopting` and `/design` redirect |
 | `/spec.md`, ... | the same chapters as plain Markdown | |
 | `/0.1/unifold.schema.json` | | the schema; the build stops if it is missing |
 | `/skill/SKILL.md`, `/skill/unifold-convert/SKILL.md`, `/llms.txt` | | the two skills; an index for agents |

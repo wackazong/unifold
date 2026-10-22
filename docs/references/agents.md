@@ -10,7 +10,7 @@ How a coding agent finds out that a repository uses unifold, what it reads, and 
 | The skills | `unifold-convert`, the procedure that brings a repository into the format, and `unifold`, the procedures for reading and changing a unifold project | When the agent decides that the task calls for it |
 | The tool | `unifold show`, `capability`, `impact` and `check`, each with `--json` | When the agent runs it |
 
-`unifold init --agents` sets up all three: it installs the skills in `docs/skills/` of the root, writes the stubs described below, and adds the block to the root `AGENTS.md` ([tool.md](tool.md)). Why there are three ways and not one is in [reasoning.md](../../explanation/reasoning.md).
+`unifold init --agents` sets up all three: it installs the skills in `docs/skills/` of the root, writes the stubs described below, and adds the block to the root `AGENTS.md` ([tool.md](tool.md)). Why there are three ways and not one is in [reasoning.md](../explanation/reasoning.md).
 
 ## Where skills are found
 

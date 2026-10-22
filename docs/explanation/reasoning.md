@@ -1,7 +1,7 @@
 # Reasoning behind unifold
 
 Why the standard looks the way it does: where its parts come from, what it adds of its own, and the established ideas a reader can use to predict it. Nothing here is a rule; the rules are in the
-[standard](../references/unifold/spec.md).
+[standard](../references/spec.md).
 
 ## Where the parts come from
 
@@ -94,7 +94,7 @@ Diátaxis sorts documentation by what the reader is doing, and says that a text 
 | Reference | Looking something up while working | The manifest, `README.md`, `docs/references/`, the generated diagrams |
 | Explanation | Studying, to understand | `README.md` `## Why`, `docs/explanation/`, `docs/decisions/` |
 
-The standard's own documents follow the same sorting: reference chapters in `docs/references/unifold/`, this and the other explanation files in `docs/explanation/`, a tutorial in `docs/tutorials/`.
+The standard's own documents follow the same sorting: reference chapters in `docs/references/`, this and the other explanation files in `docs/explanation/`, a tutorial in `docs/tutorials/`.
 
 ## arc42 per unit
 

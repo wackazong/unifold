@@ -9,8 +9,8 @@ A change that alters no rule, such as a typing mistake, a clearer sentence or a 
 ## Changing the standard
 
 1. Write a decision record in `docs/decisions/` with the next free number and `status: proposed`: the problem, the options, the choice, and the good and bad consequences. The template is in [docs/skills/unifold/assets/](docs/skills/unifold/assets/decision.template.md).
-2. Change [spec.md](docs/references/unifold/spec.md) if the change concerns manifests, wiring, generated files or the comparison with code, otherwise the reference chapter or the explanation file that covers it ([documents.md](docs/references/unifold/documents.md) says which kind holds what). The standard stays on one page of at most 200 lines.
-3. If the tool reports the rule, change [rules.md](docs/references/unifold/rules.md), the tool in `docs/skills/unifold/scripts/unifold.py`, and add a case to [tests/conformance.py](tests/conformance.py).
+2. Change [spec.md](docs/references/spec.md) if the change concerns manifests, wiring, generated files or the comparison with code, otherwise the reference chapter or the explanation file that covers it ([documents.md](docs/references/documents.md) says which kind holds what). The standard stays on one page of at most 200 lines.
+3. If the tool reports the rule, change [rules.md](docs/references/rules.md), the tool in `docs/skills/unifold/scripts/unifold.py`, and add a case to [tests/conformance.py](tests/conformance.py).
 4. Change the skill and its templates if the procedure for agents changes.
 5. Run everything:
 
@@ -27,8 +27,8 @@ A maintainer accepts the decision by setting `status: accepted` and naming the d
 ## Rules for the text
 
 - Every Markdown file has at most 200 lines. Prose is one line per paragraph and per list item, never wrapped by hand.
-- Plain, precise English that a non-native reader and an agent parse equally well, in the Markdown style of [writing.md](docs/references/unifold/writing.md#markdown-style): short sentences, instructions verb first, one term for one thing, one home for every fact.
-- The chapters in `docs/references/unifold/` link only to each other, to the explanation and tutorial files of this repository, and to full URLs. The skill links to the site by `https://unifold.md/...` URL.
+- Plain, precise English that a non-native reader and an agent parse equally well, in the Markdown style of [writing.md](docs/references/writing.md#markdown-style): short sentences, instructions verb first, one term for one thing, one home for every fact.
+- The chapters in `docs/references/` link only to each other, to the explanation and tutorial files of this repository, and to full URLs. The skill links to the site by `https://unifold.md/...` URL.
 - Prose does not cite rule IDs; it links to `rules.md`.
 - A claim about a tool, a study or a product carries a link to its source.
 
