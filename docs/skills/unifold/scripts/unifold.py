@@ -46,8 +46,8 @@ except ImportError:                                   # pragma: no cover
                      "`uv run unifold.py`, or install PyYAML (python3 -m pip install pyyaml).\n")
     sys.exit(2)
 
-TOOL_VERSION = "0.1"
-SPEC_VERSIONS = ("0.1",)
+TOOL_VERSION = "0.2"
+SPEC_VERSIONS = ("0.1", "0.2")
 SITE_URL = "https://unifold.md"
 MANIFEST = "unifold.yaml"
 MAX_LINES = 200
@@ -132,7 +132,7 @@ ATX = re.compile(r"^ {0,3}(#{1,6})(?:\s+(.*?))?\s*#*\s*$")
 # rule id: (severity, what the rule demands, how to fix a finding)
 RULES = {
     "S1": ("error", "The root manifest states a version of the standard that this tool supports, as a string.",
-           "Write `unifold: \"0.1\"` in the root `unifold.yaml`."),
+           "Write `unifold: \"0.2\"` in the root `unifold.yaml`."),
     "S3": ("error", "Every unit has a `README.md`.",
            "Write the file (the template is in the `unifold` skill)."),
     "S7": ("error", "Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`.",
@@ -149,12 +149,12 @@ RULES = {
            "Correct the path, create the file, or remove the key until there is something to point at. A definition that two siblings share lies in the unit above both."),
     "M10": ("warn", "No summary is still `TODO`.",
             "Replace `TODO` with one line that says what the unit, capability or need is."),
-    "W1": ("error", "Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A connection joins two units; a folder is never a provider.",
+    "W1": ("error", "Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A bare key names a capability or a need of the unit, not both. A need of a child is passed up only to a need that the unit does not meet inside, and a need that a child meets inside is not wired again. A connection joins two units; a folder is never a provider.",
            "Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`."),
-    "W2": ("error", "Every need of every child has a provider, unless it is `optional`: a wiring line, or a need of the same name in the parent (implicit pass-up).",
-           "Add `child.need: provider` to the parent's wiring, or declare a need of the same name in the parent to pass it up. Do not mark a need optional to silence this."),
-    "W3": ("warn", "Every capability of a child is used: a wiring line names it as provider, or a capability of the parent is implemented by it.",
-           "Wire the unit that should use it, or implement a capability of the parent with it (`capability: child.capability`), or remove the capability."),
+    "W2": ("error", "Every need of every child is connected by a line in the parent's wiring, unless it is `optional` or the child meets it inside.",
+           "Add `child.need: provider` to the parent's wiring, for a capability of a sibling, or declare a need in the parent and pass the need up (`child.need: need`). Do not mark a need optional to silence this."),
+    "W3": ("warn", "Every capability of a child is used: a wiring line names it as the provider of a need of a sibling or of the parent itself, or a capability of the parent is implemented by it.",
+           "Wire the unit that should use it; where code of the parent itself uses it, declare a need in the parent and wire it (`need: child.capability`); or implement a capability of the parent with it (`capability: child.capability`); or remove the capability."),
     "W4": ("warn", "A need and its provider have the same `kind`, if both state one.",
            "Put an adapter unit between the two, or correct the kind that is wrong."),
     "W7": ("warn", "The children of a unit do not need each other in a cycle.",
@@ -480,8 +480,9 @@ class Unit:
         self.needs = self._entries("needs")
         self.conn: dict = {}                    # (child, need) -> Conn
         self.impl: dict = {}                    # own capability -> Conn (implemented by children)
+        self.inner: dict = {}                   # own need -> Conn (met inside, by a child)
         self.need_users: dict = {}              # own need -> [(child, need)]
-        self.capability_users: dict = {}              # (child, capability) -> [("need", child, need, config) | ("capability", name)]
+        self.capability_users: dict = {}        # (child, capability) -> [("need", user, need, config) | ("capability", name)]; the user may be this unit
         self.problems: list = []                # (line, message) for rule W1
         self.schema_problems: list = []         # (line, message) for rule M2
         self._by_name: dict = {}
@@ -578,6 +579,8 @@ class Project:
         self.ignore: set = set()                # folders named by `ignore` in the root manifest
         self.git_ignored: set = git_ignored(root)   # files and folders that git ignores
         self.links, self.diagrams, self.max_lines = "none", "parents", MAX_LINES
+        self.version = SPEC_VERSIONS[-1]        # 0.1: a bare wiring key is a capability, and
+        #                                         needs pass up by name without a line
         self._texts: dict = {}
         self._docs: dict = {}
         self._kinds: dict = {}
@@ -599,6 +602,7 @@ class Project:
                                  + ", ".join(f'"{v}"' for v in SPEC_VERSIONS), lines.get(("unifold",)))
             return
         self.usable = True
+        self.version = version
         ignore = data.get("ignore")
         if isinstance(ignore, list):
             self.ignore = {os.path.normpath(p).replace(os.sep, "/").strip("/")
@@ -619,8 +623,8 @@ class Project:
             unit.children.sort(key=lambda u: sort_key(u.rel))
             for child in unit.children:
                 unit._by_name.setdefault(child.name, []).append(child)
-        for unit in self.units:
-            self._connect(unit)
+        for unit in reversed(self.units):       # children first: a parent must know which
+            self._connect(unit)                 # needs its children meet inside
 
     # ----- files, cached
 
@@ -769,8 +773,9 @@ class Project:
 
     # ----- wiring
 
-    def _provider(self, unit, for_port, key_child, config, value):
-        """Resolve one provider reference. Returns (Entry or None, error or None)."""
+    def _provider(self, unit, key_side, key_child, config, value, inside=frozenset()):
+        """Resolve one provider reference. key_side: 'child' (the key is a need of a child),
+        'capability' or 'need' (of this unit). Returns (Entry or None, error or None)."""
         if not isinstance(value, str) or not value.strip():
             return None, f"the provider must be a reference, not {show_value(value)}"
         value = value.strip()
@@ -793,19 +798,31 @@ class Project:
             if child is key_child:
                 return None, "a unit cannot provide for its own need"
             return Entry(config, "child", value, unit=child, capability=capability), None
-        if for_port:
+        if key_side == "capability":
             return None, f"a capability cannot be wired to an own need ('{value}'); " \
                          "a capability is implemented by a child (`child.capability`)"
+        if key_side == "need":
+            return None, f"a need of this unit is met by a capability of a child " \
+                         f"(`child.capability`), not by the need '{value}'"
         if value not in unit.needs:
             hint = "; a capability of a child is written 'child." + value + "'" \
                 if any(value in c.capabilities for c in unit.children[:500]) else ""
             return None, f"'{value}' is not a need of this unit{hint}"
+        if value in inside:
+            return None, f"'{value}' is a need that this unit meets inside, for its own code; " \
+                         "wire the child's need to a provider of its own"
         return Entry(config, "own", value, capability=value), None
 
     def _connect(self, unit):
         raw = unit.manifest.get("wiring")
         if not isinstance(raw, dict) or unit.broken:
             raw = {}
+        old = self.version == "0.1"
+        # needs of this unit that a child meets inside: a bare key that names a need and no
+        # capability (in 0.1 a bare key always names a capability)
+        inside = set() if old else {
+            str(k).strip() for k in raw if "." not in str(k)
+            and str(k).strip() in unit.needs and str(k).strip() not in unit.capabilities}
         for key, value in raw.items():
             key = str(key).strip()
             line = unit.lines.get(("wiring", key))
@@ -818,11 +835,11 @@ class Project:
                     (line, f"wiring '{key}': the provider must be one reference or a mapping "
                            f"of named alternatives, not {show_value(value)}"))
                 continue
-            key_child, need = None, None
+            key_child, need, side = None, None, "child"
             if key.startswith("./") or key.startswith("*"):
                 unit.problems.append((line, f"wiring key '{key}': a key is a need of a child "
-                                            "(`child.need`) or a capability of this unit; every unit "
-                                            "is written out"))
+                                            "(`child.need`), or a capability or need of this unit; "
+                                            "every unit is written out"))
                 continue
             if "." in key:
                 ref, _, need = key.rpartition(".")
@@ -834,20 +851,38 @@ class Project:
                     close = difflib.get_close_matches(need, list(key_child.needs), 1)
                     hint = f"; did you mean '{close[0]}'?" if close else \
                         f" (it needs: {', '.join(key_child.needs) or 'nothing'})"
-                    side = " It is a capability there; write the line as `user.need: " \
-                           f"{key}`." if need in key_child.capabilities else ""
+                    side_hint = " It is a capability there; write the line as `user.need: " \
+                        f"{key}`." if need in key_child.capabilities else ""
                     unit.problems.append((line, f"wiring key '{key}': '{key_child.rel}' has no "
-                                                f"need '{need}'{hint}{side}"))
+                                                f"need '{need}'{hint}{side_hint}"))
                     continue
-            elif key not in unit.capabilities:
+                if need in key_child.inner:
+                    unit.problems.append((line, f"wiring key '{key}': '{key_child.rel}' meets its "
+                                                f"need '{need}' inside, in its own wiring; delete "
+                                                "this line"))
+                    continue
+            else:
+                is_cap, is_need = key in unit.capabilities, key in unit.needs
                 hint = " (a need of a child is written `child.need`)" \
                     if any(key in c.needs for c in unit.children[:500]) else ""
-                unit.problems.append((line, f"wiring key '{key}': not a capability of this unit{hint}"))
-                continue
+                if old and not is_cap:
+                    unit.problems.append((line, f"wiring key '{key}': " + (
+                        "a need of this unit as a wiring key is new in unifold 0.2; write "
+                        "`unifold: \"0.2\"` in the root manifest" if is_need
+                        else f"not a capability of this unit{hint}")))
+                    continue
+                if is_cap and is_need and not old:
+                    unit.problems.append((line, f"wiring key '{key}': names both a capability and "
+                                                "a need of this unit; rename one of them"))
+                    continue
+                if not is_cap and not is_need:
+                    unit.problems.append((line, f"wiring key '{key}': not a capability or need "
+                                                f"of this unit{hint}"))
+                    continue
+                side = "capability" if is_cap else "need"
             entries = []
             for config, target in pairs:
-                entry, error = self._provider(unit, key_child is None,
-                                              key_child, config, target)
+                entry, error = self._provider(unit, side, key_child, config, target, inside)
                 if error:
                     shown = target if isinstance(target, str) else show_value(target)
                     unit.problems.append((line, f"wiring '{key}: {shown}': {error}"))
@@ -857,14 +892,17 @@ class Project:
                 continue
             if key_child is not None:
                 unit.conn[(key_child, need)] = Conn(key, entries, "explicit", line)
+            elif side == "need":
+                unit.inner[key] = Conn(key, entries, "explicit", line)
             else:
                 unit.impl[key] = Conn(key, entries, "explicit", line)
-        for child in unit.children:
-            for need in child.needs:
-                if (child, need) not in unit.conn and need in unit.needs:
-                    unit.conn[(child, need)] = Conn(
-                        f"{child.ref_in_parent()}.{need}",
-                        [Entry(None, "own", need, capability=need)], "implicit", None)
+        if old:                                 # 0.1: a need passes up by name without a line
+            for child in unit.children:
+                for need in child.needs:
+                    if (child, need) not in unit.conn and need in unit.needs:
+                        unit.conn[(child, need)] = Conn(
+                            f"{child.ref_in_parent()}.{need}",
+                            [Entry(None, "own", need, capability=need)], "implicit", None)
         for (child, need), conn in unit.conn.items():
             for entry in conn.entries:
                 if entry.kind == "own":
@@ -875,7 +913,10 @@ class Project:
         for capability, conn in unit.impl.items():
             for entry in conn.entries:
                 unit.capability_users.setdefault((entry.unit, entry.capability), []).append(("capability", capability))
-
+        for need, conn in unit.inner.items():
+            for entry in conn.entries:
+                unit.capability_users.setdefault((entry.unit, entry.capability), []).append(
+                    ("need", unit, need, entry.config))
 
 ROOT_LINE = re.compile(r"^[\"']?unifold[\"']?\s*:", re.M)
 
@@ -973,6 +1014,11 @@ def final_users(unit: Unit, need: str) -> list:
 
 def providers_of(unit: Unit, need: str) -> list:
     """Who finally provides for a need of `unit`, resolved through all levels."""
+    inside = unit.inner.get(need)
+    if inside is not None:                  # met inside: followed down, not up
+        return [{"where": "unit", "unit": target, "capability": capability, "config": entry.config,
+                 "via": []} for entry in inside.entries
+                for target, capability in implementers(entry.unit, entry.capability)]
     parent = unit.parent
     if parent is None:
         return [{"where": "outside", "capability": need, "config": None, "via": []}]
@@ -1248,12 +1294,14 @@ def check_wiring(project: Project, unit: Unit):
         for need, spec in child.needs.items():
             conn = unit.conn.get((child, need))
             if conn is None:
-                if not spec["optional"]:
+                if not spec["optional"] and need not in child.inner:
                     offers = [c.ref_in_parent() + "." + need for c in unit.children[:2000]
                               if c is not child and need in c.capabilities]
+                    up = "to pass it up" if project.version == "0.1" else \
+                        f"and pass it up (`{ref}.{need}: {need}`)"
                     fix = f"Add `{ref}.{need}: {offers[0]}` to the wiring." if offers else \
                         (f"Add `{ref}.{need}: <provider>` to the wiring of this manifest, or "
-                         f"declare a need `{need}` here to pass it up" +
+                         f"declare a need `{need}` here {up}" +
                          ("." if not unit.is_root else " to the outside world."))
                     project.add("W2", where, f"need '{ref}.{need}' has no provider",
                                 wiring_line, fix)
@@ -1299,6 +1347,24 @@ def check_wiring(project: Project, unit: Unit):
                 project.add("W4", where, f"capability '{capability}' is of kind '{kind}', the capability "
                                          f"'{entry.raw}' that implements it of kind '{other}'",
                             conn.line)
+    for need, conn in unit.inner.items():
+        spec = unit.needs[need]
+        for entry in conn.entries:
+            other_spec = entry.unit.capabilities.get(entry.capability, {})
+            other = other_spec.get("kind", "")
+            contracts_agree(f"need '{need}' of this unit", unit, spec, f"need '{need}' of this unit",
+                            entry.unit, other_spec, f"capability '{entry.raw}'", conn.line)
+            if spec["kind"] and other and spec["kind"] != other:
+                project.add("W4", where, f"need '{need}' of this unit is of kind '{spec['kind']}', "
+                                         f"its provider '{entry.raw}' of kind '{other}'", conn.line)
+        if unit.status == "active" and not spec["optional"]:
+            default = conn.entries[0].config
+            for item in providers_of(unit, need):
+                if item["where"] == "unit" and item["config"] in (None, default) \
+                        and item["unit"].status != "active":
+                    project.add("W9", where, f"active unit '{unit.rel}' gets '{need}' from "
+                                             f"'{item['unit'].rel}', which is "
+                                             f"{item['unit'].status}", conn.line)
     for cycle in find_cycles(graph):
         project.add("W7", where, "children need each other in a cycle: "
                     + " -> ".join(cycle + [cycle[0]]), wiring_line)
@@ -1896,22 +1962,22 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
         if text and text not in labels:
             labels.append(text)
 
-    passed: dict = {}                    # need of the frame -> children that pass it up by name
+    passed: dict = {}                    # need of the frame -> (child, need) that pass up to it
     if focus is None:
         for (child, need), conn in frame.conn.items():
-            if conn.origin == "implicit":
-                passed.setdefault(need, []).append(child)
+            if len(conn.entries) == 1 and conn.entries[0].kind == "own":
+                passed.setdefault(conn.entries[0].capability, []).append((child, need))
     for need, users in sorted(passed.items()):
         if len(users) >= SHARED_FROM:
-            optional = all(c.needs.get(need, {}).get("optional") for c in users)
-            shared.append(f"- need `{need}` of " + ", ".join(f"`{c.ref_in_parent()}`" for c in users)
-                          + f" → need `{need}` of `{frame.name}`, passed up by name"
+            optional = all(c.needs.get(n, {}).get("optional") for c, n in users)
+            shared.append("- need " + ", ".join(f"`{c.ref_in_parent()}.{n}`" for c, n in users)
+                          + f" → need `{need}` of `{frame.name}`, passed up"
                           + (" (optional)" if optional else ""))
 
     def collect(unit: Unit):
         for (child, need), conn in unit.conn.items():
-            if unit is frame and conn.origin == "implicit" and \
-                    len(passed.get(need, ())) >= SHARED_FROM:
+            if unit is frame and len(conn.entries) == 1 and conn.entries[0].kind == "own" and \
+                    len(passed.get(conn.entries[0].capability, ())) >= SHARED_FROM:
                 continue                    # listed below the picture, like a shared connection
             if focus is not None and child is not focus and \
                     not any(e.kind == "child" and e.unit is focus for e in conn.entries):
@@ -1947,6 +2013,18 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
                     touched.add(entry.unit)
                     text = ("" if capability == entry.capability else entry.capability) \
                         + (f" ({entry.config})" if entry.config else "")
+                    for target in targets(entry.unit, entry.capability):
+                        edge(pid, node_id(target), index > 0, text)
+            for need, conn in unit.inner.items():      # a need of the frame, met by a child
+                for index, entry in enumerate(conn.entries):
+                    if focus is not None and entry.unit is not focus:
+                        continue
+                    pid = side_id(frame, "n", need)
+                    frame_sides[pid] = f'{{{{"{label(need)}"}}}}'
+                    touched.add(entry.unit)
+                    text = ("" if need == entry.capability else entry.capability) \
+                        + (f" ({entry.config})" if entry.config else "") \
+                        + (" (optional)" if unit.needs[need].get("optional") else "")
                     for target in targets(entry.unit, entry.capability):
                         edge(pid, node_id(target), index > 0, text)
         for child in unit.children:
@@ -2113,6 +2191,10 @@ def wiring_table(unit: Unit) -> list:
     for capability, conn in unit.impl.items():
         rows.append(f"| capability `{capability}` of `{unit.name}` | "
                     + " or ".join(f"`{e.raw}`" for e in conn.entries) + " | implemented by |")
+    for need, conn in unit.inner.items():
+        to = " or ".join(f"`{e.raw}`" + (f" ({e.config})" if e.config else "") for e in conn.entries)
+        note = "optional" if unit.needs[need].get("optional") else ""
+        rows.append(f"| need `{need}` of `{unit.name}` | {to} | {note} |")
     for (child, need), conn in unit.conn.items():
         key = f"`{child.ref_in_parent()}.{need}`"
         to = " or ".join((f"`{e.raw}`" if e.kind != "own" else f"need `{e.capability}` of `{unit.name}`")
@@ -2463,6 +2545,11 @@ def mark(status) -> str:
     return f" [{status_mark(status)}]" if status and status not in ("active", "accepted") else ""
 
 
+def named(rel: str) -> str:
+    """A unit in text output: its path, or 'the root'."""
+    return "the root" if rel == "." else rel
+
+
 def print_show(info: dict):
     def line(name, value):
         if value:
@@ -2491,7 +2578,7 @@ def print_show(info: dict):
                 print(f"      used from outside the project (capability '{item['root-capability']}' of the root)")
             else:
                 config = f" [{item['config']}]" if item.get("config") else ""
-                print(f"      used by {item['unit']}{mark(item['status'])} as need "
+                print(f"      used by {named(item['unit'])}{mark(item['status'])} as need "
                       f"'{item['need']}'{config}")
     if info["needs"]:
         print("needs")
@@ -2513,7 +2600,7 @@ def print_show(info: dict):
             else:
                 more = "".join(f"  {name} {item[key]}" for key, name in (
                     ("verified-by", "verified by"),) if item.get(key))
-                print(f"      provided by {item['unit']}{mark(item['status'])} capability "
+                print(f"      provided by {named(item['unit'])}{mark(item['status'])} capability "
                       f"'{item['capability']}'{note}{more}")
     for skill in info["skills"]:
         print(f"skill     {skill['name']}: {skill['path']}")
@@ -2590,7 +2677,7 @@ def print_capability(data: dict):
         note = f" ({'; '.join(notes)})" if notes else ""
         kind = f" ({item['kind']})" if item["kind"] else ""
         side = "capabilities" if item["side"] == "capabilities" else "needs"
-        print(f"--- {item['unit']}{mark(item['status'])} {side} '{item['name']}'"
+        print(f"--- {named(item['unit'])}{mark(item['status'])} {side} '{item['name']}'"
               f"{kind}{note}: {item['summary']}")
         for key, text in (("contract", "contract"), ("verified-by", "verified by")):
             if item.get(key):
@@ -2711,7 +2798,7 @@ def print_impact(data: dict):
     if not data["dependents"]:
         print("  no unit of the project depends on it")
     for item in data["dependents"]:
-        print(f"  {item['distance']}  {item['unit']}{mark(item['status'])}: {item['via']}")
+        print(f"  {item['distance']}  {named(item['unit'])}{mark(item['status'])}: {item['via']}")
     if data["citations"]:
         print("cited by")
         for row in data["citations"]:

@@ -23,7 +23,7 @@ No finding means consistent, not correct: the tool does not judge whether a summ
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
-| <a id="s1"></a>`S1` | error | The root manifest states a version of the standard that this tool supports, as a string. | Write `unifold: "0.1"` in the root `unifold.yaml`. |
+| <a id="s1"></a>`S1` | error | The root manifest states a version of the standard that this tool supports, as a string. | Write `unifold: "0.2"` in the root `unifold.yaml`. |
 | <a id="s3"></a>`S3` | error | Every unit has a `README.md`. | Write the file (the template is in the `unifold` skill). |
 | <a id="s7"></a>`S7` | error | Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`. | Correct the front matter. |
 | <a id="s9"></a>`S9` | error | A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has a valid `status` and an ISO `date`; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision. | Correct the file name or the front matter. |
@@ -40,13 +40,13 @@ No finding means consistent, not correct: the tool does not judge whether a summ
 
 ## W: wiring
 
-A finding about wiring names the manifest that holds the wiring: the parent's.
+A finding about wiring names the manifest that holds the line: the parent's for a need of a child, the unit's own for a need it meets inside.
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
-| <a id="w1"></a>`W1` | error | Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A connection joins two units; a folder is never a provider. | Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`. |
-| <a id="w2"></a>`W2` | error | Every need of every child has a provider, unless it is `optional`: a wiring line, or a need of the same name in the parent (implicit pass-up). | Add `child.need: provider` to the parent's wiring, or declare a need of the same name in the parent to pass it up. Do not mark a need optional to silence this. |
-| <a id="w3"></a>`W3` | warn | Every capability of a child is used: a wiring line names it as provider, or a capability of the parent is implemented by it. | Wire the unit that should use it, or implement a capability of the parent with it (`capability: child.capability`), or remove the capability. |
+| <a id="w1"></a>`W1` | error | Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A bare key names a capability or a need of the unit, not both. A need of a child is passed up only to a need that the unit does not meet inside, and a need that a child meets inside is not wired again. A connection joins two units; a folder is never a provider. | Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`. |
+| <a id="w2"></a>`W2` | error | Every need of every child is connected by a line in the parent's wiring, unless it is `optional` or the child meets it inside. | Add `child.need: provider` to the parent's wiring, for a capability of a sibling, or declare a need in the parent and pass the need up (`child.need: need`). Do not mark a need optional to silence this. |
+| <a id="w3"></a>`W3` | warn | Every capability of a child is used: a wiring line names it as the provider of a need of a sibling or of the parent itself, or a capability of the parent is implemented by it. | Wire the unit that should use it; where code of the parent itself uses it, declare a need in the parent and wire it (`need: child.capability`); or implement a capability of the parent with it (`capability: child.capability`); or remove the capability. |
 | <a id="w4"></a>`W4` | warn | A need and its provider have the same `kind`, if both state one. | Put an adapter unit between the two, or correct the kind that is wrong. |
 | <a id="w7"></a>`W7` | warn | The children of a unit do not need each other in a cycle. | Move what both need into a third unit, or turn one direction around (the other side subscribes). |
 | <a id="w9"></a>`W9` | warn | An `active` unit does not get a mandatory need from a provider that is `planned` or `deprecated` (default alternative). | Correct the status, or wire a provider that exists. |
