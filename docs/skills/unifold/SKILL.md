@@ -8,7 +8,7 @@ license: MIT OR Apache-2.0
 
 In a unifold project some folders are **units**: they contain a `unifold.yaml` that says what the folder provides, its **capabilities**, and what it **needs**. The nearest unit above connects each need to a provider in its `wiring`. A tool checks this against the code and generates the diagrams. The standard is one page: <https://unifold.md/spec>.
 
-`unifold` below means the tool in this skill: `uv run <folder of this skill>/scripts/unifold.py`, or `python3` with PyYAML in place of `uv run`. It finds the project root from any folder inside the project.
+`unifold` below means the tool: `uvx unifold`, or the copy in this skill, `uv run <folder of this skill>/scripts/unifold.py`. It finds the project root from any folder inside the project.
 
 ## 1. Find your unit
 

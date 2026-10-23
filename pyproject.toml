@@ -1,5 +1,5 @@
 # The package is built from the single file that also ships inside the skill:
-# docs/skills/unifold/scripts/unifold.py. Not yet published; see README.md.
+# docs/skills/unifold/scripts/unifold.py.
 [build-system]
 requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"

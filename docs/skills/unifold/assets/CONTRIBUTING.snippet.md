@@ -9,8 +9,8 @@ When you change code:
 3. Run the tool and commit what it writes:
 
    ```sh
-   uv run docs/skills/unifold/scripts/unifold.py check --fix
-   uv run docs/skills/unifold/scripts/unifold.py check
+   uvx unifold check --fix
+   uvx unifold check
    ```
 
 4. Do not edit files that start with `<!-- unifold:generated`.

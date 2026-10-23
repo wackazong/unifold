@@ -4,14 +4,15 @@
 
 ## Running it
 
-It needs Python 3.9 or newer and PyYAML. The package is not published yet. Until it is, run the file from a clone; `uv` installs PyYAML by itself:
+It needs Python 3.9 or newer and PyYAML, and is published on PyPI as [unifold](https://pypi.org/project/unifold/):
 
 ```sh
-uv run docs/skills/unifold/scripts/unifold.py check     # or: python3 ... with PyYAML installed
-uvx --from . unifold check                             # from a clone, as the installed command
+uvx unifold check                                      # run it without installing
+uv tool install unifold                                # or install the command (pipx install unifold works too)
+uv run docs/skills/unifold/scripts/unifold.py check    # or run the copy that init --agents installs
 ```
 
-Once published: `uvx unifold check`. The examples below write `unifold`. `PATH` is any folder inside the project (default: the current folder).
+The examples below write `unifold`. `PATH` is any folder inside the project (default: the current folder).
 
 ## Commands
 
@@ -117,7 +118,7 @@ A coding agent should check when it stops, not after every edit: a unit that is 
 
 ```json
 {"hooks": {"Stop": [{"hooks": [{"type": "command", "timeout": 60,
-  "command": "cd \"$CLAUDE_PROJECT_DIR\" && uv run docs/skills/unifold/scripts/unifold.py check --fix --quiet >&2 || exit 2"}]}]}}
+  "command": "cd \"$CLAUDE_PROJECT_DIR\" && uvx unifold check --fix --quiet >&2 || exit 2"}]}]}}
 ```
 
 ## What the tool does not read

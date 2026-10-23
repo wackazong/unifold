@@ -2,7 +2,7 @@
 
 For a developer who has a repository with a few folders, Python 3.9 or newer and [uv](https://docs.astral.sh/uv/). In about fifteen minutes you give the repository a root manifest, describe two folders as units, connect them, and see the first generated diagram. The example is a repository `shop` with a folder `billing/` that uses a folder `platform/`; use your own folders in their place.
 
-The tool is not published as a package yet. Until it is, run it from a clone of the unifold repository: `uv run <clone>/docs/skills/unifold/scripts/unifold.py`. The steps below write `unifold` for that command.
+Install the tool with `uv tool install unifold`, or write `uvx unifold` wherever the steps write `unifold`.
 
 ## 1. Start the project
 

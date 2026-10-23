@@ -16,7 +16,7 @@ plantwatch follows [unifold](https://unifold.md) 0.1. Some folders are units: th
    unifold check
    ```
 
-   `unifold` is the reference tool of the standard. Until the package is published, run it from a clone of the unifold repository: `python3 docs/skills/unifold/scripts/unifold.py` (Python 3.9 or newer with PyYAML).
+   `unifold` is the reference tool of the standard: `uvx unifold`, or `uv tool install unifold` to install it.
 
 ## Decisions
 

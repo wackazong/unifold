@@ -18,7 +18,7 @@ A standard is understood from an example faster than from its text, and every ru
 
 ## Commands
 
-`unifold` below is the reference tool. Until the package is published, run it from this repository:
+`unifold` below is the reference tool, `uvx unifold`. To check the examples with the tool of this repository instead, which may be newer:
 
 ```sh
 alias unifold="python3 $PWD/../docs/skills/unifold/scripts/unifold.py"   # in this folder
