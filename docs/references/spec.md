@@ -1,6 +1,6 @@
-# unifold 0.1: the standard
+# unifold 0.2: the standard
 
-Version 0.1. This page is the standard for manifests, wiring, generated files and the comparison with code; [documents.md](documents.md) and [writing.md](writing.md) are the standard for the documents of a unit. MUST, MUST NOT, SHOULD and MAY are used as in [BCP 14](https://www.rfc-editor.org/info/bcp14). Examples are not normative.
+Version 0.2. This page is the standard for manifests, wiring and generated files; [documents.md](documents.md) and [writing.md](writing.md) are the standard for the documents of a unit. MUST, MUST NOT, SHOULD and MAY are used as in [BCP 14](https://www.rfc-editor.org/info/bcp14). Examples are not normative.
 
 ## 1. Terms
 
@@ -8,12 +8,12 @@ Version 0.1. This page is the standard for manifests, wiring, generated files an
 |---|---|
 | Unit | A folder that contains a file named `unifold.yaml`, its manifest. Nothing else makes a folder a unit. The unit's name is the folder's name. A unit SHOULD hold code that is built, run or deployed. A document is never a unit. |
 | Root | The top unit of a project. Its manifest has the key `unifold`. |
-| Project | The root and everything below it, except nested projects (section 8). |
+| Project | The root and everything below it, except nested projects (section 7). |
 | Plain folder | A folder that is not a unit. It belongs to the nearest unit above it. |
 | Parent, child | The parent of a unit is the nearest unit above it; plain folders in between do not count. Siblings have the same parent. Ancestors are the parent, its parent, and so on; descendants are the reverse. |
 | Capability | A named interface that a unit provides: an API, a library, a command, a stream of events. It is something others use, not a feature of the product and not an access right. |
-| Need | A named thing that a unit requires from outside itself. It says what is required, never who supplies it. |
-| Wiring | The mapping in a unit's manifest from needs to providers. A provider is a capability of a child or a need of the unit itself. One need joined to its provider is a connection. |
+| Need | A named thing that a unit requires and does not implement itself. It says what is required, never who supplies it. |
+| Wiring | The mapping in a unit's manifest from needs to providers: the needs of its children, and needs of its own that a child meets. A provider is a capability of a child or, for a need of a child, a need of the unit. One need joined to its provider is a connection. |
 | Contract | The document that defines a capability or need exactly, given as a path or a URL. Both sides of a connection name the same contract. |
 
 ## 2. The manifest
@@ -39,10 +39,10 @@ A manifest is a YAML mapping with these keys. Any other key is an error.
 | `status` | no | `planned` (code missing or incomplete), `active` (default) or `deprecated` (to be removed). |
 | `owner` | no | The team or person responsible. Descendants inherit it until one sets its own. |
 | `capabilities` | no | The capabilities, keyed by name. |
-| `needs` | no | The needs, keyed by name. The needs of the root are what the project requires from outside; nothing above wires them. |
+| `needs` | no | The needs, keyed by name. The parent wires them, except a need that the unit meets inside (section 3). The needs of the root that it does not meet inside are what the project requires from outside. |
 | `wiring` | no | The connections inside this unit (section 3). |
 | `x-...` | no | A key that starts with `x-`, here or in an entry of `capabilities` or `needs`, belongs to the project and is ignored. |
-| `unifold` | root: yes | Root only. The version of this standard, as a string: `"0.1"`. |
+| `unifold` | root: yes | Root only. The version of this standard, as a string: `"0.2"`. |
 | `name` | no | Root only. The name of the project. Default: the name of the root folder. It SHOULD be set: generated files contain it, so a copy in a folder of another name would otherwise have stale generated files. |
 | `ignore` | no | Root only. Folders, relative to the root, that are not searched for units. What version control ignores is not searched either. |
 | `diagrams` | no | Root only. `parents` (default), `all` or `none` (section 6). |
@@ -63,22 +63,34 @@ The name of a capability or need consists of letters, digits, `-` and `_`, start
 
 ## 3. Wiring
 
-`wiring` is a mapping. The key is a need, the value its provider: "this need is met by that provider". A reference is either a bare name, an entry of the unit itself, or `child.name`, an entry of a direct child. A reference is split at its last dot. `child` is the child's folder name, or its path relative to the unit (`a/utils.matcher`); the path MUST be used when two children have the same folder name.
+`wiring` is a mapping. The key is a need, or a capability of the unit; the value is its provider: "this is met by that". A reference is either a bare name, an entry of the unit itself, or `child.name`, an entry of a direct child. A reference is split at its last dot. `child` is the child's folder name, or its path relative to the unit (`a/utils.matcher`); the path MUST be used when two children have the same folder name.
 
 | Key | Value | Meaning |
 |---|---|---|
 | `child.need` | `sibling.capability` | Another child provides for the need. |
 | `child.need` | `own-need` | The need is passed up: whatever meets this unit's own need meets it. |
+| `own-need` | `child.capability` | A child provides for a need of this unit, for example of its own code. The need is met inside this unit. |
 | `own-capability` | `child.capability` | A child implements a capability of this unit. |
-| `child.need` | `{name: provider, ...}` | Named alternatives, each in one of the forms above. The first is the default. |
+| any key above | `{name: provider, ...}` | Named alternatives, each in the form for that key. The first is the default. |
+
+```yaml
+# shop/unifold.yaml: the main program of shop uses both children
+needs:
+  clock: {summary: The current time, contract: docs/references/clock.md}      # met inside
+  mailer: {summary: Sends mail, contract: docs/references/mailer.md}          # from outside
+wiring:
+  billing.clock: platform.clock     # a need of a child, met by a sibling
+  billing.mailer: mailer            # a need of a child, passed up
+  clock: platform.clock             # a need of shop itself, met by a child
+```
 
 1. **One level.** Wiring names only entries of the unit itself and of its direct children. It MUST NOT name anything deeper.
-2. **Complete.** Every need of every child MUST be connected, unless it is `optional`. The provider is, in this order: (a) a line whose key names that child and need; (b) **implicit pass-up:** a need of the unit itself with the same name. Otherwise the need is unconnected, which is an error.
-3. **Sides.** A key is a need of a child or a capability of the unit. A value is a capability of a child or, for a need only, a need of the unit. A child that provides for its own need is an error.
+2. **Complete.** Every need of every child MUST be connected by a line of the parent, unless it is `optional` or the child meets it inside. Nothing is connected without a line: a need of the parent with the same name does not meet a need of a child.
+3. **Sides.** A key is a need of a child, a need of the unit or a capability of the unit; a bare key that names both a need and a capability of the unit is an error. A value is a capability of a child or, for a need of a child, a need of the unit that the unit does not meet inside. A need that a child meets inside MUST NOT be wired again. A child that provides for its own need is an error.
 4. **Alternatives.** A need has one provider at a time. The build or the deployment decides which alternative is in use; this standard does not describe configurations. Every alternative MUST meet all that the need expects.
 5. **Kinds.** A need and its provider SHOULD have the same `kind`. A difference is reported only when both state a kind.
 6. **Direction.** A connection records a dependency, not the direction in which data flows. A subscriber needs the stream; the publisher provides it.
-7. **Final provider.** Who finally provides for a need, or uses a capability, is found by following needs up and capabilities down.
+7. **Final provider.** Who finally provides for a need, or uses a capability, is found by following needs up and capabilities down. A need that a unit meets inside is followed down; its user is the unit itself.
 8. **Contract.** Both sides of every connection MUST name a contract, and the same one.
 
 ## 4. Documents
@@ -92,17 +104,15 @@ A conforming checker reads a project, changes nothing, and reports findings with
 | Finding | Severity |
 |---|---|
 | A manifest that is not valid: not a YAML mapping, an unknown key, a wrong type, no `summary`; a root without `unifold` | error |
-| A wiring reference to a child, capability or need that does not exist, or that is on the wrong side | error |
-| A need of a child that is not `optional` and not connected | error |
+| A wiring line that section 3 does not allow, or that names a child, capability or need that does not exist | error |
+| A need of a child that is not `optional`, not met inside the child, and not connected | error |
 | A path in a manifest that does not exist, or lies where section 2 forbids | error |
 | A unit without `README.md`; a link in a hand-written document whose target does not exist, or that points where [documents.md](documents.md) forbids | error |
 | A side of a connection without a contract, or two sides that name different contracts | error |
 | A generated file that is missing, or differs from what the generator would write now | error |
-| A dependency found in code that no connection covers (section 7) | error |
-| A connection for which no dependency is found in code (section 7) | warn |
 | `summary: TODO` | warn |
 
-No error means consistent, not correct: no checker judges whether a summary is true. Reference tool: [tool.md](tool.md), [rules.md](rules.md).
+No error means consistent, not correct: no checker reads the code, and none judges whether a summary is true. Reference tool: [tool.md](tool.md), [rules.md](rules.md).
 
 ## 6. Generated files
 
@@ -110,37 +120,22 @@ Diagrams and indexes are generated from the manifests and MUST NOT be edited by 
 
 | File in the unit | Shows | Written for |
 |---|---|---|
-| `docs/diagrams/component.md` | The children of the unit and the connections between them. | Units that have children. |
+| `docs/diagrams/component.md` | The children of the unit and the connections between them and with the unit's own needs. | Units that have children. |
 | `docs/diagrams/context.md` | The unit inside the frame of its parent, with the siblings it is connected to; tables of the final provider of each need and the final users of each capability. | Units that have children and a parent. |
 | `docs/diagrams/architecture.md` | The unit opened up three levels deep, or fewer where the page would exceed the line limit. | Units whose children have children. |
 | `docs/decisions/index.md` | The decisions of the unit, with status and date. | Units that have decisions. |
 | `AGENTS.md` | Where the documents and skills of the unit are, for coding agents; at the root also the unifold block with the index of units. | Every unit. |
 
 - `diagrams: all` also writes `context.md` for units without children; `diagrams: none` writes no diagram.
-- An arrow points from the unit that needs to the unit that provides. A need that three or more children pass up by name is listed once below the picture. A `planned` unit is marked.
+- An arrow points from what needs to what provides. A need of the unit to which three or more children pass up is listed once below the picture. A `planned` unit is marked.
 - Generated links are URL-encoded. Generated files SHOULD be committed.
 
-## 7. Comparison with dependencies in code
-
-Manifests can agree with each other and still be wrong, so a checker compares the wiring with dependencies observed in the code. A dependency has `from` and `to`, paths of files or folders relative to the root, and optionally `kind` and `evidence`, which say how and where it was found:
-
-```json
-[{"from": "billing", "to": "platform", "kind": "cargo", "evidence": "billing/Cargo.toml"}]
-```
-
-- Each path belongs to the nearest unit at or above it. A path that does not exist is an error. A dependency inside one unit is ignored.
-- A dependency from unit A to unit B is covered when a need of A, or of a unit between A and their nearest common ancestor, is connected to a capability of B, or of a unit between B and that ancestor.
-- Code of a unit itself MAY depend on anything below that unit. Code below a unit that depends on code of the unit itself is not covered.
-- A dependency that only tests have, such as a dev-dependency, has a `kind` that ends in `-dev`. It counts as observed and never needs a connection.
-- Any other dependency that is not covered is an error. A connection with no observed dependency, between two units whose dependencies are both extracted, is a warning. The comparison is per pair of units, not per capability.
-
-A checker SHOULD extract dependencies itself from build files it understands, and MUST accept a list in this format ([tool.md](tool.md)).
-
-## 8. Nested projects
+## 7. Nested projects
 
 A folder below the root whose manifest has the key `unifold` is the root of a nested project: a separate project, checked on its own. The outer project does not treat it as a child, and nothing is wired to it.
 
-## 9. Conformance
+## 8. Conformance
 
-- A project conforms to unifold 0.1 when a conforming checker reports no error for it, with the comparison of section 7 switched on. Warnings do not break conformance. A conforming project MAY say "This repository follows unifold 0.1".
+- A project conforms to unifold 0.2 when a conforming checker reports no error for it. Warnings do not break conformance. A conforming project MAY say "This repository follows unifold 0.2".
 - A tool conforms when it accepts and rejects the same manifests as this page, connects needs as section 3 says, and reports the findings of section 5. [tool.md](tool.md) says how to test another implementation.
+- A checker MAY read a project that says `"0.1"` with the meaning of 0.1: a bare wiring key always names a capability, and a need of a child is connected without a line to a need of the unit with the same name.

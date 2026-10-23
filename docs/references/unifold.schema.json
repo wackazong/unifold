@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unifold.md/0.1/unifold.schema.json",
+  "$id": "https://unifold.md/0.2/unifold.schema.json",
   "title": "unifold manifest",
   "description": "A unifold.yaml: the manifest of a unit. See https://unifold.md/spec. Keys marked 'root only' are allowed in the manifest of the project root, which is the one that has the key `unifold`.",
   "type": "object",
@@ -16,7 +16,7 @@
   "properties": {
     "unifold": {
       "description": "Root only, and required there: the version of the standard, as a string.",
-      "const": "0.1"
+      "enum": ["0.2", "0.1"]
     },
     "name": {
       "description": "Root only. The name of the project. Default: the name of the root folder. Every root manifest should set it, so that generated files do not depend on the folder name.",
@@ -72,7 +72,7 @@
       }
     },
     "needs": {
-      "description": "The needs, keyed by name. A need says what is required, never who supplies it.",
+      "description": "The needs, keyed by name. A need says what is required, never who supplies it. The parent wires it, unless this unit meets it inside, in its own wiring.",
       "type": "object",
       "propertyNames": {
         "$ref": "#/$defs/entryName"
@@ -89,7 +89,7 @@
       }
     },
     "wiring": {
-      "description": "Connections inside this unit. Key: `child.need` or a capability of this unit; every unit is written out, there is no wildcard. Value: the provider, or a mapping of named alternatives (the first is the default). A reference is split at its last dot; `child` is a folder name or a path relative to the unit.",
+      "description": "Connections inside this unit; every connection is written out, there is no wildcard and no connection by equal names. Key: `child.need`, a need of this unit (met by a child), or a capability of this unit (implemented by a child). Value: the provider, or a mapping of named alternatives (the first is the default). A reference is split at its last dot; `child` is a folder name or a path relative to the unit.",
       "type": "object",
       "propertyNames": {
         "type": "string",
@@ -157,7 +157,7 @@
       }
     },
     "provider": {
-      "description": "`child.capability`, or a need of this unit (bare name). A connection joins two units; a folder is never a provider.",
+      "description": "`child.capability`, or, for a need of a child, a need of this unit (bare name) that this unit does not meet inside. A connection joins two units; a folder is never a provider.",
       "type": "string",
       "minLength": 1,
       "pattern": "^[^*]"
@@ -184,7 +184,7 @@
         "contract": {
           "type": "string",
           "minLength": 1,
-          "description": "Where the exact definition is. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, a unit above it or a unit below it, never in a sibling. Required when the capability is used: both sides of a connection name the same document."
+          "description": "Where the exact definition is. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Required when the capability is used: both sides of a connection name the same document."
         },
         "verified-by": {
           "type": "string",
@@ -215,7 +215,7 @@
         "contract": {
           "type": "string",
           "minLength": 1,
-          "description": "The definition this need and its provider share. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, a unit above it or a unit below it, never in a sibling. Required when the need is wired: both sides of a connection name the same document."
+          "description": "The definition this need and its provider share. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Required when the need is wired: both sides of a connection name the same document."
         },
         "verified-by": {
           "type": "string",

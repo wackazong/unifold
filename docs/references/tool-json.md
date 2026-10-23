@@ -27,8 +27,7 @@ For `check`, the object also has `summary` and an empty `findings` list, so that
 ```json
 {"ok": false,
  "summary": {"units": 12, "error": 1, "warn": 0, "info": 0, "rules": {"W2": 1},
-             "root": "/work/shop", "tool": "0.1",
-             "dependencies": {"observed": 19, "extracted": true, "notes": []}},
+             "root": "/work/shop", "tool": "0.2"},
  "findings": [
   {"rule": "W2", "severity": "error", "file": "cloud/unifold.yaml", "line": 14,
    "message": "need 'alerts.push' has no provider",
@@ -68,9 +67,9 @@ For `check`, the object also has `summary` and an empty `findings` list, so that
  "files": ["cloud/services/alerts/rules/README.md", "..."]}
 ```
 
-- `used-by` and `provided-by` are resolved through the whole tree: they name the units whose own code is on the other side.
+- `used-by` and `provided-by` are resolved through the whole tree: they name the units whose own code is on the other side. A unit above can be such a user, when it wires a need of its own to this capability; a need that a unit meets inside is provided by a unit below it, never from outside.
 - The other form of an entry: `{"outside": true, "root-capability": "api"}` and `{"outside": true, "root-need": "clock", ...}` for the world outside the project.
-- `via` lists how the connection came about, if not by an explicit line: `"passed up by name"`. `config` is the name of the alternative, or `null`.
+- `via` lists how the connection came about, if not by an explicit line: `"passed up by name"`, in a project of version 0.1 only. `config` is the name of the alternative, or `null`.
 - `contract` and `verified-by` are URLs, or paths relative to the root. Both sides of a connection name the same contract, so an entry under `used-by` or `provided-by` repeats none.
 - A `status` other than `active`, and a decision status other than `accepted`, means: not in force. The text output marks these in brackets.
 
@@ -101,9 +100,9 @@ The first end is the capability or need asked for; the others are every final us
                 "says": "...", "stamp": "current"}]}
 ```
 
-`distance` 1 is a direct user; higher numbers depend on a dependent. `exposed-as` lists the units above that provide the capability as their own; `outside` the capabilities of the root through which the world uses it directly; `root-capabilities-affected` every capability of the root that depends on it. `stamp` is `current`, `stale` or `missing`.
+`distance` 1 is a direct user, which can be the parent when its own need is wired to the unit; higher numbers depend on a dependent. `exposed-as` lists the units above that provide the capability as their own; `outside` the capabilities of the root through which the world uses it directly; `root-capabilities-affected` every capability of the root that depends on it. `stamp` is `current`, `stale` or `missing`.
 
-## tree, deps, cited-by, skills, rules
+## tree, cited-by, skills, rules
 
 `tree` prints a list, the root first:
 
@@ -112,8 +111,6 @@ The first end is the capability or need asked for; the others are every final us
   "summary": "...", "parent": ".", "capabilities": ["public-api"],
   "needs": ["push-service"], "children": ["cloud/platform"], "nested-projects": []}]
 ```
-
-`deps` prints the list of [tool.md](tool.md): `[{"from": "crates/printer", "to": "crates/matcher", "kind": "cargo", "evidence": "crates/printer/Cargo.toml [dependencies] grep-matcher"}]`.
 
 `cited-by` prints the `citations` rows of `impact`; a row of kind `link` has no `title`, `says` or `stamp`. `skills` prints `[{"name", "unit", "path", "description"}]`. `rules` prints `[{"id", "severity", "what", "fix", "url"}]`.
 

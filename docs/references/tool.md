@@ -1,6 +1,6 @@
 # The reference tool
 
-`unifold` is one Python file, [unifold.py](../skills/unifold/scripts/unifold.py). It checks a project against the [standard](spec.md), compares the wiring with the dependencies it finds in code, generates the diagrams, and answers questions about the map. Its findings: [rules.md](rules.md). Its JSON: [tool-json.md](tool-json.md).
+`unifold` is one Python file, [unifold.py](../skills/unifold/scripts/unifold.py). It checks a project against the [standard](spec.md), generates the diagrams, and answers questions about the map. Its findings: [rules.md](rules.md). Its JSON: [tool-json.md](tool-json.md).
 
 ## Running it
 
@@ -25,7 +25,6 @@ The examples below write `unifold`. `PATH` is any folder inside the project (def
 | `capability PATH NAME` | Both ends of every connection of one capability or need, with contracts and README sections. |
 | `impact PATH [CAPABILITY]` | Every unit that depends on the unit or capability, transitively, and the context items that cite its files. |
 | `tree [PATH] [--depth N]` | The unit tree with status, capabilities and needs. |
-| `deps [PATH] [--write FILE]` | The dependencies between folders that the extractors find, as JSON. |
 | `stamp [PATH]` | Writes or refreshes the stamps of the context items at or below `PATH`, and prints each with file, line and the source it cites. |
 | `cited-by FILE` | Context items and links that cite `FILE`, with line and `Says` text. `FILE` may be deleted already. |
 | `skills [sync] [PATH]` | Lists all skills; `sync` writes their stubs into `.agents/skills` and `.claude/skills`, and the other generated files as `generate` does ([agents.md](agents.md)). |
@@ -49,49 +48,23 @@ Every command accepts `--json`. With `--json`, a failure also prints JSON ([tool
 | `--strict` | Warnings fail too. |
 | `--quiet`, `-q` | No info findings, no fix hints. |
 | `--format github` | Prints workflow commands; GitHub shows them on the changed lines. |
-| `--deps FILE` | Adds observed dependencies from a list. |
-| `--no-deps` | Does not read code. With `--deps`, only the list counts. |
 | `--rule ID` | Reports only this rule. Repeatable. |
 
 One line per finding, then a summary:
 
 ```text
 error W2 cloud/unifold.yaml:14: need 'alerts.push' has no provider
-    fix: Add `alerts.push: <provider>` to the wiring of this manifest, or declare a need `push` here to pass it up.
-12 unit(s): 1 error(s), 0 warning(s), 0 info  [W2×1]; 19 dependencies observed in code
+    fix: Add `alerts.push: <provider>` to the wiring of this manifest, or declare a need `push` here and pass it up (`alerts.push: push`).
+12 unit(s): 1 error(s), 0 warning(s), 0 info  [W2×1]
 ```
 
 Generated files are built in memory and compared, so a stale diagram is an error; `check --fix` repairs it. `--fix` never adds or refreshes a stamp: only `unifold stamp` does, after you have compared `Says` with the source.
-
-## Dependencies from code
-
-`check` reads build files and imports and compares the result with the wiring ([spec.md](spec.md), section 7). `unifold deps` prints what it found.
-
-| Ecosystem | Recognised by | A dependency is | `kind` |
-|---|---|---|---|
-| Cargo | `Cargo.toml` with `[workspace]` or `[package]` | a `path` dependency, also through `workspace = true`; it belongs to the folder below the package that holds all its `[lib]` and `[[bin]]` sources, if there is one | `cargo`; `cargo-dev` for dev-dependencies |
-| npm, pnpm, yarn | `workspaces` in `package.json`, `pnpm-workspace.yaml`, `lerna.json` | a dependency of any sort on a package of the workspace, or a `file:` or `link:` path | `npm` |
-| Go | `go.mod` | an import of another folder of the same or another module of the repository | `go`; `go-dev` from `_test.go` files |
-| Python | `pyproject.toml`, `setup.py`, `setup.cfg`, folders with `__init__.py` | an import, absolute or relative, that resolves to another folder of the repository | `python`; `python-dev` from test files |
-
-- Cargo and npm give one entry per pair of packages and kind, Go and Python one per pair of folders, each with its `evidence`.
-- A kind that ends in `-dev` exists only in tests: listed, never demanding wiring.
-- Not read: npm packages outside a workspace, `testdata`, `vendor`, `third_party`, `node_modules`, ignored folders, nested projects. An import that could mean two packages of the repository is not guessed.
-- TOML is read with `tomllib` (Python 3.11), else `tomli`, else a built-in reader; a file it cannot read is reported as a note and skipped.
-
-For dependencies no extractor sees, such as calls between services, pass a list. It adds to what is extracted:
-
-```json
-[{"from": "src/checkout", "to": "src/cart", "kind": "grpc", "evidence": "k8s env CART_ADDR"}]
-```
-
-`from` and `to` are files or folders, relative to the root; `kind` and `evidence` are optional. A path that does not exist is an error. `unifold deps --write deps.json` writes the extracted list in the same format.
 
 ## init
 
 `unifold init` starts a project. If `DIR` has no `unifold.yaml`, it writes the root manifest: the version of the standard, `name` from the folder name, and `summary: TODO`, which `check` reports until a person has replaced it. If `DIR` has no `README.md`, it writes one from the template of the `unifold` skill, with placeholders in angle brackets to replace; `check` reports only its two example headings. Then it runs `generate`. A hand-written `AGENTS.md` is in the way of the generated one: on a terminal `init` asks whether to replace it, otherwise it keeps the file and says so. A project of one unit conforms at once: `check` reports warnings and no error.
 
-`init` reads no code and writes no other manifest. The units of an existing repository are a judgement about its architecture; a build file knows packages, not units. A person makes that judgement, or an agent with the skill `unifold-convert` ([first map](../tutorials/first-map.md)); `check` then compares the result with the dependencies in the code.
+`init` reads no code and writes no other manifest. The units of an existing repository are a judgement about its architecture; a build file knows packages, not units. A person makes that judgement, or an agent with the skill `unifold-convert` ([first map](../tutorials/first-map.md)); `check` then says what is missing or inconsistent.
 
 The root `AGENTS.md` always carries the unifold block: about 15 lines, plus one row per unit when the project has at most 40 units below the root. `init --agents` also installs the skills `unifold` and `unifold-convert` into `docs/skills/` (text, templates and this tool) and runs `skills sync`; the block then names the installed tool and links the skills. It prints a hint if a `CLAUDE.md` at the root does not mention `AGENTS.md`, which hides it from Claude Code.
 
@@ -123,6 +96,7 @@ A coding agent should check when it stops, not after every edit: a unit that is 
 
 ## What the tool does not read
 
+- Code, in whatever language. The tool reads `unifold.yaml` files and Markdown documents.
 - Folders whose name starts with a dot, the `docs` folder of a unit, `node_modules`, `__pycache__`, Cargo build folders, Python virtual environments, symbolic links to folders, the `ignore` folders, and every file and folder that git ignores (`.gitignore`, `.git/info/exclude` and the global excludes; a committed file is read even if a pattern matches it). List third-party code that is committed under `ignore` in the root manifest.
 - Nested projects, for example a submodule with a root manifest of its own. `tree` lists them; they are checked on their own. Something in another repository is a need of the root; no map across repositories is produced.
 - Markdown files other than those named in [documents.md](documents.md), and text inside code blocks.

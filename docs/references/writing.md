@@ -86,6 +86,6 @@ The checker compares files with each other. Whoever reviews a change, a person o
 - State facts in the present tense, the main statement first. Name the actor: "the gateway rejects uploads above 1 MB". No history; that is in the decisions and in version control.
 - A sentence makes one statement and SHOULD have at most 25 words; in a step of a skill or a tutorial, at most 20. Split at the colon or semicolon that joins two statements. A paragraph has one topic and at most six sentences; a list item is a paragraph.
 - A step is an instruction: the verb first, one action per sentence, then what the reader sees. "Run `check`. It prints no error." Not: "After running `check`, which should print no error, ...".
-- One term for one thing: the term of [spec.md](spec.md) section 1 or of the unit's glossary, never a synonym. A unit *provides* and *needs*; the parent *connects*; code *depends on* another unit, which is what the tool compares with the wiring. Not "offers" or "exposes" for provides, not "depends on" for needs.
+- One term for one thing: the term of [spec.md](spec.md) section 1 or of the unit's glossary, never a synonym. A unit *provides* and *needs*; the parent *connects*. Not "offers" or "exposes" for provides, not "depends on" for needs.
 
 What the reference tool reports is in [rules.md](rules.md).
