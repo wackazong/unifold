@@ -65,27 +65,7 @@ A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, 
 
 `unifold init --agents` installs the two skills, writes their stubs into `.agents/skills/` and `.claude/skills/`, and adds the unifold block to the root `AGENTS.md`. Every unit's `AGENTS.md` is generated: a pointer to `README.md`, the documents by kind, the skills. Most agents read `AGENTS.md` and find the stubs; Kiro and Aider do not ([agents](https://unifold.md/agents)). Every agent with a shell can run `unifold show`, which prints a folder's capabilities, needs and resolved neighbours, as text or JSON.
 
-## Questions
-
-**Do I need the tool?** Anyone can implement the standard, but its two promises, "checked" and "generated", need a checker. The reference tool is one Python file.
-
-**Do I need an AI agent?** No. The files are YAML and Markdown.
-
-**Does it read my code?** It reads build files and imports to find which unit depends on which, and compares that with the wiring, per pair of units. It does not judge whether a description is true.
-
-**Do I have to write documentation?** Every unit has a `README.md` that says what it is for and why. Everything else in `docs/` is written when there is something to say. The checker reads links, headings and length, never meaning.
-
-**Does it fit a project with one package?** Yes: a project of one unit. The map is one box; the documentation in fixed places is the point ([requirements](https://unifold.md/requirements)).
-
-**What ends up in my repository?** The `unifold.yaml` files, the generated diagrams and the generated `AGENTS.md` of every unit. The standard is not copied; the root manifest names its version. With `--agents`, also the skills, the tool and the stubs.
-
-**What about my `docs/` folder, docs site and ADR tool?** `docs/` is where unifold keeps the documents, sorted by kind, and a site can be built from it. Existing decision records move to `docs/decisions/` ([documents](https://unifold.md/documents)).
-
-**Is it stable?** Not yet. 0.1 is the first release. It has been tried on a handful of repositories and not measured in use ([risks](https://unifold.md/risks)).
-
-## Capabilities
-
-What this repository provides. It is a specification, not a unit, so these are not declared in a manifest.
+## What this repository provides
 
 ### The standard
 
@@ -98,6 +78,22 @@ Two skills in the [Agent Skills](https://agentskills.io/specification) format. [
 ### The tool
 
 The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, compares the wiring with the dependencies in code, and generates the diagrams and the `AGENTS.md` files. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
+
+## Questions
+
+**Do I need the tool?** Anyone can implement the standard, but its two promises, "checked" and "generated", need a checker. The reference tool is one Python file.
+
+**Do I need an AI agent?** No. The files are YAML and Markdown.
+
+**Does it read my code?** unifold reads its own unifold.yaml files and your Markdown files in order to check conformance to the standard. Unifold is language agnostic. Use whichever programming language you like.
+
+**Do I have to write documentation?** Every unit has a `README.md` that says what it is for and why. Everything else in `docs/` is written when there is something to say.
+
+**Does it fit a project with one package?** Yes: a project of one unit. The map is one box; unifold defines how to structure your docs ([requirements](https://unifold.md/requirements)).
+
+**What ends up in my repository?** The `unifold.yaml` files, the generated diagrams and the generated `AGENTS.md` of every unit. The standard is not copied; the root manifest names its version. With `--agents`, also the skills, the tool and the stubs.
+
+**What about my `docs/` folder, docs site and ADR tool?** `docs/` is where unifold keeps the documents, sorted by kind, and a software artifact can be built from it. Existing decision records move to `docs/decisions/` ([documents](https://unifold.md/documents)).
 
 ## Needs
 
