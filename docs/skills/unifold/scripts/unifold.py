@@ -7,8 +7,9 @@
 """unifold: check, draw and query the architecture map of a repository.
 
 A folder with a `unifold.yaml` is a unit: it says what it provides and what it
-needs. The unit above wires needs to providers. This tool checks that map
-against itself and against the dependencies it finds in the code.
+needs. The unit above wires needs to providers. This tool checks that the map
+is consistent: every need wired, both sides of a connection on one contract, the
+documents where they belong, the generated files current.
 
   init [DIR] [--agents]       start a project: root manifest, generated files; --agents adds the skills
   check [PATH] [--fix]        report findings; --fix first writes the generated files
@@ -17,7 +18,6 @@ against itself and against the dependencies it finds in the code.
   capability PATH NAME        both ends of every connection of one entry
   impact PATH [CAPABILITY]    everything that depends on a unit or capability
   tree [PATH]                 the unit tree
-  deps [PATH]                 dependencies between units, as found in the code
   stamp [PATH]                confirm context items: write and refresh their stamps
   cited-by FILE               context items and links that cite FILE
   skills [sync] [PATH]        list skills, or write stubs where agents look for them
@@ -45,14 +45,6 @@ except ImportError:                                   # pragma: no cover
     sys.stderr.write("unifold needs the PyYAML package. Run it with `uvx unifold` or "
                      "`uv run unifold.py`, or install PyYAML (python3 -m pip install pyyaml).\n")
     sys.exit(2)
-
-try:                                                  # Python 3.11+
-    import tomllib as _toml
-except ImportError:                                   # pragma: no cover
-    try:
-        import tomli as _toml
-    except ImportError:
-        _toml = None
 
 TOOL_VERSION = "0.1"
 SPEC_VERSIONS = ("0.1",)
@@ -161,7 +153,7 @@ RULES = {
            "Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`."),
     "W2": ("error", "Every need of every child has a provider, unless it is `optional`: a wiring line, or a need of the same name in the parent (implicit pass-up).",
            "Add `child.need: provider` to the parent's wiring, or declare a need of the same name in the parent to pass it up. Do not mark a need optional to silence this."),
-    "W3": ("warn", "Every capability of a child is used: a wiring line names it as provider, a capability of the parent is implemented by it, or code of the parent itself is observed to depend on the child.",
+    "W3": ("warn", "Every capability of a child is used: a wiring line names it as provider, or a capability of the parent is implemented by it.",
            "Wire the unit that should use it, or implement a capability of the parent with it (`capability: child.capability`), or remove the capability."),
     "W4": ("warn", "A need and its provider have the same `kind`, if both state one.",
            "Put an adapter unit between the two, or correct the kind that is wrong."),
@@ -189,12 +181,6 @@ RULES = {
            "Rename or remove the section; the manifest is the list of capabilities and needs."),
     "G1": ("error", "Every generated file exists and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
            "Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command."),
-    "D1": ("error", "Code in one unit depends on code in another unit only where a connection covers it. A dependency that only tests have is exempt.",
-           "Declare the need and wire it, give the code a manifest if it has none, or remove the dependency from the code."),
-    "D2": ("warn", "For every connection between two units whose dependencies are extracted, a dependency is found in code.",
-           "Remove the stale wiring line and need, or pass the dependency that the extractor cannot see with `--deps FILE`."),
-    "D3": ("error", "A dependency list given with `--deps` is a JSON list of `{\"from\", \"to\"}` whose paths exist in the project.",
-           "Correct the list; paths are relative to the project root."),
 }
 SEVERITY_ORDER = {"error": 0, "warn": 1, "info": 2}
 
@@ -284,196 +270,6 @@ def write_text(path: str, content: str):
         raise Fail("not-writable", f"cannot write {path}: {exc.strerror or exc}")
 
 
-def load_toml(path: str):
-    """Return (mapping or None, error or None). Uses tomllib, tomli or a small reader."""
-    try:
-        text = read_text(path)
-        if _toml is not None and not os.environ.get("UNIFOLD_MINI_TOML"):
-            return _toml.loads(text), None
-        return _MiniToml(text).parse(), None
-    except OSError as exc:
-        return None, f"cannot read {path}: {exc.strerror or exc}"
-    except RecursionError:
-        return None, f"{path}: nested too deeply"
-    except Exception as exc:                          # tomllib.TOMLDecodeError, ValueError
-        extra = "" if _toml is not None else \
-            " (built-in TOML reader; Python 3.11+ or the package `tomli` reads every file)"
-        return None, f"{path}: not readable as TOML: {exc}{extra}"
-
-
-class _MiniToml:
-    """Reads the TOML that build files use, for Python 3.9 and 3.10 without `tomli`."""
-
-    def __init__(self, text: str):
-        self.s, self.i = text, 0
-
-    def error(self, what):
-        line = self.s.count("\n", 0, self.i) + 1
-        raise ValueError(f"line {line}: {what}")
-
-    def skip(self, newlines=False):
-        s = self.s
-        while self.i < len(s):
-            c = s[self.i]
-            if c in " \t" or (newlines and c in "\r\n"):
-                self.i += 1
-            elif c == "#":
-                while self.i < len(s) and s[self.i] != "\n":
-                    self.i += 1
-            else:
-                break
-
-    def parse(self) -> dict:
-        root: dict = {}
-        table = root
-        while True:
-            self.skip(True)
-            if self.i >= len(self.s):
-                return root
-            if self.s.startswith("[[", self.i):
-                self.i += 2
-                keys = self.keys()
-                if not self.s.startswith("]]", self.i):
-                    self.error("expected ]]")
-                self.i += 2
-                parent = self.descend(root, keys[:-1])
-                items = parent.setdefault(keys[-1], [])
-                if not isinstance(items, list):
-                    self.error("not an array of tables")
-                table = {}
-                items.append(table)
-            elif self.s[self.i] == "[":
-                self.i += 1
-                keys = self.keys()
-                if self.s[self.i:self.i + 1] != "]":
-                    self.error("expected ]")
-                self.i += 1
-                table = self.descend(root, keys)
-            else:
-                keys = self.keys()
-                if self.s[self.i:self.i + 1] != "=":
-                    self.error("expected =")
-                self.i += 1
-                self.skip()
-                self.descend(table, keys[:-1])[keys[-1]] = self.value()
-            self.skip()
-            if self.i < len(self.s) and self.s[self.i] not in "\r\n":
-                self.error("unexpected text")
-
-    def descend(self, table, keys):
-        for key in keys:
-            nxt = table.setdefault(key, {})
-            if isinstance(nxt, list) and nxt and isinstance(nxt[-1], dict):
-                nxt = nxt[-1]
-            if not isinstance(nxt, dict):
-                self.error(f"'{key}' is not a table")
-            table = nxt
-        return table
-
-    def keys(self):
-        out = []
-        while True:
-            self.skip()
-            c = self.s[self.i:self.i + 1]
-            if c in ('"', "'"):
-                out.append(self.string())
-            else:
-                match = re.compile(r"[A-Za-z0-9_-]+").match(self.s, self.i)
-                if not match:
-                    self.error("expected a key")
-                out.append(match.group())
-                self.i = match.end()
-            self.skip()
-            if self.s[self.i:self.i + 1] != ".":
-                return out
-            self.i += 1
-
-    def string(self):
-        s, q = self.s, self.s[self.i]
-        if s.startswith(q * 3, self.i):
-            end = s.find(q * 3, self.i + 3)
-            if end < 0:
-                self.error("unterminated string")
-            while s.startswith(q, end + 3):               # quotes right before the end
-                end += 1
-            raw = s[self.i + 3:end]
-            self.i = end + 3
-            raw = raw[1:] if raw.startswith("\n") else raw
-            return self.unescape(re.sub(r"\\[ \t]*\n\s*", "", raw)) if q == '"' else raw
-        j = self.i + 1
-        while j < len(s) and s[j] != q:
-            if s[j] == "\n":
-                self.error("unterminated string")
-            j += 2 if (s[j] == "\\" and q == '"') else 1
-        if j >= len(s):
-            self.error("unterminated string")
-        raw = s[self.i + 1:j]
-        self.i = j + 1
-        return self.unescape(raw) if q == '"' else raw
-
-    @staticmethod
-    def unescape(raw):
-        def one(match):
-            c = match.group(1)
-            if c[0] in "uU":
-                return chr(int(c[1:], 16))
-            return {"b": "\b", "t": "\t", "n": "\n", "f": "\f", "r": "\r", "e": "\x1b"}.get(c, c)
-        return re.sub(r"\\(u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|.)", one, raw)
-
-    def value(self):
-        s = self.s
-        c = s[self.i:self.i + 1]
-        if c in ('"', "'"):
-            return self.string()
-        if c == "[":
-            self.i += 1
-            out = []
-            while True:
-                self.skip(True)
-                if s[self.i:self.i + 1] == "]":
-                    self.i += 1
-                    return out
-                out.append(self.value())
-                self.skip(True)
-                if s[self.i:self.i + 1] == ",":
-                    self.i += 1
-                elif s[self.i:self.i + 1] != "]":
-                    self.error("expected , or ]")
-        if c == "{":
-            self.i += 1
-            out = {}
-            while True:
-                self.skip(True)
-                if s[self.i:self.i + 1] == "}":
-                    self.i += 1
-                    return out
-                keys = self.keys()
-                if s[self.i:self.i + 1] != "=":
-                    self.error("expected =")
-                self.i += 1
-                self.skip()
-                self.descend(out, keys[:-1])[keys[-1]] = self.value()
-                self.skip(True)
-                if s[self.i:self.i + 1] == ",":
-                    self.i += 1
-                elif s[self.i:self.i + 1] != "}":
-                    self.error("expected , or }")
-        match = re.compile(r"[^\s,\]}#]+(?: \d\d:[^\s,\]}#]+)?").match(s, self.i)
-        if not match:
-            self.error("expected a value")
-        self.i = match.end()
-        word = match.group()
-        if word in ("true", "false"):
-            return word == "true"
-        try:
-            return int(word.replace("_", ""), 0)
-        except ValueError:
-            try:
-                return float(word.replace("_", ""))
-            except ValueError:
-                return word                                # dates and times stay text
-
-
 def cell(text) -> str:
     """Text made safe for a Markdown table cell."""
     return str(text if text is not None else "").replace("|", "\\|").replace("\n", " ")
@@ -493,13 +289,6 @@ def show_value(value) -> str:
     if isinstance(value, (list, dict)):
         return "a list" if isinstance(value, list) else "a mapping"
     return f"'{value}'"
-
-
-def slug_name(text: str) -> str:
-    """A package name as a capability name: letters, digits, '-' and '_'."""
-    text = re.sub(r"[^A-Za-z0-9_-]+", "-", str(text).split("/")[-1] if str(text).startswith("@")
-                  else str(text)).strip("-_")
-    return text or "main"
 
 
 def heading_slug(text: str) -> str:
@@ -732,10 +521,6 @@ class Unit:
             unit = unit.parent
         return out
 
-    def chain(self) -> list:
-        """The root first, this unit last."""
-        return [self, *self.ancestors()][::-1]
-
     def depth_below(self, other):
         """Levels between self and ancestor `other` (0 if same), else None."""
         depth, unit = 0, self
@@ -799,7 +584,6 @@ class Project:
         self._owners: dict = {}
         self._rels: dict = {root: "."}
         self._expected = None
-        self.deps_notes: list = []
         path = os.path.join(root, MANIFEST)
         try:
             data, lines, error, line = parse_yaml(self.text(path))
@@ -973,10 +757,6 @@ class Project:
         return any(rel == item or rel.startswith(item + "/") for item in self.ignore) \
             or rel in self.git_ignored \
             or any(rel.startswith(item) for item in self.git_ignored if item.endswith("/"))
-
-    def ignored_paths(self) -> set:
-        """What the dependency scan skips: the `ignore` folders and what git ignores."""
-        return self.ignore | {item.rstrip("/") for item in self.git_ignored}
 
     def listdir(self, folder: str) -> list:
         """The visible entries of a folder, sorted: no dot files, nothing ignored."""
@@ -1430,7 +1210,7 @@ def contract_target(project: Project, unit: Unit, value):
     return project.rel(target), target, None
 
 
-def check_wiring(project: Project, unit: Unit, parent_uses=frozenset()):
+def check_wiring(project: Project, unit: Unit):
     where = unit.manifest_path
     wiring_line = unit.lines.get(("wiring",))
     for line, message in unit.problems:
@@ -1504,7 +1284,7 @@ def check_wiring(project: Project, unit: Unit, parent_uses=frozenset()):
                                                  f"'{item['unit'].rel}', which is "
                                                  f"{item['unit'].status}", conn.line)
         for capability in child.capabilities:
-            if not unit.capability_users.get((child, capability)) and (unit, child) not in parent_uses:
+            if not unit.capability_users.get((child, capability)):
                 project.add("W3", where, f"'{ref}.{capability}' is provided but nothing uses it",
                             wiring_line)
     for capability, conn in unit.impl.items():
@@ -2015,157 +1795,6 @@ def leftovers(project: Project, expected: dict) -> list:
     return out
 
 
-# ----- dependencies in code
-
-def load_deps_file(project: Project, source: str) -> list:
-    """Read a list of observed dependencies. Problems become D3 findings."""
-    shown = source if not project.inside(real(source)) else real(source)
-    try:
-        data = json.loads(read_text(source))
-    except (OSError, ValueError) as exc:
-        project.add("D3", shown, f"cannot read the dependency list: {exc}")
-        return []
-    if not isinstance(data, list):
-        project.add("D3", shown, "the dependency list must be a JSON list of "
-                                 '{"from": path, "to": path} entries, not '
-                                 + ("an object" if isinstance(data, dict) else "a single value"))
-        return []
-    edges, malformed, unknown = [], [], []
-    for index, item in enumerate(data, 1):
-        if not isinstance(item, dict) or not isinstance(item.get("from"), str) \
-                or not isinstance(item.get("to"), str):
-            malformed.append(index)
-            continue
-        edge = {"kind": str(item.get("kind") or "given"),
-                "evidence": str(item.get("evidence") or f"{os.path.basename(source)} entry {index}")}
-        for side in ("from", "to"):
-            value = item[side].replace("\\", "/")
-            path = value if os.path.isabs(value) else os.path.join(project.root, value)
-            path = os.path.normpath(path)
-            if not project.inside(path) or not os.path.exists(path):
-                unknown.append(f"entry {index}: '{item[side]}'")
-                edge = None
-                break
-            edge[side] = project.rel(path)
-        if edge:
-            edges.append(edge)
-    if malformed:
-        project.add("D3", shown, f"{len(malformed)} entr{'y is' if len(malformed) == 1 else 'ies are'}"
-                                 f" not of the form {{\"from\": path, \"to\": path}} (first: entry "
-                                 f"{malformed[0]})")
-    if unknown:
-        project.add("D3", shown, f"{len(unknown)} path(s) do not exist in the project: "
-                    + "; ".join(unknown[:3]) + (" …" if len(unknown) > 3 else ""))
-    return edges
-
-
-def is_dev(edge: dict) -> bool:
-    return str(edge.get("kind", "")).endswith("-dev")
-
-
-def map_edges(project: Project, edges: list):
-    """Sort edges by what they mean for the unit tree.
-
-    Returns (between, upward, parent_uses): `between` maps (common, first, second) to the
-    edges between two children of `common`; `upward` maps (ancestor, first) to edges from
-    below `first` to own code of the ancestor; `parent_uses` holds (unit, child) where
-    own code of the unit uses something below the child.
-    """
-    between, upward, parent_uses = {}, {}, set()
-    for edge in edges:
-        src = os.path.join(project.root, *edge["from"].split("/")) if edge["from"] != "." else project.root
-        dst = os.path.join(project.root, *edge["to"].split("/")) if edge["to"] != "." else project.root
-        if project.is_ignored(src) or project.is_ignored(dst):
-            continue
-        (kind_a, a), (kind_b, b) = project.owner_of(src), project.owner_of(dst)
-        if kind_a != "unit" or kind_b != "unit" or a is b:
-            continue
-        chain_a, chain_b = a.chain(), b.chain()
-        depth = 0
-        while depth < min(len(chain_a), len(chain_b)) and chain_a[depth] is chain_b[depth]:
-            depth += 1
-        common = chain_a[depth - 1]
-        if a is common:
-            parent_uses.add((a, chain_b[depth]))
-        elif b is common:
-            upward.setdefault((common, chain_a[depth]), []).append((edge, a, dst))
-        else:
-            between.setdefault((common, chain_a[depth], chain_b[depth]), []).append((edge, a, b))
-    return between, upward, parent_uses
-
-
-def evidence_text(items: list) -> str:
-    edge = next((e for e, *_ in items if not is_dev(e)), items[0][0])
-    count = sum(1 for e, *_ in items if not is_dev(e))
-    text = edge.get("evidence") or f"{edge['from']} -> {edge['to']}"
-    return f"{edge.get('kind', 'given')}: {text}" + (f"; {count - 1} more" if count > 1 else "")
-
-
-def check_deps(project: Project, mapped, covered: dict):
-    """D1 and D2: compare observed dependencies with the wiring."""
-    between, upward, _ = mapped
-    wired: dict = {}
-    for unit in project.units:
-        for (child, _), conn in unit.conn.items():
-            for entry in conn.entries:
-                if entry.kind == "child":
-                    wired.setdefault((unit, child, entry.unit), conn)
-    for (common, first, second), items in between.items():
-        real_items = [i for i in items if not is_dev(i[0])]
-        if not real_items or (common, first, second) in wired or first.broken or second.broken:
-            continue
-        _, a, b = real_items[0]
-        ref_a, ref_b = first.ref_in_parent(), second.ref_in_parent()
-        capability = next(iter(b.capabilities), "<capability>") if b is second else "<capability>"
-        need = slug_name(b.name)
-        names = {need, *b.capabilities, *second.capabilities}
-        names |= {slug_name(e.get("evidence", "").split("(")[0].split()[-1])
-                  for e, *_ in real_items if e.get("evidence", "").split("(")[0].split()}
-        present = [n for n in a.needs if n in names
-                   and (a is not first or (first, n) not in common.conn)]
-        if present:
-            need = present[0]
-            steps = f"Wire need `{need}` of {a.rel}/{MANIFEST}, which is declared but not " \
-                    "connected"
-            if a is not first:
-                steps += f": declare the same need in each unit up to '{first.rel}'"
-            steps += (", and" if a is not first else ":") + \
-                f" add `{ref_a}.{need}: {ref_b}.{capability}` to the wiring here. " \
-                "Or remove the dependency from the code."
-        else:
-            steps = f"Add a need to {a.rel}/{MANIFEST} (for example `{need}`)"
-            if a is not first:
-                steps += f", declare the same need in each unit up to '{first.rel}'"
-            steps += f", and add `{ref_a}.{need}: {ref_b}.{capability}` to the wiring here. " \
-                     "Or remove the dependency from the code."
-        project.add("D1", common.manifest_path,
-                    f"'{a.rel}' depends on '{b.rel}', but no need of '{ref_a}' is connected "
-                    f"to '{ref_b}' ({evidence_text(real_items)})",
-                    common.lines.get(("wiring",)), steps)
-    for (common, first), items in upward.items():
-        open_items = [i for i in items if not is_dev(i[0])]
-        if not open_items or first.broken:
-            continue
-        _, a, dst = open_items[0]
-        project.add("D1", common.manifest_path,
-                    f"'{a.rel}' depends on code of its ancestor '{common.rel}' that lies in "
-                    f"no unit ({evidence_text(open_items)})",
-                    common.lines.get(("wiring",)),
-                    f"Give that code a folder with a {MANIFEST} and a capability, declare a "
-                    f"need in {a.rel}/{MANIFEST} and wire the two here; or remove the dependency.")
-    for (unit, child, provider), conn in wired.items():
-        if (unit, child, provider) in between or conn.origin == "implicit":
-            continue
-        shared = [eco for eco, units in covered.items() if child in units and provider in units]
-        if not shared:
-            continue
-        need = next(n for (c, n), k in unit.conn.items() if c is child and k is conn)
-        project.add("D2", unit.manifest_path,
-                    f"need '{need}' of '{child.rel}' is connected to '{provider.rel}', but no "
-                    f"dependency between them was found in code ({', '.join(sorted(shared))})",
-                    conn.line)
-
-
 # ------------------------------------------------------------- generation
 
 def safe_id(text: str) -> str:
@@ -2602,7 +2231,7 @@ def agents_block(project: Project) -> str:
         "",
         f"- `{tool} show PATH`: a unit, its capabilities and needs, and who is on the other side",
         f"- `{tool} capability PATH NAME`: both ends of one connection, with contracts",
-        f"- `{tool} check`: is the map consistent, and does the code agree (`--fix` rewrites generated files)",
+        f"- `{tool} check`: is the map consistent (`--fix` rewrites generated files)",
     ]
     skills = [(n, t) for n, t in (("unifold", "How to read and write the map"),
                                   ("unifold-convert", "How to bring folders into the map"))
@@ -3130,522 +2759,6 @@ def print_tree(project: Project, depth=None):
         stack.extend(reversed(below))
 
 
-# ----------------------------------------------- dependencies found in code
-
-BUILD_FILES = {"Cargo.toml", "package.json", "go.mod", "go.work", "pyproject.toml", "setup.py",
-               "setup.cfg", "pnpm-workspace.yaml", "lerna.json"}
-NOT_SOURCE = {"vendor", "third_party", "testdata", "site-packages"}
-PY_TEST_DIRS = {"tests", "test", "testing"}
-
-
-class Scan:
-    """One walk over the repository: build files and source files by folder."""
-
-    def __init__(self, root: str, ignore=()):
-        self.root, self.notes = root, []
-        self.named: dict = {name: [] for name in BUILD_FILES}
-        self.go: dict = {}
-        self.py: dict = {}
-        self.inits: set = set()
-        self._dirs: dict = {}
-        ignore = set(ignore)
-        for folder, subs, names in os.walk(root):
-            rel = "" if folder == root else folder[len(root) + 1:].replace(os.sep, "/")
-            keep = []
-            for sub in sorted(subs):
-                path = os.path.join(folder, sub)
-                sub_rel = f"{rel}/{sub}" if rel else sub
-                if sub.startswith(".") or sub in NEVER_SCANNED or sub in NOT_SOURCE \
-                        or sub_rel in ignore or is_build_output(path):
-                    continue
-                manifest = os.path.join(path, MANIFEST)
-                if os.path.isfile(manifest):
-                    try:
-                        if ROOT_LINE.search(read_text(manifest)):
-                            continue                # a nested project is checked on its own
-                    except OSError:
-                        pass
-                keep.append(sub)
-            subs[:] = keep
-            for name in names:
-                if (f"{rel}/{name}" if rel else name) in ignore:
-                    continue
-                if name in BUILD_FILES:
-                    self.named[name].append(os.path.join(folder, name))
-                elif name.endswith(".go"):
-                    self.go.setdefault(folder, []).append(name)
-                elif name.endswith(".py"):
-                    self.py.setdefault(folder, []).append(name)
-                    if name == "__init__.py":
-                        self.inits.add(folder)
-
-    def rel(self, path: str) -> str:
-        return "." if path == self.root else path[len(self.root) + 1:].replace(os.sep, "/")
-
-    def isdir(self, path: str) -> bool:
-        found = self._dirs.get(path)
-        if found is None:
-            found = self._dirs[path] = os.path.isdir(path)
-        return found
-
-
-def under(path: str, folder: str) -> bool:
-    return path == folder or path.startswith(folder + os.sep)
-
-
-def glob_match(rel: str, patterns) -> bool:
-    """Does a relative folder match one of the workspace patterns (`packages/*`, `apps/**`)?"""
-    for pattern in patterns:
-        if not isinstance(pattern, str):
-            continue
-        pattern = os.path.normpath(pattern.strip()).replace(os.sep, "/").strip("/")
-        regex = ""
-        for part in re.split(r"(\*\*/?|\*|\?)", pattern):
-            regex += {"**/": "(?:.*/)?", "**": ".*", "*": "[^/]*", "?": "[^/]"}.get(part) \
-                or re.escape(part)
-        if re.fullmatch(regex, rel):
-            return True
-    return False
-
-
-class Edges:
-    def __init__(self, scan: Scan):
-        self.scan, self.found = scan, {}
-
-    def add(self, source: str, target: str, kind: str, evidence: str):
-        key = (self.scan.rel(source), self.scan.rel(target), kind)
-        if key[0] != key[1]:
-            self.found.setdefault(key, evidence)
-
-    def list(self) -> list:
-        return [{"from": a, "to": b, "kind": kind, "evidence": evidence}
-                for (a, b, kind), evidence in sorted(self.found.items())]
-
-
-def extract_cargo(scan: Scan, edges: Edges, covered: dict):
-    tomls = {}
-    for path in scan.named["Cargo.toml"]:
-        data, error = load_toml(path)
-        if error:
-            scan.notes.append(error)
-        elif isinstance(data, dict):
-            tomls[os.path.dirname(path)] = data
-    roots = [d for d in tomls if isinstance(tomls[d].get("workspace"), dict)]
-
-    def workspace_of(folder):
-        found = [r for r in roots if under(folder, r)]
-        return max(found, key=len) if found else None
-
-    def is_package(folder):
-        return isinstance(tomls.get(folder, {}).get("package"), dict)
-
-    members = set()
-    for root in roots:
-        space = tomls[root]["workspace"]
-        patterns = space.get("members") if isinstance(space.get("members"), list) else []
-        excluded = space.get("exclude") if isinstance(space.get("exclude"), list) else []
-        if is_package(root):
-            members.add(root)
-        for folder in tomls:
-            if folder != root and under(folder, root) and is_package(folder):
-                rel = os.path.relpath(folder, root).replace(os.sep, "/")
-                if glob_match(rel, patterns) and not any(
-                        glob_match(rel, [e]) or rel.startswith(str(e).strip("/") + "/")
-                        for e in excluded):
-                    members.add(folder)
-    for folder in tomls:
-        if is_package(folder) and not any(o != folder and under(folder, o) for o in tomls):
-            members.add(folder)
-
-    def dependencies(folder):
-        data = tomls[folder]
-        tables = [(name, data.get(name)) for name in
-                  ("dependencies", "dev-dependencies", "build-dependencies")]
-        targets = data.get("target")
-        if isinstance(targets, dict):
-            for target in targets.values():
-                if isinstance(target, dict):
-                    tables += [(name, target.get(name)) for name in
-                               ("dependencies", "dev-dependencies", "build-dependencies")]
-        for section, table in tables:
-            if not isinstance(table, dict):
-                continue
-            for name, spec in table.items():
-                if not isinstance(spec, dict):
-                    continue
-                base = folder
-                if spec.get("workspace") is True:
-                    base = workspace_of(folder)
-                    shared = tomls.get(base, {}).get("workspace", {}).get("dependencies", {}) \
-                        if base else {}
-                    spec = shared.get(name) if isinstance(shared, dict) else None
-                if isinstance(spec, dict) and isinstance(spec.get("path"), str):
-                    yield section, name, os.path.normpath(os.path.join(base, spec["path"]))
-
-    def source_folder(folder):
-        """Where the code of a package lies, if not in the package folder itself.
-
-        A package may keep the sources of its library and binaries elsewhere
-        (`[[bin]] path = "crates/core/main.rs"`). If all of them lie in one folder below
-        the package folder, the dependencies belong to that folder, which may be a unit.
-        """
-        data, paths = tomls[folder], []
-        lib = data.get("lib")
-        bins = data.get("bin") if isinstance(data.get("bin"), list) else []
-        if isinstance(lib, dict) and isinstance(lib.get("path"), str):
-            paths.append(lib["path"])
-        elif os.path.isfile(os.path.join(folder, "src", "lib.rs")):
-            paths.append("src/lib.rs")
-        for target in bins:
-            if isinstance(target, dict) and isinstance(target.get("path"), str):
-                paths.append(target["path"])
-        if data["package"].get("autobins") is not False and (
-                not bins or any(isinstance(t, dict) and "path" not in t for t in bins)):
-            if os.path.isfile(os.path.join(folder, "src", "main.rs")):
-                paths.append("src/main.rs")
-            if os.path.isdir(os.path.join(folder, "src", "bin")):
-                paths.append("src/bin/x.rs")
-        folders = {os.path.dirname(os.path.normpath(os.path.join(folder, p))) for p in paths}
-        if not folders:
-            return folder, ""
-        common = os.path.commonpath(sorted(folders)) if len(folders) > 1 else folders.pop()
-        if not under(common, folder) or common == folder or under(common, os.path.join(folder, "src")):
-            return folder, ""
-        return common, f" (its code is in {scan.rel(common)})"
-
-    queue, done, code_at = sorted(members), set(), set()
-    while queue:
-        folder = queue.pop()
-        if folder in done:
-            continue
-        done.add(folder)
-        code, where = source_folder(folder)
-        code_at.add(code)
-        for section, name, target in dependencies(folder):
-            if not is_package(target):
-                continue
-            kind = "cargo-dev" if section == "dev-dependencies" else "cargo"
-            source = code if section == "dependencies" else folder
-            edges.add(source, target, kind,
-                      f"{scan.rel(os.path.join(folder, 'Cargo.toml'))} [{section}] {name}"
-                      + (where if source is not folder else ""))
-            if target not in done:
-                queue.append(target)
-    if done:
-        covered["cargo"] = set(done) | code_at
-
-
-def extract_npm(scan: Scan, edges: Edges, covered: dict):
-    found = {}
-    for path in scan.named["package.json"]:
-        try:
-            data = json.loads(read_text(path))
-        except (OSError, ValueError) as exc:
-            scan.notes.append(f"{scan.rel(path)}: not readable as JSON: {exc}")
-            continue
-        if isinstance(data, dict):
-            found[os.path.dirname(path)] = data
-    spaces = {}
-    for folder, data in found.items():
-        patterns = data.get("workspaces")
-        if isinstance(patterns, dict):
-            patterns = patterns.get("packages")
-        if isinstance(patterns, list):
-            spaces[folder] = list(patterns)
-    for path in scan.named["pnpm-workspace.yaml"]:
-        try:
-            data = yaml.safe_load(read_text(path))
-        except (OSError, yaml.YAMLError):
-            continue
-        if isinstance(data, dict) and isinstance(data.get("packages"), list):
-            spaces.setdefault(os.path.dirname(path), []).extend(data["packages"])
-    for path in scan.named["lerna.json"]:
-        try:
-            data = json.loads(read_text(path))
-        except (OSError, ValueError):
-            continue
-        if isinstance(data, dict) and isinstance(data.get("packages"), list):
-            spaces.setdefault(os.path.dirname(path), list(data["packages"]))
-    members = {}
-    for root in sorted(spaces, key=len, reverse=True):
-        patterns = [p for p in spaces[root] if isinstance(p, str)]
-        wanted = [p for p in patterns if not p.startswith("!")]
-        unwanted = [p[1:] for p in patterns if p.startswith("!")]
-        if root in found:
-            members.setdefault(root, root)
-        for folder in found:
-            if folder != root and under(folder, root):
-                rel = os.path.relpath(folder, root).replace(os.sep, "/")
-                if glob_match(rel, wanted) and not glob_match(rel, unwanted):
-                    members.setdefault(folder, root)
-    if scan.root in found:
-        members.setdefault(scan.root, scan.root)
-    names = {}
-    for folder, root in members.items():
-        if isinstance(found[folder].get("name"), str):
-            names[(root, found[folder]["name"])] = folder
-    for folder, root in sorted(members.items()):
-        data = found[folder]
-        for section in ("dependencies", "devDependencies", "peerDependencies",
-                        "optionalDependencies"):
-            table = data.get(section)
-            if not isinstance(table, dict):
-                continue
-            for name, spec in table.items():
-                target = None
-                if isinstance(spec, str) and spec.startswith(("file:", "link:", "portal:")):
-                    target = os.path.normpath(os.path.join(folder, spec.split(":", 1)[1]))
-                    target = target if target in found else None
-                target = target or names.get((root, name))
-                if target and target != folder:
-                    edges.add(folder, target, "npm",
-                              f"{scan.rel(os.path.join(folder, 'package.json'))} {section} {name}")
-    if len(members) > 1:
-        covered["npm"] = set(members)
-
-
-GO_DECL = re.compile(r"^(?:func|type|var|const)\b", re.M)
-GO_IMPORT = re.compile(r"\bimport\s*(?:\(([^)]*)\)|(?:[\w.]+\s+)?\"([^\"]+)\")")
-
-
-def go_imports(text: str) -> list:
-    cut = GO_DECL.search(text)
-    head = text[:cut.start()] if cut else text
-    head = re.sub(r"/\*.*?\*/", "", head, flags=re.S)
-    head = re.sub(r"(?m)^\s*//[^\n]*", "", head)
-    out = []
-    for block, single in GO_IMPORT.findall(head):
-        out += re.findall(r"\"([^\"]+)\"", block) if block else [single]
-    return out
-
-
-def extract_go(scan: Scan, edges: Edges, covered: dict, skip_sources=False):
-    modules = {}
-    for path in scan.named["go.mod"]:
-        try:
-            match = re.search(r"^module\s+(\S+)", read_text(path), re.M)
-        except OSError:
-            continue
-        if match:
-            modules[os.path.dirname(path)] = match.group(1).strip('"')
-    if not modules:
-        return
-    ordered = sorted(modules.items(), key=lambda kv: -len(kv[1]))
-    prefixes = tuple(path for _, path in ordered)
-    dirs = sorted(modules, key=len, reverse=True)
-    sources = set()
-    for folder, names in sorted(scan.go.items()):
-        module = next((d for d in dirs if under(folder, d)), None)
-        if module is None:
-            continue
-        for name in sorted(names):
-            is_test = name.endswith("_test.go")
-            if not is_test:
-                sources.add(folder)
-            if skip_sources:
-                continue
-            path = os.path.join(folder, name)
-            try:
-                if os.path.getsize(path) > 2_000_000:
-                    continue
-                text = read_text(path)
-            except OSError:
-                continue
-            for imported in go_imports(text):
-                if not imported.startswith(prefixes):
-                    continue
-                for target_module, module_path in ordered:
-                    if imported == module_path or imported.startswith(module_path + "/"):
-                        target = os.path.normpath(os.path.join(
-                            target_module, *imported[len(module_path):].strip("/").split("/")))
-                        if target != folder and scan.isdir(target):
-                            edges.add(folder, target, "go-dev" if is_test else "go",
-                                      f"{scan.rel(path)} imports {imported}")
-                        break
-    covered["go"] = sources
-
-
-def py_is_test(folder_rel: str, name: str) -> bool:
-    return bool(PY_TEST_DIRS.intersection(folder_rel.split("/"))) or name.startswith("test_") \
-        or name.endswith("_test.py") or name == "conftest.py"
-
-
-def py_imports(text: str) -> list:
-    """(level, module parts, [imported names]) of every import statement."""
-    import ast
-    out = []
-    try:
-        tree = ast.parse(text)
-    except (SyntaxError, ValueError, RecursionError, MemoryError):
-        for match in re.finditer(r"^[ \t]*(?:from[ \t]+(\.*)([\w.]*)[ \t]+import[ \t]+([^\n#]+)"
-                                 r"|import[ \t]+([^\n#]+))", text, re.M):
-            if match.group(4):
-                for item in match.group(4).split(","):
-                    name = item.split(" as ")[0].strip()
-                    if re.fullmatch(r"[\w.]+", name):
-                        out.append((0, name.split("."), []))
-            else:
-                names = [n.split(" as ")[0].strip() for n in match.group(3).strip("() ").split(",")]
-                out.append((len(match.group(1)), [p for p in match.group(2).split(".") if p],
-                            [n for n in names if re.fullmatch(r"\w+", n)]))
-        return out
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            out += [(0, alias.name.split("."), []) for alias in node.names]
-        elif isinstance(node, ast.ImportFrom):
-            out.append((node.level or 0, node.module.split(".") if node.module else [],
-                        [alias.name for alias in node.names if alias.name != "*"]))
-    return out
-
-
-def extract_python(scan: Scan, edges: Edges, covered: dict, skip_sources=False):
-    projects = {}                                 # folder -> its build file
-    for path in scan.named["pyproject.toml"]:
-        data, error = load_toml(path)
-        if error:
-            scan.notes.append(error)
-            continue
-        folder = os.path.dirname(path)
-        tool = data.get("tool") if isinstance(data.get("tool"), dict) else {}
-        project = data.get("project") if isinstance(data.get("project"), dict) else \
-            tool.get("poetry") if isinstance(tool.get("poetry"), dict) else None
-        if project and isinstance(project.get("name"), str):
-            projects[folder] = path
-    for path in scan.named["setup.cfg"]:
-        folder = os.path.dirname(path)
-        if folder in projects:
-            continue
-        import configparser
-        parser = configparser.ConfigParser(interpolation=None)
-        try:
-            parser.read_string(read_text(path))
-            name = parser.get("metadata", "name", fallback="")
-        except (OSError, configparser.Error):
-            continue
-        if name and not name.startswith(("attr:", "file:")):
-            projects[folder] = path
-    for path in scan.named["setup.py"]:
-        folder = os.path.dirname(path)
-        if folder in projects:
-            continue
-        try:
-            text = read_text(path)
-        except OSError:
-            continue
-        name = re.search(r"\bname\s*=\s*[\"']([^\"']+)[\"']", text)
-        if name:
-            projects[folder] = path
-    if not scan.py:
-        return
-    covered["python"] = {folder for folder, names in scan.py.items()
-                         if any(not py_is_test(scan.rel(folder), n) for n in names)}
-    if skip_sources:
-        return
-    tops = {}                                         # top-level name -> [folder or file]
-    for folder in scan.inits:
-        if os.path.dirname(folder) not in scan.inits:
-            tops.setdefault(os.path.basename(folder), []).append(folder)
-    roots = {os.path.dirname(f) for found in tops.values() for f in found} | set(projects) \
-        | {os.path.join(p, "src") for p in projects}
-    for root in roots:
-        if root in scan.inits:
-            continue
-        for name in scan.py.get(root, ()):
-            if name not in ("setup.py", "conftest.py", "__init__.py"):
-                tops.setdefault(name[:-3], []).append(os.path.join(root, name))
-
-    def descend(start: str, parts: list) -> str:
-        """The deepest folder that the dotted path names, starting in `start`."""
-        current = start
-        for part in parts:
-            deeper = os.path.join(current, part)
-            if deeper in scan.py or scan.isdir(deeper) and deeper in scan.inits:
-                current = deeper
-            else:
-                break
-        return current
-
-    def resolve(parts: list, source: str):
-        found = tops.get(parts[0])
-        if not found:
-            return None
-        if len(found) > 1:
-            scored = sorted(found, key=lambda f: len(os.path.commonpath([f, source])),
-                            reverse=True)
-            if len(os.path.commonpath([scored[0], source])) == \
-                    len(os.path.commonpath([scored[1], source])):
-                return None                           # ambiguous: do not guess
-            found = scored
-        first = found[0]
-        if first.endswith(".py") and not scan.isdir(first):
-            return os.path.dirname(first)
-        return descend(first, parts[1:])
-
-    for folder, names in sorted(scan.py.items()):
-        folder_rel = scan.rel(folder)
-        for name in sorted(names):
-            path = os.path.join(folder, name)
-            try:
-                if os.path.getsize(path) > 1_000_000:
-                    continue
-                text = read_text(path)
-            except OSError:
-                continue
-            if "import" not in text:
-                continue
-            kind = "python-dev" if py_is_test(folder_rel, name) else "python"
-            for level, module, imported in py_imports(text):
-                targets = []
-                if level:
-                    base = folder
-                    for _ in range(level - 1):
-                        base = os.path.dirname(base)
-                    if not under(base, scan.root):
-                        continue
-                    for item in imported or [None]:
-                        targets.append(descend(base, module + ([item] if item else [])))
-                elif module:
-                    for item in imported or [None]:
-                        targets.append(resolve(module + ([item] if item else []), path))
-                dotted = "." * level + ".".join(module)
-                for target in targets:
-                    if target and target != folder and under(target, scan.root):
-                        edges.add(folder, target, kind, f"{scan.rel(path)} imports {dotted}")
-
-
-def extract(root: str, ignore=(), owner=None) -> dict:
-    """Find the dependencies between folders of a repository.
-
-    `owner` maps a folder to its unit; where all sources of a language lie in one unit,
-    its files are not read.
-    """
-    scan = Scan(root, ignore)
-    edges, covered = Edges(scan), {}
-
-    def one_owner(folders) -> bool:
-        return owner is not None and len({owner(f) for f in folders}) < 2
-
-    extract_cargo(scan, edges, covered)
-    extract_npm(scan, edges, covered)
-    extract_go(scan, edges, covered, skip_sources=one_owner(scan.go))
-    extract_python(scan, edges, covered, skip_sources=one_owner(scan.py))
-    return {"edges": edges.list(), "covered": covered, "notes": scan.notes}
-
-
-def covered_units(project: Project, covered: dict) -> dict:
-    """{ecosystem: units that contain extracted code}."""
-    out = {}
-    for eco, folders in covered.items():
-        units = set()
-        for folder in folders:
-            kind, unit = project.owner_of(folder)
-            while kind == "unit" and unit is not None and unit not in units:
-                units.add(unit)
-                unit = unit.parent
-        out[eco] = units
-    return out
-
-
 # ------------------------------------------------------------------- init
 
 MINIMAL_SKILL = """---
@@ -3746,7 +2859,7 @@ def init_project(target: str, agents=False, interactive=False) -> dict:
     the generated files.
 
     No other manifest is written. The units of a repository are chosen by a person or by an
-    agent with the skill `unifold-convert`; this tool only checks them against the code. A
+    agent with the skill `unifold-convert`; this tool checks what they wrote. A
     hand-written `AGENTS.md` is replaced only when `interactive` and the person says yes.
     """
     root = real(target)
@@ -3774,7 +2887,7 @@ def init_project(target: str, agents=False, interactive=False) -> dict:
         result["written"].append(MANIFEST)
         result["notes"].append("the root manifest says `summary: TODO`. The units of the "
                                "repository are written by hand or with the skill "
-                               "`unifold-convert`; this tool drafts none from the code")
+                               "`unifold-convert`; this tool drafts none")
     readme = os.path.join(root, "README.md")
     if not os.path.exists(readme):
         write_text(readme, README_TEMPLATE.replace("<folder-name>", os.path.basename(root), 1))
@@ -3990,45 +3103,21 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
 
 # --------------------------------------------------------------- commands
 
-def gather_deps(project: Project, deps_file=None, no_deps=False):
-    """Observed dependencies: extracted, plus a given list. Returns (edges, covered units)."""
-    edges, covered = [], {}
-    if not no_deps and len(project.units) > 1:
-        found = extract(project.root, project.ignored_paths(),
-                        owner=lambda f: project.owner_of(f)[1])
-        edges += found["edges"]
-        covered = covered_units(project, found["covered"])
-        project.deps_notes = found["notes"]
-    if deps_file:
-        given = load_deps_file(project, deps_file)
-        edges += given
-        if no_deps:
-            folders = {os.path.join(project.root, *e[side].split("/")) if e[side] != "."
-                       else project.root for e in given for side in ("from", "to")}
-            covered = covered_units(project, {"given list": folders})
-    return edges, covered
-
-
-def run_check(path: str, fix=False, deps_file=None, no_deps=False, strict=False,
-              only=None) -> dict:
+def run_check(path: str, fix=False, strict=False, only=None) -> dict:
     """Check the project that contains `path`. Returns the result as plain data."""
     project = open_project(path, need_usable=False)
     fixed = None
-    edges = []
     if project.usable:
         if fix:
             fixed = write_generated(project)
             project = Project(project.root)
-        edges, covered = gather_deps(project, deps_file, no_deps)
-        mapped = map_edges(project, edges)
         for unit in project.units:
             if not unit.broken:
                 check_manifest(project, unit)
-            check_wiring(project, unit, mapped[2])
+            check_wiring(project, unit)
         for unit in project.units:
             check_documents(project, unit)
         check_generated(project)
-        check_deps(project, mapped, covered)
     seen, findings = set(), []
     for item in project.findings:
         key = (item["rule"], item["file"], item["line"], item["message"])
@@ -4044,10 +3133,7 @@ def run_check(path: str, fix=False, deps_file=None, no_deps=False, strict=False,
     for item in findings:
         rules[item["rule"]] = rules.get(item["rule"], 0) + 1
     summary = {"units": len(project.units), **counts, "rules": rules,
-               "root": project.root, "tool": TOOL_VERSION,
-               "dependencies": {"observed": len(edges),
-                                "extracted": not no_deps and len(project.units) > 1,
-                                "notes": project.deps_notes}}
+               "root": project.root, "tool": TOOL_VERSION}
     if fixed is not None:
         summary["fixed"] = fixed
     ok = not counts["error"] and not (strict and counts["warn"])
@@ -4069,12 +3155,9 @@ def print_check(result: dict, quiet=False):
               f"{len(fixed['removed'])} removed")
     if fixed and fixed["refused"]:
         print("not overwritten (no generated marker): " + ", ".join(fixed["refused"]))
-    for note in summary["dependencies"]["notes"]:
-        print(f"note: {note}")
     per_rule = ", ".join(f"{rule}×{count}" for rule, count in sorted(summary["rules"].items()))
     print(f"{summary['units']} unit(s): {summary['error']} error(s), {summary['warn']} "
-          f"warning(s), {summary['info']} info" + (f"  [{per_rule}]" if per_rule else "")
-          + f"; {summary['dependencies']['observed']} dependencies observed in code")
+          f"warning(s), {summary['info']} info" + (f"  [{per_rule}]" if per_rule else ""))
 
 
 def print_github(result: dict):
@@ -4120,14 +3203,13 @@ COMMANDS = {
     "init": "start a project in DIR (default: here): the root manifest and README.md if there "
             "are none, and the generated files; with --agents also install the skills and the "
             "skill stubs",
-    "check": "check manifests, wiring, generated files, documents and the comparison with code",
+    "check": "check manifests, wiring, contracts, documents and generated files",
     "generate": "write diagrams, decision indexes, the AGENTS.md of every unit and, "
                 "where they exist, skill stubs",
     "show": "describe the unit that contains PATH, with its resolved neighbours",
     "capability": "print both ends of every connection of one capability or need",
     "impact": "list everything that depends on a unit or capability, and who cites its files",
     "tree": "print the unit tree with status, capabilities and needs",
-    "deps": "print the dependencies between folders that the extractors find in code, as JSON",
     "stamp": "write or refresh the stamps of the context items at or below PATH, and print "
              "each one with the source it cites",
     "cited-by": "list the context items and links that cite FILE",
@@ -4168,10 +3250,6 @@ def build_parser() -> argparse.ArgumentParser:
                      help="hide info findings and fix hints")
     cmd.add_argument("--format", choices=("text", "json", "github"), default="text",
                      help="github: workflow annotations")
-    cmd.add_argument("--deps", metavar="FILE",
-                     help="JSON list of further observed dependencies")
-    cmd.add_argument("--no-deps", action="store_true",
-                     help="do not extract dependencies from code")
     cmd.add_argument("--rule", action="append", metavar="ID",
                      help="report only this rule (repeatable)")
     command("generate")
@@ -4184,9 +3262,6 @@ def build_parser() -> argparse.ArgumentParser:
     cmd.add_argument("capability", nargs="?", help="limit to one capability")
     cmd = command("tree")
     cmd.add_argument("--depth", type=int, help="levels below the root to print")
-    cmd = command("deps", as_json=False)
-    cmd.add_argument("--write", metavar="FILE", help="write the list to FILE instead of printing it")
-    cmd.add_argument("--json", action="store_true", help="accepted; the output is always JSON")
     command("stamp")
     cmd = command("cited-by", path=False)
     cmd.add_argument("file", help="the cited file; it need not exist any more")
@@ -4243,14 +3318,14 @@ def run(args) -> int:
             for note in result["notes"]:
                 print(f"note: {note}")
             print("Next: describe the parts of the repository as units, by hand or with the "
-                  "skill `unifold-convert`; `unifold check` compares the map with the code." +
+                  "skill `unifold-convert`; `unifold check` says what is missing." +
                   ("" if args.agents else " `unifold init --agents` sets up coding agents."))
         emit(args, {"ok": True, **result}, text)
         return 0
     if name == "check":
         if args.format == "json":
             args.json = True
-        result = run_check(args.path, args.fix, args.deps, args.no_deps, args.strict,
+        result = run_check(args.path, args.fix, args.strict,
                            {r.upper() for r in args.rule} if args.rule else None)
         if args.json:
             print(json.dumps(result, indent=1, ensure_ascii=False))
@@ -4289,18 +3364,6 @@ def run(args) -> int:
         return 0
     if not os.path.exists(args.path):
         raise Fail("no-such-path", f"{args.path} does not exist")
-    if name == "deps":
-        project = open_project(args.path)
-        found = extract(project.root, project.ignored_paths())
-        text = json.dumps(found["edges"], indent=1, ensure_ascii=False) + "\n"
-        for note in found["notes"]:
-            sys.stderr.write(f"note: {note}\n")
-        if args.write:
-            write_text(os.path.abspath(args.write), text)
-            sys.stderr.write(f"{len(found['edges'])} dependencies written to {args.write}\n")
-        else:
-            sys.stdout.write(text)
-        return 0
     project = open_project(args.path)
     if name == "generate":
         result = write_generated(project)

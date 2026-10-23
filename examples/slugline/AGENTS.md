@@ -17,7 +17,7 @@ This repository has a [unifold](https://unifold.md) map. A folder with a `unifol
 
 - `unifold show PATH`: a unit, its capabilities and needs, and who is on the other side
 - `unifold capability PATH NAME`: both ends of one connection, with contracts
-- `unifold check`: is the map consistent, and does the code agree (`--fix` rewrites generated files)
+- `unifold check`: is the map consistent (`--fix` rewrites generated files)
 
 | Unit | Path | Summary |
 |---|---|---|

@@ -85,36 +85,6 @@ def with_decision(status="proposed", more="", date="2026-10-07", name="0001-x.md
     return {f"docs/decisions/{name}": DECISION.format(status=status, more=more, date=date)}
 
 
-def cargo(members: dict, root_package: str = "") -> dict:
-    """A tiny Cargo workspace. members: {folder: [path dependencies]} ('dev:x' = dev-dependency)."""
-    out = {"Cargo.toml": "[workspace]\nmembers = [%s]\n%s" % (
-        ", ".join(f'"{m}"' for m in members), root_package)}
-    for folder, deps in members.items():
-        name = folder.rsplit("/", 1)[-1]
-        normal = "".join(f'{d} = {{ path = "../{d}" }}\n' for d in deps if not d.startswith("dev:"))
-        dev = "".join(f'{d[4:]} = {{ path = "../{d[4:]}" }}\n' for d in deps if d.startswith("dev:"))
-        out[f"{folder}/Cargo.toml"] = (f'[package]\nname = "{name}"\nversion = "0.1.0"\n'
-                                       f'description = "The {name} crate."\n\n[dependencies]\n{normal}'
-                                       + (f"\n[dev-dependencies]\n{dev}" if dev else ""))
-        out[f"{folder}/src/lib.rs"] = "// code\n"
-    return out
-
-
-def npm(members: dict) -> dict:
-    """A tiny npm workspace. members: {folder: [dependencies on other members]}."""
-    out = {"package.json": json.dumps({"name": "demo", "private": True,
-                                       "workspaces": ["packages/*"]})}
-    for folder, deps in members.items():
-        out[f"packages/{folder}/package.json"] = json.dumps(
-            {"name": f"@demo/{folder}", "version": "1.0.0", "description": f"The {folder} package",
-             "dependencies": {f"@demo/{d}": "workspace:*" for d in deps}})
-    return out
-
-
-CARGO_AB = cargo({"a": ["b"], "b": []})
-B = "https://example.test/b"
-A_NEEDS_B = "needs:\n  b: {summary: The b crate, contract: %s}\n" % B
-B_CAPABILITY_B = "capabilities:\n  b: {kind: library, summary: The b crate, contract: %s}\n" % B
 CONTEXT_FILES = {**with_decision(), CONTEXT: ITEM.format(stamp="")}
 
 # name, files, expected findings, options (generate, args)
@@ -181,24 +151,6 @@ CASES = [
         "docs/tutorials/first.md": "# First\n", "docs/references/api/index.md": "# API\n",
         "docs/explanation/risks.md": "# Risks\n", "docs/skills/do-it/SKILL.md": SKILL,
         **with_decision()}), []),
-    ("clean-code-agrees-with-wiring-cargo",
-     project("wiring:\n  a.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B}, CARGO_AB), []),
-    ("clean-code-agrees-with-wiring-npm", project(
-        "wiring:\n  a.b: b.b\n", {"packages/a": A_NEEDS_B, "packages/b": B_CAPABILITY_B},
-        npm({"a": ["b"], "b": []})), []),
-    ("clean-dev-dependency-needs-no-wiring", project(
-        "capabilities:\n  a: {summary: s, contract: https://example.test/a}\n" + B_CAPABILITY_B[len("capabilities:\n"):]
-        + "wiring:\n  a: a.a\n  b: b.b\n",
-        {"a": "capabilities:\n  a: {summary: s, contract: https://example.test/a}\n", "b": B_CAPABILITY_B},
-        cargo({"a": ["dev:b"], "b": []})), []),
-    ("clean-own-code-uses-child", project("", {"b": B_CAPABILITY_B}, {
-        "Cargo.toml": '[workspace]\nmembers = ["b"]\n[package]\nname = "demo"\nversion = "0.1.0"\n'
-                      '[dependencies]\nb = { path = "b" }\n',
-        "b/Cargo.toml": '[package]\nname = "b"\nversion = "0.1.0"\n'}), []),
-    ("clean-given-dependency-list", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
-        "a/main.c": "x\n", "b/lib.c": "x\n",
-        "deps.json": '[{"from": "a/main.c", "to": "b\\\\lib.c", "kind": "call", "evidence": "trace"}]\n'}),
-     [], {"args": ["--deps", "deps.json"]}),
     # ------------------------------------------------------------ S: structure
     ("S1-unsupported-version", {"unifold.yaml": 'unifold: "9.9"\nsummary: A demo\n'},
      ["error S1 unifold.yaml"]),
@@ -456,64 +408,6 @@ CASES = [
       "error G1 a/docs/diagrams/component.md", "error G1 a/docs/diagrams/context.md",
       "error G1 docs/diagrams/architecture.md", "error G1 docs/diagrams/component.md"],
      {"generate": False}),
-    # ------------------------------------------------- D: dependencies in code
-    ("D1-dependency-without-wiring-cargo", project(
-        B_CAPABILITY_B + "wiring:\n  b: b.b\n", {"a": "", "b": B_CAPABILITY_B}, CARGO_AB),
-     ["error D1 unifold.yaml"]),
-    ("D1-dependency-without-wiring-npm", project(
-        B_CAPABILITY_B + "wiring:\n  b: b.b\n", {"packages/a": "", "packages/b": B_CAPABILITY_B},
-        npm({"a": ["b"], "b": []})), ["error D1 unifold.yaml"]),
-    ("D1-dependency-in-given-list", project("", {"a": "", "b": ""}, {
-        "a/main.c": "x\n", "b/lib.c": "x\n",
-        "deps.json": '[{"from": "a/main.c", "to": "b/lib.c"}]\n'}),
-     ["error D1 unifold.yaml"], {"args": ["--deps", "deps.json"]}),
-    ("D1-code-of-ancestor-used-without-folder-line", project("", {"a": ""}, {
-        "a/main.c": "x\n", "lib/x.c": "x\n", "deps.json": '[{"from": "a/main.c", "to": "lib/x.c"}]\n'}),
-     ["error D1 unifold.yaml"], {"args": ["--deps", "deps.json"]}),
-    ("D1-code-of-ancestor-is-not-covered-by-a-folder-line", project("wiring:\n  a.x: ./lib\n", {"a": NEEDS_X}, {
-        "a/main.c": "x\n", "lib/x.c": "x\n", "deps.json": '[{"from": "a/main.c", "to": "lib/x.c"}]\n'}),
-     ["error D1 unifold.yaml", "error W1 unifold.yaml", "error W2 unifold.yaml"], {"args": ["--deps", "deps.json"]}),
-    ("D1-code-of-ancestor-covered-once-it-is-a-unit", project("wiring:\n  a.x: lib.x\n", {"a": NEEDS_X, "lib": CAPABILITY_X}, {
-        "a/main.c": "x\n", "lib/x.c": "x\n", "deps.json": '[{"from": "a/main.c", "to": "lib/x.c"}]\n'}),
-     [], {"args": ["--deps", "deps.json"]}),
-    ("D1-not-for-a-dependency-of-tests-in-given-list", project("", {"a": "", "b": ""}, {
-        "a/main.c": "x\n", "b/lib.c": "x\n",
-        "deps.json": '[{"from": "a/main.c", "to": "b/lib.c", "kind": "make-dev"}]\n'}),
-     [], {"args": ["--deps", "deps.json"]}),
-    ("D1-cargo-binary-in-a-unit-below-the-package", project("", {"app": "", "b": B_CAPABILITY_B}, {
-        **cargo({"b": []}, '[package]\nname = "demo"\nversion = "0.1.0"\n[[bin]]\nname = "demo"\n'
-                           'path = "app/main.rs"\n[dependencies]\nb = { path = "b" }\n'),
-        "app/main.rs": "fn main() {}\n"}),
-     ["error D1 unifold.yaml", "warn W3 unifold.yaml"]),
-    ("D1-cargo-binary-in-a-unit-below-the-package-wired", project(
-        "wiring:\n  app.b: b.b\n", {"app": A_NEEDS_B, "b": B_CAPABILITY_B}, {
-            **cargo({"b": []}, '[package]\nname = "demo"\nversion = "0.1.0"\n[[bin]]\nname = "demo"\n'
-                               'path = "app/main.rs"\n[dependencies]\nb = { path = "b" }\n'),
-            "app/main.rs": "fn main() {}\n"}),
-     []),
-    ("D2-cargo-binary-in-a-unit-below-the-package", project(
-        "wiring:\n  app.b: b.b\n", {"app": A_NEEDS_B, "b": B_CAPABILITY_B}, {
-            **cargo({"b": []}, '[package]\nname = "demo"\nversion = "0.1.0"\n[[bin]]\nname = "demo"\n'
-                               'path = "app/main.rs"\n'),
-            "app/main.rs": "fn main() {}\n"}),
-     ["warn D2 unifold.yaml"]),
-    ("D2-not-when-only-tests-depend", project(
-        "wiring:\n  a.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B}, cargo({"a": ["dev:b"], "b": []})),
-     []),
-    ("D2-wiring-without-dependency-in-code", project(
-        "wiring:\n  a.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B}, cargo({"a": [], "b": []})),
-     ["warn D2 unifold.yaml"]),
-    ("D2-not-for-units-without-extracted-code", project(
-        "wiring:\n  a.b: b.b\n  notes.b: b.b\n", {"a": A_NEEDS_B, "b": B_CAPABILITY_B, "notes": A_NEEDS_B},
-        CARGO_AB), []),
-    ("D3-unknown-path-in-list", project("", {"a": ""}, {
-        "deps.json": '[{"from": "a/nowhere.c", "to": "a"}]\n'}),
-     ["error D3 deps.json"], {"args": ["--deps", "deps.json"]}),
-    ("D3-list-is-an-object", project("", {"a": ""}, {"deps.json": '{"edges": []}\n'}),
-     ["error D3 deps.json"], {"args": ["--deps", "deps.json"]}),
-    ("D3-entries-of-another-shape", project("", {"a": ""}, {
-        "deps.json": '[{"source": "a", "target": "a"}]\n'}),
-     ["error D3 deps.json"], {"args": ["--deps", "deps.json"]}),
 ]
 
 
@@ -561,7 +455,7 @@ def run_case(runner: Runner, case) -> str | None:
         folder = new_project(tmp, files)
         if options.get("generate", True):
             runner.run("generate", str(folder))
-        args = [str(folder / a) if a.endswith(".json") else a for a in options.get("args", [])]
+        args = list(options.get("args", []))
         try:
             found = runner.findings(folder, *args)
         except AssertionError as exc:
@@ -912,8 +806,11 @@ def scenario_agents_generated(runner: Runner, tmp: str):
 def scenario_init(runner: Runner, tmp: str):
     """`init` writes the root manifest, a README.md from the template and the generated files:
     it reads no build file and drafts no unit."""
-    files = cargo({"crates/core": [], "crates/cli": ["core", "dev:extra"], "crates/extra": []})
-    files["crates/cli/src/main.rs"] = "fn main() {}\n"
+    files = {"Cargo.toml": '[workspace]\nmembers = ["crates/core", "crates/cli"]\n',
+             "crates/core/Cargo.toml": '[package]\nname = "core"\nversion = "0.1.0"\n',
+             "crates/cli/Cargo.toml": '[package]\nname = "cli"\nversion = "0.1.0"\n\n'
+                                      '[dependencies]\ncore = { path = "../core" }\n',
+             "crates/core/src/lib.rs": "// code\n", "crates/cli/src/main.rs": "fn main() {}\n"}
     folder = new_project(tmp, files)
     data, done = runner.json("init", "--json", str(folder))
     check(done.returncode == 0 and data["ok"] and data["units"] == 1
@@ -938,10 +835,6 @@ def scenario_init(runner: Runner, tmp: str):
     check(again.returncode == 0 and (folder / "unifold.yaml").read_text() == root
           and "kept" in again.stdout and "unifold-convert" in again.stdout,
           f"init twice keeps the manifest and names the skill: {again.stdout}")
-    edges, _ = runner.json("deps", str(folder))
-    check({"from": "crates/cli", "to": "crates/core", "kind": "cargo",
-           "evidence": "crates/cli/Cargo.toml [dependencies] core"} in edges, f"deps: {edges}")
-    check(any(e["kind"] == "cargo-dev" for e in edges), "dev-dependencies are listed with their kind")
     empty = Path(tmp) / "none"
     data, done = runner.json("init", "--json", str(empty))
     check(done.returncode == 0 and data["units"] == 1
@@ -956,20 +849,11 @@ def scenario_init(runner: Runner, tmp: str):
           f"init on a unit that is not a root: {done.returncode} {done.stderr}")
 
 
-def scenario_hints(runner: Runner, tmp: str):
-    """Texts that must not mislead: the D1 hint for a declared need, `capability` without a README section."""
-    files = project("", {"a": "needs:\n  b: {summary: The b crate, optional: true}\n", "b": B_CAPABILITY_B},
-                 CARGO_AB)
-    folder = new_project(tmp, files)
+def scenario_capability_hint(runner: Runner, tmp: str):
+    """`capability` says when README.md has no section for the entry."""
+    folder = new_project(tmp, project("", {"b": CAPABILITY_X}))
     runner.run("generate", str(folder))
-    data, _ = runner.json("check", "--json", "--rule", "D1", str(folder))
-    fix = data["findings"][0]["fix"] if data["findings"] else ""
-    check("Wire need `b`" in fix and "Add a need" not in fix and "`a.b: b.b`" in fix,
-          f"D1 for a need that is declared but not wired says: wire it: {fix}")
-    (folder / "a/unifold.yaml").write_text(UNIT)
-    data, _ = runner.json("check", "--json", "--rule", "D1", str(folder))
-    check("Add a need" in data["findings"][0]["fix"], "D1 without such a need says: add one")
-    done = runner.run("capability", str(folder / "b"), "b")
+    done = runner.run("capability", str(folder / "b"), "x")
     check(done.returncode == 0 and "(no section for it in README.md)" in done.stdout,
           f"capability says that README.md has no section for it: {done.stdout}")
 
@@ -1095,7 +979,7 @@ def scenario_robustness(runner: Runner, tmp: str):
 
 
 def scenario_gitignore(runner: Runner, tmp: str):
-    """What git ignores is not part of the project: no unit, no document, no dependency."""
+    """What git ignores is not part of the project: no unit, no document."""
     if shutil.which("git") is None:
         return
     folder = new_project(tmp, project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
@@ -1103,13 +987,12 @@ def scenario_gitignore(runner: Runner, tmp: str):
         "build/x/unifold.yaml": UNIT, "build/x/README.md": README.format(name="x"),
         "a/docs/references/generated.md": "# Generated\n\n[gone](nowhere.md)\n",
         "a/docs/references/kept.md": "# Kept\n",
-        "docs/scratch.md": "# Scratch\n",
-        **cargo({"a": ["b"], "b": [], "build/x": ["b"]})}))
+        "docs/scratch.md": "# Scratch\n"}))
     done = subprocess.run(["git", "init", "-q", str(folder)], capture_output=True, text=True)
     check(done.returncode == 0, f"git init: {done.stderr}")
     runner.run("generate", str(folder))
     found = runner.findings(folder)
-    check(found == [], f"ignored unit, document and dependency are not seen: {found}")
+    check(found == [], f"ignored unit and document are not seen: {found}")
     rows, _ = runner.json("tree", "--json", str(folder))
     check([r["path"] for r in rows] == [".", "a", "b"], f"tree without the ignored unit: {rows}")
     data, _ = runner.json("show", "--json", str(folder / "a"))
@@ -1133,7 +1016,7 @@ SCENARIOS = [
     ("scenario-check-fix", scenario_check_fix),
     ("scenario-agents-generated", scenario_agents_generated),
     ("scenario-init-root-manifest-only", scenario_init),
-    ("scenario-hints-d1-and-capability", scenario_hints),
+    ("scenario-capability-hint", scenario_capability_hint),
     ("scenario-init-agents-and-skill-stubs", scenario_agents),
     ("scenario-skill-stub-names", scenario_stub_names),
     ("scenario-site", scenario_site),
