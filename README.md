@@ -85,7 +85,7 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 
 **Do I need an AI agent?** No. The files are YAML and Markdown.
 
-**Does it read my code?** unifold reads its own unifold.yaml files and your Markdown files in order to check conformance to the standard. Unifold is language agnostic. Use whichever programming language you like.
+**Does it read my code?** Only to find dependencies. It reads build files and imports for Cargo, npm, pnpm, yarn, Go and Python, and compares them with the wiring. For any other language, pass a list of dependencies with `--deps`. The standard itself works with every language.
 
 **Do I have to write documentation?** Every unit has a `README.md` that says what it is for and why. Everything else in `docs/` is written when there is something to say.
 
