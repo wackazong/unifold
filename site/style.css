@@ -193,7 +193,7 @@ td:first-child:empty, th:first-child:empty { min-width: 0; }
 .panel pre { margin: 0 -1.15rem; padding: 0 1.15rem; background: none; border-radius: 0; }
 .panel pre code { font-size: .8438rem; line-height: 1.7; }
 .panel pre .hl { display: inline-block; vertical-align: top; min-width: calc(100% + 2.3rem); margin: 0 -1.15rem; padding: 0 1.15rem; background: var(--hl); box-shadow: 0 1px 0 var(--hl); }
-.duo { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.5rem; margin: 1.75rem 0 2rem; align-items: start; }
+.duo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; max-width: 50rem; margin: 1.75rem 0 2rem; }
 .terminal { margin: 0; background: var(--dark); color: var(--dark-ink); border-radius: 4px; overflow: hidden; }
 .terminal figcaption { display: flex; align-items: center; padding: .65rem 1rem; background: var(--dark-2); color: var(--dark-muted); font: .75rem var(--mono); }
 .terminal .dots { display: inline-flex; gap: .4rem; margin-right: .7rem; }
@@ -208,7 +208,7 @@ td:first-child:empty, th:first-child:empty { min-width: 0; }
 .terminal .fix { color: var(--term-ok); font-weight: 700; }
 .terminal .tick { color: #fff; }
 .diagram-card { margin: 0; padding: 1rem 1.1rem 1.2rem; border: 2px solid var(--ink); border-radius: 4px; overflow-x: auto; }
-.wiring { display: block; width: 100%; min-width: 26rem; height: auto; font-family: var(--sans); }
+.wiring { display: block; width: 100%; max-width: 36rem; min-width: 26rem; height: auto; margin: 0 auto; font-family: var(--sans); }
 .wiring .frame { fill: var(--bg-2); stroke: var(--line-2); stroke-dasharray: 5 4; }
 .wiring .frame-name { font: 700 14px var(--mono); fill: var(--ink); }
 .wiring .frame-summary { font-size: 13px; fill: var(--muted); }
@@ -290,7 +290,7 @@ td:first-child:empty, th:first-child:empty { min-width: 0; }
   .hero-grid { grid-template-columns: 1fr; }
   .sheet { grid-template-columns: 1fr; }
   .panel + .panel { border-left: 0; border-top: 2px dashed var(--line-2); }
-  .duo, .run { grid-template-columns: 1fr; }
+  .run { grid-template-columns: 1fr; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cols.three, .index-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

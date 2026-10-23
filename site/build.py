@@ -640,7 +640,7 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
                 else:
                     items.append(inline_md(p, version))
             blocks.append(band(sid, heading, f'<div class="faq">{"".join(items)}</div>', n, "questions"))
-        elif low == "capabilities" and subsections(body):
+        elif (low == "capabilities" or low.startswith("what this")) and subsections(body):
             intro_md = re.split(r"(?m)^### ", body, maxsplit=1)[0].strip()
             cols = []
             for h, b in subsections(body):
