@@ -519,6 +519,54 @@ def first_link(md: str) -> str | None:
     return m.group(1) if m else None
 
 
+def how_it_works(body: str, version: str) -> tuple[str, str]:
+    """The section 'How it works': (the manifests as one sheet, the rest of the section)."""
+    sheet, manifests, parts = [], [], []
+    for seg in split_fences(body):
+        if seg[0] == "md":
+            if seg[1].strip():
+                parts.append(("md", seg[1].strip()))
+            continue
+        _, lang, code = seg
+        if lang in ("yaml", "yml"):
+            first, _, tail = code.partition("\n")
+            label = first.lstrip("# ").strip() if first.startswith("#") else ""
+            code = tail if label else code
+            try:
+                data = yaml.safe_load(code) or {}
+            except yaml.YAMLError:
+                data = {}
+            manifests.append((label, data))
+            sheet.append((label, code, data))
+        else:
+            parts.append(("term", code))
+    names = {k.rsplit(".", 1)[-1] for _, d in manifests if isinstance(d, dict)
+             for k in (d.get("wiring") or {})}
+    panels = []
+    for label, code, data in sheet:
+        role = "connects" if "wiring" in data else "provides" if "capabilities" in data \
+            else "needs" if "needs" in data else ""
+        file_name, _, note = label.partition(" ")
+        panels.append(f'<figure class="panel"><figcaption><code>{esc(file_name)}</code>'
+                      f'<span class="note">{esc(note)}</span>'
+                      f'{f"<span class={chr(34)}role{chr(34)}>{role}</span>" if role else ""}</figcaption>'
+                      f'{code_block(code.rstrip(), "yaml", mark_wiring=True, mark_names=names)}</figure>')
+    root_name = next((str(d.get("name")) for _, d in manifests if d.get("name")), "")
+    diagram = wiring_diagram(manifests)
+    before, after, figures = [], [], []
+    for kind, text in parts:
+        if kind == "term":
+            figures.append(terminal(text, "unifold check", f"~/{root_name}" if root_name else ""))
+        elif kind == "md":
+            (after if figures else before).append(f'<div class="text">{inline_md(text, version)}</div>')
+    if diagram:
+        figures.append(f'<figure class="diagram-card"><figcaption><code>docs/diagrams/component.md</code>'
+                       f'<span class="role generated">generated</span></figcaption>{diagram}</figure>')
+    sheet_html = f'<div class="sheet" role="group" aria-label="The manifests">{"".join(panels)}</div>' if panels else ""
+    rest = [*before, f'<div class="duo">{"".join(figures)}</div>' if figures else "", *after]
+    return sheet_html, "".join(rest)
+
+
 def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, version: str) -> str:
     m = re.match(r"^#\s+(.+)\n", readme)
     title = m.group(1).strip() if m else "unifold"
@@ -533,18 +581,21 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
             quote = re.sub(r"(?m)^>\s?", "", para).strip()
         else:
             intro.append(para)
+    how = next((b for h, b in sections if h.lower().startswith("how it works")), "")
+    sheet_html, how_rest = how_it_works(how, version) if how else ("", "")
     claim, _, subtitle = (quote or title).partition(". ")
     claim = claim if claim.endswith((".", "!", "?")) else claim + "."
     hero = f"""<section class="hero"><div class="wrap hero-grid">
 <div class="hero-copy">
 <h1>{esc(claim)}</h1>
 {f'<p class="subtitle">{strip_p(inline_md(subtitle, version))}</p>' if subtitle else ''}
-</div>
 <div class="hero-actions">
 <a class="button primary" href="/first-map">Get Started</a>
 <a class="button" href="/spec">Read the standard</a>
 <p class="install"><code>uvx unifold init</code></p>
 </div>
+</div>
+{sheet_html}
 </div></section>"""
     blocks = [hero]
     if intro:
@@ -558,50 +609,7 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
         low, sid = heading.lower(), slug(heading)
         nxt = sections[i + 1] if i + 1 < len(sections) else None
         if low.startswith("how it works"):
-            sheet, manifests, parts = [], [], []
-            for seg in split_fences(body):
-                if seg[0] == "md":
-                    if seg[1].strip():
-                        parts.append(("md", seg[1].strip()))
-                    continue
-                _, lang, code = seg
-                if lang in ("yaml", "yml"):
-                    first, _, tail = code.partition("\n")
-                    label = first.lstrip("# ").strip() if first.startswith("#") else ""
-                    code = tail if label else code
-                    try:
-                        data = yaml.safe_load(code) or {}
-                    except yaml.YAMLError:
-                        data = {}
-                    manifests.append((label, data))
-                    sheet.append((label, code, data))
-                else:
-                    parts.append(("term", code))
-            names = {k.rsplit(".", 1)[-1] for _, d in manifests if isinstance(d, dict)
-                     for k in (d.get("wiring") or {})}
-            panels = []
-            for label, code, data in sheet:
-                role = "connects" if "wiring" in data else "provides" if "capabilities" in data \
-                    else "needs" if "needs" in data else ""
-                file_name, _, note = label.partition(" ")
-                panels.append(f'<figure class="panel"><figcaption><code>{esc(file_name)}</code>'
-                              f'<span class="note">{esc(note)}</span>'
-                              f'{f"<span class={chr(34)}role{chr(34)}>{role}</span>" if role else ""}</figcaption>'
-                              f'{code_block(code.rstrip(), "yaml", mark_wiring=True, mark_names=names)}</figure>')
-            root_name = next((str(d.get("name")) for _, d in manifests if d.get("name")), "")
-            diagram = wiring_diagram(manifests)
-            before, after, figures = [], [], []
-            for kind, text in parts:
-                if kind == "term":
-                    figures.append(terminal(text, "unifold check", f"~/{root_name}" if root_name else ""))
-                elif kind == "md":
-                    (after if figures else before).append(f'<div class="text">{inline_md(text, version)}</div>')
-            if diagram:
-                figures.append(f'<figure class="diagram-card"><figcaption><code>docs/diagrams/component.md</code>'
-                               f'<span class="role generated">generated</span></figcaption>{diagram}</figure>')
-            sheet_html = f'<div class="sheet" role="group" aria-label="The manifests">{"".join(panels)}</div>' if panels else ""
-            out = [sheet_html, *before, f'<div class="duo">{"".join(figures)}</div>' if figures else "", *after]
-            blocks.append(band(sid, heading, "".join(out), n, "how"))
+            blocks.append(band(sid, heading, how_rest, n, "how"))
         elif low.startswith("what a unit has") and table_rows(body):
             tiles = []
             for k, (name, what) in enumerate(r[:2] for r in table_rows(body) if len(r) >= 2):
