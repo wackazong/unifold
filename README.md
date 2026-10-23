@@ -46,7 +46,7 @@ error D1 unifold.yaml:4: 'billing' depends on 'ledger', but no need of 'billing'
     fix: Add a need to billing/unifold.yaml (for example `ledger`), and add `billing.ledger: ledger.journal` to the wiring here. Or remove the dependency from the code.
 ```
 
-`unifold show billing` prints the unit, its need and who finally provides it. The tutorial [Your first map](docs/tutorials/first-map.md) takes fifteen minutes.
+`unifold show billing` prints the unit, its need and who finally provides it. The tutorial [Your first map](https://unifold.md/first-map) takes fifteen minutes.
 
 ## What a unit has
 
@@ -59,11 +59,11 @@ error D1 unifold.yaml:4: 'billing' depends on 'ledger', but no need of 'billing'
 
 ## How people use it
 
-A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, `docs/skills/` says how to do a task, `docs/references/` holds the facts, `docs/explanation/` the reasoning, the invariants, the runtime, the deployment and the risks, and `docs/decisions/` the choices. A reviewer runs `unifold check` and works through the [review checklist](docs/references/writing.md#review-checklist).
+A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, `docs/skills/` says how to do a task, `docs/references/` holds the facts, `docs/explanation/` the reasoning, the invariants, the runtime, the deployment and the risks, and `docs/decisions/` the choices. A reviewer runs `unifold check` and works through the [review checklist](https://unifold.md/writing#review-checklist).
 
 ## How agents use it
 
-`unifold init --agents` installs the two skills, writes their stubs into `.agents/skills/` and `.claude/skills/`, and adds the unifold block to the root `AGENTS.md`. Every unit's `AGENTS.md` is generated: a pointer to `README.md`, the documents by kind, the skills. Most agents read `AGENTS.md` and find the stubs; Kiro and Aider do not ([agents](docs/references/agents.md)). Every agent with a shell can run `unifold show`, which prints a folder's capabilities, needs and resolved neighbours, as text or JSON.
+`unifold init --agents` installs the two skills, writes their stubs into `.agents/skills/` and `.claude/skills/`, and adds the unifold block to the root `AGENTS.md`. Every unit's `AGENTS.md` is generated: a pointer to `README.md`, the documents by kind, the skills. Most agents read `AGENTS.md` and find the stubs; Kiro and Aider do not ([agents](https://unifold.md/agents)). Every agent with a shell can run `unifold show`, which prints a folder's capabilities, needs and resolved neighbours, as text or JSON.
 
 ## Questions
 
@@ -75,13 +75,13 @@ A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, 
 
 **Do I have to write documentation?** Every unit has a `README.md` that says what it is for and why. Everything else in `docs/` is written when there is something to say. The checker reads links, headings and length, never meaning.
 
-**Does it fit a project with one package?** Yes: a project of one unit. The map is one box; the documentation in fixed places is the point ([requirements](docs/explanation/requirements.md)).
+**Does it fit a project with one package?** Yes: a project of one unit. The map is one box; the documentation in fixed places is the point ([requirements](https://unifold.md/requirements)).
 
 **What ends up in my repository?** The `unifold.yaml` files, the generated diagrams and the generated `AGENTS.md` of every unit. The standard is not copied; the root manifest names its version. With `--agents`, also the skills, the tool and the stubs.
 
-**What about my `docs/` folder, docs site and ADR tool?** `docs/` is where unifold keeps the documents, sorted by kind, and a site can be built from it. Existing decision records move to `docs/decisions/` ([documents](docs/references/documents.md)).
+**What about my `docs/` folder, docs site and ADR tool?** `docs/` is where unifold keeps the documents, sorted by kind, and a site can be built from it. Existing decision records move to `docs/decisions/` ([documents](https://unifold.md/documents)).
 
-**Is it stable?** No. This is draft 0.1, not yet published as a package. It has been tried on a handful of repositories and not measured in use ([risks](docs/explanation/risks.md)).
+**Is it stable?** No. This is draft 0.1. It has been tried on a handful of repositories and not measured in use ([risks](https://unifold.md/risks)).
 
 ## Capabilities
 
@@ -89,15 +89,15 @@ What this repository provides. It is a specification, not a unit, so these are n
 
 ### The standard
 
-The standard on one page, [spec.md](docs/references/spec.md), with the reference chapters beside it and a [JSON Schema](docs/references/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
+The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.1/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
 
 ### The skills
 
-Two skills in the [Agent Skills](https://agentskills.io/specification) format. [unifold](docs/skills/unifold/SKILL.md), with file templates, teaches an agent to find its unit, read the right files, change manifests and documents, and check the result. [unifold-convert](docs/skills/unifold-convert/SKILL.md) brings an existing repository into the map: the agent chooses the units, writes their manifests and checks them against the code. No script derives units from code.
+Two skills in the [Agent Skills](https://agentskills.io/specification) format. [unifold](https://unifold.md/skill/SKILL.md), with file templates, teaches an agent to find its unit, read the right files, change manifests and documents, and check the result. [unifold-convert](https://unifold.md/skill/unifold-convert/SKILL.md) brings an existing repository into the map: the agent chooses the units, writes their manifests and checks them against the code. No script derives units from code.
 
 ### The tool
 
-The reference tool, described in [tool.md](docs/references/tool.md) and tested by [tests/conformance.py](tests/conformance.py). It checks manifests, compares the wiring with the dependencies in code, and generates the diagrams and the `AGENTS.md` files. A [GitHub Action](action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
+The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, compares the wiring with the dependencies in code, and generates the diagrams and the `AGENTS.md` files. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
 
 ## Needs
 
@@ -120,14 +120,14 @@ python3 site/build.py --check
 
 | Kind | Pages |
 |---|---|
-| The standard | [spec.md](docs/references/spec.md), the standard on one page; [unifold.schema.json](docs/references/unifold.schema.json) |
-| Reference | [documents](docs/references/documents.md), [writing](docs/references/writing.md), [agents](docs/references/agents.md), [tool](docs/references/tool.md), [tool JSON](docs/references/tool-json.md), [rules](docs/references/rules.md) |
-| Explanation | [requirements](docs/explanation/requirements.md), [reasoning](docs/explanation/reasoning.md), [wiring](docs/explanation/wiring.md), [invariants](docs/explanation/invariants.md), [risks](docs/explanation/risks.md), [decisions](docs/decisions/index.md) |
-| Tutorial | [Your first map](docs/tutorials/first-map.md) |
-| Examples | [slugline](examples/slugline/README.md), a tested Cargo workspace; [plantwatch](examples/plantwatch/README.md), a design written before any code, with every document convention |
+| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.1/unifold.schema.json) |
+| Reference | [documents](https://unifold.md/documents), [writing](https://unifold.md/writing), [agents](https://unifold.md/agents), [tool](https://unifold.md/tool), [tool JSON](https://unifold.md/tool-json), [rules](https://unifold.md/rules) |
+| Explanation | [requirements](https://unifold.md/requirements), [reasoning](https://unifold.md/reasoning), [wiring](https://unifold.md/wiring), [invariants](https://unifold.md/invariants), [risks](https://unifold.md/risks), [decisions](https://github.com/wackazong/unifold/blob/main/docs/decisions/index.md) |
+| Tutorial | [Your first map](https://unifold.md/first-map) |
+| Examples | [slugline](https://github.com/wackazong/unifold/tree/main/examples/slugline), a tested Cargo workspace; [plantwatch](https://github.com/wackazong/unifold/tree/main/examples/plantwatch), a design written before any code, with every document convention |
 
 ## Contributing and licence
 
-Changes to the standard are proposed as decision records; see [CONTRIBUTING.md](CONTRIBUTING.md) and the [decisions](docs/decisions/index.md).
+Changes to the standard are proposed as decision records; see [CONTRIBUTING.md](https://github.com/wackazong/unifold/blob/main/CONTRIBUTING.md) and the [decisions](https://github.com/wackazong/unifold/blob/main/docs/decisions/index.md).
 
-Licensed under either of the Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE)) or the MIT license ([LICENSE-MIT](LICENSE-MIT)), at your option. The templates of the skill and everything the tool generates may be used without attribution. Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this work by you shall be dual licensed as above, without any additional terms or conditions.
+Licensed under either of the Apache License, Version 2.0 ([LICENSE-APACHE](https://github.com/wackazong/unifold/blob/main/LICENSE-APACHE)) or the MIT license ([LICENSE-MIT](https://github.com/wackazong/unifold/blob/main/LICENSE-MIT)), at your option. The templates of the skill and everything the tool generates may be used without attribution. Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this work by you shall be dual licensed as above, without any additional terms or conditions.
