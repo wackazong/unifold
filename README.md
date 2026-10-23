@@ -81,7 +81,7 @@ A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, 
 
 **What about my `docs/` folder, docs site and ADR tool?** `docs/` is where unifold keeps the documents, sorted by kind, and a site can be built from it. Existing decision records move to `docs/decisions/` ([documents](https://unifold.md/documents)).
 
-**Is it stable?** No. This is draft 0.1. It has been tried on a handful of repositories and not measured in use ([risks](https://unifold.md/risks)).
+**Is it stable?** Not yet. 0.1 is the first release. It has been tried on a handful of repositories and not measured in use ([risks](https://unifold.md/risks)).
 
 ## Capabilities
 

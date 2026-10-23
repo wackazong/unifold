@@ -1,6 +1,6 @@
 # Contributing to unifold
 
-unifold is a draft. Changes are welcome.
+Changes are welcome.
 
 ## Corrections
 

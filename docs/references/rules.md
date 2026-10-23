@@ -102,4 +102,4 @@ A project MAY add checks of its own in its build. It SHOULD NOT silence a rule o
 
 ## Changes to this table
 
-Rule ids are never reused. The gaps in the numbering are rules that were merged or removed before draft 0.1.
+Rule ids are never reused. The gaps in the numbering are rules that were merged or removed before version 0.1.

@@ -1,6 +1,6 @@
 # unifold 0.1: the standard
 
-Draft 0.1. This page is the standard for manifests, wiring, generated files and the comparison with code; [documents.md](documents.md) and [writing.md](writing.md) are the standard for the documents of a unit. MUST, MUST NOT, SHOULD and MAY are used as in [BCP 14](https://www.rfc-editor.org/info/bcp14). Examples are not normative.
+Version 0.1. This page is the standard for manifests, wiring, generated files and the comparison with code; [documents.md](documents.md) and [writing.md](writing.md) are the standard for the documents of a unit. MUST, MUST NOT, SHOULD and MAY are used as in [BCP 14](https://www.rfc-editor.org/info/bcp14). Examples are not normative.
 
 ## 1. Terms
 
