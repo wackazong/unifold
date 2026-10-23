@@ -39,7 +39,7 @@ SKILL = ROOT / "docs" / "skills" / "unifold" / "SKILL.md"
 CONVERT_SKILL = ROOT / "docs" / "skills" / "unifold-convert" / "SKILL.md"
 OUT = SITE / "_out"
 DIAGRAMS = SITE / "diagrams"      # pre-rendered Mermaid, committed, keyed by content hash
-STATIC = SITE / "static"          # copied as it is (og.png)
+STATIC = SITE / "static"          # copied as it is: the heading font with its licence, og.png
 
 EXPL = ROOT / "docs" / "explanation"
 TUT = ROOT / "docs" / "tutorials"
@@ -309,6 +309,7 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="{FAVICON_URI}">
 <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
+<link rel="preload" href="/patua-one.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{css_href}">
 </head>
 <body class="{body_class}">
@@ -327,7 +328,7 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <div><h2>Tool</h2><a href="/tool">Commands</a><a href="/rules">Rules</a><a href="/tool-json">JSON output</a><a href="/first-map">Get Started</a></div>
 <div><h2>Agents</h2><a href="/agents">How agents use it</a><a href="/skill/SKILL.md">The skill</a><a href="/skill/unifold-convert/SKILL.md">The convert skill</a><a href="/llms.txt">llms.txt</a></div>
 </nav>
-<p class="fine">The text, the skills and the tool are licensed under <a href="/LICENSE-MIT.txt">MIT</a> or <a href="/LICENSE-APACHE.txt">Apache-2.0</a>, at your option. No scripts, no trackers, no fonts from elsewhere.</p>
+<p class="fine">The text, the skills and the tool are licensed under <a href="/LICENSE-MIT.txt">MIT</a> or <a href="/LICENSE-APACHE.txt">Apache-2.0</a>, at your option. Headings are set in Patua One by LatinoType, under the <a href="/patua-one-OFL.txt">SIL Open Font License</a>. No scripts, no trackers, no fonts from elsewhere.</p>
 </div></footer>
 </body>
 </html>

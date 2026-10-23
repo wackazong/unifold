@@ -33,7 +33,7 @@ npm install --prefix site @mermaid-js/mermaid-cli   # or set MMDC=/path/to/mmdc
 python3 site/build.py                                # then commit site/diagrams/
 ```
 
-`MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. Files in `site/static/`, if the folder exists, are copied as they are; an `og.png` there becomes the preview image of every page.
+`MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. Files in `site/static/` are copied as they are: the heading font Patua One (`patua-one.woff2`, the Latin subset from [Fontsource](https://fontsource.org/fonts/patua-one) 5.3.0) with its licence, the SIL Open Font License. An `og.png` there would become the preview image of every page.
 
 ## Domain
 

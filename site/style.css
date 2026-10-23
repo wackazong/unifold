@@ -1,5 +1,9 @@
 /* unifold.md. One hand-written stylesheet; no fonts or scripts from elsewhere. Flat: no shadows,
    bands of colour, headings that carry a highlighter bar. */
+@font-face {                         /* served from this site; one weight, used for every heading */
+  font-family: "Patua One"; src: url("/patua-one.woff2") format("woff2");
+  font-weight: 400 900; font-style: normal; font-display: swap;
+}
 :root {
   color-scheme: light dark;
   --bg: #ffffff; --bg-2: #f5f6f6; --paper: #ffffff; --ink: #141c20; --ink-2: #33424a; --muted: #5d6c73;
@@ -12,7 +16,7 @@
   --amber: #9a5b00; --amber-hl: #ffe1a3; --coral: #b93a24; --coral-hl: #ffd2c6;
   --violet: #6646b8; --violet-hl: #e1d7fa;
   --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
-  --slab: Rockwell, "Rockwell Nova", "Roboto Slab", "Zilla Slab", Arvo, "Clarendon BT", Georgia, serif;
+  --slab: "Patua One", Rockwell, "Rockwell Nova", "Roboto Slab", Georgia, serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
 }
 @media (prefers-color-scheme: dark) {
