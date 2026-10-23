@@ -47,7 +47,7 @@ TUT = ROOT / "docs" / "tutorials"
 # slug (the URL), source file, name in the navigation, one line for indexes, kind
 CHAPTERS = [
     ("spec", REF / "spec.md", "The standard", "The whole standard on one page: manifest, wiring, documents, what a checker guarantees.", "Standard"),
-    ("documents", REF / "documents.md", "Introduction", "The files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, where a file may point.", "Reference"),
+    ("documents", REF / "documents.md", "Documents", "The files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, where a file may point.", "Reference"),
     ("writing", REF / "writing.md", "Writing", "How each document is written: context items, decisions, references, skills, tutorials, explanation files, the review checklist.", "Reference"),
     ("agents", REF / "agents.md", "Agents", "How coding agents find and use unifold, per agent.", "Reference"),
     ("tool", REF / "tool.md", "Tool", "The reference tool: commands, output, hooks, continuous integration.", "Reference"),
@@ -58,7 +58,7 @@ CHAPTERS = [
     ("wiring", EXPL / "wiring.md", "Wiring", "Wiring in practice: names, passing needs up, several children on one provider, alternatives, adapters, services.", "Explanation"),
     ("invariants", EXPL / "invariants.md", "Invariants", "What is true of the standard, the skills and the tool at every moment.", "Explanation"),
     ("risks", EXPL / "risks.md", "Risks", "Risks and known limits of the standard.", "Explanation"),
-    ("first-map", TUT / "first-map.md", "Get Started", "A tutorial: a root manifest, two units, a connection, the first diagram, documents for one unit.", "Tutorial"),
+    ("first-map", TUT / "first-map.md", "Your first map", "A tutorial: a root manifest, two units, a connection, the first diagram, documents for one unit.", "Tutorial"),
 ]
 SLUG_OF = {src.resolve(): slug for slug, src, _, _, _ in CHAPTERS}
 # old addresses that still get a page
@@ -286,7 +286,7 @@ def render_md(text: str, base: Path, version: str, permalinks: bool = True) -> t
 # --------------------------------------------------------------------------
 def page(*, title: str, description: str, path: str, body: str, css_href: str, version: str,
          current: str = "", body_class: str = "", noindex: bool = False) -> str:
-    nav = [("documents", "Introduction"), ("spec", "Standard"), ("tool", "Tool"), ("first-map", "Get Started")]
+    nav = [("documents", "Documentation"), ("spec", "Standard"), ("tool", "Tool"), ("first-map", "Get Started")]
     links = "".join(
         f'<a href="/{s}"{CUR if s == current else ""}>{n}</a>' for s, n in nav)
     url = SITE_URL + path
@@ -323,7 +323,7 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <div class="foot-brand"><a class="brand" href="/">{LOGO.format(s=22)}<span>unifold</span></a>
 <p>Your project structure is your architecture. Unifold keeps structure, knowledge and code in sync.</p></div>
 <nav class="foot-cols" aria-label="Footer">
-<div><h2>Standard</h2><a href="/documents">Introduction</a><a href="/spec">The standard</a><a href="/writing">Writing</a><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></div>
+<div><h2>Standard</h2><a href="/documents">Documentation</a><a href="/spec">The standard</a><a href="/writing">Writing</a><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></div>
 <div><h2>Tool</h2><a href="/tool">Commands</a><a href="/rules">Rules</a><a href="/tool-json">JSON output</a><a href="/first-map">Get Started</a></div>
 <div><h2>Agents</h2><a href="/agents">How agents use it</a><a href="/skill/SKILL.md">The skill</a><a href="/skill/unifold-convert/SKILL.md">The convert skill</a><a href="/llms.txt">llms.txt</a></div>
 </nav>
