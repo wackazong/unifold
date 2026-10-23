@@ -1,5 +1,5 @@
-# yaml-language-server: $schema=https://unifold.md/0.1/unifold.schema.json
-unifold: "0.1"
+# yaml-language-server: $schema=https://unifold.md/0.2/unifold.schema.json
+unifold: "0.2"
 name: slugline
 summary: Turns text into URL slugs, as a Rust library and as a command
 capabilities:

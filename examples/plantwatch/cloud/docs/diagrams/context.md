@@ -37,7 +37,7 @@ flowchart LR
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
 | push-service | http | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
-| container-host | infrastructure | [contract](../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root (passed up by name) | | |
+| container-host | infrastructure | [contract](../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root | | |
 
 ### Who uses what this unit provides
 

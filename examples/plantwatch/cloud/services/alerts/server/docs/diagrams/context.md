@@ -12,15 +12,15 @@ flowchart LR
     u_cloud__services__alerts__rules["rules"]
     u_cloud__services__alerts__server["server"]
   end
+  n_cloud__services__alerts___event_dbus{{"event-bus"}}
   n_cloud__services__alerts___reading_devents{{"reading-events"}}
   n_cloud__services__alerts___sql_ddb{{"sql-db"}}
-  n_cloud__services__alerts___event_dbus{{"event-bus"}}
   p_cloud__services__alerts___alerts_dapi(["alerts-api"])
   u_cloud__services__alerts__server -->|"evaluation"| u_cloud__services__alerts__rules
   u_cloud__services__alerts__server -->|"notification"| u_cloud__services__alerts__notifier
+  u_cloud__services__alerts__server -->|"event-bus"| n_cloud__services__alerts___event_dbus
   u_cloud__services__alerts__server -->|"reading-events"| n_cloud__services__alerts___reading_devents
   u_cloud__services__alerts__server -->|"sql-db"| n_cloud__services__alerts___sql_ddb
-  u_cloud__services__alerts__server -->|"event-bus"| n_cloud__services__alerts___event_dbus
   p_cloud__services__alerts___alerts_dapi --> u_cloud__services__alerts__server
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
@@ -40,11 +40,11 @@ flowchart LR
 
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
-| reading-events | events | [contract](../../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../../ingest/README.md) (planned) (passed up by name) | reading-events |  |
+| reading-events | events | [contract](../../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../../ingest/README.md) (planned) | reading-events |  |
 | evaluation | library | [contract](../../../docs/references/evaluation.md) | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | evaluation |  |
 | notification | library | [contract](../../../docs/references/notification.md) | [cloud/services/alerts/notifier](../../../notifier/README.md) (planned) | notification |  |
-| sql-db | db | [contract](../../../../../docs/references/sql-db.md) | [cloud/platform](../../../../../platform/README.md) (planned) (passed up by name) | sql-db |  |
-| event-bus | queue | [contract](../../../../../docs/references/event-bus.md) | [cloud/platform](../../../../../platform/README.md) (planned) (passed up by name) | event-bus |  |
+| sql-db | db | [contract](../../../../../docs/references/sql-db.md) | [cloud/platform](../../../../../platform/README.md) (planned) | sql-db |  |
+| event-bus | queue | [contract](../../../../../docs/references/event-bus.md) | [cloud/platform](../../../../../platform/README.md) (planned) | event-bus |  |
 
 ### Who uses what this unit provides
 

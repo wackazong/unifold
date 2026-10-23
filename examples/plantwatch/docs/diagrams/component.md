@@ -16,8 +16,8 @@ flowchart LR
   end
   n_root___push_dservice{{"push-service"}}
   n_root___container_dhost{{"container-host"}}
-  n_root___soil_dprobe{{"soil-probe"}}
   n_root___ambient_dsensor{{"ambient-sensor"}}
+  n_root___soil_dprobe{{"soil-probe"}}
   p_root___app_dui(["app-ui"])
   p_root___test_dreport(["test-report"])
   u_mobile -->|"sensor-link → ble-link (real)"| u_device
@@ -30,8 +30,8 @@ flowchart LR
   u_test_drig -->|"scenario-control (optional)"| u_emulator
   u_test_drig -->|"cloud-api → public-api"| u_cloud
   u_cloud -->|"container-host"| n_root___container_dhost
-  u_device -->|"soil-probe"| n_root___soil_dprobe
   u_device -->|"ambient-sensor"| n_root___ambient_dsensor
+  u_device -->|"soil-probe"| n_root___soil_dprobe
   p_root___app_dui --> u_mobile
   p_root___test_dreport --> u_test_drig
   classDef focus stroke-width:4px
@@ -62,6 +62,6 @@ flowchart LR
 | `test-rig.device-under-test` | `device.ble-link` (real) or `emulator.ble-link` (simulated) |  |
 | `test-rig.scenario-control` | `emulator.scenario-control` | optional |
 | `test-rig.cloud-api` | `cloud.public-api` |  |
-| `cloud.container-host` | need `container-host` of `plantwatch` | passed up by name |
-| `device.soil-probe` | need `soil-probe` of `plantwatch` | passed up by name |
-| `device.ambient-sensor` | need `ambient-sensor` of `plantwatch` | passed up by name |
+| `cloud.container-host` | need `container-host` of `plantwatch` |  |
+| `device.ambient-sensor` | need `ambient-sensor` of `plantwatch` |  |
+| `device.soil-probe` | need `soil-probe` of `plantwatch` |  |

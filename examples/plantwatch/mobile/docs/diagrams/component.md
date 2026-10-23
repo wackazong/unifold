@@ -44,6 +44,6 @@ flowchart LR
 | `sync.sensor-readings` | `ble-client.sensor-readings` |  |
 | `ui.plant-data` | `sync.plant-data` |  |
 | `ui.pairing` | `ble-client.pairing` |  |
-| `ble-client.sensor-link` | need `sensor-link` of `mobile` | passed up by name |
-| `sync.cloud-api` | need `cloud-api` of `mobile` | passed up by name |
-| `ui.push-service` | need `push-service` of `mobile` | passed up by name |
+| `ble-client.sensor-link` | need `sensor-link` of `mobile` |  |
+| `sync.cloud-api` | need `cloud-api` of `mobile` |  |
+| `ui.push-service` | need `push-service` of `mobile` |  |

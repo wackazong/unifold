@@ -32,3 +32,8 @@ wiring:
   server.evaluation: rules.evaluation
   server.notification: notifier.notification
   rules.thresholds: plant-lookup.thresholds
+  notifier.push: push
+  plant-lookup.plants-api: plants-api
+  server.event-bus: event-bus
+  server.reading-events: reading-events
+  server.sql-db: sql-db

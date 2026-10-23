@@ -13,13 +13,13 @@ flowchart LR
     u_device__sampling["sampling"]
     u_device__store["store"]
   end
-  n_device___soil_dprobe{{"soil-probe"}}
   n_device___ambient_dsensor{{"ambient-sensor"}}
+  n_device___soil_dprobe{{"soil-probe"}}
   u_device__sampling -->|"sensor-io, timer"| u_device__hal
   u_device__store -->|"flash"| u_device__hal
   u_device__link -->|"radio"| u_device__hal
-  u_device__hal -->|"soil-probe"| n_device___soil_dprobe
   u_device__hal -->|"ambient-sensor"| n_device___ambient_dsensor
+  u_device__hal -->|"soil-probe"| n_device___soil_dprobe
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
@@ -39,8 +39,8 @@ flowchart LR
 
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
-| soil-probe | hardware | [contract](../../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root (passed up by name) | | |
-| ambient-sensor | hardware | [contract](../../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root (passed up by name) | | |
+| soil-probe | hardware | [contract](../../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root | | |
+| ambient-sensor | hardware | [contract](../../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root | | |
 
 ### Who uses what this unit provides
 

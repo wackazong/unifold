@@ -15,18 +15,18 @@ flowchart LR
   end
   n_cloud__services__alerts___push{{"push"}}
   n_cloud__services__alerts___plants_dapi{{"plants-api"}}
+  n_cloud__services__alerts___event_dbus{{"event-bus"}}
   n_cloud__services__alerts___reading_devents{{"reading-events"}}
   n_cloud__services__alerts___sql_ddb{{"sql-db"}}
-  n_cloud__services__alerts___event_dbus{{"event-bus"}}
   p_cloud__services__alerts___alerts_dapi(["alerts-api"])
   u_cloud__services__alerts__server -->|"evaluation"| u_cloud__services__alerts__rules
   u_cloud__services__alerts__server -->|"notification"| u_cloud__services__alerts__notifier
   u_cloud__services__alerts__rules -->|"thresholds"| u_cloud__services__alerts__plant_dlookup
   u_cloud__services__alerts__notifier -->|"push"| n_cloud__services__alerts___push
   u_cloud__services__alerts__plant_dlookup -->|"plants-api"| n_cloud__services__alerts___plants_dapi
+  u_cloud__services__alerts__server -->|"event-bus"| n_cloud__services__alerts___event_dbus
   u_cloud__services__alerts__server -->|"reading-events"| n_cloud__services__alerts___reading_devents
   u_cloud__services__alerts__server -->|"sql-db"| n_cloud__services__alerts___sql_ddb
-  u_cloud__services__alerts__server -->|"event-bus"| n_cloud__services__alerts___event_dbus
   p_cloud__services__alerts___alerts_dapi --> u_cloud__services__alerts__server
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
@@ -50,8 +50,8 @@ flowchart LR
 | `server.evaluation` | `rules.evaluation` |  |
 | `server.notification` | `notifier.notification` |  |
 | `rules.thresholds` | `plant-lookup.thresholds` |  |
-| `notifier.push` | need `push` of `alerts` | passed up by name |
-| `plant-lookup.plants-api` | need `plants-api` of `alerts` | passed up by name |
-| `server.reading-events` | need `reading-events` of `alerts` | passed up by name |
-| `server.sql-db` | need `sql-db` of `alerts` | passed up by name |
-| `server.event-bus` | need `event-bus` of `alerts` | passed up by name |
+| `notifier.push` | need `push` of `alerts` |  |
+| `plant-lookup.plants-api` | need `plants-api` of `alerts` |  |
+| `server.event-bus` | need `event-bus` of `alerts` |  |
+| `server.reading-events` | need `reading-events` of `alerts` |  |
+| `server.sql-db` | need `sql-db` of `alerts` |  |

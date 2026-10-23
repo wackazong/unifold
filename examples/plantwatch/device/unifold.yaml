@@ -25,3 +25,5 @@ wiring:
   link.radio: hal.radio
   link.reading-log: store.reading-log
   link.live-readings: sampling.readings
+  hal.ambient-sensor: ambient-sensor
+  hal.soil-probe: soil-probe

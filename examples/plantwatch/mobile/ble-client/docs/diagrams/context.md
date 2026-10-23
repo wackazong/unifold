@@ -34,8 +34,8 @@ flowchart LR
 
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
-| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [device/link](../../../../device/link/README.md) (planned) (real; passed up by name) | ble-link |  |
-| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [emulator](../../../../emulator/README.md) (planned) (simulated; passed up by name) | ble-link |  |
+| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [device/link](../../../../device/link/README.md) (planned) (real) | ble-link |  |
+| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [emulator](../../../../emulator/README.md) (planned) (simulated) | ble-link |  |
 
 ### Who uses what this unit provides
 

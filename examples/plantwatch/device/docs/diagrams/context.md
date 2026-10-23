@@ -12,12 +12,12 @@ flowchart LR
     u_mobile["mobile"]
     u_test_drig["test-rig"]
   end
-  n_root___soil_dprobe{{"soil-probe"}}
   n_root___ambient_dsensor{{"ambient-sensor"}}
+  n_root___soil_dprobe{{"soil-probe"}}
   u_mobile -->|"sensor-link → ble-link (real)"| u_device
   u_test_drig -->|"device-under-test → ble-link (real)"| u_device
-  u_device -->|"soil-probe"| n_root___soil_dprobe
   u_device -->|"ambient-sensor"| n_root___ambient_dsensor
+  u_device -->|"soil-probe"| n_root___soil_dprobe
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
   classDef deprecated stroke-dasharray:2 2,opacity:0.6
@@ -36,8 +36,8 @@ flowchart LR
 
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
-| soil-probe | hardware | [contract](../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root (passed up by name) | | |
-| ambient-sensor | hardware | [contract](../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root (passed up by name) | | |
+| soil-probe | hardware | [contract](../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root | | |
+| ambient-sensor | hardware | [contract](../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root | | |
 
 ### Who uses what this unit provides
 

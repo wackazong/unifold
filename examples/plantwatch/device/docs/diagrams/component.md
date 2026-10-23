@@ -13,8 +13,8 @@ flowchart LR
     u_device__sampling["sampling"]
     u_device__store["store"]
   end
-  n_device___soil_dprobe{{"soil-probe"}}
   n_device___ambient_dsensor{{"ambient-sensor"}}
+  n_device___soil_dprobe{{"soil-probe"}}
   p_device___ble_dlink(["ble-link"])
   u_device__sampling -->|"sensor-io, timer"| u_device__hal
   u_device__store -->|"flash"| u_device__hal
@@ -22,8 +22,8 @@ flowchart LR
   u_device__link -->|"radio"| u_device__hal
   u_device__link -->|"reading-log"| u_device__store
   u_device__link -->|"live-readings → readings"| u_device__sampling
-  u_device__hal -->|"soil-probe"| n_device___soil_dprobe
   u_device__hal -->|"ambient-sensor"| n_device___ambient_dsensor
+  u_device__hal -->|"soil-probe"| n_device___soil_dprobe
   p_device___ble_dlink --> u_device__link
   classDef focus stroke-width:4px
   classDef planned stroke-dasharray:6 4
@@ -51,5 +51,5 @@ flowchart LR
 | `link.radio` | `hal.radio` |  |
 | `link.reading-log` | `store.reading-log` |  |
 | `link.live-readings` | `sampling.readings` |  |
-| `hal.soil-probe` | need `soil-probe` of `device` | passed up by name |
-| `hal.ambient-sensor` | need `ambient-sensor` of `device` | passed up by name |
+| `hal.ambient-sensor` | need `ambient-sensor` of `device` |  |
+| `hal.soil-probe` | need `soil-probe` of `device` |  |

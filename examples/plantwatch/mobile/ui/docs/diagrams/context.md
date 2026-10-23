@@ -38,7 +38,7 @@ flowchart LR
 |---|---|---|---|---|---|
 | plant-data | library | [contract](../../../docs/references/plant-data.md) | [mobile/sync](../../../sync/README.md) (planned) | plant-data |  |
 | pairing | library | [contract](../../../docs/references/pairing.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | pairing |  |
-| push-service | http | [contract](../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root (passed up by name) | | |
+| push-service | http | [contract](../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
 
 ### Who uses what this unit provides
 

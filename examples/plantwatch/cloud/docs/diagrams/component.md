@@ -61,4 +61,4 @@ flowchart LR
 | `alerts.reading-events` | `ingest.reading-events` |  |
 | `alerts.plants-api` | `plants.plants-api` |  |
 | `alerts.push` | need `push-service` of `cloud` |  |
-| `platform.container-host` | need `container-host` of `cloud` | passed up by name |
+| `platform.container-host` | need `container-host` of `cloud` |  |

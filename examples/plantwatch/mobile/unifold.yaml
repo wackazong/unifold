@@ -25,3 +25,6 @@ wiring:
   sync.sensor-readings: ble-client.sensor-readings
   ui.plant-data: sync.plant-data
   ui.pairing: ble-client.pairing
+  ble-client.sensor-link: sensor-link
+  sync.cloud-api: cloud-api
+  ui.push-service: push-service

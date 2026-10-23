@@ -35,7 +35,7 @@ flowchart LR
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
 | sensor-readings | library | [contract](../../../docs/references/sensor-readings.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | sensor-readings |  |
-| cloud-api | http | [contract](../../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../../cloud/services/gateway/README.md) (planned) (passed up by name) | public-api |  |
+| cloud-api | http | [contract](../../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../../cloud/services/gateway/README.md) (planned) | public-api |  |
 
 ### Who uses what this unit provides
 

@@ -31,7 +31,7 @@ flowchart LR
 
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
-| push | http | [contract](../../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root (passed up by name) | | |
+| push | http | [contract](../../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
 
 ### Who uses what this unit provides
 

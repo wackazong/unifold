@@ -31,7 +31,7 @@ flowchart LR
 
 | Need | Kind | Contract | Provided by | Capability | Verified by |
 |---|---|---|---|---|---|
-| plants-api | http | [contract](../../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../../plants/README.md) (planned) (passed up by name) | plants-api |  |
+| plants-api | http | [contract](../../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../../plants/README.md) (planned) | plants-api |  |
 
 ### Who uses what this unit provides
 

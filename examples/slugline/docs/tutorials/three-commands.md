@@ -6,10 +6,10 @@ This lesson is for a developer who has cloned the unifold repository and wants t
 
    ```console
    $ unifold check
-   4 unit(s): 0 error(s), 0 warning(s), 0 info; 3 dependencies observed in code
+   4 unit(s): 0 error(s), 0 warning(s), 0 info
    ```
 
-   The map is consistent. The three dependencies come from the `Cargo.toml` files, and each is wired.
+   The map is consistent: every need of the four units is wired, and both sides of each connection name the same contract.
 
 2. Run `unifold show plugins/unicode`. It prints the unit, its capability and its need:
 

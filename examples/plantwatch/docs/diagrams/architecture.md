@@ -36,8 +36,8 @@ flowchart LR
   end
   n_root___push_dservice{{"push-service"}}
   n_root___container_dhost{{"container-host"}}
-  n_root___soil_dprobe{{"soil-probe"}}
   n_root___ambient_dsensor{{"ambient-sensor"}}
+  n_root___soil_dprobe{{"soil-probe"}}
   p_root___app_dui(["app-ui"])
   p_root___test_dreport(["test-report"])
   u_mobile__ble_dclient -->|"sensor-link → ble-link (real)"| u_device__link
@@ -50,8 +50,8 @@ flowchart LR
   u_test_drig -->|"scenario-control (optional)"| u_emulator
   u_test_drig -->|"cloud-api → public-api"| u_cloud__services__gateway
   u_cloud__platform -->|"container-host"| n_root___container_dhost
-  u_device__hal -->|"soil-probe"| n_root___soil_dprobe
   u_device__hal -->|"ambient-sensor"| n_root___ambient_dsensor
+  u_device__hal -->|"soil-probe"| n_root___soil_dprobe
   p_root___app_dui --> u_mobile__ui
   p_root___test_dreport --> u_test_drig
   u_cloud__services__ingest -->|"event-bus"| u_cloud__platform

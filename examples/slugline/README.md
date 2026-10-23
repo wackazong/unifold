@@ -1,6 +1,6 @@
 # slugline
 
-Turns text into a URL slug: `Crème brûlée` becomes `creme-brulee`. A Rust library and a command, in a small Cargo workspace of three crates, for anyone who needs stable, readable identifiers from free text. It is also the small showcase of [unifold](https://unifold.md): four units with code and tests, a map that `check` compares with the `Cargo.toml` files.
+Turns text into a URL slug: `Crème brûlée` becomes `creme-brulee`. A Rust library and a command, in a small Cargo workspace of three crates, for anyone who needs stable, readable identifiers from free text. It is also the small showcase of [unifold](https://unifold.md): four units with code and tests, and a map of them in four manifests.
 
 ## Why
 
@@ -37,6 +37,6 @@ unifold check
 ## Read next
 
 1. [Three commands](docs/tutorials/three-commands.md): what `check`, `show` and `capability` print for this project.
-2. [Break the map](docs/tutorials/break-the-map.md): what `check` says when a wiring line is missing or the code depends on something unwired.
+2. [Break the map](docs/tutorials/break-the-map.md): what `check` says when a wiring line is missing or the two sides of a connection name different contracts.
 3. The generated [component diagram](docs/diagrams/component.md), or `unifold.html` in a browser.
 4. [core](core/README.md), the child with a decision, invariants and a context item.

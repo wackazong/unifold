@@ -30,3 +30,4 @@ wiring:
   alerts.reading-events: ingest.reading-events
   alerts.plants-api: plants.plants-api
   alerts.push: push-service
+  platform.container-host: container-host

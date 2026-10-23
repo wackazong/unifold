@@ -1,4 +1,4 @@
-unifold: "0.1"
+unifold: "0.2"
 name: plantwatch
 diagrams: all
 summary: Tells people when their house plants need water, using a sensor in the pot, a phone app and cloud services
@@ -46,3 +46,6 @@ wiring:
     simulated: emulator.ble-link
   test-rig.scenario-control: emulator.scenario-control
   test-rig.cloud-api: cloud.public-api
+  cloud.container-host: container-host
+  device.ambient-sensor: ambient-sensor
+  device.soil-probe: soil-probe
