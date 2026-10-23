@@ -683,7 +683,7 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
 
     main = f'<main id="main">{"".join(blocks)}</main>'
     description = f"{claim} {subtitle}".strip() + \
-        " An open standard for repository architecture, checked against the code, for people and coding agents."
+        " An open standard for repository architecture, checked for consistency, for people and coding agents."
     return page(title=title, description=description, path="/", body=main, css_href=css_href,
                 version=version, body_class="home")
 
@@ -700,7 +700,7 @@ def build() -> None:
         if not need.exists():
             die(f"{need.relative_to(ROOT)} is missing.")
 
-    version = "0.1"
+    version = "0.2"
     for name in ("unifold.yaml",):
         f = ROOT / name
         if f.exists():
@@ -747,8 +747,9 @@ def build() -> None:
         landing((ROOT / "README.md").read_text(encoding="utf-8"), explorers, css_href, version), encoding="utf-8")
 
     # machine-readable files
-    (OUT / version).mkdir()
-    shutil.copyfile(schema, OUT / version / "unifold.schema.json")
+    for served in dict.fromkeys([version, "0.1"]):   # manifests of 0.1 point their editors at /0.1/
+        (OUT / served).mkdir()
+        shutil.copyfile(schema, OUT / served / "unifold.schema.json")
     (OUT / "skill").mkdir()
     shutil.copyfile(SKILL, OUT / "skill" / "SKILL.md")
     (OUT / "skill" / "unifold-convert").mkdir()
@@ -763,7 +764,7 @@ def build() -> None:
         "# unifold", "",
         f"> unifold {version} is an open standard for writing down how the parts of a repository depend on "
         "each other. A folder becomes a unit by getting a `unifold.yaml` that lists what it provides and what it "
-        "needs; the unit above connects each need to a provider; a checker compares this with the code and "
+        "needs; the unit above connects each need to a provider; a checker keeps this consistent and "
         "generates the diagrams.", "",
         "All pages below are plain Markdown. The same pages exist as HTML without the `.md` ending.", "",
         "## Standard", "",
