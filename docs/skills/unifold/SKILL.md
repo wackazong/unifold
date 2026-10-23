@@ -6,7 +6,7 @@ license: MIT OR Apache-2.0
 
 # unifold
 
-In a unifold project some folders are **units**: they contain a `unifold.yaml` that says what the folder provides, its **capabilities**, and what it **needs**. The nearest unit above connects each need to a provider in its `wiring`. A tool checks this against the code and generates the diagrams. The standard is one page: <https://unifold.md/spec>.
+In a unifold project some folders are **units**: they contain a `unifold.yaml` that says what the folder provides, its **capabilities**, and what it **needs**. The nearest unit above connects each need to a provider in its `wiring`. A tool checks that this map is consistent and generates the diagrams; it does not read code. The standard is one page: <https://unifold.md/spec>.
 
 `unifold` below means the tool: `uvx unifold`, or the copy in this skill, `uv run <folder of this skill>/scripts/unifold.py`. It finds the project root from any folder inside the project.
 
@@ -22,7 +22,7 @@ unifold show [PATH]      # PATH: the file or folder of your task; default: here
 - `unifold impact PATH [CAPABILITY]` lists everything that depends on the unit or capability, through all levels, and the context items that cite its files.
 - `unifold tree` prints all units.
 
-Without the tool: your unit is the nearest folder at or above your file that has a `unifold.yaml`. Its parent is the next such folder above. The parent's `wiring` has the lines `your-unit.need: provider`; a need without a line passes up as a need of the parent with the same name.
+Without the tool: your unit is the nearest folder at or above your file that has a `unifold.yaml`. Its parent is the next such folder above. The parent's `wiring` has the lines `your-unit.need: provider`; the provider is a capability of a sibling, or a need of the parent to which the need is passed up. A need without a line is not connected.
 
 Every unit has a `README.md`; its `docs/` follows the conventions used below, and `AGENTS.md` is generated.
 
@@ -47,14 +47,14 @@ Do not weaken a manifest to make the check pass. Mark a need `optional`, delete 
 
 1. Create `unifold.yaml` in the folder from [unifold.template.yaml](assets/unifold.template.yaml). The folder name is the unit's name. Required: `summary`. Set `status: planned` if the code does not exist yet.
 2. Declare capabilities and needs with one line each. Write a need from the point of view of this unit: what is needed, never who has it. Do not declare the language runtime, registry packages or logging as needs.
-3. Add a `wiring` line for every need to the parent's manifest (`new-unit.need: sibling.capability`). Skip the line when the parent has a need of the same name. Add a line for each sibling need that the new unit meets.
+3. Add a `wiring` line for every need to the parent's manifest (`new-unit.need: sibling.capability`). Where no sibling meets a need, declare it in the parent too and pass it up: `new-unit.need: need`. Add a line for each sibling need that the new unit meets.
 4. Give both sides of every new connection the same `contract`: a document in `docs/references/` of the parent or a unit above it. Write it if it does not exist: the form of what travels, and an example.
 5. Write `README.md` from the template below. Its `## Why` is the part that matters. Do not list children, capabilities or connections in prose. `AGENTS.md` is generated in step 6.
 6. Finish (section 4).
 
 ### Change a capability, a need, or a dependency in code
 
-1. If your code starts to use another unit, declare the new need and wire it in the parent. If no sibling provides it, declare the need in the parent as well and continue one level up.
+1. If your code starts to use another unit, declare the new need and wire it in the parent. If no sibling provides it, declare the need in the parent as well, pass it up (`unit.need: need`) and continue one level up. If the code of a unit with children starts to use one of its children, declare a need in that unit and wire it in its own wiring: `need: child.capability`. The tool does not read code: keeping the map in step with it is part of the change.
 2. If a capability changes, change the contract that both sides name, the manifest and its section in `README.md`.
 3. Run `unifold capability PATH NAME` and read both sides of every connection. The provider must still cover what each need expects.
 4. If you renamed an entry, search the unit's files for the old name.
@@ -122,7 +122,7 @@ Report to the human:
 | Warning "cited source changed" | A `Says` text may be out of date. Read the source, correct `Says`, run `unifold stamp`. |
 | `summary: TODO` | A placeholder that nobody completed. |
 | `verified-by` | A pointer to tests. Nobody ran them for you. |
-| A clean `check` | The files agree with each other and with the build files. It does not mean a text is true. |
+| A clean `check` | The files agree with each other. It does not mean that the code follows them, or that a text is true. |
 
 ## Templates
 

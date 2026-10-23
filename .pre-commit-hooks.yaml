@@ -1,7 +1,7 @@
 # Hooks for https://pre-commit.com; see docs/references/tool.md.
 - id: unifold
   name: unifold check
-  description: Check the unifold map of the repository against itself and the code.
+  description: Check that the unifold map of the repository is consistent.
   entry: unifold check
   language: python
   pass_filenames: false

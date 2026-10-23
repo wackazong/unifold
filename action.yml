@@ -12,7 +12,7 @@ inputs:
     description: Set to "true" to fail on warnings too.
     default: "false"
   args:
-    description: Further arguments for `unifold check`, for example "--deps deps.json".
+    description: Further arguments for `unifold check`, for example "--quiet" or "--rule W2".
     default: ""
   python-version:
     description: Python version to run the tool with (3.9 or newer).

@@ -9,7 +9,7 @@ A change that alters no rule, such as a typing mistake, a clearer sentence or a 
 ## Changing the standard
 
 1. Write a decision record in `docs/decisions/` with the next free number and `status: proposed`: the problem, the options, the choice, and the good and bad consequences. Start from the [template](docs/skills/unifold/assets/decision.template.md), and add a row to the [index](docs/decisions/index.md).
-2. Change [spec.md](docs/references/spec.md) if the change concerns manifests, wiring, generated files or the comparison with code; otherwise the chapter that covers it ([documents.md](docs/references/documents.md) says which kind holds what). The standard stays on one page of at most 200 lines.
+2. Change [spec.md](docs/references/spec.md) if the change concerns manifests, wiring or generated files; otherwise the chapter that covers it ([documents.md](docs/references/documents.md) says which kind holds what). The standard stays on one page of at most 200 lines.
 3. If the tool reports the rule, change [rules.md](docs/references/rules.md), the rule table in `docs/skills/unifold/scripts/unifold.py`, and the tool, and add a case to [tests/conformance.py](tests/conformance.py).
 4. Change the skills and their templates if the procedure for agents changes.
 5. Run everything:

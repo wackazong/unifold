@@ -1,8 +1,8 @@
 # Unifold: architecture as code
 
-> Your project structure is your architecture. Unifold keeps structure, knowledge and code in sync.
+> Your project structure is your architecture. Unifold aligns project structure, knowledge, and code.
 
-A folder with a `unifold.yaml` is a unit: it declares what it provides and what it needs, next to the code, and the unit above connects every need to a provider. The unifold tool checks this map against the code and generates the diagrams, so nobody draws them and they cannot disagree with the files. Every unit keeps its documents in the same places, so that a person or a coding agent can understand one folder without reading its neighbours.
+A folder with a `unifold.yaml` is a unit: it declares what it provides and what it needs, next to the code, and the unit above connects every need to a provider. The unifold tool checks that the map is consistent and generates the diagrams, so nobody draws them and they cannot disagree with the files. Every unit keeps its documents in the same places, so that a person or a coding agent can understand one folder without reading its neighbours.
 
 ## Why
 
@@ -32,18 +32,18 @@ capabilities:
 
 ```yaml
 # unifold.yaml in the repository root
-unifold: "0.1"
+unifold: "0.2"
 name: shop
 summary: Shop backend
 wiring:
   billing.clock: platform.clock
 ```
 
-`billing` says what it needs, never who supplies it; the root connects the need to `platform`. Both sides name one document, `docs/references/clock.md` of the root: the contract of the connection, which says what a clock gives and in which form. `unifold check` reads the three manifests and the build files, and writes the component diagram. It fails on a need without a provider, on two sides that name different contracts, and on code that depends on a unit without a connection. If `billing` starts to use a unit `ledger` in its `Cargo.toml` without a need for it:
+`billing` says what it needs, never who supplies it; the root connects the need to `platform`. Both sides name one document, `docs/references/clock.md` of the root: the contract of the connection, which says what a clock gives and in which form. `unifold check` reads the three manifests and writes the component diagram. It fails on a need without a provider, and on two sides that name different contracts. Without the wiring line in the root:
 
 ```text
-error D1 unifold.yaml:4: 'billing' depends on 'ledger', but no need of 'billing' is connected to 'ledger' (cargo: billing/Cargo.toml [dependencies] ledger)
-    fix: Add a need to billing/unifold.yaml (for example `ledger`), and add `billing.ledger: ledger.journal` to the wiring here. Or remove the dependency from the code.
+error W2 unifold.yaml: need 'billing.clock' has no provider
+    fix: Add `billing.clock: platform.clock` to the wiring.
 ```
 
 `unifold show billing` prints the unit, its need and who finally provides it. The tutorial [Your first map](https://unifold.md/first-map) takes fifteen minutes.
@@ -52,7 +52,7 @@ error D1 unifold.yaml:4: 'billing' depends on 'ledger', but no need of 'billing'
 
 | File | What it is |
 |---|---|
-| `unifold.yaml` | The manifest: what the unit provides and needs, and the wiring of its children. Checked against the other manifests and the code. |
+| `unifold.yaml` | The manifest: what the unit provides and needs, and the wiring of its children. Checked against the other manifests. |
 | `README.md` | The front page: what the unit is for, why it is built this way, what can be relied on. |
 | `docs/` | Everything else written about the unit, in fixed places sorted by what the reader is doing: tutorials, skills, references, explanation, decisions. A file exists only when it has content. |
 | `AGENTS.md` | Generated: where the documents and skills of the unit are, for coding agents. |
@@ -69,15 +69,15 @@ A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, 
 
 ### The standard
 
-The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.1/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
+The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.2/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
 
 ### The skills
 
-Two skills in the [Agent Skills](https://agentskills.io/specification) format. [unifold](https://unifold.md/skill/SKILL.md), with file templates, teaches an agent to find its unit, read the right files, change manifests and documents, and check the result. [unifold-convert](https://unifold.md/skill/unifold-convert/SKILL.md) brings an existing repository into the map: the agent chooses the units, writes their manifests and checks them against the code. No script derives units from code.
+Two skills in the [Agent Skills](https://agentskills.io/specification) format. [unifold](https://unifold.md/skill/SKILL.md), with file templates, teaches an agent to find its unit, read the right files, change manifests and documents, and check the result. [unifold-convert](https://unifold.md/skill/unifold-convert/SKILL.md) brings an existing repository into the map: the agent chooses the units, writes their manifests, and compares them with the code. No script derives units from code.
 
 ### The tool
 
-The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, compares the wiring with the dependencies in code, and generates the diagrams and the `AGENTS.md` files. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
+The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, wiring, contracts and documents, and generates the diagrams and the `AGENTS.md` files. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
 
 ## Questions
 
@@ -85,7 +85,7 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 
 **Do I need an AI agent?** No. The files are YAML and Markdown.
 
-**Does it read my code?** Only to find dependencies. It reads build files and imports for Cargo, npm, pnpm, yarn, Go and Python, and compares them with the wiring. For any other language, pass a list of dependencies with `--deps`. The standard itself works with every language.
+**Does it read my code?** No. It reads the `unifold.yaml` files and the Markdown documents, so your code may be in any language. Keeping the code and the map in step is part of every change and its review.
 
 **Do I have to write documentation?** Every unit has a `README.md` that says what it is for and why. Everything else in `docs/` is written when there is something to say.
 
@@ -116,7 +116,7 @@ python3 site/build.py --check
 
 | Kind | Pages |
 |---|---|
-| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.1/unifold.schema.json) |
+| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.2/unifold.schema.json) |
 | Reference | [documents](https://unifold.md/documents), [writing](https://unifold.md/writing), [agents](https://unifold.md/agents), [tool](https://unifold.md/tool), [tool JSON](https://unifold.md/tool-json), [rules](https://unifold.md/rules) |
 | Explanation | [requirements](https://unifold.md/requirements), [reasoning](https://unifold.md/reasoning), [wiring](https://unifold.md/wiring), [invariants](https://unifold.md/invariants), [risks](https://unifold.md/risks), [decisions](https://github.com/wackazong/unifold/blob/main/docs/decisions/index.md) |
 | Tutorial | [Your first map](https://unifold.md/first-map) |

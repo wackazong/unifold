@@ -15,7 +15,7 @@ This repository holds the unifold standard. Read [README.md](README.md) first: i
 | Skill | Description |
 |---|---|
 | [unifold](docs/skills/unifold/SKILL.md) | Work in a repository that contains unifold.yaml files. Find out what a folder provides and needs and who is on the other side, change units, capabilities and wiring, record decisions, and check the result. Use it when a task touches the interface or the dependencies of a folder, the architecture, or the documents of a unit, and before you finish any change in such a repository. |
-| [unifold-convert](docs/skills/unifold-convert/SKILL.md) | Convert an existing repository to unifold, or bring a part of one into the map. Find the units in the folder layout and the build files, write one unifold.yaml per unit with capabilities, needs and wiring, and check the result against the code. Use it when a repository has no unifold.yaml yet, when `unifold check` passes but most folders are not units, or when it reports dependencies on code that has no manifest. |
+| [unifold-convert](docs/skills/unifold-convert/SKILL.md) | Convert an existing repository to unifold, or bring a part of one into the map. Find the units in the folder layout and the build files, write one unifold.yaml per unit with capabilities, needs and wiring, and check that the map is complete and matches what the code uses. Use it when a repository has no unifold.yaml yet, or when `unifold check` passes but most folders are not units. |
 
 ## unifold
 
@@ -23,6 +23,6 @@ The examples in `examples/` are [unifold](https://unifold.md) projects. A folder
 
 - `python3 docs/skills/unifold/scripts/unifold.py show PATH`: a unit, its capabilities and needs, and who is on the other side
 - `python3 docs/skills/unifold/scripts/unifold.py capability PATH NAME`: both ends of one connection, with contracts
-- `python3 docs/skills/unifold/scripts/unifold.py check`: is the map consistent, and does the code agree (`--fix` rewrites generated files)
+- `python3 docs/skills/unifold/scripts/unifold.py check`: is the map consistent (`--fix` rewrites generated files)
 
 How to read and write the map: the skill [unifold](docs/skills/unifold/SKILL.md). How to bring folders into the map: the skill [unifold-convert](docs/skills/unifold-convert/SKILL.md).

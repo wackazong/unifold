@@ -1,20 +1,19 @@
 ---
 name: unifold-convert
-description: Convert an existing repository to unifold, or bring a part of one into the map. Find the units in the folder layout and the build files, write one unifold.yaml per unit with capabilities, needs and wiring, and check the result against the code. Use it when a repository has no unifold.yaml yet, when `unifold check` passes but most folders are not units, or when it reports dependencies on code that has no manifest.
+description: Convert an existing repository to unifold, or bring a part of one into the map. Find the units in the folder layout and the build files, write one unifold.yaml per unit with capabilities, needs and wiring, and check that the map is complete and matches what the code uses. Use it when a repository has no unifold.yaml yet, or when `unifold check` passes but most folders are not units.
 license: MIT OR Apache-2.0
 ---
 
 # Convert a repository to unifold
 
-The result is a map that a person can accept: a few well-chosen units, wired by the unit above, and a clean `check`. Each unit has a `unifold.yaml` that says what the folder provides and what it needs. No script writes this map. A build file knows packages and their dependencies. It does not know which folders are parts of the architecture, what a part provides, or what it needs from others. You read the repository and decide; the tool checks what you decided against the code.
+The result is a map that a person can accept: a few well-chosen units, wired by the unit above, and a clean `check`. Each unit has a `unifold.yaml` that says what the folder provides and what it needs. No script writes this map. A build file knows packages and their dependencies. It does not know which folders are parts of the architecture, what a part provides, or what it needs from others. You read the repository and decide; the tool checks that what you wrote is consistent. It does not read code, so you compare the map with the code.
 
 `unifold` below means the tool: `uvx unifold`, or the copy that `unifold init --agents` installs, `uv run docs/skills/unifold/scripts/unifold.py`. The standard is one page: <https://unifold.md/spec>. How to work in a converted project: the skill `unifold`.
 
 ## 0. Before you start
 
 - If the root has no `unifold.yaml`, run `unifold init --agents` (or `unifold init`). It writes the root manifest and installs the skills. It writes a `README.md` from the template if there is none.
-- Run `unifold deps`. It prints the dependencies between folders that the tool reads from Cargo, npm, Go and Python build files and imports. This list is evidence; it is not the map.
-- Read the root `README.md`, the build files at the root, and the first level of folders. Do not read code yet.
+- Read the root `README.md`, the build files at the root, and the first level of folders. Do not read code yet. The build files say which packages depend on which: evidence, not the map.
 
 ## 1. Find the parts
 
@@ -43,25 +42,23 @@ Write each manifest from the template [unifold.template.yaml](../unifold/assets/
 5. A need of the project itself is a need of the root: a database, a cloud API, a cluster. What it provides to the outside is a capability of the root.
 6. Every unit needs a `README.md`. Keep one that exists. Where there is none, write a short one from the template ([README.template.md](../unifold/assets/README.template.md)): the heading, one paragraph on what the unit is for, and a `## Why` of a few lines.
 
-Then the wiring, in the manifest of the nearest unit above both sides: `child.need: other-child.capability`, one line per need and child. A need that no sibling meets becomes a need of the parent with the same name; it passes up without a line. Where several providers exist, write named alternatives; the first is the default. Patterns: <https://unifold.md/wiring>.
+Then the wiring, in the manifest of the nearest unit above both sides: `child.need: other-child.capability`, one line per need and child. A need that no sibling meets becomes a need of the parent and is passed up with a line: `child.need: need`. Nothing connects by an equal name. Where the code of a unit with children uses one of its children, that unit declares a need and wires it in its own wiring: `need: child.capability`. Where several providers exist, write named alternatives; the first is the default. Patterns: <https://unifold.md/wiring>.
 
 Then the contracts. Every connection carries something in some form. Both of its sides name the document that defines it. The document lies in `docs/references/` of the unit that holds the wiring, or of a unit above it, never in a sibling. A need that is passed up names the same document at every level.
 
 Where a schema, a `.proto` or an OpenAPI file already defines the interface and lies where both sides may name it, name it. Where only a sibling holds it, move it up. Where nothing exists, write a short reference with the form and an example.
 
-## 3. Check against the code
+## 3. Check the map, then compare it with the code
 
 ```sh
 unifold check --fix
 ```
 
-- `D1`, a dependency in code without a connection. A need or a wiring line is missing, or the folder that holds the code has no manifest yet. Add the need, or give the folder a manifest with a capability. Do not touch the code.
-- `D2`, a connection without a dependency in code. The need may be wrong, or no extractor sees the dependency: a call between services, a file read at run time. Write such dependencies into a list with their evidence and pass it with `check --deps FILE`. The format is in <https://unifold.md/tool>.
 - `W2`, a need without a provider. Wire it, pass it up, or declare it at the root as a need of the project. Do not mark it `optional`.
 - `W3`, a capability nobody uses. Either someone does and the wiring is missing, or it is not a capability; remove it in that case.
 - `W11`, a side of a connection without a contract, or two sides that name different documents. Write or move the document and point both sides at it.
 
-Repeat until `check` reports no error. Then run `unifold tree` and `unifold show` for each unit. Read the result as a stranger would: does every box and every arrow mean something?
+Repeat until `check` reports no error. Then compare with the code, because the tool does not: for each unit, read its build file and its imports or calls. Every use of another unit is a need with a line; every line stands for a use. Code that is used but lies in no unit gets a manifest with a capability. Do not touch the code. Last, run `unifold tree` and `unifold show` for each unit and read the result as a stranger would: does every box and every arrow mean something?
 
 ## 4. Report
 
@@ -69,8 +66,7 @@ Tell the person:
 
 - the units you chose and the candidates you left out, with the reason;
 - every capability and need whose name or summary is a guess;
-- the dependencies on code that has no manifest yet: the work that remains;
-- the dependencies you passed with `--deps`, with the evidence for each;
+- the uses between folders that you found in the code and the map does not show yet: the work that remains;
 - the warnings that remain and the summaries that are still `TODO`;
 - that the map is a proposal. A person accepts it by reading it, not by running the check.
 

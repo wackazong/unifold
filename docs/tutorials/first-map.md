@@ -65,7 +65,7 @@ Connect the need in the unit above both folders, here the root:
 
 ```yaml
 # unifold.yaml in the root
-unifold: "0.1"
+unifold: "0.2"
 name: shop
 summary: Shop backend
 wiring:
@@ -94,7 +94,7 @@ needs:
   clock: {summary: A time source, contract: ../docs/references/clock.md}
 ```
 
-Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s)`. The component diagram now shows two boxes and an arrow from `billing` to `platform`, labelled `clock`. If your build files show that `billing` depends on `platform`, the check also confirms that the wiring and the code agree. If the code depends on a folder you have not wired, the check says so, with the file where it found the dependency.
+Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s)`. The component diagram now shows two boxes and an arrow from `billing` to `platform`, labelled `clock`. The check does not read your code: keeping the code and the map in step is part of every change, and of its review.
 
 ## 6. Ask the map a question
 
@@ -114,4 +114,4 @@ Run:
 unifold init --agents
 ```
 
-This installs the skills `unifold` and `unifold-convert` and the tool into `docs/skills/`, writes their stubs into `.agents/skills/` and `.claude/skills/`, and adds the unifold block, with the index of units, to the root `AGENTS.md`. From here, ask an agent to convert the rest of the repository with the skill `unifold-convert`. Or continue one folder at a time: a manifest, a `README.md`, the needs, the contract, the wiring line, `check`. Where code depends on a folder that is not a unit yet, the check reports it; those findings are the work that remains. Most folders never need a manifest.
+This installs the skills `unifold` and `unifold-convert` and the tool into `docs/skills/`, writes their stubs into `.agents/skills/` and `.claude/skills/`, and adds the unifold block, with the index of units, to the root `AGENTS.md`. From here, ask an agent to convert the rest of the repository with the skill `unifold-convert`. Or continue one folder at a time: a manifest, a `README.md`, the needs, the contract, the wiring line, `check`. Most folders never need a manifest.

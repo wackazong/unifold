@@ -11,7 +11,7 @@ wiring:
 
 "The need `clock` of `billing` is met by the capability `clock` of `platform`." The key is the side that needs, the value the side that provides. The unit holding the line is the one place where both sides are visible. `billing` itself never says who supplies its clock.
 
-Seen from inside a unit, its own capabilities need an implementation, and its own needs are available. That is why an own capability stands on the key side and an own need on the value side.
+Seen from inside a unit, its own capabilities need an implementation, and its own needs are available to its children. That is why an own capability stands on the key side and an own need on the value side, unless the unit's own code uses the need: then a child meets it, and the need stands on the key side ([a unit with code of its own](#a-unit-with-code-of-its-own)).
 
 ## What is a need and what is not
 
@@ -23,22 +23,24 @@ Do not declare a need for what every unit of that sort has anyway: the language 
 
 - Name a need after what is needed, in the words of the unit that has it: `clock`, `cart-store`, `matcher`. Not after who provides it today.
 - Name a capability after what it provides, not after a technology.
-- A first map tends to name capabilities and needs after packages, because that is what the build files show ([requirements](requirements.md)). Rename them to roles as soon as you know better; the comparison with code works per pair of units, not by name.
+- A first map tends to name capabilities and needs after packages, because that is what the build files show ([requirements](requirements.md)). Rename them to roles as soon as you know better.
 - In YAML, write a summary that contains `:` or a comma inside `{...}` in quotes. The short form `name: summary text` on a line of its own avoids most of these cases.
 
 ## Passing a need up
 
-A need that no sibling can meet goes to the parent, and from there upward until a unit can meet it or the root states it as a need of the project.
+A need that no sibling can meet goes to the parent, and from there upward until a unit can meet it or the root states it as a need of the project. Each step is a line:
 
 ```yaml
 # services/unifold.yaml
 summary: The backend services
 needs:
   clock: A time source
-# no wiring line: the need `clock` of every child is passed up by name
+wiring:
+  billing.clock: clock      # passed up: whatever meets the need clock of services meets it
+  alerts.push: push-service # the names may differ
 ```
 
-If the unit declares a need with the same name as a child's need, the two are connected without a line. `unifold show` marks such a connection as "(passed up by name)". Write an explicit line when the names differ (`alerts.push: push-service`) or when one child should get a different provider. An explicit line always wins.
+Nothing connects by an equal name. A need of the parent called `clock` does not meet the need `clock` of a child without the line `child.clock: clock`; the check reports the missing line.
 
 ## Several children, one provider
 
@@ -51,7 +53,7 @@ wiring:
   shipping.clock: platform.clock
 ```
 
-The repetition is the point: the wiring lists every connection inside the unit, and adding a child cannot change one without a change to a manifest. Where the children use one name for what is the same for everybody, declaring that need in the parent costs no line at all: every child passes it up by name, and a diagram lists a need that three or more children pass up below the picture, under "Shared connections, not drawn".
+The repetition is the point: the wiring lists every connection inside the unit, and adding a child cannot change one without a change to a manifest. Where three or more children pass a need up to the same need of the parent, the diagram lists them once below the picture, under "Shared connections, not drawn".
 
 ## Alternatives and stand-ins
 
@@ -100,16 +102,28 @@ wiring:
 
 The capability then appears in two manifests. Each describes it at its own level. A parent that only passes a capability through adds nothing of its own to the summary and keeps no second contract.
 
-## Code of the unit itself
+## A unit with code of its own
 
-A unit with children MAY have code of its own, for example a main program that calls three libraries. That code may use anything below the unit, and the comparison with code accepts it without a wiring line. A capability of a child that only this code uses is reported as unused, unless an observed dependency shows the use ([rules](../references/rules.md)).
+A unit with children MAY have code of its own, for example a main program that calls its libraries. What that code uses from a child is a need of the unit, declared like any need and wired in the unit's own wiring to the child's capability:
 
-The other direction is not covered. When a child depends on code of the unit above it, that code gets a folder with a manifest and a capability, and the child's need is wired to it like any other connection. A connection always joins two units; there is no line that names a folder. Until the manifest exists, the checker reports the dependency.
+```yaml
+# shop/unifold.yaml: the main program of shop uses both children
+needs:
+  invoices: {summary: Creates and fetches invoices, contract: docs/references/invoices.md}
+  clock: {summary: The current time, contract: docs/references/clock.md}
+wiring:
+  invoices: billing.invoices        # a need of shop itself, met by a child
+  clock: platform.clock
+  billing.clock: platform.clock     # still needed: the clock of shop is not the clock of billing
+```
 
-## Optional parts and test-only dependencies
+Such a need is met inside the unit: the unit above does not wire it, and at the root it is not a need of the project. It is the unit's own; a child's need of the same name still needs its own line, and it cannot be passed up to it.
 
-- A need behind a feature flag is `optional: true`. It MAY be wired anyway.
-- A dependency that only tests use, such as a Cargo dev-dependency or an import in a test file, needs no need and no connection. The tool lists it with a kind of its own that ends in `-dev` (`cargo-dev`), and it counts as observed: if you do declare and wire it, there is no warning. In a list of your own, give such an entry a `kind` that ends in `-dev`.
+The other direction is not modelled. When a child uses code of the unit above it, that code gets a folder with a manifest and a capability, and the child's need is wired to it like any other connection. A connection always joins two units; there is no line that names a folder.
+
+## Optional needs
+
+A need behind a feature flag is `optional: true`. It MAY be wired anyway. What only tests use, such as a fake or a test helper, is no need: declare a need for what the unit's code requires when it runs.
 
 ## Services and external systems
 
@@ -117,5 +131,5 @@ For a set of services in one repository:
 
 - Each service folder is a unit. A folder such as `src/` that only groups them stays plain.
 - A database or a queue with no folder of its own is either a need of the root (somebody outside operates it) or a capability of the unit whose files define it, such as a deployment folder.
-- Calls between services are not in any build file. Give the checker a list of observed calls, taken for example from service addresses in the deployment files or from client stubs ([tool](../references/tool.md)).
+- A call from one service to another is a need of the caller, wired to a capability of the callee. The contract is the API both sides name.
 - With a flat set of services, all wiring is in one manifest, and every new call between two services changes it. That manifest is the map of the system; expect it to be the file with the most changes.
