@@ -24,13 +24,13 @@ Only accepted decisions bind.
 | 0016 | [Let a port say which definition it conforms to, and check the form of context items](0016-let-a-port-say-which-definition-it-conforms-to.md) | accepted | 2026-10-22 |
 | 0017 | [Define a core that can be adopted alone](0017-define-a-core-that-can-be-adopted-alone.md) | superseded by 0023 | 2026-10-07 |
 | 0018 | [Allow one wiring line for several children, but not for deeper levels](0018-allow-one-wiring-line-for-several-children.md) | superseded by 0024 | 2026-10-07 |
-| 0019 | [Compare the wiring with dependencies observed in code](0019-compare-the-wiring-with-dependencies-observed-in-code.md) | accepted | 2026-10-22 |
+| 0019 | [Compare the wiring with dependencies observed in code](0019-compare-the-wiring-with-dependencies-observed-in-code.md) | superseded by 0047 | 2026-10-22 |
 | 0020 | [Keep the manifest in unit.yaml by default](0020-keep-the-manifest-in-unit-yaml-by-default.md) | superseded by 0022 | 2026-10-07 |
 | 0021 | [Name the standard unifold](0021-name-the-standard-unifold.md) | accepted | 2026-10-22 |
 | 0022 | [Make unifold.yaml the only marker of a unit](0022-make-unifold-yaml-the-only-marker-of-a-unit.md) | accepted | 2026-10-22 |
 | 0023 | [Set the level per subtree and keep core free of prose rules](0023-set-the-level-per-subtree-and-keep-core-free-of-prose-rules.md) | superseded by 0040 | 2026-10-07 |
 | 0024 | [Pass needs up by name and draw shared connections once](0024-pass-needs-up-by-name-and-draw-shared-connections-once.md) | superseded by 0032 | 2026-10-07 |
-| 0025 | [Compare with code by default and draft manifests from build files](0025-compare-with-code-by-default-and-draft-manifests-from-build-files.md) | accepted | 2026-10-22 |
+| 0025 | [Compare with code by default and draft manifests from build files](0025-compare-with-code-by-default-and-draft-manifests-from-build-files.md) | superseded by 0047 | 2026-10-22 |
 | 0026 | [Stamp every restatement with a hash of its source](0026-stamp-every-restatement-with-a-hash-of-its-source.md) | accepted | 2026-10-22 |
 | 0027 | [Ship one skill and generate stubs where agents look](0027-ship-one-skill-and-generate-stubs-where-agents-look.md) | accepted | 2026-10-22 |
 | 0028 | [Reference the standard instead of copying it](0028-reference-the-standard-instead-of-copying-it.md) | accepted | 2026-10-22 |
@@ -52,3 +52,6 @@ Only accepted decisions bind.
 | 0044 | [Write machine lines as HTML comments that start with `unifold:`](0044-write-machine-lines-as-html-comments-prefixed-unifold.md) | accepted | 2026-10-22 |
 | 0045 | [Keep the reference chapters directly in docs/references](0045-keep-the-reference-chapters-directly-in-docs-references.md) | accepted | 2026-10-22 |
 | 0046 | [Let a decision amend part of an accepted one](0046-let-a-decision-amend-part-of-an-accepted-one.md) | **proposed** | 2026-10-23 |
+| 0047 | [Remove the comparison with code](0047-remove-the-comparison-with-code.md) | accepted | 2026-10-23 |
+| 0048 | [Write every connection out, and let a unit wire its own need to a child](0048-write-every-connection-out-and-let-a-unit-wire-its-own-need.md) | accepted | 2026-10-23 |
+| 0049 | [Call the standard 0.2](0049-call-the-standard-0-2.md) | accepted | 2026-10-23 |
