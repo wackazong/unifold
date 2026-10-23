@@ -15,7 +15,7 @@ uv run site/build.py --serve
 
 | Address | File | From |
 |---|---|---|
-| `/` | `index.html` | `README.md`: the bold first sentence, the quote and the first paragraph become the first screen, the manifests of `## How it works` the folded sheet beside it; its text block becomes the terminal, and its root manifest the drawn diagram. Known sections get their own layout (`Why`, `What a unit has`, `Questions`, `Capabilities`, `Read next`, ...); any other section is shown as prose. |
+| `/` | `index.html` | `README.md`: the first sentence of the quote under the title becomes the title of the page, the rest of the quote the subtitle, and the text before `## Why` the introduction. The manifests of `## How it works` become a sheet of three panels, its text block a terminal, and its root manifest a drawn diagram. Known sections get their own layout (`What a unit has`, `Questions`, `Capabilities`, `Read next`, ...); any other section is shown as text under a heading with a coloured bar. |
 | `/spec`, `/documents`, `/reasoning`, `/first-map`, ... | `spec.html`, ... | the reference chapters from `docs/references/`, the explanation files from `docs/explanation/` and the tutorial from `docs/tutorials/`; `/guide`, `/adopting` and `/design` redirect |
 | `/spec.md`, ... | the same chapters as plain Markdown | |
 | `/0.1/unifold.schema.json` | | the schema; the build stops if it is missing |
