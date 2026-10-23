@@ -5,9 +5,12 @@
 ## Build
 
 ```sh
-python3 -m pip install markdown pyyaml    # or: uv run site/build.py
-python3 site/build.py --check             # build; check links, HTML, page weight
-python3 site/build.py --serve             # build; serve as GitHub Pages would (/spec, not spec.html)
+# build
+uv run site/build.py
+# build and check links, HTML, page weight
+uv run site/build.py--check
+# build and serve locally
+uv run site/build.py --serve
 ```
 
 | Address | File | From |
