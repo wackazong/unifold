@@ -1,8 +1,8 @@
 # Unifold: architecture as code
 
-> All the knowledge for you, your team and your agents.
+> Your project structure is your architecture. Unifold keeps structure, knowledge and code in sync.
 
-**Your folder structure is your architecture.** A folder with a `unifold.yaml` is a unit: it declares what it provides and what it needs, next to the code, and the unit above connects every need to a provider. The unifold tool checks this map against the code and generates the diagrams, so nobody draws them and they cannot disagree with the files. Every unit keeps its documents in the same places, so that a person or a coding agent can understand one folder without reading its neighbours.
+A folder with a `unifold.yaml` is a unit: it declares what it provides and what it needs, next to the code, and the unit above connects every need to a provider. The unifold tool checks this map against the code and generates the diagrams, so nobody draws them and they cannot disagree with the files. Every unit keeps its documents in the same places, so that a person or a coding agent can understand one folder without reading its neighbours.
 
 ## Why
 

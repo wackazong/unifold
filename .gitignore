@@ -3,3 +3,4 @@ __pycache__/
 .rumdl_cache
 build/
 *.egg-info/
+dist/
