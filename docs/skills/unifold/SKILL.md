@@ -30,7 +30,7 @@ Every unit has a `README.md`; its `docs/` follows the conventions used below, an
 
 | Task | Read, in this order |
 |---|---|
-| Use the unit from outside | `show`; its `README.md`; for exact definitions the `contract` of the capability |
+| Use the unit from outside | `show`; its `README.md`; the `contract` of the capability, which defines it |
 | Change code inside the unit | `show`; `README.md` (`## Why`); `docs/explanation/context.md` and `invariants.md`; a skill from `AGENTS.md` if one fits |
 | Change a capability or a need | The above; then `unifold capability` for that entry and `unifold impact` |
 | Change a value, a limit, a default | `unifold impact` on the unit; then search the project for the old value in every notation (15 minutes, 900 s) |
@@ -55,7 +55,7 @@ Do not weaken a manifest to make the check pass. Mark a need `optional`, delete 
 ### Change a capability, a need, or a dependency in code
 
 1. If your code starts to use another unit, declare the new need and wire it in the parent. If no sibling provides it, declare the need in the parent as well, pass it up (`unit.need: need`) and continue one level up. If the code of a unit with children starts to use one of its children, declare a need in that unit and wire it in its own wiring: `need: child.capability`. The tool does not read code: keeping the map in step with it is part of the change.
-2. If a capability changes, change the contract that both sides name, the manifest and its section in `README.md`.
+2. If a capability changes, change the contract that both sides name and the manifest. Change its section in `README.md` only if there is one; it says what the contract does not.
 3. Run `unifold capability PATH NAME` and read both sides of every connection. The provider must still cover what each need expects.
 4. If you renamed an entry, search the unit's files for the old name.
 5. If the change had real alternatives, record a decision. Finish.

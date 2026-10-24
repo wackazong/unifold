@@ -67,7 +67,7 @@ A tutorial is `docs/tutorials/<name>.md`: a lesson that leads one stated reader,
 
 The checker compares files with each other. Whoever reviews a change, a person or an agent, checks the meaning:
 
-1. Can the unit be used after reading only its `README.md`?
+1. Can the unit be used after reading its `README.md` and the contracts that its manifest names? Does a section of `README.md` repeat what a contract says?
 2. Does a file name a sibling, a user or, outside `context.md`, an ancestor? Write the need or capability it stands for instead.
 3. Does the parent restate what a child provides or how it works inside?
 4. Does `## Why` or an explanation file list units or connections?

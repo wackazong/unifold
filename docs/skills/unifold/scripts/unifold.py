@@ -80,19 +80,19 @@ README_TEMPLATE = """# <folder-name>
 
 ## Capabilities
 
-<One `###` section for each capability whose summary does not say everything. Delete the ones that are self-explanatory, and the whole section if none is left.>
+<One `###` section for each capability whose summary and contract do not say everything. Delete the others, and the whole section if none is left.>
 
 ### `<capability-name>`
 
-<What a user can rely on, each guarantee in a form a test could check: a value, a limit, an order, a response. One short example. End with the link to the contract both sides name: `Contract: [name](docs/references/name.md).`>
+<Only what the contract does not say: what this unit adds beyond it, each guarantee in a form a test could check, and its own limits. Do not repeat the contract; the manifest names it.>
 
 ## Needs
 
-<One `###` section for each need that the one-line summary does not explain.>
+<One `###` section for each need whose summary and contract do not say everything. Delete the others, and the whole section if none is left.>
 
 ### `<need-name>`
 
-<What this unit expects from whoever provides this, in this unit's own words: what is required, never who supplies it. For an optional need: what the unit does without it.>
+<Only what the contract does not say: what this unit expects beyond it, never who supplies it. For an optional need: what the unit does without it.>
 
 ## Out of scope
 

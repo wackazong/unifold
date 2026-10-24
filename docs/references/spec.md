@@ -95,7 +95,7 @@ wiring:
 
 ## 4. Documents
 
-Every unit MUST have a `README.md`: what it is for, why it is built this way, what can be relied on. Everything else written about a unit lives in its `docs/`, sorted by kind, as [documents.md](documents.md) and [writing.md](writing.md) say. A checker reads links and lengths, not meaning.
+Every unit MUST have a `README.md`: what it is for, and why it is built this way. What can be relied on is in the contracts that its manifest names. Everything else written about a unit lives in its `docs/`, sorted by kind, as [documents.md](documents.md) and [writing.md](writing.md) say. A checker reads links and lengths, not meaning.
 
 ## 5. What a checker guarantees
 

@@ -53,7 +53,7 @@ error W2 unifold.yaml: need 'billing.clock' has no provider
 | File | What it is |
 |---|---|
 | `unifold.yaml` | The manifest: what the unit provides and needs, and the wiring of its children. Checked against the other manifests. |
-| `README.md` | The front page: what the unit is for, why it is built this way, what can be relied on. |
+| `README.md` | The front page: what the unit is for, and why it is built this way. The contracts say what can be relied on. |
 | `docs/` | Everything else written about the unit, in fixed places sorted by what the reader is doing: tutorials, skills, references, explanation, decisions. A file exists only when it has content. |
 | `AGENTS.md` | Generated: where the documents and skills of the unit are, for coding agents. |
 

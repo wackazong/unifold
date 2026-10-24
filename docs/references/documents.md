@@ -36,13 +36,13 @@ A fact has one home; other files link to it. A text that teaches, instructs, sta
 
 ## README.md: the front page
 
-`README.md` is the first file every reader and agent opens. A reader MUST be able to use the unit, or to provide what it needs, after reading this file alone.
+`README.md` is the first file every reader and agent opens. It says what the unit is for and why; the contracts say how to use it. A reader MUST be able to use the unit, or to provide what it needs, after reading `README.md` and the contracts that its manifest names ([0056](../decisions/0056-let-a-readme-point-at-its-contracts.md)).
 
 | Section | Content |
 |---|---|
 | `# <name>` | Then one paragraph: what the unit is for, and for whom. |
 | `## Why` | Required. Why the unit exists, what makes it change, why it is cut this way, what must stay true. At most 20 lines that are not blank; the long form is `docs/explanation/reasoning.md`. |
-| `## Capabilities`, `## Needs` | One `###` subsection for each capability or need whose summary does not say everything. The heading is the name in code font, for example ``### `invoices` ``. A subsection says what can be relied on, in a form that can be checked: a value, a limit, an order, a response. For an optional need it says what the unit does without it. |
+| `## Capabilities`, `## Needs` | Only where the summary and the contract do not say everything. One `###` subsection for each such capability or need; the heading is the name in code font, for example ``### `invoices` ``. A subsection says only what the contract does not: what this unit adds beyond it, in a form that can be checked, its own limits, and for an optional need what the unit does without it. It does not repeat the contract or link to it as a matter of course: the manifest names the contract. |
 | `## Out of scope` | What the unit does not do. |
 | `## Commands` | Optional. The few commands to build, test and run the unit. |
 | `## Read next` | Optional. A few links into `docs/` whose order matters. |
@@ -108,6 +108,6 @@ These rules keep a parent small and a child understandable alone. They hold for 
 - **Published packages.** `unifold.yaml`, `AGENTS.md` and `docs/` lie inside package folders. Exclude them where the build tool packs the folder for publication, for example with `exclude` in a `Cargo.toml`.
 - **Existing decision records** in [MADR](https://adr.github.io/madr/) format move to `docs/decisions/` of the unit they concern. Whether [adr-tools](https://github.com/npryce/adr-tools) or [log4brains](https://github.com/thomvaill/log4brains) work on such a folder has not been tested.
 - **Owners files.** The `owner` key names who is responsible for a unit and is inherited downward; a CODEOWNERS file can be written from it. A change to a wiring line concerns the owners of both sides.
-- **Generated files in version control.** Commit them. Mark `docs/diagrams/*.md`, `docs/decisions/index.md` and `AGENTS.md` as generated for the code host, for example with `linguist-generated` in `.gitattributes`, so that reviews fold them, and run `unifold check --fix` before a commit.
+- **Generated files in version control.** Commit them; the standard requires it, and the checker reports one that `.gitignore` ignores. Mark `docs/diagrams/*.md`, `docs/decisions/index.md` and `AGENTS.md` as generated for the code host, for example with `linguist-generated` in `.gitattributes`, so that reviews fold them, and run `unifold check --fix` before a commit.
 
 What the reference tool reports for this chapter is in [rules.md](rules.md).
