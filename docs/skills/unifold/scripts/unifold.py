@@ -47,7 +47,7 @@ except ImportError:                                   # pragma: no cover
     sys.exit(2)
 
 TOOL_VERSION = "0.2"
-SPEC_VERSIONS = ("0.1", "0.2")
+SPEC_VERSIONS = ("0.2",)
 SITE_URL = "https://unifold.md"
 MANIFEST = "unifold.yaml"
 MAX_LINES = 200
@@ -451,11 +451,11 @@ class Entry:
 
 
 class Conn:
-    """A need (or an own capability) with its providers. origin: explicit or implicit."""
-    __slots__ = ("key", "entries", "origin", "line")
+    """A need (or an own capability) with its providers."""
+    __slots__ = ("key", "entries", "line")
 
-    def __init__(self, key, entries, origin, line):
-        self.key, self.entries, self.origin, self.line = key, entries, origin, line
+    def __init__(self, key, entries, line):
+        self.key, self.entries, self.line = key, entries, line
 
 
 def _text(value) -> str:
@@ -581,8 +581,7 @@ class Project:
         self.ignore: set = set()                # folders named by `ignore` in the root manifest
         self.git_ignored: set = git_ignored(root)   # files and folders that git ignores
         self.links, self.diagrams, self.max_lines = "none", "parents", MAX_LINES
-        self.version = SPEC_VERSIONS[-1]        # 0.1: a bare wiring key is a capability, and
-        #                                         needs pass up by name without a line
+        self.version = SPEC_VERSIONS[-1]
         self._texts: dict = {}
         self._docs: dict = {}
         self._kinds: dict = {}
@@ -823,10 +822,9 @@ class Project:
         raw = unit.manifest.get("wiring")
         if not isinstance(raw, dict) or unit.broken:
             raw = {}
-        old = self.version == "0.1"
         # needs of this unit that a child meets inside: a bare key that names a need and no
-        # capability (in 0.1 a bare key always names a capability)
-        inside = set() if old else {
+        # capability
+        inside = {
             str(k).strip() for k in raw if "." not in str(k)
             and str(k).strip() in unit.needs and str(k).strip() not in unit.capabilities}
         for key, value in raw.items():
@@ -871,13 +869,7 @@ class Project:
                 is_cap, is_need = key in unit.capabilities, key in unit.needs
                 hint = " (a need of a child is written `child.need`)" \
                     if any(key in c.needs for c in unit.children[:500]) else ""
-                if old and not is_cap:
-                    unit.problems.append((line, f"wiring key '{key}': " + (
-                        "a need of this unit as a wiring key is new in unifold 0.2; write "
-                        "`unifold: \"0.2\"` in the root manifest" if is_need
-                        else f"not a capability of this unit{hint}")))
-                    continue
-                if is_cap and is_need and not old:
+                if is_cap and is_need:
                     unit.problems.append((line, f"wiring key '{key}': names both a capability and "
                                                 "a need of this unit; rename one of them"))
                     continue
@@ -897,18 +889,11 @@ class Project:
             if not entries:
                 continue
             if key_child is not None:
-                unit.conn[(key_child, need)] = Conn(key, entries, "explicit", line)
+                unit.conn[(key_child, need)] = Conn(key, entries, line)
             elif side == "need":
-                unit.inner[key] = Conn(key, entries, "explicit", line)
+                unit.inner[key] = Conn(key, entries, line)
             else:
-                unit.impl[key] = Conn(key, entries, "explicit", line)
-        if old:                                 # 0.1: a need passes up by name without a line
-            for child in unit.children:
-                for need in child.needs:
-                    if (child, need) not in unit.conn and need in unit.needs:
-                        unit.conn[(child, need)] = Conn(
-                            f"{child.ref_in_parent()}.{need}",
-                            [Entry(None, "own", need, capability=need)], "implicit", None)
+                unit.impl[key] = Conn(key, entries, line)
         for (child, need), conn in unit.conn.items():
             for entry in conn.entries:
                 if entry.kind == "own":
@@ -1022,26 +1007,24 @@ def providers_of(unit: Unit, need: str) -> list:
     """Who finally provides for a need of `unit`, resolved through all levels."""
     inside = unit.inner.get(need)
     if inside is not None:                  # met inside: followed down, not up
-        return [{"where": "unit", "unit": target, "capability": capability, "config": entry.config,
-                 "via": []} for entry in inside.entries
+        return [{"where": "unit", "unit": target, "capability": capability, "config": entry.config}
+                for entry in inside.entries
                 for target, capability in implementers(entry.unit, entry.capability)]
     parent = unit.parent
     if parent is None:
-        return [{"where": "outside", "capability": need, "config": None, "via": []}]
+        return [{"where": "outside", "capability": need, "config": None}]
     conn = parent.conn.get((unit, need))
     if conn is None:
         return []
-    via = [] if conn.origin == "explicit" else [conn.origin]
     out = []
     for entry in conn.entries:
         if entry.kind == "child":
             for target, capability in implementers(entry.unit, entry.capability):
                 out.append({"where": "unit", "unit": target, "capability": capability,
-                            "config": entry.config, "via": via})
+                            "config": entry.config})
         else:
             for item in providers_of(parent, entry.capability):
-                out.append({**item, "config": item["config"] or entry.config,
-                            "via": via + [v for v in item["via"] if v not in via]})
+                out.append({**item, "config": item["config"] or entry.config})
     return out
 
 
@@ -1311,8 +1294,7 @@ def check_wiring(project: Project, unit: Unit):
                 if not spec["optional"] and need not in child.inner:
                     offers = [c.ref_in_parent() + "." + need for c in unit.children[:2000]
                               if c is not child and need in c.capabilities]
-                    up = "to pass it up" if project.version == "0.1" else \
-                        f"and pass it up (`{ref}.{need}: {need}`)"
+                    up = f"and pass it up (`{ref}.{need}: {need}`)"
                     fix = f"Add `{ref}.{need}: {offers[0]}` to the wiring." if offers else \
                         (f"Add `{ref}.{need}: <provider>` to the wiring of this manifest, or "
                          f"declare a need `{need}` here {up}" +
@@ -2147,12 +2129,7 @@ def path_link(project: Project, unit: Unit, value, out_dir: str, text: str) -> s
 
 
 def via_note(item: dict) -> str:
-    notes = []
-    if item.get("config"):
-        notes.append(str(item["config"]))
-    if "implicit" in item.get("via", ()):
-        notes.append("passed up by name")
-    return f" ({'; '.join(notes)})" if notes else ""
+    return f" ({item['config']})" if item.get("config") else ""
 
 
 def connection_tables(project: Project, unit: Unit, out_dir: str) -> list:
@@ -2217,9 +2194,7 @@ def wiring_table(unit: Unit) -> list:
         key = f"`{child.ref_in_parent()}.{need}`"
         to = " or ".join((f"`{e.raw}`" if e.kind != "own" else f"need `{e.capability}` of `{unit.name}`")
                          + (f" ({e.config})" if e.config else "") for e in conn.entries)
-        note = {"implicit": "passed up by name", "explicit": ""}[conn.origin]
-        if child.needs.get(need, {}).get("optional"):
-            note = (note + ", " if note else "") + "optional"
+        note = "optional" if child.needs.get(need, {}).get("optional") else ""
         rows.append(f"| {key} | {to} | {note} |")
     if not rows:
         return []
@@ -2510,15 +2485,13 @@ def describe(project: Project, unit: Unit) -> dict:
                 "summary": other.summary}
 
     def provider(item: dict) -> dict:
-        via = [{"implicit": "passed up by name"}[v] for v in item["via"]]
         if item["where"] == "outside":
-            return {"outside": True, "root-need": item["capability"], "config": item["config"],
-                    "via": via}
+            return {"outside": True, "root-need": item["capability"], "config": item["config"]}
         target = item["unit"]
         spec = target.capabilities.get(item["capability"], {})
         return {"unit": target.rel, "status": target.status, "capability": item["capability"],
                 "verified-by": contract_target(project, target, spec.get("verified-by"))[0] or None,
-                "config": item["config"], "via": via}
+                "config": item["config"]}
 
     def user(item: dict) -> dict:
         if item["where"] == "outside":
@@ -2610,8 +2583,7 @@ def print_show(info: dict):
             if item is None:
                 print("      no provider" + (" (optional)" if spec["optional"] else ""))
                 continue
-            notes = ([f"alternative '{item['config']}'"] if item.get("config") else []) + item["via"]
-            note = f" ({'; '.join(notes)})" if notes else ""
+            note = f" (alternative '{item['config']}')" if item.get("config") else ""
             if item.get("outside"):
                 print(f"      provided from outside the project (need '{item['root-need']}' "
                       f"of the root){note}")
@@ -2667,8 +2639,7 @@ def capability_data(project: Project, unit: Unit, name: str) -> dict:
     elif name in unit.needs:
         ends = [end(unit, name, "needs")]
         for item in providers_of(unit, name):
-            extra = {"config": item["config"],
-                     "via": [{"implicit": "passed up by name"}[v] for v in item["via"]]}
+            extra = {"config": item["config"]}
             if item["where"] == "unit":
                 ends.append(end(item["unit"], item["capability"], "capabilities", extra))
             else:
@@ -2691,8 +2662,7 @@ def print_capability(data: dict):
         if item.get("outside"):
             print(f"--- outside: {item['summary']}\n")
             continue
-        notes = [n for n in ([item.get("config")] + list(item.get("via") or [])) if n]
-        note = f" ({'; '.join(notes)})" if notes else ""
+        note = f" ({item['config']})" if item.get("config") else ""
         kind = f" ({item['kind']})" if item["kind"] else ""
         side = "capabilities" if item["side"] == "capabilities" else "needs"
         print(f"--- {named(item['unit'])}{mark(item['status'])} {side} '{item['name']}'"
@@ -3127,7 +3097,7 @@ function tree(path){const u = byPath[path]; const kids = u.children.map(c => tre
   return `<li><a data-path="${esc(path)}" class="go${path === state.path ? " on" : ""}">${esc(u.name)}${u.status !== "active" ? `<span class="st ${esc(u.status)}" title="${esc(u.status)}"></span>` : ""}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
 const legend = ["planned", "deprecated"].filter(s => units.some(u => u.status === s))
   .map(s => `<span class="st ${s}"></span>${s}`).join(" &nbsp; ");
-function note(i){const n = [].concat(i.config ? [i.config] : [], i.via || []); return n.length ? " <span class='mute'>(" + esc(n.join("; ")) + ")</span>" : "";}
+function note(i){return i.config ? " <span class='mute'>(" + esc(i.config) + ")</span>" : "";}
 function who(list, key){return list.map(i => i.outside ? "outside the project" + note(i)
   : pick(i.unit) + " · <code>" + esc(i[key]) + "</code>" + note(i)).join("<br>") || "–";}
 function code(text){return esc(text).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/^- /, "");}

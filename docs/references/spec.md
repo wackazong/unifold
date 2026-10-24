@@ -141,4 +141,3 @@ A folder below the root whose manifest has the key `unifold` is the root of a ne
 
 - A project conforms to unifold 0.2 when a conforming checker reports no error for it. Warnings do not break conformance. A conforming project MAY say "This repository follows unifold 0.2".
 - A tool conforms when it accepts and rejects the same manifests as this page, connects needs as section 3 says, and reports the findings of section 5. [tool.md](tool.md) says how to test another implementation.
-- A checker MAY read a project that says `"0.1"` with the meaning of 0.1: a bare wiring key always names a capability, and a need of a child is connected without a line to a need of the unit with the same name.

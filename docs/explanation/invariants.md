@@ -9,7 +9,7 @@ What is true of the standard, the skills and the tool at every moment. A change 
 - A finding of the tool exists in three places that agree: [rules.md](../references/rules.md), the tool, and a case in `tests/conformance.py`. Prose chapters do not cite rule ids.
 - Every change to the standard is recorded as a decision with `status: proposed`. Only a person sets `accepted`.
 - A claim about a tool, a study or a product carries a link to its source.
-- The schema of the manifest is served at `https://unifold.md/0.2/unifold.schema.json`; the schema of 0.1 stays at `/0.1/`.
+- The schema of the manifest is served at `https://unifold.md/<version>/unifold.schema.json`, and a version that was published stays there.
 - Nothing of the standard is copied into a project ([0028](../decisions/0028-reference-the-standard-instead-of-copying-it.md)). A project names the version it follows in its root manifest.
 - Structure is declared once and generated; reasons are written. No hand-written file lists units, capabilities or connections.
 - The standard is tried on its examples. This repository is a specification, and a specification is not a unit: it has no manifest, and its documents follow the document conventions by choice, not by check.

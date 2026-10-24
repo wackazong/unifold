@@ -110,8 +110,6 @@ CASES = [
     ("clean-pass-up", project(NEEDS_X + "wiring:\n  a.x: x\n", {"a": NEEDS_X}), []),
     ("clean-pass-up-two-levels", project(NEEDS_X + "wiring:\n  a.x: x\n",
                                          {"a": NEEDS_X + "wiring:\n  deep.x: x\n", "a/deep": NEEDS_X}), []),
-    ("clean-0.1-passes-up-by-name", {**project(NEEDS_X, {"a": NEEDS_X}),
-                                     "unifold.yaml": 'unifold: "0.1"\nsummary: A demo\n' + AT_ROOT_X}, []),
     ("clean-pass-up-to-a-need-of-another-name",
      project("needs:\n  x: One\n  y: {summary: Two, contract: ref:x}\nwiring:\n  a.x: y\n", {"a": NEEDS_X}), []),
     ("clean-path-form-reference", project(
@@ -306,10 +304,6 @@ CASES = [
     ("W1-parent-wires-a-need-its-child-meets-inside", project(
         "wiring:\n  a.x: b.x\n", {"a": NEEDS_X + "wiring:\n  x: inner.x\n", "a/inner": CAPABILITY_X,
                                   "b": CAPABILITY_X}),
-     ["error W1 unifold.yaml", "warn W3 unifold.yaml"]),
-    ("W1-own-need-key-in-a-0.1-project", {**project("", {"b": CAPABILITY_X}),
-                                          "unifold.yaml": 'unifold: "0.1"\nsummary: A demo\n' + AT_ROOT_X
-                                          + "wiring:\n  x: b.x\n"},
      ["error W1 unifold.yaml", "warn W3 unifold.yaml"]),
     ("W2-need-without-provider", project("", {"a": NEEDS_X, "b": CAPABILITY_X}),
      ["error W2 unifold.yaml", "warn W3 unifold.yaml"]),
@@ -640,7 +634,7 @@ def scenario_show_port_impact(runner: Runner, tmp: str):
     data, done = runner.json("show", "--json", str(folder / "web" / "inner"))
     check(done.returncode == 0, "show")
     clock = data["needs"]["clock"]["provided-by"][0]
-    check(clock.get("outside") and clock["root-need"] == "clock" and clock["via"] == [],
+    check(clock.get("outside") and clock["root-need"] == "clock",
           f"a need passed up through two levels in show: {clock}")
     store = data["needs"]["store"]["provided-by"][0]
     check(store["unit"] == "db" and store["status"] == "planned"
@@ -649,7 +643,7 @@ def scenario_show_port_impact(runner: Runner, tmp: str):
     check("[planned" in text, f"show text: {text}")
     data, _ = runner.json("show", "--json", str(folder / "web"))
     log = data["needs"]["log"]["provided-by"][0]
-    check(log["unit"] == "db" and log["via"] == [], f"an explicit line in show: {log}")
+    check(log["unit"] == "db", f"an explicit line in show: {log}")
     data, _ = runner.json("capability", "--json", str(folder / "db"), "store")
     check([e.get("unit") for e in data["ends"]] == ["db", "web/inner"]
           and data["ends"][0]["status"] == "planned", f"capability: {data}")

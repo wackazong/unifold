@@ -16,7 +16,7 @@
   "properties": {
     "unifold": {
       "description": "Root only, and required there: the version of the standard, as a string.",
-      "enum": ["0.2", "0.1"]
+      "enum": ["0.2"]
     },
     "name": {
       "description": "Root only. The name of the project. Default: the name of the root folder. Every root manifest should set it, so that generated files do not depend on the folder name.",

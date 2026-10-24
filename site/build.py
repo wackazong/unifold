@@ -857,9 +857,8 @@ def build() -> None:
     (OUT / "search.html").write_text(search_page(css_href, version), encoding="utf-8")
 
     # machine-readable files
-    for served in dict.fromkeys([version, "0.1"]):   # manifests of 0.1 point their editors at /0.1/
-        (OUT / served).mkdir()
-        shutil.copyfile(schema, OUT / served / "unifold.schema.json")
+    (OUT / version).mkdir()
+    shutil.copyfile(schema, OUT / version / "unifold.schema.json")
     (OUT / "skill").mkdir()
     shutil.copyfile(SKILL, OUT / "skill" / "SKILL.md")
     (OUT / "skill" / "unifold-convert").mkdir()
