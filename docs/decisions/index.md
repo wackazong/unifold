@@ -63,7 +63,7 @@ Only accepted decisions bind.
 | 0055 | [Report a link sideways or deeper as a warning](0055-report-a-link-sideways-or-deeper-as-a-warning.md) | accepted | 2026-10-24 |
 | 0056 | [Let a README point at its contracts](0056-let-a-readme-point-at-its-contracts.md) | accepted | 2026-10-24 |
 | 0057 | [Publish the resolved map as a model with a schema](0057-publish-the-resolved-map-as-a-model-with-a-schema.md) | rejected | 2026-10-24 |
-| 0058 | [Define well-known kinds for units and for capabilities and needs](0058-define-well-known-kinds.md) | **proposed** | 2026-10-24 |
+| 0058 | [Define well-known kinds for units and for capabilities and needs](0058-define-well-known-kinds.md) | rejected | 2026-10-24 |
 | 0059 | [Export the map to Structurizr, Backstage and Graphviz](0059-export-the-map-to-structurizr-backstage-and-graphviz.md) | rejected | 2026-10-24 |
 | 0060 | [Add a command that writes a connection through every level](0060-add-a-command-that-writes-a-connection-through-every-level.md) | rejected | 2026-10-24 |
 | 0061 | [Make the repository of the standard a project, with the reference tool as its unit](0061-make-the-repository-of-the-standard-a-project.md) | **proposed** | 2026-10-24 |

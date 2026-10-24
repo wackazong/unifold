@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: rejected
 date: 2026-10-24
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Define well-known kinds for units and for capabilities and needs

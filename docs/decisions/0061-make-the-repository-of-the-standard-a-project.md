@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: rejected
 date: 2026-10-24
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Make the repository of the standard a project, with the reference tool as its unit
