@@ -43,7 +43,7 @@ A manifest is a YAML mapping with these keys. Any other key is an error.
 | `wiring` | no | The connections inside this unit (section 3). |
 | `x-...` | no | A key that starts with `x-`, here or in an entry of `capabilities` or `needs`, belongs to the project and is ignored. |
 | `unifold` | root: yes | Root only. The version of this standard, as a string: `"0.2"`. |
-| `name` | no | Root only. The name of the project. Default: the name of the root folder. It SHOULD be set: generated files contain it, so a copy in a folder of another name would otherwise have stale generated files. |
+| `name` | no | Root only. The name of the project. Default: the name of the root folder. It SHOULD be set, because generated files contain it. |
 | `ignore` | no | Root only. Folders, relative to the root, that are not searched for units. What version control ignores is not searched either. |
 | `diagrams` | no | Root only. `parents` (default), `all` or `none` (section 6). |
 | `diagram-links` | no | Root only. How boxes in diagrams link: `none` (default), `relative`, or a base URL. |
@@ -86,11 +86,11 @@ wiring:
 
 1. **One level.** Wiring names only entries of the unit itself and of its direct children. It MUST NOT name anything deeper.
 2. **Complete.** Every need of every child MUST be connected by a line of the parent, unless it is `optional` or the child meets it inside. Nothing is connected without a line: a need of the parent with the same name does not meet a need of a child.
-3. **Sides.** A key is a need of a child, a need of the unit or a capability of the unit; a bare key that names both a need and a capability of the unit is an error. A value is a capability of a child or, for a need of a child, a need of the unit that the unit does not meet inside. A need that a child meets inside MUST NOT be wired again. A child that provides for its own need is an error.
+3. **Sides.** A bare key that names both a need and a capability of the unit is an error. A need that the unit meets inside is not a provider, a need that a child meets inside MUST NOT be wired again, and a child never provides for its own need.
 4. **Alternatives.** A need has one provider at a time. The build or the deployment decides which alternative is in use; this standard does not describe configurations. Every alternative MUST meet all that the need expects.
 5. **Kinds.** A need and its provider SHOULD have the same `kind`. A difference is reported only when both state a kind.
 6. **Direction.** A connection records a dependency, not the direction in which data flows. A subscriber needs the stream; the publisher provides it.
-7. **Final provider.** Who finally provides for a need, or uses a capability, is found by following needs up and capabilities down. A need that a unit meets inside is followed down; its user is the unit itself.
+7. **Final provider.** Who finally provides for a need, or uses a capability, is found by following needs up and capabilities down.
 8. **Contract.** Both sides of every connection MUST name a contract, and the same one. So the contract of a connection lies in the unit that wires it, or higher.
 
 ## 4. Documents
