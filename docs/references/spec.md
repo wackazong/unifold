@@ -14,7 +14,7 @@ Version 0.2. This page is the standard for manifests, wiring and generated files
 | Capability | A named interface that a unit provides: an API, a library, a command, a stream of events. It is something others use, not a feature of the product and not an access right. |
 | Need | A named thing that a unit requires and does not implement itself. It says what is required, never who supplies it. |
 | Wiring | The mapping in a unit's manifest from needs to providers: the needs of its children, and needs of its own that a child meets. A provider is a capability of a child or, for a need of a child, a need of the unit. One need joined to its provider is a connection. |
-| Contract | The document that defines a connection exactly: what travels, in which form, with examples. It is a reference, `docs/references/<topic>.md` of the unit that wires the connection or of a unit above it, and both sides name it. A kind such as `http` or `json` is not a contract, and neither is a schema file such as `openapi.yaml`. |
+| Contract | The document that defines a connection exactly: what travels, in which form, with examples. It is a reference, `docs/references/<topic>.md`, that both sides name (section 2, and rule 8 of section 3). A kind such as `http` or `json` is not a contract, and neither is a schema file such as `openapi.yaml`. |
 
 ## 2. The manifest
 
@@ -111,6 +111,7 @@ A conforming checker reads a project, changes nothing, and reports findings with
 | A side of a connection without a contract, or two sides that name different contracts | error |
 | A generated file that is missing, ignored by version control, or differs from what the generator would write now | error |
 | A link in a hand-written document that points in a direction [documents.md](documents.md) forbids | warn |
+| A hand-written document with more lines than `max-lines` | warn |
 | `summary: TODO` | warn |
 
 No error means consistent, not correct: no checker reads the code, and none judges whether a summary is true. Reference tool: [tool.md](tool.md), [rules.md](rules.md).
