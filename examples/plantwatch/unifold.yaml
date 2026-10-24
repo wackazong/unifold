@@ -9,12 +9,12 @@ capabilities:
   app-ui:
     kind: ui
     summary: Shows the state of each plant and tells the user when to water it
-    contract: mobile/docs/references/app-ui.md
+    contract: docs/references/app-ui.md
     verified-by: test-rig/docs/references/test-catalogue.md
   test-report:
     kind: file
     summary: Result of the automated end-to-end tests, for developers and CI
-    contract: test-rig/docs/references/test-report.md
+    contract: docs/references/test-report.md
 needs:
   soil-probe:
     kind: hardware

@@ -18,8 +18,8 @@ Says: a reading has a sensor id, a sequence number, a tick count, a time with a 
 
 Here: the app stores and uploads readings in the JSON form and gives a reading its `taken_at` from the tick count before it is stored.
 
-### [plantwatch: README, `app-ui`](../../../README.md#app-ui)
-<!-- unifold:cites sha=4c39645d -->
+### [plantwatch: app UI](../../../docs/references/app-ui.md)
+<!-- unifold:cites sha=aa5d729a -->
 
 Says: per plant the app shows the latest reading, the history and what the plant needs; it works offline; a plant in need produces one notification.
 

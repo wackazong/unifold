@@ -48,4 +48,4 @@ flowchart LR
 
 | Capability | Kind | Contract | Verified by | Used by | As need |
 |---|---|---|---|---|---|
-| app-ui | ui | [contract](../references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | |
+| app-ui | ui | [contract](../../../docs/references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | |

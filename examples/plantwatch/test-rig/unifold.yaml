@@ -5,7 +5,7 @@ capabilities:
   test-report:
     kind: file
     summary: JUnit XML report of an end-to-end test run
-    contract: docs/references/test-report.md
+    contract: ../docs/references/test-report.md
 needs:
   device-under-test:
     kind: protocol

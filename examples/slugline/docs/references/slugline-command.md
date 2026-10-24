@@ -9,7 +9,7 @@ slugline [OPTIONS] [TEXT]...
 ```
 
 - With `TEXT`, prints the arguments joined by one space as one slug, then a newline.
-- Without `TEXT`, prints one slug for each line of standard input.
+- Without `TEXT`, prints one slug for each line of standard input, in the order of the lines.
 - `-s`, `--separator CHAR`: one ASCII symbol between words. Default `-`.
 - `-m`, `--max-len N`: cut the slug after `N` characters.
 - `--ascii`: drop letters with diacritics instead of replacing them.

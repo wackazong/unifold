@@ -18,8 +18,8 @@ Says: the app is written once, in Flutter. Code per platform is allowed in the r
 
 Here: the screens exist once. ui holds no code that is specific to iOS or Android.
 
-### [mobile: what the owner can rely on](../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=1e176fde -->
+### [plantwatch: what the owner can rely on](../../../../docs/references/app-ui.md)
+<!-- unifold:cites sha=aa5d729a -->
 
 Says, as far as the screens deliver it:
 

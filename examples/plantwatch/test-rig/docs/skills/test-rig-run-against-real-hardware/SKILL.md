@@ -15,7 +15,7 @@ A run in the configuration `real` waits for readings in real time and covers onl
 4. **Open the sensor stick for pairing directly before the run.** A sensor stick accepts a new central only for a limited time after it has started, as the BLE profile defines. Take the cell out, put it back in, and start the run within two minutes. Leave the probe in air or in dry soil; the tests do not depend on the values.
 5. **Leave the scenario control address unset.** Its absence is what selects `real` ([configurations.md](../../references/configurations.md)). If it is set and points at a simulated device, the rig will script that device while fetching from the real one, and the results mean nothing.
 6. **Start the run** with all groups. Do not move the sensor stick or the machine during the run.
-7. **Read the report,** not only the exit status ([test-report.md](../../references/test-report.md)):
+7. **Read the report,** not only the exit status ([test-report.md](../../../../docs/references/test-report.md)):
    - `configuration` must be `real` and `sensor-id` the one you prepared.
    - Exactly the tests marked `simulated` only in the [catalogue](../../references/test-catalogue.md) are skipped, each with "needs scenario-control". Any other skipped test is a fault.
    - An error of type `environment` at the start usually means that the sensor stick was no longer open for pairing. Repeat step 4.
@@ -33,4 +33,4 @@ A run in the configuration `real` waits for readings in real time and covers onl
 
 - [configurations.md](../../references/configurations.md): settings and waiting times
 - [test-catalogue.md](../../references/test-catalogue.md): which tests run where
-- [test-report.md](../../references/test-report.md): how to read the result
+- [test-report.md](../../../../docs/references/test-report.md): how to read the result

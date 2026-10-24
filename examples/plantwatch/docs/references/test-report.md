@@ -1,6 +1,6 @@
 # Contract of `test-report`
 
-The file a run of the rig produces, and the exit status that goes with it. Readers are developers and the tools of a CI system that understand JUnit XML. The tests are listed in the [test catalogue](test-catalogue.md), the configurations in [configurations.md](configurations.md).
+The file a run of the rig produces, and the exit status that goes with it. Readers are developers and the tools of a CI system that understand JUnit XML. The tests and the configurations are listed by [test-rig](../../test-rig/README.md).
 
 ## The file
 

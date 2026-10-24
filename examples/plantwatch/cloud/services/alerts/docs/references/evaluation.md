@@ -20,6 +20,8 @@ The contract of the capability `evaluation` and the rules by which `rules` judge
 | Decided | `plant`, `changes`, `state` |
 | Cannot decide now | Nothing else. The caller keeps its state and passes the same reading again later. |
 
+- The same reading, the same state and the same answer of `thresholds` give the same result. `evaluate` uses no clock and no random value, keeps nothing between calls, and does nothing outside its result but the call of `thresholds`.
+
 | Part of a decided result | Content |
 |---|---|
 | `plant` | `plant_id`, `owner_id`, `name` of the plant the sensor stick is attached to; nothing if it is attached to none |
@@ -113,6 +115,9 @@ The state is a JSON object. Its caller treats it as opaque.
 | `light` | The light memory: per full hour the highest light value, for at most 25 hours |
 
 An empty state is nothing, or an object without `plant_id`. A state is at most 4 kB long.
+
+- The caller hands back the state exactly as returned, per sensor stick, and passes the readings of one sensor stick one after the other. `evaluate` cannot detect a state that belongs to another sensor stick.
+- A lost state makes `evaluate` start afresh: an alert that was open can open again.
 
 ## Use of thresholds
 

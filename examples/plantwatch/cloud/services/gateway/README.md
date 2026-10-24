@@ -16,7 +16,7 @@ What must stay true: no request reaches a provider without a verified token, and
 
 ### `public-api`
 
-The complete HTTP API for clients, under one host and the path prefix `/v1`. The operations and their bodies are defined above this unit and cited in [docs/explanation/context.md](docs/explanation/context.md). `gateway` adds the following guarantees:
+`gateway` adds these guarantees to the public API:
 
 - A request reaches a provider only with a valid token. The provider is told the owner the token stands for.
 - An owner id that a client sends by itself is never passed on.
@@ -25,43 +25,11 @@ The complete HTTP API for clients, under one host and the path prefix `/v1`. The
 - `gateway` answers the two token operations itself. They work while every provider is down.
 - Every instance of `gateway` behaves the same and needs no other instance. Any number can run side by side.
 
-Limits:
-
-- A token cannot be withdrawn before it expires.
-- Rate limits are counted per instance. With several instances a client can exceed the stated rate by that factor.
-
-Example: a request without token.
-
-```http
-GET /v1/plants
-```
-
-```json
-{"code": "unauthenticated", "message": "no bearer token"}
-```
-
-Contract: [public API](../../../docs/references/public-api/index.md).
+Limit: rate limits are counted per instance. With several instances a client can exceed the stated rate by that factor.
 
 ## Needs
 
-Each of the three needs is an HTTP service inside the private network that serves a part of the public API under the same paths, methods and bodies. `gateway` expects of every provider:
-
-- It trusts the header `X-Owner-Id` and limits its answer to that owner.
-- It answers within 5 seconds, or with `503` when it cannot.
-- Every operation can be repeated, because `gateway` repeats a call that failed.
-- Its error bodies have the form of the public API.
-
-### `ingest-api`
-
-Serves the upload of a batch: every path below `/v1/sensors/`.
-
-### `plants-api`
-
-Serves plants, thresholds and history: `/v1/plants` and every path below it.
-
-### `alerts-api`
-
-Serves alerts: `/v1/alerts` and every path below it.
+`gateway` waits 5 seconds for an answer of a provider and then counts the call as failed. It repeats a call that failed, so it expects every operation of `ingest-api`, `plants-api` and `alerts-api` to be safe to repeat.
 
 ## Out of scope
 

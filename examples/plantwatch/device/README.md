@@ -16,7 +16,7 @@ What must stay true: a reading is in durable memory before the board sleeps agai
 
 ### `ble-link`
 
-The sensor stick as a central sees it over the air. The firmware does everything the BLE profile requires of a sensor stick in version 1.0: advertising, the service with all its characteristics, every procedure, every result code and the behaviour on failures. Where that definition leaves a choice or sets only a bound, a central observes this:
+Where the BLE profile leaves a choice or sets only a bound, a central observes this:
 
 | Matter | Behaviour |
 |---|---|
@@ -28,28 +28,10 @@ The sensor stick as a central sees it over the air. The firmware does everything
 | Unconfirmed readings | At least 2 880 are kept, through power loss and a change of the cell |
 | Full memory | The firmware discards the oldest readings, up to 204 at once, and reports the overflow |
 | Advertising | Every 1285 ms while no central is connected |
-| Connections | One central at a time. Closed after 30 s without a request, and after 10 minutes in any case. |
-| Bonding | Open for 5 minutes after every start. At least 4 bonds survive power loss. |
+| Connections | Closed after 30 s without a request, and after 10 minutes in any case |
 | Cell life | At least 12 months on one CR2032 cell at the default interval with 4 connections of 3 s a day. The [energy budget](docs/references/energy-budget.md) says what other use costs. |
 
-Limits:
-
-- The sampling interval cannot be changed over the radio link.
-- The firmware reports no battery level.
-- A new firmware image is written through the programming header of the board, not over the air.
-- A sensor stick gives readings for 16 383 starts.
-
-Contract: [BLE profile](../docs/references/ble-profile/index.md).
-
-## Needs
-
-### `soil-probe`
-
-A capacitive probe in the soil with an analogue output between 0 V and its supply voltage. The output falls as the soil gets wetter and is proportional to the supply voltage. The firmware supplies the probe with 2.0 V to 3.3 V and only while it measures; the probe draws at most 5 mA, and its output is stable within 100 ms. The firmware is calibrated for one type of probe, not for the single probe.
-
-### `ambient-sensor`
-
-One sensor for light and temperature on an I2C bus at 100 kHz, in a place that sees the light the plant sees. It covers at least 0 to 100 000 lux and −20 °C to 60 °C, runs on 2.0 V to 3.3 V, answers within 150 ms and draws at most 1 µA when idle.
+Limit: a sensor stick gives readings for 16 383 starts.
 
 ## Out of scope
 

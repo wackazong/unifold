@@ -12,4 +12,4 @@ Terms that have one fixed meaning inside this unit. Inherited terms are cited in
 | Expected observation | What the rig must see at the public interfaces if the promise holds. |
 | Group | Tests that share a part of the path: `link`, `relay` or `alert`. |
 | Fresh plant | A plant the rig creates for one test and binds to the device under test, after removing the plant of the tests before. |
-| Passed, failed, in error, skipped | The four results of a test, defined in [test-report.md](test-report.md). |
+| Passed, failed, in error, skipped | The four results of a test, defined in [test-report.md](../../../docs/references/test-report.md). |

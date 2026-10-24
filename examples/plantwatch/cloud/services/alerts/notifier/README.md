@@ -14,55 +14,13 @@ What must stay true: `notify` is safe to call again, and `sent` is never reporte
 
 ### `notification`
 
-One function, `notify(alert)`. `alert` carries alert id, owner id, plant id, plant name, quantity, bound, judged value, threshold and the time of the reading that opened the alert. The function makes one attempt and returns one of three outcomes:
-
-| Outcome | Meaning | The caller |
-|---|---|---|
-| `sent` | The push service has taken the notification | never calls again for this alert |
-| `retry` | The attempt failed in a way that may pass | calls again later |
-| `failed` | The push service refuses this notification for good | does not call again |
-
-A caller can rely on this:
-
-- **Once for the owner.** Every call for the same alert produces the same notification with the same collapse identifier. If two of them reach a phone, the phone shows one.
-- `sent` is returned only after the push service confirmed that it took the notification.
-- The function returns within 6 seconds.
-- The same alert always gives the same words. `notifier` uses no clock and keeps nothing between calls.
-- An alert with a quantity or bound that `notifier` has no words for still produces a notification, with a general text.
-
-Limits:
-
-- "Once" depends on the collapse identifier. A repeat that arrives after the owner has dismissed the first notification is shown again. A caller keeps repeats rare by not calling again after `sent`.
-- `sent` means taken by the push service, not shown on a phone.
-- The text is English.
-- A phone that is unreachable for more than 24 hours does not get the notification.
-
-Example:
-
-```text
-notify({alert 7d2c..., plant "Monstera in the hall",
-        soil_moisture/min, value 28.4, threshold 30.0})
-  -> sent
-
-title: Monstera in the hall
-body:  Needs water. Soil moisture is 28.4 %, below 30.0 %.
-```
-
-Contract: [notification](../docs/references/notification.md).
+A repeat that reaches a phone after the owner has dismissed the first notification is shown again. A caller keeps repeats rare by not calling again after `sent`.
 
 ## Needs
 
 ### `push`
 
-An HTTP service that takes one notification per request. `notifier` expects that the service
-
-- accepts an owner id as the addressee and delivers to every phone that has registered with it for that owner,
-- accepts a collapse identifier and shows two notifications with the same identifier on a phone as one,
-- accepts a time to live of 24 hours, after which it stops trying to deliver,
-- accepts a title of up to 60 characters, a body of up to 120 characters and five data fields of up to 40 characters each,
-- answers each request clearly: taken, refused for good, or failed for now.
-
-`notifier` does not expect delivery to be certain or prompt.
+`notifier` sends data fields of up to 40 characters each.
 
 ## Out of scope
 

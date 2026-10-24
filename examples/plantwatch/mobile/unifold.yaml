@@ -6,7 +6,7 @@ capabilities:
   app-ui:
     kind: ui
     summary: Shows the state of each plant and tells the user when to water it
-    contract: docs/references/app-ui.md
+    contract: ../docs/references/app-ui.md
 needs:
   sensor-link:
     kind: protocol

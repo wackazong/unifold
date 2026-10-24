@@ -12,6 +12,7 @@ The contract of `slugify`: a function that turns one string into one slug. What 
 - A character outside ASCII is dropped, unless a plug-in replaces it ([plugin-api](plugin-api.md)).
 - Exactly one separator stands between two words; none at the start or the end, also after a cut at `max_len`.
 - The result has at most `max_len` characters.
+- A slug is its own slug: `slugify` of a slug returns it unchanged.
 
 ## Examples
 

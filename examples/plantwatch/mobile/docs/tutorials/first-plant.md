@@ -15,4 +15,4 @@ This lesson is for an owner who has a new sensor stick and the app installed on 
 11. Wait up to a minute. The list shows the soil moisture with the age of the reading, for example "41 %, a minute ago".
 12. Tap the plant. Its screen shows all three quantities and the chart of the history, with one point so far.
 
-The first reading of your plant is on the screen. From now on the phone collects readings by itself; what the app promises on every screen is in [app-ui](../references/app-ui.md).
+The first reading of your plant is on the screen. From now on the phone collects readings by itself; what the app promises on every screen is in [app-ui](../../../docs/references/app-ui.md).

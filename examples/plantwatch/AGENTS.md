@@ -7,7 +7,7 @@ unifold unit; run `unifold show` here. Read [README.md](README.md) first: it say
 
 | Kind | Files |
 |---|---|
-| Look up | [ambient-sensor](docs/references/ambient-sensor.md), [ble-profile](docs/references/ble-profile/index.md), [container-host](docs/references/container-host.md), [conventions](docs/references/conventions.md), [glossary](docs/references/glossary.md), [product-parameters](docs/references/product-parameters.md), [public-api](docs/references/public-api/index.md), [push-service](docs/references/push-service.md), [reading-schema](docs/references/reading-schema.md), [scenario-control](docs/references/scenario-control.md), [scenario-format](docs/references/scenario-format.md), [soil-probe](docs/references/soil-probe.md) |
+| Look up | 14 files in docs/references/ |
 | Understand | [requirements](docs/explanation/requirements.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [runtime](docs/explanation/runtime.md), [deployment](docs/explanation/deployment.md), [risks](docs/explanation/risks.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

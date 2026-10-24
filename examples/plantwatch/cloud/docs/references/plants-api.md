@@ -60,6 +60,8 @@ The answer reflects every `PUT` and `DELETE` that was answered before the lookup
 - `plants` adds a reading to the history when it handles the event for it, within 5 seconds after the event reaches `plants` while `plants` and its database are healthy.
 - A history request sees every reading whose event was handled before the request arrived.
 - While `plants` is behind on the event stream, history is incomplete at its newest end and complete again once it has caught up. Nothing is skipped.
+- A reading belongs to the plant to which its sensor stick is attached when `plants` handles the event. A reading of a sensor stick that is attached to no plant at that moment is not kept.
+- A raw reading is returned as it was uploaded. `plants` does not interpret it; it uses the values that the event names.
 
 ## Examples
 

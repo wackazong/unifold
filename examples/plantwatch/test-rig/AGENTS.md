@@ -7,7 +7,7 @@ unifold unit; run `unifold show` here. Read [README.md](README.md) first: it say
 
 | Kind | Files |
 |---|---|
-| Look up | [configurations](docs/references/configurations.md), [conventions](docs/references/conventions.md), [glossary](docs/references/glossary.md), [test-catalogue](docs/references/test-catalogue.md), [test-report](docs/references/test-report.md) |
+| Look up | [configurations](docs/references/configurations.md), [conventions](docs/references/conventions.md), [glossary](docs/references/glossary.md), [test-catalogue](docs/references/test-catalogue.md) |
 | Understand | [context](docs/explanation/context.md), [invariants](docs/explanation/invariants.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

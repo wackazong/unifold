@@ -1,6 +1,6 @@
 # What the owner can rely on: contract of `app-ui`
 
-The promises the app makes to its owner, independent of how a screen looks. The screens and the way between them are defined by [ui](../../ui/README.md). The things named here are those of the [data model](data-model.md).
+The promises the app makes to its owner, independent of how a screen looks. The screens and the way between them, and the data model behind them, are up to [mobile](../../mobile/README.md).
 
 ## What the owner can do
 
@@ -20,7 +20,7 @@ The promises the app makes to its owner, independent of how a screen looks. The 
 
 | Situation | The app guarantees |
 |---|---|
-| The phone comes near a paired sensor stick, app not open | The app fetches the stored readings as far as the operating system lets it run ([platform limits](platform-limits.md)) |
+| The phone comes near a paired sensor stick, app not open | The app fetches the stored readings as far as the operating system lets it run |
 | The owner opens the app near a paired sensor stick | A fetch starts within 5 seconds and runs to the end while the app stays open |
 | Readings are on the phone, a network connection exists | The app uploads them without being asked |
 | Readings are on the phone, no network connection | They stay on the phone and are visible in the history |
@@ -58,11 +58,11 @@ Each case starts from a phone with one plant, "Monstera", whose sensor stick is 
 | Plants of one owner | 50 |
 | History on the phone | 90 days per plant |
 | Owners per phone | 1 |
-| Systems | See [platform limits](platform-limits.md) |
+| Systems | The iOS and Android versions that [mobile](../../mobile/README.md) names |
 | Languages | English and German |
 | Screen orientation | Portrait |
 
-The first three values are inherited; see [context.md](../explanation/context.md).
+The first three values are [product parameters](product-parameters.md).
 
 ## Permissions
 

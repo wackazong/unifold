@@ -47,4 +47,4 @@ flowchart LR
 
 | Capability | Kind | Contract | Verified by | Used by | As need |
 |---|---|---|---|---|---|
-| test-report | file | [contract](../references/test-report.md) |  | outside the project, as capability `test-report` of the root | |
+| test-report | file | [contract](../../../docs/references/test-report.md) |  | outside the project, as capability `test-report` of the root | |

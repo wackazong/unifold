@@ -36,4 +36,4 @@ A test of the rig guards a promise that is visible at public interfaces. The pro
 
 - [test-catalogue.md](../../references/test-catalogue.md)
 - [configurations.md](../../references/configurations.md)
-- [test-report.md](../../references/test-report.md): how results are worded
+- [test-report.md](../../../../docs/references/test-report.md): how results are worded

@@ -36,8 +36,8 @@ Here: the means by which a repeated call stays harmless.
 
 ## From plantwatch
 
-### [plantwatch: README, need `push-service`](../../../../../../README.md#push-service)
-<!-- unifold:cites sha=553fd6a9 -->
+### [plantwatch: push service, for a sender](../../../../../../docs/references/push-service.md#for-a-sender)
+<!-- unifold:cites sha=fe988229 -->
 
 Says: a sender hands the service a notification for an owner, with an identifier under which a repeat replaces the earlier one. Delivery is not guaranteed.
 

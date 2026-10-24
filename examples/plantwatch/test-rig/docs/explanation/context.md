@@ -18,15 +18,15 @@ Says: a reading has a sensor id, a sequence number, a tick count, a time with a 
 
 Here: the rig builds the readings it uploads in the JSON form and compares the readings it fetched with what the API returns.
 
-### [plantwatch: README, `test-report`](../../../README.md#test-report)
-<!-- unifold:cites sha=23b0c4ae -->
+### [plantwatch: test report](../../../docs/references/test-report.md)
+<!-- unifold:cites sha=d21981fb -->
 
 Says: the project provides the result of the automated end-to-end tests as a JUnit XML file. A run goes against a real or a simulated sensor stick.
 
 Here: the rig's capability `test-report` is this result.
 
-### [plantwatch: README, `app-ui`](../../../README.md#app-ui)
-<!-- unifold:cites sha=4c39645d -->
+### [plantwatch: app UI](../../../docs/references/app-ui.md)
+<!-- unifold:cites sha=aa5d729a -->
 
 Says: per plant the app shows the latest reading, the history and what the plant needs; it works offline; a plant in need produces one notification.
 
