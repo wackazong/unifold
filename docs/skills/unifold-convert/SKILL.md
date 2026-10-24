@@ -44,9 +44,9 @@ Write each manifest from the template [unifold.template.yaml](../unifold/assets/
 
 Then the wiring, in the manifest of the nearest unit above both sides: `child.need: other-child.capability`, one line per need and child. A need that no sibling meets becomes a need of the parent and is passed up with a line: `child.need: need`. Nothing connects by an equal name. Where the code of a unit with children uses one of its children, that unit declares a need and wires it in its own wiring: `need: child.capability`. Where several providers exist, write named alternatives; the first is the default. Patterns: <https://unifold.md/wiring>.
 
-Then the contracts. Every connection carries something in some form. Both of its sides name the document that defines it. The document lies in `docs/references/` of the unit that holds the wiring, or of a unit above it, never in a sibling. A need that is passed up names the same document at every level.
+Then the contracts. Every connection carries something in some form. Both of its sides name the document that defines it. The document lies in `docs/references/` of the unit that holds the wiring, or of a unit above it, never in a sibling or a child. A need that is passed up names the same document at every level.
 
-Where a schema, a `.proto` or an OpenAPI file already defines the interface and lies where both sides may name it, name it. Where only a sibling holds it, move it up. Where nothing exists, write a short reference with the form and an example.
+A contract is always a Markdown reference: never a kind such as `http` or `json`, never a schema, a `.proto` or an OpenAPI file, and never a URL. A definition from outside the project is linked from the reference. Where such a file already defines the interface, it stays with the code that uses it, and the reference states the same form in prose with an example. Where nothing exists, write a short reference with the form and an example.
 
 ## 3. Check the map, then compare it with the code
 

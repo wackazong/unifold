@@ -85,11 +85,11 @@ If a need and its provider state different kinds, for example `library` and `htt
 
 ## Contracts of a connection
 
-A connection carries information in some form: a wire format, a schema, a trait, a command line. That form is the contract of the connection, a document that both sides name. The checker reports a connection whose two sides name different documents, or none.
+A connection carries information in some form: a wire format, a schema, a trait, a command line. The contract of the connection is the reference that defines that form, with examples, and both sides name it. It is not the kind: `http` says how the sides talk, the contract says what they say. And it is not a schema file such as `openapi.yaml` or a `.proto`, even where code is generated from one: such a file stays with the code that uses it. The checker reports a connection whose two sides name different documents, or none.
 
-A manifest never points into a sibling, so the contract of a connection between two children lives in the references of the unit that wires them, or higher: `docs/references/clock.md` of the parent, named as `../docs/references/clock.md` by both. A protocol that several parts implement, such as a radio profile served by a device and by its emulator, is such a document, not a unit: a unit holds code. A definition from outside the project is a URL.
+A manifest never points into a sibling, so the contract of a connection between two children lives in the references of the unit that wires them, or higher: `docs/references/clock.md` of the parent, named as `../docs/references/clock.md` by both. A protocol that several parts implement, such as a radio profile served by a device and by its emulator, is such a document, not a unit: a unit holds code. A definition from outside the project, such as the API of a vendor, gets a reference of the root as well, which links the definition by its URL.
 
-A capability that a parent passes through (`public-api: gateway.public-api`) names the same document at both levels; a chain that no sibling uses may keep it in the implementing child. A format that travels inside another contract, such as a reading inside an upload, is not a contract of its own: it is a reference that the context files of its users cite.
+A capability that a parent passes through (`public-api: gateway.public-api`) names the same document at both levels: a reference of the parent, or of a unit above it. A format that travels inside another contract, such as a reading inside an upload, is not a contract of its own: it is a reference that the context files of its users cite.
 
 ## A capability implemented by a child
 

@@ -14,7 +14,7 @@ Version 0.2. This page is the standard for manifests, wiring and generated files
 | Capability | A named interface that a unit provides: an API, a library, a command, a stream of events. It is something others use, not a feature of the product and not an access right. |
 | Need | A named thing that a unit requires and does not implement itself. It says what is required, never who supplies it. |
 | Wiring | The mapping in a unit's manifest from needs to providers: the needs of its children, and needs of its own that a child meets. A provider is a capability of a child or, for a need of a child, a need of the unit. One need joined to its provider is a connection. |
-| Contract | The document that defines a capability or need exactly, given as a path or a URL. Both sides of a connection name the same contract. |
+| Contract | The document that defines a connection exactly: what travels, in which form, with examples. It is a reference, `docs/references/<topic>.md` of the unit that wires the connection or of a unit above it, and both sides name it. A kind such as `http` or `json` is not a contract, and neither is a schema file such as `openapi.yaml`. |
 
 ## 2. The manifest
 
@@ -23,7 +23,7 @@ summary: Creates invoices            # billing/unifold.yaml
 capabilities:
   invoices:
     summary: Create and fetch invoices
-    contract: openapi.yaml
+    contract: ../docs/references/invoices.md
     verified-by: tests/api
 needs:
   clock: {summary: A time source, contract: ../docs/references/clock.md}
@@ -55,8 +55,8 @@ An entry of `capabilities` or `needs` is either a string, its summary, or a mapp
 |---|---|---|
 | `summary` | yes | One line: what the capability provides, or what the need expects. `TODO` and `<...>` as for the unit. |
 | `kind` | no | Free text for the technical nature, for example `library`, `http`, `events`, `cli`. |
-| `contract` | no | The exact definition: a URL, or a path relative to the folder of the manifest. A path MUST exist and lie in this unit, in an ancestor or in a descendant. |
-| `verified-by` | no | What checks the entry against its contract, for example tests: a URL or a path, as for `contract`. Leaving it out is never a finding. |
+| `contract` | no | The contract of the connection (section 1): a path, relative to the folder of the manifest, to a Markdown file in `docs/references/` of this unit or of an ancestor. It MUST exist. A URL is not a contract; a reference links a definition from outside the project. |
+| `verified-by` | no | What checks the entry against its contract, for example tests: a URL, or a path relative to the folder of the manifest. A path MUST exist and lie in this unit, in an ancestor or in a descendant. Leaving it out is never a finding. |
 | `optional` | no | On a need only: `true` if the need may stay unconnected. Default: `false`. |
 
 The name of a capability or need consists of letters, digits, `-` and `_`, starts with a letter or a digit, and is local to the unit. A folder name MAY contain dots. No unit lies in a folder whose name starts with a dot, or in the `docs` folder of a unit. A manifest does not list its children or its users.
@@ -91,7 +91,7 @@ wiring:
 5. **Kinds.** A need and its provider SHOULD have the same `kind`. A difference is reported only when both state a kind.
 6. **Direction.** A connection records a dependency, not the direction in which data flows. A subscriber needs the stream; the publisher provides it.
 7. **Final provider.** Who finally provides for a need, or uses a capability, is found by following needs up and capabilities down. A need that a unit meets inside is followed down; its user is the unit itself.
-8. **Contract.** Both sides of every connection MUST name a contract, and the same one.
+8. **Contract.** Both sides of every connection MUST name a contract, and the same one. So the contract of a connection lies in the unit that wires it, or higher.
 
 ## 4. Documents
 
@@ -107,9 +107,10 @@ A conforming checker reads a project, changes nothing, and reports findings with
 | A wiring line that section 3 does not allow, or that names a child, capability or need that does not exist | error |
 | A need of a child that is not `optional`, not met inside the child, and not connected | error |
 | A path in a manifest that does not exist, or lies where section 2 forbids | error |
-| A unit without `README.md`; a link in a hand-written document whose target does not exist, or that points where [documents.md](documents.md) forbids | error |
+| A unit without `README.md`; a link in a hand-written document whose target does not exist, that leaves the project, or that is an absolute path | error |
 | A side of a connection without a contract, or two sides that name different contracts | error |
-| A generated file that is missing, or differs from what the generator would write now | error |
+| A generated file that is missing, ignored by version control, or differs from what the generator would write now | error |
+| A link in a hand-written document that points in a direction [documents.md](documents.md) forbids | warn |
 | `summary: TODO` | warn |
 
 No error means consistent, not correct: no checker reads the code, and none judges whether a summary is true. Reference tool: [tool.md](tool.md), [rules.md](rules.md).
@@ -128,7 +129,8 @@ Diagrams and indexes are generated from the manifests and MUST NOT be edited by 
 
 - `diagrams: all` also writes `context.md` for units without children; `diagrams: none` writes no diagram.
 - An arrow points from what needs to what provides. A need of the unit to which three or more children pass up is listed once below the picture. A `planned` unit is marked.
-- Generated links are URL-encoded. Generated files SHOULD be committed.
+- Generated links are URL-encoded.
+- Generated files MUST be committed, and kept current with every change to what they show. A checker cannot see a commit; it reports a generated file that is missing, out of date, or ignored by version control.
 
 ## 7. Nested projects
 

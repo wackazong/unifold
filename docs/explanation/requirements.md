@@ -44,6 +44,6 @@ A map with one capability per package restates the build files. The map becomes 
 1. Complete summaries, one line each.
 2. The outside world: what the project needs from external systems as needs of the root, and what it provides as capabilities of the root.
 3. Needs named as roles, `matcher` instead of the provider's package name ([wiring](wiring.md)).
-4. Capabilities split where users depend on different parts of a package, with a `contract` and a `verified-by` where a file defines them and tests check them.
+4. Capabilities split where users depend on different parts of a package, each with a `contract` in the references of the unit that wires it, and a `verified-by` where tests check it.
 5. Units for parts that are not packages: the modules of one large package, a deployment folder.
 6. The why of every unit, and its documents sorted by what the reader is doing.
