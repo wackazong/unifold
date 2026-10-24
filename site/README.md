@@ -8,7 +8,7 @@
 # build
 uv run site/build.py
 # build and check links, HTML, page weight
-uv run site/build.py--check
+uv run site/build.py --check
 # build and serve locally
 uv run site/build.py --serve
 ```
