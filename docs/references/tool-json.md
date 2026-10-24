@@ -70,7 +70,7 @@ For `check`, the object also has `summary` and an empty `findings` list, so that
 - `used-by` and `provided-by` are resolved through the whole tree: they name the units whose own code is on the other side. A unit above can be such a user, when it wires a need of its own to this capability; a need that a unit meets inside is provided by a unit below it, never from outside.
 - The other form of an entry: `{"outside": true, "root-capability": "api"}` and `{"outside": true, "root-need": "clock", ...}` for the world outside the project.
 - `via` lists how the connection came about, if not by an explicit line: `"passed up by name"`, in a project of version 0.1 only. `config` is the name of the alternative, or `null`.
-- `contract` and `verified-by` are URLs, or paths relative to the root. Both sides of a connection name the same contract, so an entry under `used-by` or `provided-by` repeats none.
+- `contract` is a path relative to the root; `verified-by` is a URL, or a path relative to the root. Both sides of a connection name the same contract, so an entry under `used-by` or `provided-by` repeats none.
 - A `status` other than `active`, and a decision status other than `accepted`, means: not in force. The text output marks these in brackets.
 
 ## capability

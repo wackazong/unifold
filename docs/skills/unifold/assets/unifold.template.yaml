@@ -12,7 +12,7 @@ capabilities:
   <other-capability>:
     summary: <what the capability provides, in one line>
     kind: <library | http | events | cli | ...>
-    contract: <path or URL of the exact definition>
+    contract: ../docs/references/<topic>.md   # the reference of the parent that defines the connection
     verified-by: <path or URL of the tests that check it>
 needs:
   <need-name>: <what this unit expects from whoever provides it>

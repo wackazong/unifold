@@ -145,8 +145,8 @@ RULES = {
            "Correct the YAML. The unit and its wiring are not checked until it parses."),
     "M2": ("error", "A manifest has a one-line `summary` and otherwise only the keys, types and values of the standard; root-only keys are in the root; names of capabilities and needs use letters, digits, `-` and `_` and start with a letter or digit; no summary is a placeholder (`<...>`).",
            "Correct the key or value named in the message. Project-specific keys start with `x-`."),
-    "M7": ("error", "`contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and lies in this unit, an ancestor or a descendant.",
-           "Correct the path, create the file, or remove the key until there is something to point at. A definition that two siblings share lies in the unit above both."),
+    "M7": ("error", "`contract` is a path, relative to the manifest, to a Markdown file that exists in `docs/references/` of this unit or of an ancestor. `verified-by` is a URL or a path, relative to the manifest, that exists and lies in this unit, an ancestor or a descendant.",
+           "Write the contract as `docs/references/<topic>.md` of the unit that wires the connection, and name it from both sides. A schema file is not a contract, and a definition from outside the project is linked from the reference by its URL. Otherwise correct the path, create the file, or remove the key until there is something to point at."),
     "M10": ("warn", "No summary is still `TODO`.",
             "Replace `TODO` with one line that says what the unit, capability or need is."),
     "W1": ("error", "Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A bare key names a capability or a need of the unit, not both. A need of a child is passed up only to a need that the unit does not meet inside, and a need that a child meets inside is not wired again. A connection joins two units; a folder is never a provider.",
@@ -165,21 +165,23 @@ RULES = {
             "Write the definition as a reference of this unit, the one that holds the wiring, or of a unit above it, and point both sides at it with `contract`."),
     "L1": ("error", "The target of every relative link in a hand-written document exists, including its anchor: a heading, or the first cell of a table row.",
            "Correct the link."),
-    "L2": ("error", "A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract` or `verified-by`. No other link goes sideways, deeper, out of the project, or is an absolute path.",
-           "Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`."),
+    "L2": ("error", "A relative link stays inside the project, and no link is an absolute path.",
+           "Write the link relative to this file; cite things outside the project by full URL."),
     "L7": ("warn", "`docs/explanation/context.md` cites no decision that is rejected, deprecated or superseded, and an `active` unit cites no decision that is still `proposed`.",
            "Cite the successor, or have the decision accepted."),
     "L9": ("warn", "Every item of `docs/explanation/context.md` is a `###` heading with a link, followed by a paragraph that starts with `Says` and one that starts with `Here`.",
            "Complete the item."),
     "L10": ("warn", "Every context item carries a stamp, and the cited part (the file, or the section or table row that the fragment of the link names) has not changed since the stamp was written.",
             "Read the cited source again, correct `Says`, then run `unifold stamp`. Only `unifold stamp` writes stamps; `check --fix` never does."),
+    "L11": ("warn", "A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract` or `verified-by`. No other link goes sideways or deeper.",
+            "Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`."),
     "T1": ("warn", "A hand-written document has at most `max-lines` lines (default 200).",
            "Split the file: a reference into parts, the long why into `docs/explanation/reasoning.md`, a procedure into a skill."),
     "T4": ("warn", "The `## Why` section of `README.md` has at most 20 lines that are not blank.",
            "Move the long form to `docs/explanation/reasoning.md`."),
     "T5": ("warn", "A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest.",
            "Rename or remove the section; the manifest is the list of capabilities and needs."),
-    "G1": ("error", "Every generated file exists and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
+    "G1": ("error", "Every generated file exists, is not ignored by git, and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
            "Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command."),
 }
 SEVERITY_ORDER = {"error": 0, "warn": 1, "info": 2}
@@ -759,7 +761,11 @@ class Project:
         """Named by `ignore` in the root manifest, or ignored by git: not part of the project."""
         rel = self.rel(path)
         return any(rel == item or rel.startswith(item + "/") for item in self.ignore) \
-            or rel in self.git_ignored \
+            or self.git_ignores(path)
+
+    def git_ignores(self, path: str) -> bool:
+        rel = self.rel(path)
+        return rel in self.git_ignored \
             or any(rel.startswith(item) for item in self.git_ignored if item.endswith("/"))
 
     def listdir(self, folder: str) -> list:
@@ -1214,7 +1220,7 @@ def check_manifest(project: Project, unit: Unit):
                     bad(f"{label}: '{field}' must be one path or URL, not {show_value(value)}",
                         section, name, field)
                     continue
-                problem = path_problem(project, unit, value.strip())
+                problem = path_problem(project, unit, value.strip(), field == "contract")
                 if problem:
                     project.add("M7", where, f"{label}: '{field}' {problem}: {value.strip()}", line)
     raw = manifest.get("wiring")
@@ -1227,12 +1233,13 @@ def check_manifest(project: Project, unit: Unit):
         project.add("M10", where, f"summary still says TODO: {shown}", lines.get(("summary",)))
 
 
-def path_problem(project: Project, unit: Unit, value: str):
+def path_problem(project: Project, unit: Unit, value: str, contract: bool = False):
     """Why a contract or verified-by value is not acceptable, or None."""
     if SCHEME.match(value) and not re.match(r"^[A-Za-z]:[\\/]", value):
-        return None
+        return "must be a reference in docs/references/, not a URL; the reference links the URL" \
+            if contract else None
     if os.path.isabs(value) or re.match(r"^[A-Za-z]:[\\/]", value):
-        return "must be a path relative to the manifest, or a URL"
+        return "must be a path relative to the manifest" + ("" if contract else ", or a URL")
     target = os.path.normpath(os.path.join(unit.path, value.split("#", 1)[0]))
     if not project.inside(target):
         return "points outside the project"
@@ -1243,6 +1250,13 @@ def path_problem(project: Project, unit: Unit, value: str):
         return "lies in a nested project"
     if owner is not unit and owner not in unit.ancestors() and unit not in owner.ancestors():
         return f"lies in the sibling unit '{owner.rel}'"
+    if not contract:
+        return None
+    if owner is not unit and owner not in unit.ancestors():
+        return f"lies in the unit '{owner.rel}' below; a contract lies in the unit that wires the connection"
+    if not target.startswith(os.path.join(owner.path, "docs", "references") + os.sep) \
+            or not target.endswith(".md"):
+        return "is not a Markdown file in docs/references/"
     return None
 
 
@@ -1691,27 +1705,27 @@ def check_links(project: Project, unit: Unit, path: str, doc: Doc, is_context: b
         elif owner_kind == "foreign":
             if project.foreign[owner] is not unit or \
                     target not in (owner, os.path.join(owner, "README.md")):
-                project.add("L2", path, "a nested project is linked only by its README.md, "
+                project.add("L11", path, "a nested project is linked only by its README.md, "
                                         f"from the unit that contains it: {link}", line)
         elif owner is unit:
             continue
         elif owner.parent is unit:
             if target not in (owner.path, os.path.join(owner.path, "README.md")):
-                project.add("L2", path, f"link into the child '{owner.name}' must target its "
+                project.add("L11", path, f"link into the child '{owner.name}' must target its "
                                         f"README.md: {link}", line)
         elif owner.depth_below(unit) is not None:
-            project.add("L2", path, f"link reaches into '{owner.rel}', below a child; link to "
+            project.add("L11", path, f"link reaches into '{owner.rel}', below a child; link to "
                                     f"the README.md of the direct child instead: {link}", line)
         elif unit.depth_below(owner) is not None:
             decisions = os.path.join(owner.path, "docs", "decisions") + os.sep
             references = os.path.join(owner.path, "docs", "references") + os.sep
             if not is_context:
-                project.add("L2", path, f"upward link outside docs/explanation/context.md: {link}",
+                project.add("L11", path, f"upward link outside docs/explanation/context.md: {link}",
                             line, "Cite it as an item in docs/explanation/context.md and link to "
                                   "that file.")
             elif not (target == os.path.join(owner.path, "README.md")
                       or target.startswith((decisions, references))):
-                project.add("L2", path, "docs/explanation/context.md cites only an ancestor's "
+                project.add("L11", path, "docs/explanation/context.md cites only an ancestor's "
                                         f"README.md, decisions and references: {link}", line)
             elif target.startswith(decisions) and target.endswith(".md") \
                     and os.path.basename(target) != "index.md" and kind == "file":
@@ -1722,7 +1736,7 @@ def check_links(project: Project, unit: Unit, path: str, doc: Doc, is_context: b
                     project.add("L7", path, "an active unit relies on a decision that is "
                                             f"still proposed: {link}", line)
         else:
-            project.add("L2", path, f"sideways link into '{owner.rel}'; a unit does not know "
+            project.add("L11", path, f"sideways link into '{owner.rel}'; a unit does not know "
                                     f"its siblings: {link}", line)
 
 
@@ -1804,6 +1818,10 @@ def check_generated(project: Project):
         if kind != "file":
             project.add("G1", path, "generated file is missing" if not kind else
                         "a folder is in the place of a generated file")
+            continue
+        if project.git_ignores(path):
+            project.add("G1", path, "generated file is ignored by git; generated files are committed",
+                        fix="Remove the pattern that ignores it from `.gitignore`, then commit the file.")
             continue
         text = project.text(path)
         if text == content:

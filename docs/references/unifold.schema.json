@@ -184,12 +184,13 @@
         "contract": {
           "type": "string",
           "minLength": 1,
-          "description": "Where the exact definition is. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Required when the capability is used: both sides of a connection name the same document."
+          "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$",
+          "description": "The contract of the connection: a path, relative to the folder of the manifest, to a Markdown file in docs/references/ of this unit or of an ancestor. Not a URL. Required when the capability is used: both sides of a connection name the same document."
         },
         "verified-by": {
           "type": "string",
           "minLength": 1,
-          "description": "What checks the capability against its contract, for example tests. A URL, or a path as for `contract`. Never required."
+          "description": "What checks the capability against its contract, for example tests. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Never required."
         }
       }
     },
@@ -215,12 +216,13 @@
         "contract": {
           "type": "string",
           "minLength": 1,
-          "description": "The definition this need and its provider share. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Required when the need is wired: both sides of a connection name the same document."
+          "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$",
+          "description": "The contract this need and its provider share: a path, relative to the folder of the manifest, to a Markdown file in docs/references/ of this unit or of an ancestor. Not a URL. Required when the need is wired: both sides of a connection name the same document."
         },
         "verified-by": {
           "type": "string",
           "minLength": 1,
-          "description": "What checks a provider against the contract. A URL, or a path as for `contract`. Never required."
+          "description": "What checks a provider against the contract. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Never required."
         },
         "optional": {
           "description": "true if the need may stay unconnected.",

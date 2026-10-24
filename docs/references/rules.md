@@ -35,7 +35,7 @@ No finding means consistent, not correct: the tool does not judge whether a summ
 |---|---|---|---|
 | <a id="m1"></a>`M1` | error | A manifest is a YAML mapping without duplicate keys. | Correct the YAML. The unit and its wiring are not checked until it parses. |
 | <a id="m2"></a>`M2` | error | A manifest has a one-line `summary` and otherwise only the keys, types and values of the standard; root-only keys are in the root; names of capabilities and needs use letters, digits, `-` and `_` and start with a letter or digit; no summary is a placeholder (`<...>`). | Correct the key or value named in the message. Project-specific keys start with `x-`. |
-| <a id="m7"></a>`M7` | error | `contract` and `verified-by` are a URL or a path, relative to the manifest, that exists and lies in this unit, an ancestor or a descendant. | Correct the path, create the file, or remove the key until there is something to point at. A definition that two siblings share lies in the unit above both. |
+| <a id="m7"></a>`M7` | error | `contract` is a path, relative to the manifest, to a Markdown file that exists in `docs/references/` of this unit or of an ancestor. `verified-by` is a URL or a path, relative to the manifest, that exists and lies in this unit, an ancestor or a descendant. | Write the contract as `docs/references/<topic>.md` of the unit that wires the connection, and name it from both sides. A schema file is not a contract, and a definition from outside the project is linked from the reference by its URL. Otherwise correct the path, create the file, or remove the key until there is something to point at. |
 | <a id="m10"></a>`M10` | warn | No summary is still `TODO`. | Replace `TODO` with one line that says what the unit, capability or need is. |
 
 ## W: wiring
@@ -59,10 +59,11 @@ These rules read the hand-written documents of a unit ([documents.md](documents.
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
 | <a id="l1"></a>`L1` | error | The target of every relative link in a hand-written document exists, including its anchor: a heading, or the first cell of a table row. | Correct the link. |
-| <a id="l2"></a>`L2` | error | A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract` or `verified-by`. No other link goes sideways, deeper, out of the project, or is an absolute path. | Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`. |
+| <a id="l2"></a>`L2` | error | A relative link stays inside the project, and no link is an absolute path. | Write the link relative to this file; cite things outside the project by full URL. |
 | <a id="l7"></a>`L7` | warn | `docs/explanation/context.md` cites no decision that is rejected, deprecated or superseded, and an `active` unit cites no decision that is still `proposed`. | Cite the successor, or have the decision accepted. |
 | <a id="l9"></a>`L9` | warn | Every item of `docs/explanation/context.md` is a `###` heading with a link, followed by a paragraph that starts with `Says` and one that starts with `Here`. | Complete the item. |
 | <a id="l10"></a>`L10` | warn | Every context item carries a stamp, and the cited part (the file, or the section or table row that the fragment of the link names) has not changed since the stamp was written. | Read the cited source again, correct `Says`, then run `unifold stamp`. Only `unifold stamp` writes stamps; `check --fix` never does. |
+| <a id="l11"></a>`L11` | warn | A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract` or `verified-by`. No other link goes sideways or deeper. | Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`. |
 
 ## T: text
 
@@ -78,7 +79,7 @@ These rules read the hand-written documents of a unit ([documents.md](documents.
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
-| <a id="g1"></a>`G1` | error | Every generated file exists and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated. | Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command. |
+| <a id="g1"></a>`G1` | error | Every generated file exists, is not ignored by git, and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated. | Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command. |
 
 ## Order and cascades
 

@@ -46,8 +46,9 @@ MARK = "<!-- unifold:generated - do not edit; run `unifold generate` -->"
 
 ROOT = 'unifold: "0.2"\nsummary: A demo\n'
 UNIT = "summary: A part\n"
-X = "https://example.test/x"                      # the contract both sides of x name
+X = "ref:x"                                       # the contract both sides of x name
 NEEDS_X = "needs:\n  x: {kind: library, summary: Needs x, contract: %s}\n" % X
+AT_ROOT_X = NEEDS_X.replace(X, "docs/references/x.md")   # NEEDS_X in a root written by hand
 CAPABILITY_X = "capabilities:\n  x: {kind: library, summary: Offers x, contract: %s}\n" % X
 WIRED = "wiring:\n  a.x: b.x\n"
 README = "# {name}\n\nWhat it is for.\n"
@@ -72,11 +73,22 @@ def stamp(text: str) -> str:
 
 def project(root: str = "", units: dict | None = None, files: dict | None = None) -> dict:
     """A project: a manifest and a README.md per unit. AGENTS.md is generated. A file
-    whose value is None is left out."""
-    out = {"unifold.yaml": ROOT + root, "README.md": README.format(name="demo")}
+    whose value is None is left out. `ref:NAME` in a manifest becomes the path from the
+    unit to docs/references/NAME.md of the root, which is written too."""
+    names: set = set()
+
+    def refs(text: str, folder: str) -> str:
+        def path(match):
+            names.add(match.group(1))
+            return os.path.relpath(f"docs/references/{match.group(1)}.md", folder)
+        return re.sub(r"\bref:([\w-]+)", path, text)
+
+    out = {"unifold.yaml": ROOT + refs(root, "."), "README.md": README.format(name="demo")}
     for path, manifest in (units or {}).items():
-        out[f"{path}/unifold.yaml"] = UNIT + manifest
+        out[f"{path}/unifold.yaml"] = UNIT + refs(manifest, path)
         out[f"{path}/README.md"] = README.format(name=path.rsplit("/", 1)[-1])
+    for name in sorted(names):
+        out[f"docs/references/{name}.md"] = f"# {name}\n\nThe contract of {name}.\n"
     out.update(files or {})
     return {k: v for k, v in out.items() if v is not None}
 
@@ -99,9 +111,9 @@ CASES = [
     ("clean-pass-up-two-levels", project(NEEDS_X + "wiring:\n  a.x: x\n",
                                          {"a": NEEDS_X + "wiring:\n  deep.x: x\n", "a/deep": NEEDS_X}), []),
     ("clean-0.1-passes-up-by-name", {**project(NEEDS_X, {"a": NEEDS_X}),
-                                     "unifold.yaml": 'unifold: "0.1"\nsummary: A demo\n' + NEEDS_X}, []),
+                                     "unifold.yaml": 'unifold: "0.1"\nsummary: A demo\n' + AT_ROOT_X}, []),
     ("clean-pass-up-to-a-need-of-another-name",
-     project("needs:\n  x: One\n  y: {summary: Two, contract: https://example.test/x}\nwiring:\n  a.x: y\n", {"a": NEEDS_X}), []),
+     project("needs:\n  x: One\n  y: {summary: Two, contract: ref:x}\nwiring:\n  a.x: y\n", {"a": NEEDS_X}), []),
     ("clean-path-form-reference", project(
         'wiring:\n  "left/utils.x": right/utils.x\n',
         {"left/utils": NEEDS_X, "right/utils": CAPABILITY_X}), []),
@@ -121,18 +133,17 @@ CASES = [
               "needs:\n  n: {kind: http, summary: s, contract: ../docs/references/n.md}\n"},
         {"docs/references/p.md": "# p\n", "docs/references/n.md": "# n\n"}), []),
     ("clean-kind-stated-on-one-side-only",
-     project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {summary: Offers x, contract: https://example.test/x}\n"}), []),
+     project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {summary: Offers x, contract: ref:x}\n"}), []),
     ("clean-ignored-folder", project("ignore: [vendor]\n", files={
         "vendor/dep/unifold.yaml": "summary: [broken\n"}), []),
     ("clean-nested-project-is-not-checked", project("", files={
         "inner/unifold.yaml": 'unifold: "0.2"\nsummary: Inner\nwiring:\n  nobody.x: nothing.y\n'}), []),
     ("clean-units-below-folder-named-target", project(WIRED, {"target/a": NEEDS_X, "target/b": CAPABILITY_X}), []),
-    ("clean-contract-in-ancestor-and-url", project("", {
-        "a": "capabilities:\n  x:\n    summary: s\n    contract: ../shared/spec.md\n"
-             "    verified-by: https://example.org/ci\n"},
-        {"shared/spec.md": "# Spec\n", "unifold.yaml": ROOT + "capabilities:\n  x: {summary: s, "
-                                                             "contract: shared/spec.md}\nwiring:\n  x: a.x\n"}), []),
-    ("clean-verified-by-in-child", project("capabilities:\n  x: {summary: s, contract: https://example.test/x, "
+    ("clean-contract-in-ancestor-verified-by-url", project("capabilities:\n  x: {summary: s, contract: ref:x}\n"
+                                                         "wiring:\n  x: a.x\n", {
+        "a": "capabilities:\n  x:\n    summary: s\n    contract: ref:x\n"
+             "    verified-by: https://example.org/ci\n"}), []),
+    ("clean-verified-by-in-child", project("capabilities:\n  x: {summary: s, contract: ref:x, "
                                       "verified-by: b/tests}\nwiring:\n  x: b.x\n",
                                       {"b": CAPABILITY_X}, {"b/tests/t.txt": "x\n"}), []),
     ("clean-fragment-of-the-contract-ignored", project(WIRED, {
@@ -235,6 +246,16 @@ CASES = [
      ["error M7 unifold.yaml"]),
     ("M7-contract-outside-project", project("capabilities:\n  x: {summary: s, contract: ../elsewhere.md}\n"),
      ["error M7 unifold.yaml"]),
+    ("M7-contract-url", project("capabilities:\n  x: {summary: s, contract: https://example.org/api}\n"),
+     ["error M7 unifold.yaml"]),
+    ("M7-contract-in-unit-below", project("capabilities:\n  x: {summary: s, contract: a/docs/references/x.md}\n"
+                                          "wiring:\n  x: a.x\n",
+        {"a": "capabilities:\n  x: {summary: s, contract: docs/references/x.md}\n"},
+        {"a/docs/references/x.md": "# x\n"}),
+     ["error M7 unifold.yaml"]),
+    ("M7-contract-not-a-reference", project("capabilities:\n  x: {summary: s, contract: openapi.yaml}\n",
+                                            files={"openapi.yaml": "openapi: 3.1.0\n"}),
+     ["error M7 unifold.yaml"]),
     ("M7-contract-in-sibling-unit", project(WIRED, {
         "a": "needs:\n  x: {summary: s, contract: ../b/docs/references/x.md}\n",
         "b": "capabilities:\n  x: {summary: s, contract: docs/references/x.md}\n"},
@@ -275,7 +296,7 @@ CASES = [
     ("W1-capability-implemented-by-own-code", project("capabilities:\n  p: s\nwiring:\n  p: ./\n"),
      ["error W1 unifold.yaml"]),
     ("W1-key-names-a-capability-and-a-need", project(
-        "capabilities:\n  x: {summary: s, contract: https://example.test/x}\n" + NEEDS_X + "wiring:\n  x: b.x\n",
+        "capabilities:\n  x: {summary: s, contract: ref:x}\n" + NEEDS_X + "wiring:\n  x: b.x\n",
         {"b": CAPABILITY_X}), ["error W1 unifold.yaml", "warn W3 unifold.yaml"]),
     ("W1-own-need-wired-to-own-need", project("needs:\n  x: s\n  y: s\nwiring:\n  x: y\n"),
      ["error W1 unifold.yaml"]),
@@ -287,7 +308,7 @@ CASES = [
                                   "b": CAPABILITY_X}),
      ["error W1 unifold.yaml", "warn W3 unifold.yaml"]),
     ("W1-own-need-key-in-a-0.1-project", {**project("", {"b": CAPABILITY_X}),
-                                          "unifold.yaml": 'unifold: "0.1"\nsummary: A demo\n' + NEEDS_X
+                                          "unifold.yaml": 'unifold: "0.1"\nsummary: A demo\n' + AT_ROOT_X
                                           + "wiring:\n  x: b.x\n"},
      ["error W1 unifold.yaml", "warn W3 unifold.yaml"]),
     ("W2-need-without-provider", project("", {"a": NEEDS_X, "b": CAPABILITY_X}),
@@ -298,30 +319,30 @@ CASES = [
     ("W2-a-need-of-the-same-name-in-the-parent-is-no-connection", project(NEEDS_X, {"a": NEEDS_X}),
      ["error W2 unifold.yaml"]),
     ("W4-own-need-kind-differs", project(NEEDS_X + "wiring:\n  x: b.x\n", {
-        "b": "capabilities:\n  x: {kind: http, summary: s, contract: https://example.test/x}\n"}),
+        "b": "capabilities:\n  x: {kind: http, summary: s, contract: ref:x}\n"}),
      ["warn W4 unifold.yaml"]),
-    ("W4-kinds-differ", project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {kind: http, summary: s, contract: https://example.test/x}\n"}),
+    ("W4-kinds-differ", project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {kind: http, summary: s, contract: ref:x}\n"}),
      ["warn W4 unifold.yaml"]),
     ("W7-cycle", project("wiring:\n  a.x: b.x\n  b.y: a.y\n", {
-        "a": NEEDS_X + "capabilities:\n  y: {summary: s, contract: https://example.test/x}\n",
-        "b": CAPABILITY_X + "needs:\n  y: {summary: s, contract: https://example.test/x}\n"}),
+        "a": NEEDS_X + "capabilities:\n  y: {summary: s, contract: ref:x}\n",
+        "b": CAPABILITY_X + "needs:\n  y: {summary: s, contract: ref:x}\n"}),
      ["warn W7 unifold.yaml"]),
     ("W11-need-without-contract", project(WIRED, {"a": "needs:\n  x: Needs x\n", "b": CAPABILITY_X}),
      ["error W11 unifold.yaml"]),
     ("W11-capability-without-contract", project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: Offers x\n"}),
      ["error W11 unifold.yaml"]),
     ("W11-contracts-differ", project(WIRED, {
-        "a": "needs:\n  x: {summary: s, contract: https://example.test/a}\n", "b": CAPABILITY_X}),
+        "a": "needs:\n  x: {summary: s, contract: ref:a}\n", "b": CAPABILITY_X}),
      ["error W11 unifold.yaml"]),
     ("W11-implemented-by-differs", project(
-        "capabilities:\n  x: {summary: s, contract: https://example.test/root}\nwiring:\n  x: b.x\n",
+        "capabilities:\n  x: {summary: s, contract: ref:root}\nwiring:\n  x: b.x\n",
         {"b": CAPABILITY_X}), ["error W11 unifold.yaml"]),
     ("W11-own-need-without-contract", project("needs:\n  x: Needs x\nwiring:\n  x: b.x\n", {"b": CAPABILITY_X}),
      ["error W11 unifold.yaml"]),
     ("W11-own-need-provider-without-contract", project(NEEDS_X + "wiring:\n  x: b.x\n",
                                                        {"b": "capabilities:\n  x: Offers x\n"}),
      ["error W11 unifold.yaml"]),
-    ("W11-pass-up-differs", project("needs:\n  x: {summary: s, contract: https://example.test/root}\n"
+    ("W11-pass-up-differs", project("needs:\n  x: {summary: s, contract: ref:root}\n"
                                     "wiring:\n  a.x: x\n", {"a": NEEDS_X}), ["error W11 unifold.yaml"]),
     ("W11-pass-up-without-contract", project("needs:\n  x: From outside\nwiring:\n  a.x: x\n", {"a": NEEDS_X}),
      ["error W11 unifold.yaml"]),
@@ -336,7 +357,7 @@ CASES = [
                                                  {"b": "status: planned\n" + CAPABILITY_X}),
      ["warn W9 unifold.yaml"]),
     ("W9-not-for-optional-needs", project(WIRED, {
-        "a": "needs:\n  x: {summary: s, optional: true, contract: https://example.test/x}\n", "b": CAPABILITY_X + "status: planned\n"}), []),
+        "a": "needs:\n  x: {summary: s, optional: true, contract: ref:x}\n", "b": CAPABILITY_X + "status: planned\n"}), []),
     # ------------------------------------------------ L, T: documents
     ("L1-broken-link", project(files={"README.md": "# demo\n\n[gone](docs/gone.md)\n"}),
      ["error L1 README.md"]),
@@ -355,29 +376,29 @@ CASES = [
         "docs/references/a_(v1).md": "# A\n"}), []),
     ("L1-broken-link-in-a-tutorial", project(files={"docs/tutorials/x.md": "# X\n\n[gone](nope.md)\n"}),
      ["error L1 docs/tutorials/x.md"]),
-    ("L2-upward-link-outside-context", project("", {"a": ""}, {
-        "a/README.md": "# a\n\n[up](../README.md)\n"}), ["error L2 a/README.md"]),
-    ("L2-upward-link-from-another-explanation-file", project("", {"a": ""}, {
+    ("L11-upward-link-outside-context", project("", {"a": ""}, {
+        "a/README.md": "# a\n\n[up](../README.md)\n"}), ["warn L11 a/README.md"]),
+    ("L11-upward-link-from-another-explanation-file", project("", {"a": ""}, {
         "a/docs/explanation/reasoning.md": "# Why\n\n[up](../../../README.md)\n"}),
-     ["error L2 a/docs/explanation/reasoning.md"]),
-    ("L2-upward-link-from-context-is-allowed", project("", {"a": ""}, {
+     ["warn L11 a/docs/explanation/reasoning.md"]),
+    ("L11-upward-link-from-context-is-allowed", project("", {"a": ""}, {
         CONTEXT: "# Context of a\n\n### [demo](../../../README.md)\n" + stamp(README.format(name="demo"))
                  + "\nSays: x.\n\nHere: y.\n"}), []),
-    ("L2-old-context-path-does-not-allow-upward-links", project("", {"a": ""}, {
+    ("L11-old-context-path-does-not-allow-upward-links", project("", {"a": ""}, {
         "a/docs/context.md": "# Context of a\n\n### [demo](../../README.md)\n\nSays: x.\n\nHere: y.\n"}),
      ["info S12 a/docs/context.md"]),
-    ("L2-sideways-link", project("", {"a": "", "b": ""}, {
-        "a/README.md": "# a\n\n[b](../b/README.md)\n"}), ["error L2 a/README.md"]),
-    ("L2-link-into-child", project("", {"a": ""}, {"README.md": "# demo\n\n[a](a/AGENTS.md)\n"}),
-     ["error L2 README.md"]),
-    ("L2-link-below-a-child", project("", {"a": "", "a/deep": ""}, {
-        "README.md": "# demo\n\n[deep](a/deep/README.md)\n"}), ["error L2 README.md"]),
+    ("L11-sideways-link", project("", {"a": "", "b": ""}, {
+        "a/README.md": "# a\n\n[b](../b/README.md)\n"}), ["warn L11 a/README.md"]),
+    ("L11-link-into-child", project("", {"a": ""}, {"README.md": "# demo\n\n[a](a/AGENTS.md)\n"}),
+     ["warn L11 README.md"]),
+    ("L11-link-below-a-child", project("", {"a": "", "a/deep": ""}, {
+        "README.md": "# demo\n\n[deep](a/deep/README.md)\n"}), ["warn L11 README.md"]),
     ("L2-absolute-link", project(files={"README.md": "# demo\n\n[x](/docs/x.md)\n"}),
      ["error L2 README.md"]),
     ("L2-link-out-of-the-project", project(files={"README.md": "# demo\n\n[up](..) [in](../demo/README.md)\n"}),
      ["error L2 README.md"]),
-    ("L2-generated-marker-gives-no-exemption", project("", {"a": "", "b": ""}, {
-        "a/README.md": MARK + "\n# a\n\n[b](../b/README.md)\n"}), ["error L2 a/README.md"]),
+    ("L11-generated-marker-gives-no-exemption", project("", {"a": "", "b": ""}, {
+        "a/README.md": MARK + "\n# a\n\n[b](../b/README.md)\n"}), ["warn L11 a/README.md"]),
     ("L7-context-cites-superseded-decision", project("", {"a": ""}, {
         **with_decision("superseded by 0002"), **with_decision(name="0002-y.md"),
         CONTEXT: ITEM.format(stamp=stamp(DECISION.format(
@@ -558,12 +579,12 @@ def scenario_finding_shape(runner: Runner, tmp: str):
 
 def scenario_generate_is_idempotent(runner: Runner, tmp: str):
     files = project(
-        "diagrams: all\n" + NEEDS_X + "  log: {summary: s, contract: https://example.test/log}\n"
+        "diagrams: all\n" + NEEDS_X + "  log: {summary: s, contract: ref:log}\n"
         "wiring:\n  a.x: {real: b.x, fake: c.x}\n  a.log: log\n  b.log: log\n  deep.log: log\n",
-        {"a": NEEDS_X + "  log: {summary: Logs, contract: https://example.test/log}\n",
-         "b": CAPABILITY_X + "needs:\n  log: {summary: Logs, contract: https://example.test/log}\n",
+        {"a": NEEDS_X + "  log: {summary: Logs, contract: ref:log}\n",
+         "b": CAPABILITY_X + "needs:\n  log: {summary: Logs, contract: ref:log}\n",
          "c": CAPABILITY_X,
-         "my plugins/deep": "status: planned\nneeds:\n  log: {summary: Logs, contract: https://example.test/log}\n",
+         "my plugins/deep": "status: planned\nneeds:\n  log: {summary: Logs, contract: ref:log}\n",
          "c/inner": ""},
         with_decision())
     folder = new_project(tmp, files)
@@ -604,19 +625,18 @@ def scenario_generate_is_idempotent(runner: Runner, tmp: str):
 
 def scenario_show_port_impact(runner: Runner, tmp: str):
     folder = new_project(tmp, project(
-        "needs:\n  clock: {summary: A time source, contract: https://example.test/clock}\n"
-        "capabilities:\n  api: {summary: s, contract: https://example.test/api}\n"
+        "needs:\n  clock: {summary: A time source, contract: ref:clock}\n"
+        "capabilities:\n  api: {summary: s, contract: ref:api}\n"
         "wiring:\n  api: web.api\n  web.store: db.store\n  web.log: db.log\n  web.clock: clock\n",
-        {"web": "capabilities:\n  api: {summary: s, contract: https://example.test/api}\n"
-                "needs:\n  store: {summary: s, contract: ../schema.sql}\n"
-                "  log: {summary: s, contract: https://example.test/log}\n"
-                "  clock: {summary: s, contract: https://example.test/clock}\n"
+        {"web": "capabilities:\n  api: {summary: s, contract: ref:api}\n"
+                "needs:\n  store: {summary: s, contract: ref:schema}\n"
+                "  log: {summary: s, contract: ref:log}\n"
+                "  clock: {summary: s, contract: ref:clock}\n"
                 "wiring:\n  inner.clock: clock\n  inner.store: store\n",
-         "web/inner": "needs:\n  clock: {summary: Needs time, contract: https://example.test/clock}\n"
-                      "  store: {summary: s, contract: ../../schema.sql}\n",
-         "db": "status: planned\ncapabilities:\n  store: {summary: Keeps things, contract: ../schema.sql}\n"
-               "  log: {summary: s, contract: https://example.test/log}\n"},
-        {"schema.sql": "-- x\n"}))
+         "web/inner": "needs:\n  clock: {summary: Needs time, contract: ref:clock}\n"
+                      "  store: {summary: s, contract: ref:schema}\n",
+         "db": "status: planned\ncapabilities:\n  store: {summary: Keeps things, contract: ref:schema}\n"
+               "  log: {summary: s, contract: ref:log}\n"}))
     data, done = runner.json("show", "--json", str(folder / "web" / "inner"))
     check(done.returncode == 0, "show")
     clock = data["needs"]["clock"]["provided-by"][0]
@@ -624,7 +644,7 @@ def scenario_show_port_impact(runner: Runner, tmp: str):
           f"a need passed up through two levels in show: {clock}")
     store = data["needs"]["store"]["provided-by"][0]
     check(store["unit"] == "db" and store["status"] == "planned"
-          and data["needs"]["store"]["contract"] == "schema.sql", f"resolved provider with status: {store}")
+          and data["needs"]["store"]["contract"] == "docs/references/schema.md", f"resolved provider with status: {store}")
     text = runner.run("show", str(folder / "web" / "inner")).stdout
     check("[planned" in text, f"show text: {text}")
     data, _ = runner.json("show", "--json", str(folder / "web"))
@@ -651,15 +671,15 @@ def scenario_own_needs(runner: Runner, tmp: str):
     Such a need is met inside: it is not a need of the project, and its provider counts it as a
     user. A need of a child is never met by a need of the parent with the same name."""
     files = project(
-        "needs:\n  invoices: {summary: Creates invoices, contract: https://example.test/invoices}\n"
-        "  clock: {summary: The current time, contract: https://example.test/clock}\n"
-        "  mailer: {summary: Sends mail, contract: https://example.test/mailer}\n"
+        "needs:\n  invoices: {summary: Creates invoices, contract: ref:invoices}\n"
+        "  clock: {summary: The current time, contract: ref:clock}\n"
+        "  mailer: {summary: Sends mail, contract: ref:mailer}\n"
         "wiring:\n  billing.clock: platform.clock\n  billing.mailer: mailer\n"
         "  invoices: billing.invoices\n  clock: platform.clock\n",
-        {"billing": "capabilities:\n  invoices: {summary: s, contract: https://example.test/invoices}\n"
-                    "needs:\n  clock: {summary: s, contract: https://example.test/clock}\n"
-                    "  mailer: {summary: s, contract: https://example.test/mailer}\n",
-         "platform": "capabilities:\n  clock: {summary: s, contract: https://example.test/clock}\n"})
+        {"billing": "capabilities:\n  invoices: {summary: s, contract: ref:invoices}\n"
+                    "needs:\n  clock: {summary: s, contract: ref:clock}\n"
+                    "  mailer: {summary: s, contract: ref:mailer}\n",
+         "platform": "capabilities:\n  clock: {summary: s, contract: ref:clock}\n"})
     folder = new_project(tmp, files)
     runner.run("generate", str(folder))
     check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
@@ -1018,12 +1038,8 @@ def scenario_site(runner: Runner, tmp: str):
 
 
 def scenario_robustness(runner: Runner, tmp: str):
-    files = {"unifold.yaml": ROOT + "wiring:\n" + "".join(
-        f"  u{i}.x: u{(i + 1) % 1200}.x\n" for i in range(1200))}
-    files["README.md"] = README.format(name="demo")
-    for i in range(1200):
-        files[f"u{i}/unifold.yaml"] = UNIT + NEEDS_X + CAPABILITY_X
-        files[f"u{i}/README.md"] = README.format(name=f"u{i}")
+    files = project("wiring:\n" + "".join(f"  u{i}.x: u{(i + 1) % 1200}.x\n" for i in range(1200)),
+                    {f"u{i}": NEEDS_X + CAPABILITY_X for i in range(1200)})
     folder = new_project(tmp, files)
     runner.run("generate", str(folder))
     found = runner.findings(folder)
@@ -1080,6 +1096,10 @@ def scenario_gitignore(runner: Runner, tmp: str):
     check("error L1 a/docs/references/generated.md" in found and "error G1 AGENTS.md" in found
           and "error G1 build/x/AGENTS.md" in found and "info S12 docs/scratch.md" in found,
           f"without .gitignore everything is seen: {found}")
+    (folder / ".gitignore").write_text("build/\na/docs/references/generated.md\nscratch.md\ndocs/diagrams/\n")
+    runner.run("generate", str(folder))
+    found = runner.findings(folder)
+    check(found == ["error G1 docs/diagrams/component.md"], f"an ignored generated file is reported: {found}")
 
 
 SCENARIOS = [
