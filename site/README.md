@@ -21,6 +21,8 @@ uv run site/build.py --serve
 | `/0.2/unifold.schema.json`, `/0.1/unifold.schema.json` | | the schema, at the current version and at 0.1, where manifests of 0.1 point; the build stops if it is missing |
 | `/skill/SKILL.md`, `/skill/unifold-convert/SKILL.md`, `/llms.txt` | | the two skills; an index for agents |
 | `/examples/<name>/` | `index.html` | every `examples/**/unifold.html` that exists |
+| `/search` | `search.html` | the search: `search.js` searches `search.json` in the browser as you type, in the field in the header of every page and here, where all sections found are listed. The build writes that index with one entry per section of every chapter (down to `###`) and per band of the start page; `--check` checks its addresses. Without JavaScript the field in the header leads here. |
+| `/favicon.svg`, `/favicon.ico`, `/apple-touch-icon.png` | | the mark, drawn by the build from the corners in `MARK`: an SVG with light and dark colours, an ICO with 16, 32 and 48 pixels for browsers without SVG icons, a PNG for home screens |
 
 GitHub Pages serves `spec.html` at `/spec`; `spec/index.html` would redirect to `/spec/`.
 

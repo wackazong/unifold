@@ -16,12 +16,15 @@ from __future__ import annotations
 
 import hashlib
 import html
+import json
 import os
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
+import zlib
 from pathlib import Path
 
 # --------------------------------------------------------------------------
@@ -91,12 +94,61 @@ CUR = ' aria-current="page"'
 # --------------------------------------------------------------------------
 # Marks
 # --------------------------------------------------------------------------
-# The mark: one sheet with a crease. Left panel lies flat, right panel lifts.
+# The mark: one sheet with a crease. Left panel lies flat, right panel lifts. Corners on a 32 grid;
+# the logo, the SVG icon and the PNG icons are all drawn from them.
+MARK = (((3, 9), (15, 5), (15, 27), (3, 23)), ((17, 5), (29, 9), (29, 23), (17, 27)))
+MARK_D = ["M" + "L".join(f"{x} {y}" for x, y in panel) + "z" for panel in MARK]
+MARK_LIGHT, MARK_DARK = ("#0b6b5c", "#5cc4ae"), ("#5fd3bb", "#2c8f7d")
 LOGO = ('<svg class="mark" viewBox="0 0 32 32" width="{s}" height="{s}" aria-hidden="true">'
-        '<path class="m1" d="M3 9l12-4v22L3 23z"/><path class="m2" d="M17 5l12 4v14l-12 4z"/></svg>')
-FAVICON = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>"
-           "<path fill='#0b6b5c' d='M3 9l12-4v22L3 23z'/><path fill='#5cc4ae' d='M17 5l12 4v14l-12 4z'/></svg>")
-FAVICON_URI = "data:image/svg+xml," + FAVICON.replace("#", "%23").replace("<", "%3C").replace(">", "%3E")
+        f'<path class="m1" d="{MARK_D[0]}"/><path class="m2" d="{MARK_D[1]}"/></svg>')
+FAVICON = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><style>"
+           f".a{{fill:{MARK_LIGHT[0]}}}.b{{fill:{MARK_LIGHT[1]}}}@media (prefers-color-scheme:dark)"
+           f"{{.a{{fill:{MARK_DARK[0]}}}.b{{fill:{MARK_DARK[1]}}}}}</style>"
+           f"<path class='a' d='{MARK_D[0]}'/><path class='b' d='{MARK_D[1]}'/></svg>")
+
+
+def mark_png(size: int, scale: float, offset: float = 0, background: str | None = None) -> bytes:
+    """The mark as a square PNG, for browsers and devices that take no SVG icon. A point of the
+    grid lands at offset + scale * point; the coverage of a pixel is exact across and sampled down."""
+    sub = 8
+    cover = [[[0.0] * size for _ in MARK] for _ in range(size)]
+    for py in range(size):
+        for s in range(sub):
+            y = (py + (s + .5) / sub - offset) / scale
+            for k, panel in enumerate(MARK):
+                xs = [ax + (y - ay) * (bx - ax) / (by - ay)
+                      for (ax, ay), (bx, by) in zip(panel, panel[1:] + panel[:1]) if min(ay, by) <= y < max(ay, by)]
+                if len(xs) < 2:
+                    continue
+                left, right = offset + scale * min(xs), offset + scale * max(xs)
+                for px in range(max(0, int(left)), min(size, int(right) + 1)):
+                    cover[py][k][px] += max(0.0, min(right, px + 1) - max(left, px)) / sub
+    colors = [bytes.fromhex(c[1:]) for c in MARK_LIGHT]
+    back = bytes.fromhex(background[1:]) if background else None
+    raw = bytearray()
+    for py in range(size):
+        raw.append(0)
+        for px in range(size):
+            a = [cover[py][k][px] for k in range(len(MARK))]
+            alpha = min(1.0, sum(a))
+            rgb = [sum(c[i] * w for c, w in zip(colors, a)) / alpha if alpha else 0 for i in range(3)]
+            if back:
+                rgb, alpha = [v * alpha + b * (1 - alpha) for v, b in zip(rgb, back)], 1.0
+            raw += bytes(round(v) for v in rgb) + bytes([round(alpha * 255)])
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
+
+
+def ico(images: list[tuple[int, bytes]]) -> bytes:
+    """A favicon.ico that holds PNGs of the given sizes."""
+    head, data = struct.pack("<HHH", 0, 1, len(images)), b""
+    for size, png in images:
+        head += struct.pack("<BBBBHHII", size, size, 0, 0, 1, 32, len(png), 6 + 16 * len(images) + len(data))
+        data += png
+    return head + data
 
 
 # --------------------------------------------------------------------------
@@ -284,6 +336,11 @@ def render_md(text: str, base: Path, version: str, permalinks: bool = True) -> t
 # --------------------------------------------------------------------------
 # Page shell
 # --------------------------------------------------------------------------
+def hashed(name: str) -> str:
+    """The address of a file of site/ with a hash of its content, so that browsers fetch it again after a change."""
+    return f"/{name}?v={hashlib.sha256((SITE / name).read_bytes()).hexdigest()[:8]}"
+
+
 def page(*, title: str, description: str, path: str, body: str, css_href: str, version: str,
          current: str = "", body_class: str = "", noindex: bool = False) -> str:
     nav = [("documents", "Documentation"), ("spec", "Standard"), ("tool", "Tool"), ("first-map", "Get Started")]
@@ -307,10 +364,13 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <meta property="og:url" content="{esc(url)}">
 {og_image}
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="{FAVICON_URI}">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
 <link rel="preload" href="/patua-one.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{css_href}">
+<script src="{hashed("search.js")}" defer></script>
 </head>
 <body class="{body_class}">
 <a class="skip" href="#main">Skip to content</a>
@@ -318,17 +378,18 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <a class="brand" href="/">{LOGO.format(s=24)}<span>unifold</span></a>
 <span class="version" title="unifold {esc(version)}">{esc(version)}</span>
 <nav aria-label="Site">{links}<a class="gh" href="{REPO_URL}" rel="noopener" aria-label="unifold on GitHub">{icon("github", "icon sm")}<span>GitHub</span></a></nav>
+<form class="site-search" action="/search" role="search"><input type="search" name="q" placeholder="Search" aria-label="Search the documentation" autocomplete="off" spellcheck="false"><button aria-label="Search">{icon("search", "icon sm")}</button></form>
 </div></header>
 {body}
 <footer class="bottom"><div class="wrap">
 <div class="foot-brand"><a class="brand" href="/">{LOGO.format(s=22)}<span>unifold</span></a>
-<p>Your project structure is your architecture. Unifold keeps structure, knowledge and code in sync.</p></div>
+<p>Your project structure is your architecture. Keep your documentation, architecture, and project structure aligned.</p></div>
 <nav class="foot-cols" aria-label="Footer">
 <div><h2>Standard</h2><a href="/documents">Documentation</a><a href="/spec">The standard</a><a href="/writing">Writing</a><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></div>
 <div><h2>Tool</h2><a href="/tool">Commands</a><a href="/rules">Rules</a><a href="/tool-json">JSON output</a><a href="/first-map">Get Started</a></div>
 <div><h2>Agents</h2><a href="/agents">How agents use it</a><a href="/skill/SKILL.md">The skill</a><a href="/skill/unifold-convert/SKILL.md">The convert skill</a><a href="/llms.txt">llms.txt</a></div>
 </nav>
-<p class="fine">The text, the skills and the tool are licensed under <a href="/LICENSE-MIT.txt">MIT</a> or <a href="/LICENSE-APACHE.txt">Apache-2.0</a>, at your option. Headings are set in Patua One by LatinoType, under the <a href="/patua-one-OFL.txt">SIL Open Font License</a>. No scripts, no trackers, no fonts from elsewhere.</p>
+<p class="fine">The text, the skills and the tool are licensed under <a href="/LICENSE-MIT.txt">MIT</a> or <a href="/LICENSE-APACHE.txt">Apache-2.0</a>, at your option. Headings are set in Patua One by LatinoType, under the <a href="/patua-one-OFL.txt">SIL Open Font License</a>.</p>
 </div></footer>
 </body>
 </html>
@@ -344,12 +405,50 @@ def toc_html(tokens: list) -> str:
     return "<ol>" + "".join(items) + "</ol>" if items else ""
 
 
+# --------------------------------------------------------------------------
+# Search: one entry per section, [address, page, heading, text]; site/search.js searches them
+# --------------------------------------------------------------------------
+SEARCH: list[list[str]] = []
+
+
+def text_of(fragment: str) -> str:
+    """The text of an HTML fragment, without diagrams, icons and permalinks."""
+    s = re.sub(r'<figure class="diagram.*?</figure>|<svg.*?</svg>|<a class="anchor".*?</a>', " ", fragment, flags=re.S)
+    s = re.sub(r"</?(?:p|li|ul|ol|t[dhr]|table|pre|div|h\d|br|blockquote|figure|figcaption|details|summary)\b[^>]*>",
+               " ", s)
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", s))).strip()
+
+
+def index_chapter(url: str, name: str, body: str) -> None:
+    """A chapter in the search index: the part before the first section, then every section down to h3."""
+    parts = re.split(r'(<h[1-3] id="[^"]+">.*?</h[1-3]>)', body, flags=re.S)
+    for head, text in zip(parts[1::2], parts[2::2]):
+        m = re.match(r'<h([1-3]) id="([^"]+)">(.*?)</h\1>', head, re.S)
+        SEARCH.append([url if m.group(1) == "1" else f"{url}#{m.group(2)}", name, text_of(m.group(3)), text_of(text)])
+
+
+def search_page(css_href: str, version: str) -> str:
+    chapters = "".join(f'<li><a href="/{s}">{esc(n)}</a></li>' for s, _, n, _, _ in CHAPTERS)
+    main = f"""<main id="main" class="wrap search-main">
+<h1>Search</h1>
+<form class="search-big" action="/search" role="search">
+<input type="search" name="q" placeholder="Search the documentation" aria-label="Search the documentation" autocomplete="off" spellcheck="false" autofocus>
+</form>
+<p class="search-status" id="search-status" aria-live="polite"></p>
+<ol class="results" id="results"></ol>
+<noscript><p>The search runs in your browser and needs JavaScript. These are all the chapters:</p><ul>{chapters}</ul></noscript>
+</main>"""
+    return page(title="Search | unifold", description="Search the standard, the references, the explanations and the tutorial.",
+                path="/search", body=main, css_href=css_href, version=version, body_class="search-page", noindex=True)
+
+
 def chapter_page(slug: str, src: Path, text: str, css_href: str, version: str) -> str:
     body, tokens = render_md(text, src.parent, version)
     m = re.search(r"^#\s+(.+)$", text, re.M)
     h1 = re.sub(r"[`*]", "", m.group(1)).strip() if m else slug
     title = h1 if "unifold" in h1.lower() else f"{h1} | unifold"
-    desc = next(d for s, _, _, d, _ in CHAPTERS if s == slug)
+    name, desc = next((n, d) for s, _, n, d, _ in CHAPTERS if s == slug)
+    index_chapter(f"/{slug}", name, body)
     chapters, kind_shown = "", None
     for s, _, n, _, kind in CHAPTERS:
         if kind != kind_shown:
@@ -400,6 +499,7 @@ ICONS = {
     "file": '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/>',
     "folder": '<path d="M3 6h6l2 2h10v11H3z"/>',
     "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    "search": '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>',
     "github": '<path d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.1.7-.2.7-.5v-1.7c-2.7.6-3.3-1.2-3.3-1.2-.4-1.1-1-1.4-1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.1-.2-4.4-1.1-4.4-4.8 0-1 .4-1.9 1-2.6-.1-.3-.4-1.2.1-2.6 0 0 .8-.3 2.6 1a9 9 0 0 1 4.8 0c1.8-1.3 2.6-1 2.6-1 .5 1.4.2 2.3.1 2.6.6.7 1 1.6 1 2.6 0 3.7-2.3 4.6-4.4 4.8.3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A9.5 9.5 0 0 0 12 2.5z"/>',
 }
 
@@ -510,7 +610,8 @@ ACCENTS = ("teal", "blue", "amber", "coral", "violet")
 
 
 def band(sid: str, heading: str, inner: str, n: int, cls: str = "") -> str:
-    """A full-width section whose heading carries the highlighter bar of its colour."""
+    """A full-width section whose heading carries the highlighter bar of its colour; it goes into the search."""
+    SEARCH.append([f"/#{sid}", "Start page", heading, text_of(inner)])
     return (f'<section class="band {ACCENTS[n % len(ACCENTS)]} {cls}" id="{sid}"><div class="wrap">'
             f'<h2><span>{esc(heading)}</span></h2>{inner}</div></section>')
 
@@ -599,9 +700,10 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
 {sheet_html}
 </div></section>"""
     blocks = [hero]
+    lead = inline_md(chr(10) + chr(10).join(intro), version) if intro else ""
     if intro:
-        blocks.append(f'<section class="intro"><div class="wrap"><div class="lead">'
-                      f'{inline_md(chr(10) + chr(10).join(intro), version)}</div></div></section>')
+        blocks.append(f'<section class="intro"><div class="wrap"><div class="lead">{lead}</div></div></section>')
+    SEARCH.append(["/", "Start page", claim, text_of(f"<p>{inline_md(subtitle, version)}</p>{lead}")])
 
     n = 0
     i = 0
@@ -697,7 +799,8 @@ def build() -> None:
     if not schema.exists():
         die(f"{schema.relative_to(ROOT)} is missing. The site serves it at /<version>/unifold.schema.json; "
             "the build cannot continue without it.")
-    for need in [ROOT / "README.md", SKILL, CONVERT_SKILL, SITE / "style.css"] + [src for _, src, _, _, _ in CHAPTERS]:
+    for need in [ROOT / "README.md", SKILL, CONVERT_SKILL, SITE / "style.css", SITE / "search.js"] + \
+            [src for _, src, _, _, _ in CHAPTERS]:
         if not need.exists():
             die(f"{need.relative_to(ROOT)} is missing.")
 
@@ -747,6 +850,12 @@ def build() -> None:
     (OUT / "index.html").write_text(
         landing((ROOT / "README.md").read_text(encoding="utf-8"), explorers, css_href, version), encoding="utf-8")
 
+    # search: the index of every section, which search.js fetches the first time someone searches
+    (OUT / "search.json").write_text(json.dumps(SEARCH, ensure_ascii=False, separators=(",", ":")) + "\n",
+                                     encoding="utf-8")
+    shutil.copyfile(SITE / "search.js", OUT / "search.js")
+    (OUT / "search.html").write_text(search_page(css_href, version), encoding="utf-8")
+
     # machine-readable files
     for served in dict.fromkeys([version, "0.1"]):   # manifests of 0.1 point their editors at /0.1/
         (OUT / served).mkdir()
@@ -787,6 +896,9 @@ def build() -> None:
     (OUT / "CNAME").write_text(DOMAIN + "\n", encoding="utf-8")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
     (OUT / "favicon.svg").write_text(FAVICON + "\n", encoding="utf-8")
+    # scale and offset put the upright edges of the panels on whole pixels, so that small icons stay sharp
+    (OUT / "favicon.ico").write_bytes(ico([(16, mark_png(16, .5, .5)), (32, mark_png(32, 1)), (48, mark_png(48, 1.5, .5))]))
+    (OUT / "apple-touch-icon.png").write_bytes(mark_png(180, 4, 26, "#ffffff"))
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
     urls = ["/"] + [f"/{s}" for s, _, _, _, _ in CHAPTERS] + [f"/examples/{n}/" for n, _ in explorers]
     (OUT / "sitemap.xml").write_text(
@@ -908,6 +1020,15 @@ def check() -> int:
             n_links += 1
             if resolve(u) is None:
                 problems.append(f"{name}: broken link {u}")
+    # addresses in the index of the search
+    for url, *_ in json.loads((OUT / "search.json").read_text(encoding="utf-8")):
+        n_links += 1
+        path, _, frag = url.partition("#")
+        target = resolve(path)
+        if target is None:
+            problems.append(f"search.json: broken link {url}")
+        elif frag and target in parsed and frag not in parsed[target].ids:
+            problems.append(f"search.json: no anchor #{frag} in {target.relative_to(OUT)}")
     # weight of the start page: the HTML and everything it loads from this site
     index = OUT / "index.html"
     weight = index.stat().st_size
@@ -918,7 +1039,8 @@ def check() -> int:
     if weight > 200_000:
         problems.append(f"index.html weighs {weight} bytes with its assets (limit 200000)")
     for name in ("CNAME", ".nojekyll", "404.html", "llms.txt", "skill/SKILL.md", "skill/unifold-convert/SKILL.md",
-                 "spec.html", "spec.md"):
+                 "spec.html", "spec.md", "search.html", "search.js", "search.json", "favicon.ico", "favicon.svg",
+                 "apple-touch-icon.png"):
         if not (OUT / name).exists():
             problems.append(f"missing {name}")
     for pr in problems:
