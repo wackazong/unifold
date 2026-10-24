@@ -4,11 +4,11 @@ What can go wrong with the standard as it stands, what it knowingly does not do,
 
 ## Risks
 
-- **No evidence from use.** The standard has been tried by its authors' agents on two examples and two open-source repositories. No study has measured whether it helps people or agents more than a well-kept root file; studies of related techniques point both ways ([reasoning](reasoning.md)). Removed by: trials on repositories that are not ours, with a measure agreed beforehand.
+- **No evidence from use.** The standard has been tried by its authors' agents on the two examples in this repository, and on two open-source repositories whose maps are not published here. No study has measured whether it helps people or agents more than a well-kept root file; studies of related techniques point both ways ([reasoning](reasoning.md)). Removed by: trials on repositories that are not ours, with a measure agreed beforehand.
 - **A first map is a proposal.** The skill `unifold-convert` has an agent choose the units and write the manifests. Nothing compares the map with the code, so a missed dependency and a poor choice of units are both left to the person who reads the result ([0034](../decisions/0034-convert-a-repository-with-a-skill-instead-of-drafting-manifests.md)).
 - **Stamps record a command, not a comparison.** A stamp says that somebody ran `unifold stamp`, not that `Says` was read against its source. Restated values outside `context.md` are not covered at all.
 - **Mentions in prose are not checked.** The direction rules are enforced for links only; a sibling named in a sentence is left to review.
-- **Agents are reached unevenly.** Of ten agents examined, Kiro and Aider do not find the stubs, and a skill is not always called when it would apply ([agents](../references/agents.md)).
+- **Agents are reached unevenly.** Of the agents examined, Kiro and Aider do not find the stubs, and a skill is not always called when it would apply ([agents](../references/agents.md)).
 
 ## Known limits
 

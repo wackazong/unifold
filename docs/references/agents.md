@@ -21,16 +21,13 @@ No agent searches `docs/skills/`. unifold keeps skills there, next to the code t
 
 ## What each agent reads
 
+The agents whose behaviour leads to a consequence below, as their documentation said on 2026-10-25. Other agents that read `AGENTS.md` and search `.agents/skills` or `.claude/skills` are reached the same way.
+
 | Agent | `AGENTS.md` | Folder in which it finds the stubs |
 |---|---|---|
 | Claude Code | Read natively since v2.1.277, but only if no `CLAUDE.md` or `CLAUDE.local.md` exists at or above the working directory; otherwise `CLAUDE.md` has to import it with `@AGENTS.md` ([memory](https://code.claude.com/docs/en/memory)) | `.claude/skills` ([skills](https://code.claude.com/docs/en/skills)) |
 | Codex CLI | From the root down to the working directory, at start, up to 32 KiB together ([docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md)) | `.agents/skills`; the list of skills is cut at 2 % of the context or 8,000 characters ([docs](https://learn.chatgpt.com/docs/build-skills)) |
-| Cursor | Root and nested files, combined with the parents ([rules](https://cursor.com/docs/context/rules)) | `.agents/skills`, `.claude/skills` ([skills](https://cursor.com/docs/skills)) |
 | GitHub Copilot | Anywhere in the repository; the nearest file takes precedence ([docs](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions)) | `.agents/skills`, `.claude/skills` ([docs](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)) |
-| Gemini CLI | Only when the setting `context.fileName` names it; the default is `GEMINI.md` ([docs](https://geminicli.com/docs/cli/gemini-md/)) | `.agents/skills` ([docs](https://geminicli.com/docs/cli/skills/)) |
-| Windsurf | The root file always; nested files for their folder ([docs](https://docs.devin.ai/desktop/cascade/agents-md)) | `.agents/skills` ([docs](https://docs.devin.ai/desktop/cascade/skills)) |
-| opencode | Not verified | `.agents/skills`, `.claude/skills` ([docs](https://opencode.ai/docs/skills)) |
-| Amp | Not verified | `.agents/skills`, `.claude/skills` ([docs](https://ampcode.com/manual/agent-skills.md)) |
 | Kiro | Not mentioned in its documentation of skills | Not reached: it reads `.kiro/skills` only ([docs](https://kiro.dev/docs/skills/)) |
 | Aider | Nothing is loaded automatically | No skills |
 
