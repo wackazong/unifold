@@ -16,7 +16,7 @@ Here: the shape of the function: state in, state out.
 
 Says: the logic that judges a reading asks for plant and thresholds through a function in its own words. An adapter of its own turns that into HTTP.
 
-Here: `rules` is that logic. Its need `thresholds` is of kind `library`, and `rules` owns the contract of it. It knows no HTTP and keeps no answer.
+Here: `rules` is that logic. Its need `thresholds` is of kind `library`, and its contract is a reference of `alerts`, the unit that wires it. It knows no HTTP and keeps no answer.
 
 ### [alerts: glossary](../../../docs/references/glossary.md)
 <!-- unifold:cites sha=ac07b284 -->

@@ -38,20 +38,14 @@ This lesson is for a developer who has cloned the unifold repository and wants t
    $ unifold capability plugins/unicode plugin-api
    --- plugins/unicode needs 'plugin-api' (library): The trait a transliteration plug-in implements
        contract: docs/references/plugin-api.md
-   The trait a transliteration plug-in implements: one method from a character to its ASCII replacement.
+       (no section for it in README.md)
 
    --- core capabilities 'plugin-api' (library): The trait a transliteration plug-in implements, and a slugify that uses one
        contract: docs/references/plugin-api.md
        verified by: core/tests/plugin.rs
-   `slugify_with(input, &options, &plugin)` asks a `Transliterate` plug-in:
-
-   - only about characters outside ASCII;
-   - an answer is treated like typed text, and may have several letters or none;
-   - `None` drops the character.
-
-   Contract: [plugin-api](../docs/references/plugin-api.md). Tests: [tests/plugin.rs](tests/plugin.rs).
+       (no section for it in README.md)
    ```
 
-   Both ends name the same contract, `docs/references/plugin-api.md`, and each shows its section of its `README.md`.
+   Both ends name the same contract, `docs/references/plugin-api.md`. Neither `README.md` has a section for the entry: the summary and the contract say everything, so the command would print the section only where one adds to them.
 
 You have read the map of slugline without opening a manifest. Next, [break the map](break-the-map.md).
