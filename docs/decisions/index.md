@@ -66,7 +66,7 @@ Only accepted decisions bind.
 | 0058 | [Define well-known kinds for units and for capabilities and needs](0058-define-well-known-kinds.md) | rejected | 2026-10-24 |
 | 0059 | [Export the map to Structurizr, Backstage and Graphviz](0059-export-the-map-to-structurizr-backstage-and-graphviz.md) | rejected | 2026-10-24 |
 | 0060 | [Add a command that writes a connection through every level](0060-add-a-command-that-writes-a-connection-through-every-level.md) | rejected | 2026-10-24 |
-| 0061 | [Make the repository of the standard a project, with the reference tool as its unit](0061-make-the-repository-of-the-standard-a-project.md) | **proposed** | 2026-10-24 |
+| 0061 | [Make the repository of the standard a project, with the reference tool as its unit](0061-make-the-repository-of-the-standard-a-project.md) | rejected | 2026-10-24 |
 | 0062 | [Try the standard on repositories that are not ours, with a measure agreed beforehand](0062-try-the-standard-on-repositories-that-are-not-ours.md) | rejected | 2026-10-24 |
 | 0063 | [Publish a change policy and the conditions for 1.0](0063-publish-a-change-policy-and-the-conditions-for-1-0.md) | rejected | 2026-10-24 |
 | 0064 | [Make a contract a reference of the unit that wires the connection](0064-make-a-contract-a-reference-of-the-unit-that-wires-the-connection.md) | accepted | 2026-10-24 |
