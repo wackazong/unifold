@@ -3027,8 +3027,11 @@ SITE = r"""<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__ · unifold</title>
 <style>
-:root{--bg:#fff;--fg:#1c1e21;--mute:#667;--line:#d6d9de;--hi:#0b62d6;--panel:#f6f7f9;--warn:#9a5b00;--warnbg:#fff4d6}
-@media(prefers-color-scheme:dark){:root{--bg:#16181c;--fg:#e6e8eb;--mute:#9aa3ad;--line:#333a44;--hi:#6cb0ff;--panel:#1e2228;--warn:#ffcf70;--warnbg:#3a2f12}}
+:root{--bg:#fff;--fg:#1c1e21;--mute:#667;--line:#d6d9de;--hi:#0b62d6;--panel:#f6f7f9;--warn:#9a5b00;--warnbg:#fff4d6;
+--ink:#141c20;--paper:#fff;--dot:#dfe4e5;--box-0:#f5f6f6;--box-1:#eceff0;--box-2:#e3e7e8;--frame:#c9d1d3;--accent:#0a7462;--accent-soft:#dcf2ec;--teal-hl:#bfeadf;--amber:#9a5b00;--amber-hl:#ffe1a3;
+--mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono","Cascadia Code",Menlo,Consolas,"Liberation Mono",monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#16181c;--fg:#e6e8eb;--mute:#9aa3ad;--line:#333a44;--hi:#6cb0ff;--panel:#1e2228;--warn:#ffcf70;--warnbg:#3a2f12;
+--ink:#e8eef0;--paper:#12181b;--dot:#222c31;--box-0:#151b1e;--box-1:#1a2226;--box-2:#20292e;--frame:#33414a;--accent:#5fd3bb;--accent-soft:#173430;--teal-hl:rgba(95,211,187,.28);--amber:#f2c56b;--amber-hl:rgba(242,180,60,.28)}}
 *{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;min-height:100vh}
 nav{width:260px;flex:none;border-right:1px solid var(--line);background:var(--panel);padding:12px;overflow:auto;max-height:100vh;position:sticky;top:0}
 nav ul{list-style:none;margin:0;padding-left:14px}nav>ul{padding-left:0}
@@ -3040,9 +3043,25 @@ h1{font-size:22px;margin:.2em 0}h2{font-size:17px;margin:1.2em 0 .3em}.mute{colo
 .badge.planned,.badge.deprecated,.badge.proposed{color:var(--warn);background:var(--warnbg);border-color:var(--warn)}
 .tabs button{font:inherit;padding:4px 12px;margin-right:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
 .tabs button.on{background:var(--hi);color:#fff;border-color:var(--hi)}
-#diagram{border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0;overflow:auto;background:var(--bg);max-height:85vh}
-#diagram svg{max-width:none;height:auto;display:block}#diagram.fit svg{max-width:100%}#diagram .pick{cursor:pointer}#diagram pre{margin:8px 0 0;font-size:12px}
-#diagram .cluster rect{fill:var(--panel)!important;stroke:var(--line)!important}
+#diagram{border:2px solid var(--ink);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;
+  background:var(--paper) radial-gradient(var(--dot) 1.2px,transparent 1.3px) 0 0/18px 18px}
+#diagram svg{max-width:none;height:auto;display:block;margin:0 auto}#diagram.fit svg{max-width:100%}#diagram .pick{cursor:pointer}#diagram pre{margin:8px 0 0;font-size:12px}
+/* diagrams: paper boxes with an ink rim and a flat offset shadow, capabilities and needs of the framing unit in amber, teal lines, framing units as dashed, shaded fields */
+#diagram .node :is(rect,polygon,path,circle,ellipse){fill:var(--paper)!important;stroke:var(--ink)!important;stroke-width:2px!important;filter:drop-shadow(4px 4px 0 var(--teal-hl))}
+#diagram .node rect{rx:8px;ry:8px}
+#diagram .node:is([id*="-p_"],[id*="-n_"]) :is(rect,polygon,path){stroke:var(--amber)!important;filter:drop-shadow(4px 4px 0 var(--amber-hl))}
+#diagram .node.focus :is(rect,polygon,path){fill:var(--accent-soft)!important;stroke:var(--accent)!important;stroke-width:3px!important;filter:drop-shadow(5px 5px 0 var(--accent))}
+#diagram .node.pick:hover :is(rect,polygon,path){stroke:var(--accent)!important;filter:drop-shadow(6px 6px 0 var(--teal-hl))}
+#diagram .nodeLabel,#diagram .node text{font:700 14px/1.3 var(--mono);color:var(--ink)!important;fill:var(--ink)!important}
+#diagram .cluster>rect{fill:var(--box-0)!important;stroke:var(--frame)!important;stroke-width:1.5px!important;stroke-dasharray:6 4;rx:14px;ry:14px}
+#diagram .cluster[data-depth="1"]>rect{fill:var(--box-1)!important}#diagram .cluster[data-depth="2"]>rect{fill:var(--box-2)!important}
+#diagram .cluster.focus>rect{stroke:var(--accent)!important;stroke-width:2.5px!important}
+#diagram .cluster-label .nodeLabel,#diagram .cluster-label text{font:700 13px/1.3 var(--mono);color:var(--ink)!important;fill:var(--ink)!important;letter-spacing:.02em}
+#diagram .cluster.pick:hover>rect{stroke:var(--accent)!important}
+#diagram .flowchart-link{stroke:var(--accent)!important;stroke-width:2px!important;fill:none!important}
+#diagram marker path,#diagram .arrowMarkerPath{fill:var(--accent)!important;stroke:var(--accent)!important}
+#diagram .edgeLabel{font:600 12px/1.35 var(--mono);color:var(--accent)!important}
+#diagram .edgeLabel,#diagram .edgeLabel p,#diagram .labelBkg{background-color:var(--paper)!important}#diagram .edgeLabel rect{fill:var(--paper)!important}
 #zoom{float:right;font:inherit;font-size:13px;padding:2px 10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
 .st{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:baseline;border:1.5px dashed currentColor;opacity:.75}
 .st.deprecated{border-style:solid;background:linear-gradient(to top right,transparent 44%,currentColor 44% 56%,transparent 56%)}
@@ -3072,6 +3091,19 @@ const badge = s => s && s !== "active" && s !== "accepted" ? ` <span class="badg
 const pick = (p, t) => `<a class="go" data-path="${esc(p)}">${esc(t ?? (p === "." ? model.name : p))}</a>` + badge(byPath[p] && byPath[p].status);
 const ref = v => v ? (/^[a-z][a-z0-9+.-]*:/i.test(v) ? `<a href="${esc(v)}">${esc(v)}</a>` : `<a href="${esc(file(v))}">${esc(v)}</a>`) : "";
 let mermaid = null, mermaidError = null, fit = null, fitted = false, state = {path: ".", kind: null};
+function shade(){                    // a framing box is shaded by how deep it sits; a line label takes the fill of the innermost box it sits in
+  const clusters = [...el("diagram").querySelectorAll(".cluster")].map(c => [c, c.querySelector(":scope > rect").getBoundingClientRect()]);
+  for (const [c, r] of clusters) c.dataset.depth = Math.min(2, clusters.filter(([o, b]) => o !== c && b.left <= r.left && b.right >= r.right && b.top <= r.top && b.bottom >= r.bottom).length);
+  const boxes = [...el("diagram").querySelectorAll(".cluster > rect")].map(r => [r.getBoundingClientRect(), getComputedStyle(r).fill]);
+  for (const label of el("diagram").querySelectorAll("g.edgeLabel")) {
+    const l = label.getBoundingClientRect(), x = l.x + l.width / 2, y = l.y + l.height / 2;
+    const inside = boxes.filter(([b]) => x > b.left && x < b.right && y > b.top && y < b.bottom)
+      .sort(([a], [b]) => a.width * a.height - b.width * b.height)[0];
+    if (!inside) continue;
+    for (const part of label.querySelectorAll("div, span, p")) part.style.setProperty("background-color", inside[1], "important");
+    for (const part of label.querySelectorAll("rect")) part.style.setProperty("fill", inside[1], "important");
+  }
+}
 function zoom(){const box = el("diagram"), svg = box.querySelector("svg"), b = el("zoom");
   box.classList.remove("fit"); const room = box.clientWidth - 24, width = svg ? svg.getBoundingClientRect().width : 0;
   const wide = width > room; fitted = wide && (fit ?? width <= room * 1.45);   // a little too wide: shrink; much too wide: scroll
@@ -3122,7 +3154,7 @@ async function render(){
   }
   try {
     const {svg} = await mermaid.render("g" + Date.now(), d.source);
-    el("diagram").innerHTML = svg; zoom();
+    el("diagram").innerHTML = svg; shade(); zoom();
     for (const node of el("diagram").querySelectorAll("[id]")) {
       const hit = Object.keys(d.nodes).find(id => node.id === id || new RegExp("(^|-)" + id + "(-\\d+)?$").test(node.id));
       if (hit && (node.classList.contains("node") || node.classList.contains("cluster"))) {
@@ -3148,8 +3180,10 @@ async function loadMermaid(){
 fromHash(); render();
 try {
   mermaid = await loadMermaid();
-  mermaid.initialize({startOnLoad: false, securityLevel: "loose", maxEdges: 2000, flowchart: {useMaxWidth: false},
-    theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default"});
+  mermaid.initialize({startOnLoad: false, securityLevel: "loose", maxEdges: 2000,   // the colours come from the style sheet above
+    flowchart: {useMaxWidth: false, curve: "basis", padding: 14, nodeSpacing: 44, rankSpacing: 64},
+    theme: "base", themeVariables: {fontFamily: getComputedStyle(document.body).getPropertyValue("--mono"), fontSize: "14px",
+      darkMode: matchMedia("(prefers-color-scheme: dark)").matches}});
 } catch (err) { mermaid = null; mermaidError = err; }
 render();
 </script></body></html>
