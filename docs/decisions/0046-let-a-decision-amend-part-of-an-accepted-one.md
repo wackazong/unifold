@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: rejected
 date: 2026-10-23
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Let a decision amend part of an accepted one

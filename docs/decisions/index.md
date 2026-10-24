@@ -51,7 +51,22 @@ Only accepted decisions bind.
 | 0043 | [Write one line per paragraph](0043-write-one-line-per-paragraph.md) | accepted | 2026-10-22 |
 | 0044 | [Write machine lines as HTML comments that start with `unifold:`](0044-write-machine-lines-as-html-comments-prefixed-unifold.md) | accepted | 2026-10-22 |
 | 0045 | [Keep the reference chapters directly in docs/references](0045-keep-the-reference-chapters-directly-in-docs-references.md) | accepted | 2026-10-22 |
-| 0046 | [Let a decision amend part of an accepted one](0046-let-a-decision-amend-part-of-an-accepted-one.md) | **proposed** | 2026-10-23 |
+| 0046 | [Let a decision amend part of an accepted one](0046-let-a-decision-amend-part-of-an-accepted-one.md) | rejected | 2026-10-23 |
 | 0047 | [Remove the comparison with code](0047-remove-the-comparison-with-code.md) | accepted | 2026-10-23 |
 | 0048 | [Write every connection out, and let a unit wire its own need to a child](0048-write-every-connection-out-and-let-a-unit-wire-its-own-need.md) | accepted | 2026-10-23 |
 | 0049 | [Call the standard 0.2](0049-call-the-standard-0-2.md) | accepted | 2026-10-23 |
+| 0050 | [Compare the wiring with observed dependencies that the project supplies](0050-compare-the-wiring-with-observed-dependencies-that-the-project-supplies.md) | rejected | 2026-10-24 |
+| 0051 | [Promise consistency, and agreement with the code only where it is observed](0051-promise-consistency-and-the-code-only-where-it-is-observed.md) | rejected | 2026-10-24 |
+| 0052 | [Let a wired need take the contract of its provider](0052-let-a-wired-need-take-the-contract-of-its-provider.md) | rejected | 2026-10-24 |
+| 0053 | [Commit the generated files](0053-commit-the-generated-files.md) | accepted | 2026-10-24 |
+| 0054 | [Make two claims of conformance: the map, and the full standard](0054-make-two-claims-of-conformance-the-map-and-the-full-standard.md) | rejected | 2026-10-24 |
+| 0055 | [Report a link sideways or deeper as a warning](0055-report-a-link-sideways-or-deeper-as-a-warning.md) | accepted | 2026-10-24 |
+| 0056 | [Let a README point at its contracts](0056-let-a-readme-point-at-its-contracts.md) | accepted | 2026-10-24 |
+| 0057 | [Publish the resolved map as a model with a schema](0057-publish-the-resolved-map-as-a-model-with-a-schema.md) | rejected | 2026-10-24 |
+| 0058 | [Define well-known kinds for units and for capabilities and needs](0058-define-well-known-kinds.md) | **proposed** | 2026-10-24 |
+| 0059 | [Export the map to Structurizr, Backstage and Graphviz](0059-export-the-map-to-structurizr-backstage-and-graphviz.md) | rejected | 2026-10-24 |
+| 0060 | [Add a command that writes a connection through every level](0060-add-a-command-that-writes-a-connection-through-every-level.md) | rejected | 2026-10-24 |
+| 0061 | [Make the repository of the standard a project, with the reference tool as its unit](0061-make-the-repository-of-the-standard-a-project.md) | **proposed** | 2026-10-24 |
+| 0062 | [Try the standard on repositories that are not ours, with a measure agreed beforehand](0062-try-the-standard-on-repositories-that-are-not-ours.md) | rejected | 2026-10-24 |
+| 0063 | [Publish a change policy and the conditions for 1.0](0063-publish-a-change-policy-and-the-conditions-for-1-0.md) | rejected | 2026-10-24 |
+| 0064 | [Make a contract a reference of the unit that wires the connection](0064-make-a-contract-a-reference-of-the-unit-that-wires-the-connection.md) | accepted | 2026-10-24 |
