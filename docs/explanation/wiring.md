@@ -11,8 +11,6 @@ wiring:
 
 "The need `clock` of `billing` is met by the capability `clock` of `platform`." The key is the side that needs, the value the side that provides. The unit holding the line is the one place where both sides are visible. `billing` itself never says who supplies its clock.
 
-Seen from inside a unit, its own capabilities need an implementation, and its own needs are available to its children. That is why an own capability stands on the key side and an own need on the value side, unless the unit's own code uses the need: then a child meets it, and the need stands on the key side ([a unit with code of its own](#a-unit-with-code-of-its-own)).
-
 ## What is a need and what is not
 
 Declare a need when another unit of the project provides the thing, when a stand-in can replace it, or when it is an external system that the project depends on by contract.
@@ -23,24 +21,12 @@ Do not declare a need for what every unit of that sort has anyway: the language 
 
 - Name a need after what is needed, in the words of the unit that has it: `clock`, `cart-store`, `matcher`. Not after who provides it today.
 - Name a capability after what it provides, not after a technology.
-- A first map tends to name capabilities and needs after packages, because that is what the build files show ([requirements](requirements.md)). Rename them to roles as soon as you know better.
+- A first map tends to name capabilities and needs after packages, because that is what the build files show. Rename them to roles as soon as you know better.
 - In YAML, write a summary that contains `:` or a comma inside `{...}` in quotes. The short form `name: summary text` on a line of its own avoids most of these cases.
 
 ## Passing a need up
 
-A need that no sibling can meet goes to the parent, and from there upward until a unit can meet it or the root states it as a need of the project. Each step is a line:
-
-```yaml
-# services/unifold.yaml
-summary: The backend services
-needs:
-  clock: A time source
-wiring:
-  billing.clock: clock      # passed up: whatever meets the need clock of services meets it
-  alerts.push: push-service # the names may differ
-```
-
-Nothing connects by an equal name. A need of the parent called `clock` does not meet the need `clock` of a child without the line `child.clock: clock`; the check reports the missing line.
+A need that no sibling can meet goes to the parent, and from there upward until a unit meets it or the root states it as a need of the project. Each step is one line, `child.need: need`, and the names may differ: `alerts.push: push-service`. Nothing connects by an equal name; the check reports the missing line.
 
 ## Several children, one provider
 
@@ -89,35 +75,11 @@ A connection carries information in some form: a wire format, a schema, a trait,
 
 A manifest never points into a sibling, so the contract of a connection between two children lives in the references of the unit that wires them, or higher: `docs/references/clock.md` of the parent, named as `../docs/references/clock.md` by both. A protocol that several parts implement, such as a radio profile served by a device and by its emulator, is such a document, not a unit: a unit holds code. A definition from outside the project, such as the API of a vendor, gets a reference of the root as well, which links the definition by its URL.
 
-A capability that a parent passes through (`public-api: gateway.public-api`) names the same document at both levels: a reference of the parent, or of a unit above it. A format that travels inside another contract, such as a reading inside an upload, is not a contract of its own: it is a reference that the context files of its users cite.
-
-## A capability implemented by a child
-
-```yaml
-capabilities:
-  public-api: Upload readings and query plants
-wiring:
-  public-api: gateway.public-api
-```
-
-The capability then appears in two manifests. Each describes it at its own level. A parent that only passes a capability through adds nothing of its own to the summary and keeps no second contract.
+A capability that a parent passes through (`public-api: gateway.public-api`) appears in two manifests, each describing it at its own level, and names the same document at both: a reference of the parent, or of a unit above it. A parent that only passes a capability through adds nothing of its own to the summary. A format that travels inside another contract, such as a reading inside an upload, is not a contract of its own: it is a reference that the context files of its users cite.
 
 ## A unit with code of its own
 
-A unit with children MAY have code of its own, for example a main program that calls its libraries. What that code uses from a child is a need of the unit, declared like any need and wired in the unit's own wiring to the child's capability:
-
-```yaml
-# shop/unifold.yaml: the main program of shop uses both children
-needs:
-  invoices: {summary: Creates and fetches invoices, contract: docs/references/invoices.md}
-  clock: {summary: The current time, contract: docs/references/clock.md}
-wiring:
-  invoices: billing.invoices        # a need of shop itself, met by a child
-  clock: platform.clock
-  billing.clock: platform.clock     # still needed: the clock of shop is not the clock of billing
-```
-
-Such a need is met inside the unit: the unit above does not wire it, and at the root it is not a need of the project. It is the unit's own; a child's need of the same name still needs its own line, and it cannot be passed up to it.
+A unit with children MAY have code of its own, for example a main program that calls its libraries. What that code uses from a child is a need of the unit, wired in the unit's own wiring to the child's capability, `clock: platform.clock`; the standard shows the example. The unit above does not wire such a need, and at the root it is not a need of the project. A child's need of the same name still needs its own line, and it cannot be passed up to it.
 
 The other direction is not modelled. When a child uses code of the unit above it, that code gets a folder with a manifest and a capability, and the child's need is wired to it like any other connection. A connection always joins two units; there is no line that names a folder.
 

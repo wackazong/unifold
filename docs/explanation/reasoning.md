@@ -73,10 +73,6 @@ A unit that holds rules of the domain names its needs in the words of the domain
 - `verified-by` points at the tests that hold a unit to a contract. It is honest to leave it out. It is not honest to point it at something that does not test the capability.
 - The order of work for a new capability is: example in the contract, failing test, code, then `status: active`.
 
-## Small steps
-
-The standard does not ask for the whole tree to be described before use. In an existing repository, start with the few units that matter most and improve the parts you touch ([first map](../tutorials/first-map.md)). A first map costs a manifest per unit and one document per connection: the contract that both sides name. In a new design, describe the root and one level with `status: planned`, then build one thin path through the system to `active` before widening. Manifests of planned units are guesses; the first running path corrects them.
-
 ## Why three ways in for agents
 
 A skill alone is not enough. In an evaluation by Vercel, agents did not call an available skill in 56 % of the cases and passed 53 % of the tasks; with a compact index in `AGENTS.md` they passed all of them ([source](https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals)). In another study, 58 % of the trials never called an available dependency-graph tool ([CodeCompass](https://arxiv.org/abs/2602.20048)). So there is a generated `AGENTS.md` with the index, a skill, and a tool that every agent with a shell can run.
