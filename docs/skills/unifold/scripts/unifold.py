@@ -3030,12 +3030,12 @@ SITE = r"""<!doctype html>
 /* the colours, type and flat shapes of unifold.md; Patua One is there when the page is served from the site */
 @font-face{font-family:"Patua One";src:local("Patua One"),url("/patua-one.woff2") format("woff2");font-display:swap}
 :root{color-scheme:light dark;--bg:#fff;--fg:#141c20;--fg-2:#33424a;--mute:#5d6c73;--line:#e2e6e7;--hi:#0a7462;--panel:#f5f6f6;--code:#f3f5f5;--warn:#9a5b00;--warnbg:#ffe1a3;
---ink:#141c20;--paper:#fff;--dot:#dfe4e5;--box-0:#f5f6f6;--box-1:#eceff0;--box-2:#e3e7e8;--frame:#c9d1d3;--accent:#0a7462;--accent-soft:#dcf2ec;--teal-hl:#bfeadf;--amber:#9a5b00;--amber-hl:#ffe1a3;
+--ink:#141c20;--paper:#fff;--unit:#e6f5f0;--unit-focus:#b5e6d9;--box-0:#f5f6f6;--box-1:#eceff0;--box-2:#e3e7e8;--frame:#c9d1d3;--accent:#0a7462;--accent-soft:#dcf2ec;--teal-hl:#bfeadf;--amber:#9a5b00;--amber-hl:#ffe1a3;
 --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;
 --slab:"Patua One",Rockwell,"Rockwell Nova","Roboto Slab",Georgia,serif;
 --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono","Cascadia Code",Menlo,Consolas,"Liberation Mono",monospace}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1214;--fg:#e8eef0;--fg-2:#c3cfd3;--mute:#8e9ea5;--line:#222c31;--hi:#5fd3bb;--panel:#141a1d;--code:#161d21;--warn:#f2c56b;--warnbg:rgba(242,180,60,.2);
---ink:#e8eef0;--paper:#12181b;--dot:#222c31;--box-0:#151b1e;--box-1:#1a2226;--box-2:#20292e;--frame:#33414a;--accent:#5fd3bb;--accent-soft:#173430;--teal-hl:rgba(95,211,187,.28);--amber:#f2c56b;--amber-hl:rgba(242,180,60,.28)}}
+--ink:#e8eef0;--paper:#12181b;--unit:#26363c;--unit-focus:#1d5348;--box-0:#151b1e;--box-1:#1a2226;--box-2:#20292e;--frame:#33414a;--accent:#5fd3bb;--accent-soft:#173430;--teal-hl:rgba(95,211,187,.28);--amber:#f2c56b;--amber-hl:rgba(242,180,60,.28)}}
 *{box-sizing:border-box}body{margin:0;font:15px/1.6 var(--sans);background:var(--bg);color:var(--fg);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
 nav{width:260px;flex:none;border-right:1px solid var(--line);background:var(--panel);padding:16px 12px;overflow:auto;max-height:100vh;position:sticky;top:0}
 nav ul{list-style:none;margin:0;padding-left:14px}nav>ul{padding-left:0}
@@ -3051,25 +3051,29 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 .tabs button{font:600 14px/1.2 var(--sans);padding:6px 14px;margin-right:6px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}
 .tabs button:hover{border-color:var(--fg)}
 .tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);box-shadow:3px 3px 0 var(--teal-hl)}
-#diagram{border:2px solid var(--ink);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;
-  background:var(--paper) radial-gradient(var(--dot) 1.2px,transparent 1.3px) 0 0/18px 18px}
+#diagram{border:1.5px solid var(--frame);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;background:var(--paper)}
 #diagram svg{max-width:none;height:auto;display:block;margin:0 auto}#diagram.fit svg{max-width:100%}#diagram .pick{cursor:pointer}#diagram pre{margin:8px 0 0;font-size:12px}
-/* diagrams: paper boxes with an ink rim and a flat offset shadow, capabilities and needs of the framing unit in amber, teal lines, framing units as dashed, shaded fields */
+/* diagrams (the label fonts are not under #diagram: Mermaid measures labels outside it): paper boxes with an ink rim and a flat offset shadow, capabilities and needs of the framing unit in amber, teal lines, framing units as dashed, shaded fields */
 #diagram .node :is(rect,polygon,path,circle,ellipse){fill:var(--paper)!important;stroke:var(--ink)!important;stroke-width:2px!important;filter:drop-shadow(4px 4px 0 var(--teal-hl))}
 #diagram .node rect{rx:8px;ry:8px}
 #diagram .node:is([id*="-p_"],[id*="-n_"]) :is(rect,polygon,path){stroke:var(--amber)!important;filter:drop-shadow(4px 4px 0 var(--amber-hl))}
-#diagram .node.focus :is(rect,polygon,path){fill:var(--accent-soft)!important;stroke:var(--accent)!important;stroke-width:3px!important;filter:drop-shadow(5px 5px 0 var(--accent))}
+#diagram .node[id*="-u_"] :is(rect,polygon,path){fill:var(--unit)!important}   /* a unit with nothing inside stands out from the fields around it */
+#diagram .node.focus :is(rect,polygon,path){fill:var(--unit-focus)!important;stroke:var(--accent)!important;stroke-width:3px!important;filter:drop-shadow(5px 5px 0 var(--accent))}
 #diagram .node.pick:hover :is(rect,polygon,path){stroke:var(--accent)!important;filter:drop-shadow(6px 6px 0 var(--teal-hl))}
-#diagram .nodeLabel,#diagram .node text{font:700 14px/1.3 var(--mono);color:var(--ink)!important;fill:var(--ink)!important}
+.node .nodeLabel,.node text{font:600 16px/1.3 var(--sans)!important;color:var(--ink)!important;fill:var(--ink)!important}
 #diagram .cluster>rect{fill:var(--box-0)!important;stroke:var(--frame)!important;stroke-width:1.5px!important;stroke-dasharray:6 4;rx:14px;ry:14px}
 #diagram .cluster[data-depth="1"]>rect{fill:var(--box-1)!important}#diagram .cluster[data-depth="2"]>rect{fill:var(--box-2)!important}
 #diagram .cluster.focus>rect{stroke:var(--accent)!important;stroke-width:2.5px!important}
-#diagram .cluster-label .nodeLabel,#diagram .cluster-label text{font:700 13px/1.3 var(--mono);color:var(--ink)!important;fill:var(--ink)!important;letter-spacing:.02em}
+.cluster-label .nodeLabel,.cluster-label text{font:700 24px/1.2 var(--sans)!important;letter-spacing:-.01em;color:var(--ink)!important;fill:var(--ink)!important;
+  --halo:var(--paper);text-shadow:0 0 3px var(--halo),0 0 3px var(--halo),0 0 2px var(--halo)}
+#diagram .cluster-label foreignObject{overflow:visible}#diagram .cluster-label foreignObject>div{display:block!important;width:max-content!important;text-align:left!important}
 #diagram .cluster.pick:hover>rect{stroke:var(--accent)!important}
 #diagram .flowchart-link{stroke:var(--accent)!important;stroke-width:2px!important;fill:none!important}
 #diagram marker path,#diagram .arrowMarkerPath{fill:var(--accent)!important;stroke:var(--accent)!important}
-#diagram .edgeLabel{font:600 12px/1.35 var(--mono);color:var(--accent)!important}
-#diagram .edgeLabel,#diagram .edgeLabel p,#diagram .labelBkg{background-color:var(--paper)!important}#diagram .edgeLabel rect{fill:var(--paper)!important}
+/* line labels without a background, letters with a halo in the colour of the paper: the line stays visible behind the text */
+.edgeLabel{font:500 14px/1.35 var(--sans)!important;color:var(--ink)!important}
+#diagram :is(.edgeLabel,.edgeLabel p,.labelBkg){background-color:transparent!important}#diagram .edgeLabel rect{fill:transparent!important}
+#diagram .edgeLabel p{--halo:var(--paper);text-shadow:1px 1px 0 var(--halo),-1px -1px 0 var(--halo),1px -1px 0 var(--halo),-1px 1px 0 var(--halo),0 0 2px var(--halo),0 0 3px var(--halo),0 0 4px var(--halo)}
 #zoom{float:right;font:600 13px/1.2 var(--sans);padding:5px 12px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}#zoom:hover{border-color:var(--fg)}
 .st{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:baseline;border:1.5px dashed currentColor;opacity:.75}
 .st.deprecated{border-style:solid;background:linear-gradient(to top right,transparent 44%,currentColor 44% 56%,transparent 56%)}
@@ -3077,6 +3081,7 @@ nav .legend{margin:14px 6px 0;font-size:12px;color:var(--mute)}nav .legend .st{m
 table{border-collapse:collapse;margin:10px 0;width:100%;font-size:14px;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
 th{background:var(--panel);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);white-space:nowrap}
 code{font:.88em var(--mono);background:var(--code);padding:.08em .32em;border-radius:3px}#info{overflow-x:auto}
+tr.flash td{animation:flash 2.4s ease-out}@keyframes flash{0%,40%{background:var(--amber-hl)}}
 @media(max-width:800px){body{display:block}nav{width:auto;max-height:none;position:static}main{padding:16px}th,td{padding:6px 8px}}
 </style></head><body>
 <nav id="tree"></nav>
@@ -3086,7 +3091,7 @@ code{font:.88em var(--mono);background:var(--code);padding:.08em .32em;border-ra
 <div class="tabs"><button id="zoom" hidden></button><span id="tabs"></span></div>
 <div id="diagram">Loading the diagram renderer…</div>
 <div id="shared"></div>
-<p class="mute">Click a box to open that unit. An arrow points from a need to its provider. A dashed border marks a unit that is planned.</p>
+<p class="mute">Click a box to open that unit, a capability or need to find it in the tables. An arrow points from a need to its provider. A dashed border marks a unit that is planned.</p>
 <div id="info"></div>
 </main>
 __INLINE__<script type="module">
@@ -3099,18 +3104,15 @@ const file = p => model.base ? model.base + "/" + p.split("/").map(encodeURIComp
 const badge = s => s && s !== "active" && s !== "accepted" ? ` <span class="badge ${esc(s.split(" ")[0])}">${esc(s)}</span>` : "";
 const pick = (p, t) => `<a class="go" data-path="${esc(p)}">${esc(t ?? (p === "." ? model.name : p))}</a>` + badge(byPath[p] && byPath[p].status);
 const ref = v => v ? (/^[a-z][a-z0-9+.-]*:/i.test(v) ? `<a href="${esc(v)}">${esc(v)}</a>` : `<a href="${esc(file(v))}">${esc(v)}</a>`) : "";
-let mermaid = null, mermaidError = null, fit = null, fitted = false, state = {path: ".", kind: null};
-function shade(){                    // a framing box is shaded by how deep it sits; a line label takes the fill of the innermost box it sits in
+let mermaid = null, mermaidError = null, fit = null, fitted = false, state = {path: ".", kind: null}, row = null;
+function shade(){                    // a framing box is shaded by how deep it sits; its name moves to its top left
   const clusters = [...el("diagram").querySelectorAll(".cluster")].map(c => [c, c.querySelector(":scope > rect").getBoundingClientRect()]);
   for (const [c, r] of clusters) c.dataset.depth = Math.min(2, clusters.filter(([o, b]) => o !== c && b.left <= r.left && b.right >= r.right && b.top <= r.top && b.bottom >= r.bottom).length);
-  const boxes = [...el("diagram").querySelectorAll(".cluster > rect")].map(r => [r.getBoundingClientRect(), getComputedStyle(r).fill]);
-  for (const label of el("diagram").querySelectorAll("g.edgeLabel")) {
-    const l = label.getBoundingClientRect(), x = l.x + l.width / 2, y = l.y + l.height / 2;
-    const inside = boxes.filter(([b]) => x > b.left && x < b.right && y > b.top && y < b.bottom)
-      .sort(([a], [b]) => a.width * a.height - b.width * b.height)[0];
-    if (!inside) continue;
-    for (const part of label.querySelectorAll("div, span, p")) part.style.setProperty("background-color", inside[1], "important");
-    for (const part of label.querySelectorAll("rect")) part.style.setProperty("fill", inside[1], "important");
+  for (const [c] of clusters) {      // the name of a framing box: top left, drawn above the boxes inside it, which start only 20px lower
+    const rect = c.querySelector(":scope > rect"), name = c.querySelector(":scope > .cluster-label");
+    if (!name) continue;
+    name.setAttribute("transform", `translate(${+rect.getAttribute("x") + 16}, ${+rect.getAttribute("y") + 8})`);
+    name.style.setProperty("--halo", getComputedStyle(rect).fill); name.dataset.frame = c.id; c.parentNode.appendChild(name);
   }
 }
 function zoom(){const box = el("diagram"), svg = box.querySelector("svg"), b = el("zoom");
@@ -3144,14 +3146,16 @@ async function render(){
   let html = "";
   const p = Object.entries(u.capabilities), n = Object.entries(u.needs);
   if (p.length) html += "<h2>Capabilities</h2><table><tr><th>Capability</th><th>Kind</th><th>Summary</th><th>Contract</th><th>Verified by</th><th>Used by</th></tr>"
-    + p.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}</td><td>${ref(v["verified-by"])}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
+    + p.map(([k, v]) => `<tr id="capability:${esc(k)}"><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}</td><td>${ref(v["verified-by"])}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
   if (n.length) html += "<h2>Needs</h2><table><tr><th>Need</th><th>Kind</th><th>Summary</th><th>Provided by</th></tr>"
-    + n.map(([k, v]) => `<tr><td><code>${esc(k)}</code>${v.optional ? " <span class='mute'>optional</span>" : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["provided-by"], "capability")}</td></tr>`).join("") + "</table>";
+    + n.map(([k, v]) => `<tr id="need:${esc(k)}"><td><code>${esc(k)}</code>${v.optional ? " <span class='mute'>optional</span>" : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["provided-by"], "capability")}</td></tr>`).join("") + "</table>";
   if (u.children.length) html += "<h2>Units inside</h2><table><tr><th>Unit</th><th>Summary</th></tr>"
     + u.children.map(c => `<tr><td>${pick(c.path, c.name)}</td><td>${esc(c.summary)}</td></tr>`).join("") + "</table>";
   if (u.skills.length) html += "<h2>Skills</h2><ul>" + u.skills.map(s => `<li><a href="${esc(file(s.path))}">${esc(s.name)}</a>: ${esc(s.description)}</li>`).join("") + "</ul>";
   if (u.decisions.length) html += "<h2>Decisions</h2><ul>" + u.decisions.map(d => `<li><a href="${esc(file(d.path))}">${esc(d.title)}</a>${badge(d.status || "no status")}</li>`).join("") + "</ul>";
   el("info").innerHTML = html;
+  const target = row && document.getElementById(row); row = null;   // a capability or need clicked in the diagram
+  if (target) { target.scrollIntoView({behavior: "smooth", block: "center"}); target.classList.add("flash"); }
   const d = u.diagrams[kind];
   el("shared").innerHTML = d && d.shared.length ? "<p class='mute'>Shared connections, not drawn:</p><ul>" + d.shared.map(s => "<li>" + code(s) + "</li>").join("") + "</ul>" : "";
   el("zoom").hidden = true;
@@ -3164,11 +3168,19 @@ async function render(){
   try {
     const {svg} = await mermaid.render("g" + Date.now(), d.source);
     el("diagram").innerHTML = svg; shade(); zoom();
+    const ids = Object.keys(d.nodes).concat(Object.keys(d.sides));
     for (const node of el("diagram").querySelectorAll("[id]")) {
-      const hit = Object.keys(d.nodes).find(id => node.id === id || new RegExp("(^|-)" + id + "(-\\d+)?$").test(node.id));
+      const hit = ids.find(id => node.id === id || new RegExp("(^|-)" + id + "(-\\d+)?$").test(node.id));
       if (hit && (node.classList.contains("node") || node.classList.contains("cluster"))) {
-        node.classList.add("pick"); node.addEventListener("click", ev => {ev.stopPropagation(); go(d.nodes[hit]);});
+        node.classList.add("pick"); node.addEventListener("click", ev => {ev.stopPropagation();
+          if (d.nodes[hit]) { go(d.nodes[hit]); return; }
+          const [path, side, name] = d.sides[hit]; row = side + ":" + name;   // a capability or need: its row in the tables of its unit
+          if (path === state.path) render(); else go(path);});
       }
+    }
+    for (const name of el("diagram").querySelectorAll(".cluster-label[data-frame]")) {   // a name drawn apart from its box opens the same unit
+      const frame = document.getElementById(name.dataset.frame);
+      if (frame && frame.classList.contains("pick")) { name.classList.add("pick"); name.addEventListener("click", ev => {ev.stopPropagation(); frame.dispatchEvent(new MouseEvent("click"));}); }
     }
   } catch (err) { el("diagram").innerHTML = "<p>The diagram could not be drawn: " + esc(err) + "</p><pre>" + esc(d.source) + "</pre>"; }
 }
@@ -3190,8 +3202,9 @@ fromHash(); render();
 try {
   mermaid = await loadMermaid();
   mermaid.initialize({startOnLoad: false, securityLevel: "loose", maxEdges: 2000,   // the colours come from the style sheet above
-    flowchart: {useMaxWidth: false, curve: "basis", padding: 14, nodeSpacing: 44, rankSpacing: 64},
-    theme: "base", themeVariables: {fontFamily: getComputedStyle(document.body).getPropertyValue("--mono"), fontSize: "14px",
+    flowchart: {useMaxWidth: false, curve: "basis", padding: 14, nodeSpacing: 44, rankSpacing: 64,
+      subGraphTitleMargin: {top: 10, bottom: 18}},   // room for the large name of a framing unit above its content
+    theme: "base", themeVariables: {fontFamily: getComputedStyle(document.body).getPropertyValue("--sans"), fontSize: "16px",
       darkMode: matchMedia("(prefers-color-scheme: dark)").matches}});
 } catch (err) { mermaid = null; mermaidError = err; }
 render();
@@ -3217,6 +3230,8 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
     saved, project.links = project.links, "none"
     out_dir = os.path.dirname(os.path.abspath(out))
     units = []
+    sides = {side_id(u, "p", c): [u.rel, "capability", c] for u in project.units for c in u.capabilities}
+    sides.update({side_id(u, "n", n): [u.rel, "need", n] for u in project.units for n in u.needs})
     for unit in project.units:
         info = describe(project, unit)
         for name, key in (("README.md", "readme"), ("AGENTS.md", "agents")):
@@ -3234,6 +3249,8 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
             charts["architecture"] = diagram(project, unit, MAX_DEPTH, out_dir)
         info["diagrams"] = {kind: {"source": "\n".join(value[0]),
                                    "nodes": {i: u.rel for i, u in value[2].items()},
+                                   "sides": {i: side for i, side in sides.items()
+                                             if re.search(rf"^\s+{i}\b", "\n".join(value[0]), re.M)},
                                    "shared": value[3]} for kind, value in charts.items()}
         units.append(info)
     project.links = saved

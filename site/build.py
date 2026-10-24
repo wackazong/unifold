@@ -30,7 +30,7 @@ from pathlib import Path
 # --------------------------------------------------------------------------
 # Configuration. REPO_URL is a placeholder until the repository has its home.
 # --------------------------------------------------------------------------
-REPO_URL = "https://github.com/unifold-spec/unifold"
+REPO_URL = "https://github.com/wackazong/unifold"
 REPO_BRANCH = "main"
 SITE_URL = "https://unifold.md"
 DOMAIN = "unifold.md"
