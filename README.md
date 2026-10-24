@@ -1,6 +1,6 @@
-# Unifold: architecture as code
+# unifold: architecture as code
 
-> Your project structure is your architecture. Unifold aligns project structure, knowledge, and code.
+> Your project structure is your architecture. Keep your documentation, architecture, and project structure aligned.
 
 A folder with a `unifold.yaml` is a unit: it declares what it provides and what it needs, next to the code, and the unit above connects every need to a provider. The unifold tool checks that the map is consistent and generates the diagrams, so nobody draws them and they cannot disagree with the files. Every unit keeps its documents in the same places, so that a person or a coding agent can understand one folder without reading its neighbours.
 
