@@ -1,0 +1,74 @@
+# Builds the site and uploads it to the host that serves unifold.md, over SSH with rsync.
+# Runs for a version tag, or by hand from the Actions tab.
+#
+# Settings of the repository (Settings, Secrets and variables, Actions):
+#   secret   DEPLOY_KEY          the private key of a deploy user on the host, OpenSSH format
+#   variable DEPLOY_HOST         the host name
+#   variable DEPLOY_USER         the user that owns the web root
+#   variable DEPLOY_PATH         the web root, an absolute path; its content is replaced
+#   variable DEPLOY_PORT         optional, default 22
+#   variable DEPLOY_KNOWN_HOSTS  optional: the host key lines (`ssh-keyscan HOST`); without it
+#                                the key is fetched at run time, which trusts the first answer
+name: deploy
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: unifold.md
+      url: https://unifold.md
+    env:
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install the build dependencies
+        run: python -m pip install --quiet "pyyaml>=6" markdown
+      - name: Build the site and check its links
+        run: python site/build.py --check
+      - name: Check the deployment settings
+        run: |
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH; do
+            if [ -z "${!name}" ]; then echo "::error::the variable $name is not set"; exit 1; fi
+          done
+          case "$DEPLOY_PATH" in
+            /?*) ;;
+            *) echo "::error::DEPLOY_PATH must be an absolute path, not '$DEPLOY_PATH'"; exit 1 ;;
+          esac
+      - name: Load the deploy key
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then echo "::error::the secret DEPLOY_KEY is not set"; exit 1; fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "$DEPLOY_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "$DEPLOY_PORT" "$DEPLOY_HOST" > ~/.ssh/known_hosts
+          fi
+          chmod 644 ~/.ssh/known_hosts
+      - name: Upload the site
+        run: |
+          rsync --archive --compress --delete --itemize-changes \
+            --rsh "ssh -i ~/.ssh/deploy_key -p $DEPLOY_PORT -o IdentitiesOnly=yes" \
+            site/_out/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+      - name: Remove the deploy key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

@@ -1,0 +1,52 @@
+# Runs on every push and pull request what CONTRIBUTING.md asks a contributor to run.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tool:
+    name: tool and examples, Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.x"]   # the oldest version the tool supports, and the newest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install PyYAML
+        run: python -m pip install --quiet "pyyaml>=6"
+      - name: Conformance tests
+        run: python tests/conformance.py
+      - name: Check the examples
+        run: |
+          python docs/skills/unifold/scripts/unifold.py check --strict examples/slugline
+          python docs/skills/unifold/scripts/unifold.py check --strict examples/plantwatch
+
+  action:
+    name: the GitHub Action on an example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        with:
+          path: examples/slugline
+          strict: "true"
+
+  site:
+    name: site build and link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install the build dependencies
+        run: python -m pip install --quiet "pyyaml>=6" markdown
+      - name: Build the site and check its links
+        run: python site/build.py --check

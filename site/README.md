@@ -37,17 +37,6 @@ python3 site/build.py                                # then commit site/diagrams
 
 `MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. Files in `site/static/` are copied as they are: the heading font Patua One (`patua-one.woff2`, the Latin subset from [Fontsource](https://fontsource.org/fonts/patua-one) 5.3.0) with its licence, the SIL Open Font License. An `og.png` there would become the preview image of every page.
 
-## Domain
+## Deployment
 
-In the repository: Settings, Pages, source "GitHub Actions", custom domain `unifold.md`, then "Enforce HTTPS". With deployment from a workflow the `CNAME` file in `_out/` is ignored; the setting counts. At the DNS provider of `unifold.md`, as documented by GitHub
-(<https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site>,
-read 2026-10-07):
-
-- `A` records for the apex: `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
-- `AAAA` records for the apex: `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153`
-- `CNAME` for `www` to `<owner>.github.io`, so that `www.unifold.md` redirects.
-
-## Placeholders
-
-- `REPO_URL`, `REPO_BRANCH` in `build.py` (`github.com/unifold-spec/unifold`, `main`).
-- `<owner>` in the DNS record above.
+The workflow [deploy.yml](../.github/workflows/deploy.yml) builds the site, checks it and uploads `_out/` with rsync over SSH to the host that serves `unifold.md`; the DNS of the domain points at that host. It runs for a tag `v*` and by hand from the Actions tab. The host, user, web root and port are repository variables, the private key of the deploy user is the secret `DEPLOY_KEY`; the head of the workflow lists them. The workflow [check.yml](../.github/workflows/check.yml) runs the tests, the examples and `build.py --check` on every push.
