@@ -1,5 +1,5 @@
 # Builds the site and uploads it to the host that serves unifold.md, over SSH with rsync.
-# Runs for a version tag, or by hand from the Actions tab.
+# Runs for every push to main, for a version tag, and by hand from the Actions tab.
 #
 # Settings of the repository (Settings, Secrets and variables, Actions):
 #   secret   DEPLOY_KEY          the private key of a deploy user on the host, OpenSSH format
@@ -13,6 +13,7 @@ name: deploy
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
 
