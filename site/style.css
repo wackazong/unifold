@@ -344,11 +344,11 @@ mark { background: var(--teal-hl); color: inherit; border-radius: 2px; padding: 
   .cols.two, .cols.three, .index-grid, .tiles { grid-template-columns: 1fr; }
   .bottom .wrap { grid-template-columns: 1fr; }
   .top nav { gap: 1rem; font-size: .9375rem; }
-  .top nav a[href="/tool"], .top nav .gh span { display: none; }
+  .top nav a[href="/tool/"], .top nav .gh span { display: none; }
 }
 @media (max-width: 30rem) {
   .wrap { padding: 0 1rem; }
-  .version, .top nav a[href="/spec"] { display: none; }
+  .version, .top nav a[href="/spec/"] { display: none; }
   .top nav { gap: .9rem; }
   body { font-size: 1rem; }
   .hero-actions .button { flex: 1 1 100%; }
