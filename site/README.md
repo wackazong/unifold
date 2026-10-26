@@ -16,15 +16,15 @@ uv run site/build.py --serve
 | Address | File | From |
 |---|---|---|
 | `/` | `index.html` | `README.md`: the first sentence of the quote under the title becomes the title of the page, the rest of the quote the subtitle, and the text before `## Why` the introduction. The manifests of `## How it works` become the document beside the title; the rest of that section follows below, with its text block as a terminal and its root manifest as a drawn diagram. Known sections get their own layout (`What a unit has`, `Questions`, `Capabilities`, `Read next`, ...); any other section is shown as text under a heading with a coloured bar. |
-| `/spec`, `/documents`, `/reasoning`, `/first-map`, ... | `spec.html`, ... | the reference chapters from `docs/references/`, the explanation files from `docs/explanation/` and the tutorial from `docs/tutorials/`; `/guide`, `/adopting` and `/design` redirect |
+| `/spec/`, `/documents/`, `/reasoning/`, `/first-map/`, ... | `spec/index.html`, ... | the reference chapters from `docs/references/`, the explanation files from `docs/explanation/` and the tutorial from `docs/tutorials/`; `/guide`, `/adopting` and `/design` redirect |
 | `/spec.md`, ... | the same chapters as plain Markdown | |
 | `/0.2/unifold.schema.json` | | the schema, at the current version; the build stops if it is missing |
 | `/skill/SKILL.md`, `/skill/unifold-convert/SKILL.md`, `/llms.txt` | | the two skills; an index for agents |
 | `/examples/<name>/` | `index.html` | every `examples/**/unifold.html` that exists |
-| `/search` | `search.html` | the search: `search.js` searches `search.json` in the browser as you type, in the field in the header of every page and here, where all sections found are listed. The build writes that index with one entry per section of every chapter (down to `###`) and per band of the start page; `--check` checks its addresses. Without JavaScript the field in the header leads here. |
+| `/search/` | `search/index.html` | the search: `search.js` searches `search.json` in the browser as you type, in the field in the header of every page and here, where all sections found are listed. The build writes that index with one entry per section of every chapter (down to `###`) and per band of the start page; `--check` checks its addresses. Without JavaScript the field in the header leads here. |
 | `/favicon.svg`, `/favicon.ico`, `/apple-touch-icon.png` | | the mark, drawn by the build from the corners in `MARK`: an SVG with light and dark colours, an ICO with 16, 32 and 48 pixels for browsers without SVG icons, a PNG for home screens |
 
-GitHub Pages serves `spec.html` at `/spec`; `spec/index.html` would redirect to `/spec/`.
+Every page is a folder with an `index.html`, so that any web server serves it; a link without the trailing slash, such as `https://unifold.md/spec`, is redirected by the server.
 
 ## Diagrams
 

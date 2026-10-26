@@ -65,7 +65,7 @@ CHAPTERS = [
 ]
 SLUG_OF = {src.resolve(): slug for slug, src, _, _, _ in CHAPTERS}
 # old addresses that still get a page
-REDIRECTS = {"guide": "/", "adopting": "/first-map", "design": "/reasoning"}
+REDIRECTS = {"guide": "/", "adopting": "/first-map/", "design": "/reasoning/"}
 
 MERMAID_CONFIG = '{"theme":"neutral","htmlLabels":false,"flowchart":{"htmlLabels":false},"fontFamily":"system-ui, sans-serif"}'
 
@@ -282,6 +282,11 @@ def render_mermaid(src: str) -> str:
 # ---- Links -------------------------------------------------------------------
 def rewrite_href(href: str, base: Path, version: str) -> str:
     """Turn a link that is relative to a Markdown file of the repository into a link of the site."""
+    if href.startswith(SITE_URL + "/"):                 # an absolute link to a chapter: the folder form
+        path, _, frag = href[len(SITE_URL) + 1:].partition("#")
+        if path in {s for s, _, _, _, _ in CHAPTERS}:
+            return f"/{path}/" + (f"#{frag}" if frag else "")
+        return href
     if re.match(r"^([a-z][a-z0-9+.-]*:|#|//)", href, re.I):
         return href
     path, _, frag = href.partition("#")
@@ -293,7 +298,7 @@ def rewrite_href(href: str, base: Path, version: str) -> str:
         warn(f"link leaves the repository: {href}")
         return href
     if target.resolve() in SLUG_OF:
-        return f"/{SLUG_OF[target.resolve()]}{frag}"
+        return f"/{SLUG_OF[target.resolve()]}/{frag}"
     if target == REF / "unifold.schema.json":
         return f"/{version}/unifold.schema.json"
     if target.name in ("LICENSE-MIT", "LICENSE-APACHE"):
@@ -345,7 +350,7 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
          current: str = "", body_class: str = "", noindex: bool = False) -> str:
     nav = [("documents", "Documentation"), ("spec", "Standard"), ("tool", "Tool"), ("first-map", "Get Started")]
     links = "".join(
-        f'<a href="/{s}"{CUR if s == current else ""}>{n}</a>' for s, n in nav)
+        f'<a href="/{s}/"{CUR if s == current else ""}>{n}</a>' for s, n in nav)
     url = SITE_URL + path
     og_image = f'<meta property="og:image" content="{SITE_URL}/og.png">\n<meta name="twitter:card" content="summary_large_image">' \
         if (STATIC / "og.png").exists() else '<meta name="twitter:card" content="summary">'
@@ -378,16 +383,16 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <a class="brand" href="/">{LOGO.format(s=24)}<span>unifold</span></a>
 <span class="version" title="unifold {esc(version)}">{esc(version)}</span>
 <nav aria-label="Site">{links}<a class="gh" href="{REPO_URL}" rel="noopener" aria-label="unifold on GitHub">{icon("github", "icon sm")}<span>GitHub</span></a></nav>
-<form class="site-search" action="/search" role="search"><input type="search" name="q" placeholder="Search" aria-label="Search the documentation" autocomplete="off" spellcheck="false"><button aria-label="Search">{icon("search", "icon sm")}</button></form>
+<form class="site-search" action="/search/" role="search"><input type="search" name="q" placeholder="Search" aria-label="Search the documentation" autocomplete="off" spellcheck="false"><button aria-label="Search">{icon("search", "icon sm")}</button></form>
 </div></header>
 {body}
 <footer class="bottom"><div class="wrap">
 <div class="foot-brand"><a class="brand" href="/">{LOGO.format(s=22)}<span>unifold</span></a>
 <p>Your project structure is your architecture. Keep your documentation, architecture, and project structure aligned.</p></div>
 <nav class="foot-cols" aria-label="Footer">
-<div><h2>Standard</h2><a href="/documents">Documentation</a><a href="/spec">The standard</a><a href="/writing">Writing</a><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></div>
-<div><h2>Tool</h2><a href="/tool">Commands</a><a href="/rules">Rules</a><a href="/tool-json">JSON output</a><a href="/first-map">Get Started</a></div>
-<div><h2>Agents</h2><a href="/agents">How agents use it</a><a href="/skill/SKILL.md">The skill</a><a href="/skill/unifold-convert/SKILL.md">The convert skill</a><a href="/llms.txt">llms.txt</a></div>
+<div><h2>Standard</h2><a href="/documents/">Documentation</a><a href="/spec/">The standard</a><a href="/writing/">Writing</a><a href="/{esc(version)}/unifold.schema.json">JSON Schema</a></div>
+<div><h2>Tool</h2><a href="/tool/">Commands</a><a href="/rules/">Rules</a><a href="/tool-json/">JSON output</a><a href="/first-map/">Get Started</a></div>
+<div><h2>Agents</h2><a href="/agents/">How agents use it</a><a href="/skill/SKILL.md">The skill</a><a href="/skill/unifold-convert/SKILL.md">The convert skill</a><a href="/llms.txt">llms.txt</a></div>
 </nav>
 <p class="fine">The text, the skills and the tool are licensed under <a href="/LICENSE-MIT.txt">MIT</a> or <a href="/LICENSE-APACHE.txt">Apache-2.0</a>, at your option. Headings are set in Patua One by LatinoType, under the <a href="/patua-one-OFL.txt">SIL Open Font License</a>.</p>
 </div></footer>
@@ -428,10 +433,10 @@ def index_chapter(url: str, name: str, body: str) -> None:
 
 
 def search_page(css_href: str, version: str) -> str:
-    chapters = "".join(f'<li><a href="/{s}">{esc(n)}</a></li>' for s, _, n, _, _ in CHAPTERS)
+    chapters = "".join(f'<li><a href="/{s}/">{esc(n)}</a></li>' for s, _, n, _, _ in CHAPTERS)
     main = f"""<main id="main" class="wrap search-main">
 <h1>Search</h1>
-<form class="search-big" action="/search" role="search">
+<form class="search-big" action="/search/" role="search">
 <input type="search" name="q" placeholder="Search the documentation" aria-label="Search the documentation" autocomplete="off" spellcheck="false" autofocus>
 </form>
 <p class="search-status" id="search-status" aria-live="polite"></p>
@@ -439,7 +444,7 @@ def search_page(css_href: str, version: str) -> str:
 <noscript><p>The search runs in your browser and needs JavaScript. These are all the chapters:</p><ul>{chapters}</ul></noscript>
 </main>"""
     return page(title="Search | unifold", description="Search the standard, the references, the explanations and the tutorial.",
-                path="/search", body=main, css_href=css_href, version=version, body_class="search-page", noindex=True)
+                path="/search/", body=main, css_href=css_href, version=version, body_class="search-page", noindex=True)
 
 
 def chapter_page(slug: str, src: Path, text: str, css_href: str, version: str) -> str:
@@ -448,13 +453,13 @@ def chapter_page(slug: str, src: Path, text: str, css_href: str, version: str) -
     h1 = re.sub(r"[`*]", "", m.group(1)).strip() if m else slug
     title = h1 if "unifold" in h1.lower() else f"{h1} | unifold"
     name, desc = next((n, d) for s, _, n, d, _ in CHAPTERS if s == slug)
-    index_chapter(f"/{slug}", name, body)
+    index_chapter(f"/{slug}/", name, body)
     chapters, kind_shown = "", None
     for s, _, n, _, kind in CHAPTERS:
         if kind != kind_shown:
             chapters += f'<li class="kind">{esc(kind)}</li>'
             kind_shown = kind
-        chapters += (f'<li><a href="/{s}"{CUR if s == slug else ""}>{esc(n)}</a>'
+        chapters += (f'<li><a href="/{s}/"{CUR if s == slug else ""}>{esc(n)}</a>'
                      f'{toc_html(tokens) if s == slug else ""}</li>')
     toc = toc_html(tokens)
     main = f"""<div class="wrap doc">
@@ -468,7 +473,7 @@ def chapter_page(slug: str, src: Path, text: str, css_href: str, version: str) -
 <a href="{REPO_URL}/blob/{REPO_BRANCH}/{src.relative_to(ROOT).as_posix()}" rel="noopener">source on GitHub</a>.</p>
 </main>
 </div>"""
-    return page(title=title, description=desc, path=f"/{slug}", body=main, css_href=css_href,
+    return page(title=title, description=desc, path=f"/{slug}/", body=main, css_href=css_href,
                 version=version, current=slug if slug in ("spec", "documents", "tool", "first-map") else "")
 
 
@@ -692,8 +697,8 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
 <h1>{esc(claim)}</h1>
 {f'<p class="subtitle">{strip_p(inline_md(subtitle, version))}</p>' if subtitle else ''}
 <div class="hero-actions">
-<a class="button primary" href="/first-map">Get Started</a>
-<a class="button" href="/spec">Read the standard</a>
+<a class="button primary" href="/first-map/">Get Started</a>
+<a class="button" href="/spec/">Read the standard</a>
 <p class="install"><code>uvx unifold init</code></p>
 </div>
 </div>
@@ -835,13 +840,15 @@ def build() -> None:
     if not explorers:
         warn("no examples/**/unifold.html found: the site has no explorer pages")
 
-    # chapters, as HTML at /slug (file slug.html) and as Markdown at /slug.md
+    # chapters, as HTML at /slug/ (file slug/index.html, which every web server serves) and as Markdown at /slug.md
     for slug, src, _, _, _ in CHAPTERS:
         text = src.read_text(encoding="utf-8")
-        (OUT / f"{slug}.html").write_text(chapter_page(slug, src, text, css_href, version), encoding="utf-8")
+        (OUT / slug).mkdir()
+        (OUT / slug / "index.html").write_text(chapter_page(slug, src, text, css_href, version), encoding="utf-8")
         (OUT / f"{slug}.md").write_text(text, encoding="utf-8")
     for old, new in REDIRECTS.items():
-        (OUT / f"{old}.html").write_text(
+        (OUT / old).mkdir()
+        (OUT / old / "index.html").write_text(
             f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Moved</title>'
             f'<meta http-equiv="refresh" content="0; url={new}"><link rel="canonical" href="{SITE_URL}{new}">'
             f'</head><body><p>This page moved to <a href="{new}">{SITE_URL}{new}</a>.</p></body></html>\n',
@@ -854,7 +861,8 @@ def build() -> None:
     (OUT / "search.json").write_text(json.dumps(SEARCH, ensure_ascii=False, separators=(",", ":")) + "\n",
                                      encoding="utf-8")
     shutil.copyfile(SITE / "search.js", OUT / "search.js")
-    (OUT / "search.html").write_text(search_page(css_href, version), encoding="utf-8")
+    (OUT / "search").mkdir()
+    (OUT / "search" / "index.html").write_text(search_page(css_href, version), encoding="utf-8")
 
     # machine-readable files
     (OUT / version).mkdir()
@@ -899,7 +907,7 @@ def build() -> None:
     (OUT / "favicon.ico").write_bytes(ico([(16, mark_png(16, .5, .5)), (32, mark_png(32, 1)), (48, mark_png(48, 1.5, .5))]))
     (OUT / "apple-touch-icon.png").write_bytes(mark_png(180, 4, 26, "#ffffff"))
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
-    urls = ["/"] + [f"/{s}" for s, _, _, _, _ in CHAPTERS] + [f"/examples/{n}/" for n, _ in explorers]
+    urls = ["/"] + [f"/{s}/" for s, _, _, _, _ in CHAPTERS] + [f"/examples/{n}/" for n, _ in explorers]
     (OUT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE_URL}{u}</loc></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")
@@ -910,7 +918,7 @@ def build() -> None:
     nf = f"""<main id="main" class="wrap prose notfound">
 <h1>This page does not exist</h1>
 <p>The address may be mistyped, or the page has moved.</p>
-<ul><li><a href="/">Start page</a></li><li><a href="/spec">The standard</a></li><li><a href="/first-map">Get Started</a></li></ul>
+<ul><li><a href="/">Start page</a></li><li><a href="/spec/">The standard</a></li><li><a href="/first-map/">Get Started</a></li></ul>
 </main>"""
     (OUT / "404.html").write_text(
         page(title="Page not found | unifold", description="This page does not exist.", path="/404", body=nf,
@@ -928,15 +936,14 @@ def build() -> None:
 # Checks: internal links, well-formed HTML, weight of the start page
 # --------------------------------------------------------------------------
 def resolve(url_path: str) -> Path | None:
-    """The file GitHub Pages serves for a path, or None."""
+    """The file a plain web server serves for a path, or None. A folder serves its index.html;
+    a folder path without the trailing slash is redirected to it by the server."""
     p = url_path.split("#")[0].split("?")[0]
     f = OUT / p.lstrip("/")
-    if p.endswith("/"):
+    if f.is_dir():
         return f / "index.html" if (f / "index.html").exists() else None
-    if f.is_file():
+    if f.is_file() and not p.endswith("/"):
         return f
-    if f.with_name(f.name + ".html").is_file():
-        return f.with_name(f.name + ".html")
     return None
 
 
@@ -1038,7 +1045,7 @@ def check() -> int:
     if weight > 200_000:
         problems.append(f"index.html weighs {weight} bytes with its assets (limit 200000)")
     for name in ("CNAME", ".nojekyll", "404.html", "llms.txt", "skill/SKILL.md", "skill/unifold-convert/SKILL.md",
-                 "spec.html", "spec.md", "search.html", "search.js", "search.json", "favicon.ico", "favicon.svg",
+                 "spec/index.html", "spec.md", "search/index.html", "search.js", "search.json", "favicon.ico", "favicon.svg",
                  "apple-touch-icon.png"):
         if not (OUT / name).exists():
             problems.append(f"missing {name}")

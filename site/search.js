@@ -141,7 +141,7 @@
       });
       if (n > shown) {
         const more = element("a", "", `All ${n} sections`);
-        more.href = "/search?q=" + encodeURIComponent(q);
+        more.href = "/search/?q=" + encodeURIComponent(q);
         items.push(element("li", "more", more));
       }
       if (!n) {
