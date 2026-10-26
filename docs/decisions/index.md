@@ -5,7 +5,7 @@
 Only accepted decisions bind.
 
 | No. | Decision | Status | Date |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0001 | [Mark units by a manifest, not by the folder name](0001-mark-units-in-the-readme-front-matter.md) | superseded by 0022 | 2026-10-06 |
 | 0002 | [Declare ports in the unit and wire them in the parent](0002-declare-ports-and-wire-them-in-the-parent.md) | accepted | 2026-10-22 |
 | 0003 | [Allow upward links only in docs/context.md](0003-allow-upward-links-only-in-context.md) | accepted | 2026-10-22 |
@@ -54,7 +54,7 @@ Only accepted decisions bind.
 | 0046 | [Let a decision amend part of an accepted one](0046-let-a-decision-amend-part-of-an-accepted-one.md) | rejected | 2026-10-23 |
 | 0047 | [Remove the comparison with code](0047-remove-the-comparison-with-code.md) | accepted | 2026-10-23 |
 | 0048 | [Write every connection out, and let a unit wire its own need to a child](0048-write-every-connection-out-and-let-a-unit-wire-its-own-need.md) | accepted | 2026-10-23 |
-| 0049 | [Call the standard 0.2](0049-call-the-standard-0-2.md) | superseded by 0065 | 2026-10-23 |
+| 0049 | [Call the standard 0.2](0049-call-the-standard-0-2.md) | accepted | 2026-10-23 |
 | 0050 | [Compare the wiring with observed dependencies that the project supplies](0050-compare-the-wiring-with-observed-dependencies-that-the-project-supplies.md) | rejected | 2026-10-24 |
 | 0051 | [Promise consistency, and agreement with the code only where it is observed](0051-promise-consistency-and-the-code-only-where-it-is-observed.md) | rejected | 2026-10-24 |
 | 0052 | [Let a wired need take the contract of its provider](0052-let-a-wired-need-take-the-contract-of-its-provider.md) | rejected | 2026-10-24 |
@@ -70,4 +70,3 @@ Only accepted decisions bind.
 | 0062 | [Try the standard on repositories that are not ours, with a measure agreed beforehand](0062-try-the-standard-on-repositories-that-are-not-ours.md) | rejected | 2026-10-24 |
 | 0063 | [Publish a change policy and the conditions for 1.0](0063-publish-a-change-policy-and-the-conditions-for-1-0.md) | rejected | 2026-10-24 |
 | 0064 | [Make a contract a reference of the unit that wires the connection](0064-make-a-contract-a-reference-of-the-unit-that-wires-the-connection.md) | accepted | 2026-10-24 |
-| 0065 | [Read version 0.2 only](0065-read-version-0-2-only.md) | proposed | 2026-10-25 |
