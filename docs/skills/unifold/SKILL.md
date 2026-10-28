@@ -120,7 +120,7 @@ Report to the human:
 
 - every capability, need, wiring line and contract you added, changed or removed;
 - the decisions you wrote, proposed or derived, which wait for acceptance, and the skills you wrote, which wait for review;
-- the warnings that remain and the summaries that are still `TODO`;
+- the warnings that remain and the responsibilities and summaries that are still `TODO`;
 - whether the check ran. If the tool could not run, say so.
 
 ## Rules for moving around

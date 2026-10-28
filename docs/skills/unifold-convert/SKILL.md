@@ -67,7 +67,7 @@ Tell the person:
 - the units you chose and the candidates you left out, with the reason;
 - every capability and need whose name or summary is a guess, and every responsibility that is one;
 - the uses between folders that you found in the code and the map does not show yet: the work that remains;
-- the warnings that remain and the summaries that are still `TODO`;
+- the warnings that remain and the responsibilities and summaries that are still `TODO`;
 - that the map is a proposal. A person accepts it by reading it, not by running the check.
 
 The `README.md` files you wrote are drafts. Complete them with the skill `unifold` once the map is accepted.

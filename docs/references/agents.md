@@ -6,7 +6,7 @@ How a coding agent learns that a repository uses unifold, what it reads, and wha
 
 | Way | What it is | When the agent sees it |
 |---|---|---|
-| `AGENTS.md` | A generated file per unit: a pointer to `README.md`, the documents of the unit by kind, its skills. The root file also carries the unifold block: what unifold is, the commands `show`, `capability` and `check`, and an index of the units (name, path, summary) for projects of up to 40 units | Always, where the agent loads `AGENTS.md` |
+| `AGENTS.md` | A generated file per unit: a pointer to `README.md`, the documents of the unit by kind, its skills. The root file also carries the unifold block: what unifold is, the commands `show`, `capability` and `check`, and an index of the units below the root (name, path, responsibility, and the status when it is not `active`) when there are at most 40 of them, otherwise a pointer to `unifold tree` | Always, where the agent loads `AGENTS.md` |
 | The skills | `unifold-convert`, the procedure that brings a repository into the format, and `unifold`, the procedures for reading and changing a unifold project | When the agent decides that the task calls for it |
 | The tool | `unifold show`, `capability`, `impact` and `check`, each with `--json` | When the agent runs it |
 
