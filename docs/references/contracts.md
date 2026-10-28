@@ -43,6 +43,8 @@ A type is defined once within the subtree of the unit that holds the contract. A
 
 For a contract whose provider is a `logic` unit, the section may say `the real implementation`: the code is small, deterministic and has no side effects, and a replay fake would answer only the inputs its author foresaw. A consumer's tests then use the real unit, and whoever plans the work builds the provider first.
 
+A capability of the root has no consumer inside the project: its consumers are other projects and programs, and its `## Fake` may take any of the three forms. When the section describes a fake, the project ships that fake for the tests of its users, so a library comes with a stand-in they can test against; when it says `the real implementation`, there is none, and its users test against the real code. Either way the project's own integration tests drive the real units through a test client. Which form fits is the project's choice.
+
 ## Folders
 
 A contract that outgrows the line limit becomes a folder: `docs/references/<topic>/index.md` holds the header, the notation and `## Parts` as a list of links, and every part is a file `<topic>/<part>.md` whose body is what a `###` section would hold. The manifests name `index.md` as the contract; a part name resolves to a heading in the file or to a file in the folder.

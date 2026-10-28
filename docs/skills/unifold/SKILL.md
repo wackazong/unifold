@@ -76,7 +76,7 @@ Do not weaken a manifest to make the check pass. Mark a need `optional`, delete 
 1. Write `docs/references/<topic>.md` in the unit that wires the connection, from [contract.template.md](assets/contract/contract.template.md). The header names whose contract it is, the notation (WIT by default) and the sources as text.
 2. Under `## Parts`, one `###` heading per operation, event or type, in kebab-case. Each has `Kind:` and a fenced code block with its signature. A command or query has `Pre:`, `Result:`, `Errors:` and an `Examples:` table: one row per case from the sources, both sides of every precondition, one row per error.
 3. Define a type once in the subtree; link to it from other contracts.
-4. Write `## Fake`: replay of the examples, a simplified behaviour with its faults, or `the real implementation` for a logic provider.
+4. Write `## Fake`: replay of the examples, a simplified behaviour with its faults, or `the real implementation` for a logic provider or a capability of the root.
 5. Longer than the line limit: a folder from [index.template.md](assets/contract/index.template.md) and [part.template.md](assets/contract/part.template.md), one file per part.
 6. Name the contract from both sides, list `parts` where a side uses only some, and run `check`: it reports a part that is missing, a part without a signature or examples, and a contract without a fake.
 

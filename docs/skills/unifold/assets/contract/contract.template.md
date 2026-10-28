@@ -45,4 +45,4 @@ variant <error-type> { <case>, <other-case> }
 
 ## Fake
 
-<One of: "Replays the examples. Any other call fails with `unexpected-call`. Faults it can inject: none." Or the simplified behaviour and the faults, for a need of the root: "A port in memory: ... Faults it can inject: ...". Or, for a logic provider: "The real implementation: <why a replay fake would be worse>.">
+<One of: "Replays the examples. Any other call fails with `unexpected-call`. Faults it can inject: none." Or the simplified behaviour and the faults, for a need of the root: "A port in memory: ... Faults it can inject: ...". Or, for a logic provider or a capability of the root: "The real implementation: <why a replay fake would be worse>.">
