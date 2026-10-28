@@ -26,6 +26,7 @@ jobs:
       - name: Check the examples
         run: |
           python docs/skills/unifold/scripts/unifold.py check --strict examples/slugline
+          python docs/skills/unifold/scripts/unifold.py check --strict examples/serial-line
           python docs/skills/unifold/scripts/unifold.py check --strict examples/plantwatch
 
   action:

@@ -22,7 +22,7 @@ A change that alters no rule, such as a typing mistake, a clearer sentence or a 
    python3 site/build.py --check
    ```
 
-   The workflow `check` runs the same commands on every push and pull request.
+   The workflow `check` runs the same commands, with `--strict` in place of `--fix`, on every push and pull request.
 
 A maintainer accepts the decision by setting `status: accepted` and naming the decision-makers.
 
