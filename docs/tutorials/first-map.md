@@ -83,7 +83,39 @@ The connection exists, but nothing says what travels on it.
 
 ## 5. Write down what they agree on
 
-Write `docs/references/clock.md` in the root: a few lines on what the clock gives and in which form, with one example. This document is the contract of the connection. It lives in the unit that connects the two sides, and both name it:
+Write the contract of the connection, `docs/references/clock.md` in the root: what the clock gives and in which form, with one example, and what stands in for it in the tests of `billing`. [contracts.md](../references/contracts.md) explains every line; this is about the smallest contract that passes:
+
+````markdown
+# clock
+
+Contract of `platform.clock`, the current time. Notation: wit.
+Sources: none
+
+## Parts
+
+### now
+
+Kind: query
+
+```wit
+now: func() -> u64;
+```
+
+Pre: none.
+Result: the seconds since 1970-01-01T00:00:00Z.
+Errors: none.
+Examples:
+
+| Case | Input | Expected |
+|---|---|---|
+| at 2026-01-01T00:00:00Z | `now()` | `1767225600` |
+
+## Fake
+
+A clock that stands still until a test moves it. Faults it can inject: none.
+````
+
+The contract lives in the unit that connects the two sides, and both name it:
 
 ```yaml
 # platform/unifold.yaml
@@ -98,7 +130,7 @@ needs:
     contract: ../docs/references/clock.md
 ```
 
-Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s)`. The component diagram now shows two boxes and an arrow from `billing` to `platform`, labelled `clock`. The check does not read your code: keeping the code and the map in step is part of every change, and of its review.
+Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s), 0 info`. The component diagram now shows two boxes and an arrow from `billing` to `platform`, labelled `clock`. The check does not read your code: keeping the code and the map in step is part of every change, and of its review.
 
 ## 6. Ask the map a question
 
