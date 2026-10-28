@@ -38,8 +38,12 @@ needs:
     summary: The layout of a frame
     contract:
       path: ../docs/references/frames.md
-      parts: [encode, decode]
-  uart: {summary: The serial port, contract: ../docs/references/uart.md}
+      parts:
+        - encode
+        - decode
+  uart:
+    summary: The serial port
+    contract: ../docs/references/uart.md
 ```
 
 A manifest is a YAML mapping with these keys. Any other key is an error.

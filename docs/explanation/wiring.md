@@ -59,10 +59,14 @@ Alternatives implement one definition, so every alternative names the same contr
 ```yaml
 # search/unifold.yaml
 needs:
-  matcher: {summary: Finds a pattern in text, contract: ../docs/references/matcher.md}
+  matcher:
+    summary: Finds a pattern in text
+    contract: ../docs/references/matcher.md
 # regex/unifold.yaml
 capabilities:
-  matcher: {summary: Regular expression search, contract: ../docs/references/matcher.md}
+  matcher:
+    summary: Regular expression search
+    contract: ../docs/references/matcher.md
 ```
 
 ## Adapters

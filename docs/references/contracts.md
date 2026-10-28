@@ -16,7 +16,9 @@ needs:
     summary: Frames for the line
     contract:
       path: ../docs/references/frames.md
-      parts: [encode, frame]
+      parts:
+        - encode
+        - frame
 ```
 
 | Kind | What it is | Has |
