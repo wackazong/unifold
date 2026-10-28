@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unifold.md/0.2/unifold.schema.json",
+  "$id": "https://unifold.md/0.3/unifold.schema.json",
   "title": "unifold manifest",
   "description": "A unifold.yaml: the manifest of a unit. See https://unifold.md/spec. Keys marked 'root only' are allowed in the manifest of the project root, which is the one that has the key `unifold`.",
   "type": "object",
   "required": [
-    "summary"
+    "responsibility"
   ],
   "additionalProperties": false,
   "patternProperties": {
@@ -16,7 +16,9 @@
   "properties": {
     "unifold": {
       "description": "Root only, and required there: the version of the standard, as a string.",
-      "enum": ["0.2"]
+      "enum": [
+        "0.3"
+      ]
     },
     "name": {
       "description": "Root only. The name of the project. Default: the name of the root folder. Every root manifest should set it, so that generated files do not depend on the folder name.",
@@ -24,8 +26,8 @@
       "minLength": 1,
       "pattern": "^[^\\n]*\\S[^\\n]*$"
     },
-    "summary": {
-      "description": "What the unit is, in one line. `TODO` marks a draft.",
+    "responsibility": {
+      "description": "What the unit is responsible for, in one sentence. `TODO` marks a draft.",
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\n]*\\S[^\\n]*\\n?$",
@@ -34,7 +36,7 @@
       }
     },
     "kind": {
-      "description": "Free text, for example library, service, app, adapter.",
+      "description": "Free text. logic, stateful and adapter are well known and carry rules. Required on a unit with children below the root.",
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\n]*\\S[^\\n]*$"
@@ -53,6 +55,50 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\n]*\\S[^\\n]*$"
+    },
+    "secret": {
+      "description": "What the unit hides because it is hard to get right or likely to change.",
+      "type": "object",
+      "required": [
+        "what",
+        "decision"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "what": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\n]*\\S[^\\n]*$",
+          "description": "One line."
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\]).*\\.md$",
+          "description": "A path, relative to the manifest, to a decision of this unit or of an ancestor that says why this is the secret."
+        }
+      }
+    },
+    "not": {
+      "description": "What the unit does not do. An item is one line, or one line mapped to the need of this unit through which the thing is delegated.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\n]*\\S[^\\n]*$"
+          },
+          {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "additionalProperties": {
+              "$ref": "#/$defs/entryName"
+            }
+          }
+        ]
+      }
     },
     "capabilities": {
       "description": "The capabilities, keyed by name.",
@@ -109,6 +155,16 @@
             }
           }
         ]
+      }
+    },
+    "scenarios": {
+      "description": "The scenarios this unit holds, keyed by name: one story as the chain of calls it causes.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/entryName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/scenario"
       }
     },
     "ignore": {
@@ -182,15 +238,36 @@
           "pattern": "^[^\\n]*\\S[^\\n]*$"
         },
         "contract": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$",
-          "description": "The contract of the connection: a path, relative to the folder of the manifest, to a Markdown file in docs/references/ of this unit or of an ancestor. Not a URL. Required when the capability is used: both sides of a connection name the same document."
-        },
-        "verified-by": {
-          "type": "string",
-          "minLength": 1,
-          "description": "What checks the capability against its contract, for example tests. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Never required."
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$"
+            },
+            {
+              "type": "object",
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$"
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]*$"
+                  },
+                  "description": "The parts of the contract this side uses: the `###` headings under `## Parts`, or the files of a contract folder."
+                }
+              }
+            }
+          ],
+          "description": "The contract of the connection: a path, relative to the folder of the manifest, to a Markdown file in docs/references/ of this unit or of an ancestor, or a mapping with `path` and `parts`. Not a URL. Both sides of a connection name the same document."
         }
       }
     },
@@ -214,20 +291,81 @@
           "pattern": "^[^\\n]*\\S[^\\n]*$"
         },
         "contract": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$",
-          "description": "The contract this need and its provider share: a path, relative to the folder of the manifest, to a Markdown file in docs/references/ of this unit or of an ancestor. Not a URL. Required when the need is wired: both sides of a connection name the same document."
-        },
-        "verified-by": {
-          "type": "string",
-          "minLength": 1,
-          "description": "What checks a provider against the contract. A URL, or a path relative to the folder of the manifest that exists and lies in this unit, an ancestor or a descendant. Never required."
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$"
+            },
+            {
+              "type": "object",
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])[^#]*\\.md(#.*)?$"
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]*$"
+                  },
+                  "description": "The parts of the contract this side uses: the `###` headings under `## Parts`, or the files of a contract folder."
+                }
+              }
+            }
+          ],
+          "description": "The contract of the connection: a path, relative to the folder of the manifest, to a Markdown file in docs/references/ of this unit or of an ancestor, or a mapping with `path` and `parts`. Not a URL. Both sides of a connection name the same document."
         },
         "optional": {
           "description": "true if the need may stay unconnected.",
           "type": "boolean",
           "default": false
+        },
+        "platform": {
+          "description": "On a need of the root only: true marks a service of the host such as time or randomness, with a controllable fake. The adapter rule does not apply to it.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "required": [
+        "summary",
+        "hops",
+        "expect"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "source": {
+          "type": "string",
+          "description": "Free text: where the story comes from."
+        },
+        "hops": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^\\s*\\S.*\\s->\\s.*\\S\\.[A-Za-z0-9][A-Za-z0-9_-]*\\s*$"
+          },
+          "description": "`caller -> target.part`: units by their path from this unit, a capability or need of this unit bare."
+        },
+        "expect": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The observable outcome."
         }
       }
     }

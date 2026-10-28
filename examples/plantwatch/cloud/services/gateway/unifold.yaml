@@ -1,6 +1,15 @@
-summary: Single entry point of the server side that authenticates callers and routes requests
+responsibility: Single entry point of the server side that authenticates callers and routes requests
 kind: service
 status: planned
+secret:
+  what: the form and the verification of tokens
+  decision: docs/decisions/0001-self-contained-signed-tokens.md
+not:
+  - looking into, validating or changing a body
+  - combining the answers of several providers into one response
+  - storing anything; no sessions, no owners, no request log beyond the process log
+  - terminating TLS; whoever publishes the network port of gateway does that
+  - deciding what an owner may see; each provider limits its answers to the owner it is told
 capabilities:
   public-api:
     kind: http

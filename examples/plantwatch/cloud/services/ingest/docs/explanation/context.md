@@ -18,8 +18,8 @@ Says: delivery is at least once. An event has an `id` derived from what it descr
 
 Here: `ingest` may publish an event again after a failure, with the same `id`. Its own recognition of duplicates need not be perfect.
 
-### [cloud: public API, uploads](../../../../../docs/references/public-api/uploads.md)
-<!-- unifold:cites sha=cfd7e862 -->
+### [cloud: public API, uploads](../../../../../docs/references/public-api/upload-batch.md)
+<!-- unifold:cites sha=3c8ec9aa -->
 
 Says, as the contract that this unit implements:
 
@@ -32,11 +32,18 @@ Says, as the contract that this unit implements:
 Here: the contract of `ingest-api`. `ingest` serves this operation exactly as defined; [ingest API](../../../../docs/references/ingest-api.md) adds the order of the checks and the failures.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=d259494b -->
+<!-- unifold:cites sha=81a51124 -->
 
-Says: errors are `{"code", "message"}`: `invalid_request` (400), `payload_too_large` (413), `unavailable` (503). A batch: 500 readings, 1 MB.
+Says: a batch has at most 500 readings, a request body at most 1 MB.
 
-Here: the errors and the limits of `ingest-api`.
+Here: the limits of `ingest-api`.
+
+### [cloud: public API, errors](../../../../../docs/references/public-api/error.md)
+<!-- unifold:cites sha=6973d698 -->
+
+Says: errors are `{"code", "message"}`: `invalid_request` (400), `payload_too_large` (413), `unavailable` (503).
+
+Here: the errors of `ingest-api`.
 
 ### [cloud: events between services](../../../../docs/references/events.md)
 <!-- unifold:cites sha=0f4bf135 -->
@@ -55,7 +62,7 @@ Here: `ingest` requires the header, writes it to its log and makes no other use 
 ## From plantwatch
 
 ### [plantwatch: reading schema](../../../../../docs/references/reading-schema.md)
-<!-- unifold:cites sha=888e575a -->
+<!-- unifold:cites sha=047250bf -->
 
 Says: a reading has a sensor id, a sequence number, a tick count, a time with a flag for an estimate, and soil moisture, light and temperature, each optional. Sensor id and sequence number identify it. It has a JSON form and a binary form, version 1.0; a minor version only adds optional fields.
 

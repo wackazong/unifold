@@ -8,11 +8,11 @@ The units directly inside `cloud` and how they are connected. An arrow points fr
 ```mermaid
 flowchart LR
   subgraph u_cloud["cloud"]
-    u_cloud__platform["platform"]
-    u_cloud__services__alerts["alerts"]
-    u_cloud__services__gateway["gateway"]
-    u_cloud__services__ingest["ingest"]
-    u_cloud__services__plants["plants"]
+    u_cloud__platform["platform (adapter)"]
+    u_cloud__services__alerts["alerts (service)"]
+    u_cloud__services__gateway["gateway (service)"]
+    u_cloud__services__ingest["ingest (service)"]
+    u_cloud__services__plants["plants (service)"]
   end
   n_cloud___push_dservice{{"push-service"}}
   n_cloud___container_dhost{{"container-host"}}
@@ -36,9 +36,9 @@ flowchart LR
   class u_cloud__platform,u_cloud__services__alerts,u_cloud__services__gateway,u_cloud__services__ingest,u_cloud__services__plants planned
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [platform](../../platform/README.md) | infrastructure | Shared infrastructure of the services - message bus and database | **planned** | [context](../../platform/docs/diagrams/context.md) |
+| [platform](../../platform/README.md) | adapter | Shared infrastructure of the services - message bus and database | **planned** | [context](../../platform/docs/diagrams/context.md) |
 | [alerts](../../services/alerts/README.md) | service | Decides when a plant needs attention and notifies its owner once | **planned** | [component](../../services/alerts/docs/diagrams/component.md) |
 | [gateway](../../services/gateway/README.md) | service | Single entry point of the server side that authenticates callers and routes requests | **planned** | [context](../../services/gateway/docs/diagrams/context.md) |
 | [ingest](../../services/ingest/README.md) | service | Accepts uploaded readings and announces each accepted one as an event | **planned** | [context](../../services/ingest/docs/diagrams/context.md) |

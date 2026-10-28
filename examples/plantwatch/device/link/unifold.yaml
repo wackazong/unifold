@@ -1,6 +1,15 @@
-summary: Implements the BLE profile on top of the radio
+responsibility: Implements the BLE profile on top of the radio
 kind: library
 status: planned
+secret:
+  what: how the procedures of the profile are served from the log and the radio
+  decision: docs/decisions/0001-serve-a-fetch-from-the-log-on-demand.md
+not:
+  - measuring; link serves what it is given: live-readings
+  - storing readings: reading-log
+  - the role of a central; link never scans and never connects
+  - deciding what the profile should say
+  - anything a central does with a reading
 capabilities:
   ble-link:
     kind: protocol

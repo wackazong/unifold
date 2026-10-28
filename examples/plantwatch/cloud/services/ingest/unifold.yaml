@@ -1,6 +1,15 @@
-summary: Accepts uploaded readings and announces each accepted one as an event
+responsibility: Accepts uploaded readings and announces each accepted one as an event
 kind: service
 status: planned
+secret:
+  what: how a reading that was accepted before is recognised
+  decision: docs/decisions/0001-accepted-ranges-are-kept-on-the-event-bus.md
+not:
+  - storing readings for queries
+  - knowing which plant a sensor stick belongs to, or who owns it
+  - verifying tokens; ingest trusts the caller identity it is given
+  - judging a reading against thresholds
+  - correcting a reading, or replacing an accepted one
 capabilities:
   ingest-api:
     kind: http

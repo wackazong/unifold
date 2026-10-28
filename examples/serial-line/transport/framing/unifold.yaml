@@ -1,0 +1,22 @@
+responsibility: Cuts the byte stream from the line into frames
+kind: logic
+status: planned
+secret:
+  what: where a frame starts in a stream, what to drop and how much to keep
+  decision: docs/decisions/0001-bytes-before-a-magic-byte-are-dropped.md
+not:
+  - frame layout and checksum: frames
+  - reading the port
+capabilities:
+  framing:
+    summary: Cut the bytes read so far into frames
+    contract: ../docs/references/framing.md
+needs:
+  frames:
+    summary: Decode one frame from the start of a byte list
+    contract:
+      path: ../../docs/references/frames.md
+      parts:
+        - decode
+        - decoded
+        - decode-error

@@ -2,7 +2,7 @@
 
 > Your project structure is your architecture. Keep your documentation, architecture, and project structure aligned.
 
-A folder with a `unifold.yaml` is a unit: it declares what it provides and what it needs, next to the code, and the unit above connects every need to a provider. The unifold tool checks that the map is consistent and generates the diagrams, so nobody draws them and they cannot disagree with the files. Every unit keeps its documents in the same places, so that a person or a coding agent can understand one folder without reading its neighbours.
+A folder with a `unifold.yaml` is a unit: it declares what it is responsible for, what it provides and what it needs, next to the code, and the unit above connects every need to a provider. A contract defines every connection, part by part, with examples and the fake that tests use; a scenario tells a story of the system as hops across the map. The unifold tool checks that all of this is consistent and generates the diagrams, so nobody draws them and they cannot disagree with the files. Every unit keeps its documents in the same places, so that a person or a coding agent can understand one folder without reading its neighbours.
 
 ## Why
 
@@ -14,7 +14,7 @@ The standard is explainable in one minute and adoptable in five. That is why the
 
 ```yaml
 # billing/unifold.yaml
-summary: Creates invoices
+responsibility: Creates invoices
 needs:
   clock:
     summary: A time source
@@ -23,7 +23,7 @@ needs:
 
 ```yaml
 # platform/unifold.yaml
-summary: Shared runtime services
+responsibility: Shared runtime services
 capabilities:
   clock:
     summary: The current time
@@ -32,9 +32,9 @@ capabilities:
 
 ```yaml
 # unifold.yaml in the repository root
-unifold: "0.2"
+unifold: "0.3"
 name: shop
-summary: Shop backend
+responsibility: Shop backend
 wiring:
   billing.clock: platform.clock
 ```
@@ -52,7 +52,7 @@ error W2 unifold.yaml: need 'billing.clock' has no provider
 
 | File | What it is |
 |---|---|
-| `unifold.yaml` | The manifest: what the unit provides and needs, and the wiring of its children. Checked against the other manifests. |
+| `unifold.yaml` | The manifest: the unit's responsibility, kind and secret, what it provides and needs, the wiring of its children and the scenarios it holds. Checked against the other manifests and the contracts. |
 | `README.md` | The front page: what the unit is for, and why it is built this way. The contracts say what can be relied on. |
 | `docs/` | Everything else written about the unit, in fixed places sorted by what the reader is doing: tutorials, skills, references, explanation, decisions. A file exists only when it has content. |
 | `AGENTS.md` | Generated: where the documents and skills of the unit are, for coding agents. |
@@ -69,7 +69,7 @@ A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, 
 
 ### The standard
 
-The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.2/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
+The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.3/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
 
 ### The skills
 
@@ -77,7 +77,7 @@ Two skills in the [Agent Skills](https://agentskills.io/specification) format. [
 
 ### The tool
 
-The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, wiring, contracts and documents, and generates the diagrams and the `AGENTS.md` files. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
+The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, wiring, contracts, scenarios and documents, generates the diagrams and the `AGENTS.md` files, and prints the resolved model as JSON for tools that build on the map. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
 
 ## Questions
 
@@ -116,11 +116,11 @@ python3 site/build.py --check
 
 | Kind | Pages |
 |---|---|
-| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.2/unifold.schema.json) |
-| Reference | [documents](https://unifold.md/documents), [writing](https://unifold.md/writing), [agents](https://unifold.md/agents), [tool](https://unifold.md/tool), [tool JSON](https://unifold.md/tool-json), [rules](https://unifold.md/rules) |
+| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.3/unifold.schema.json) |
+| Reference | [documents](https://unifold.md/documents), [writing](https://unifold.md/writing), [contracts](https://unifold.md/contracts), [agents](https://unifold.md/agents), [tool](https://unifold.md/tool), [tool JSON](https://unifold.md/tool-json), [rules](https://unifold.md/rules) |
 | Explanation | [requirements](https://unifold.md/requirements), [reasoning](https://unifold.md/reasoning), [wiring](https://unifold.md/wiring), [invariants](https://unifold.md/invariants), [risks](https://unifold.md/risks), [decisions](https://github.com/wackazong/unifold/blob/main/docs/decisions/index.md) |
 | Tutorial | [Your first map](https://unifold.md/first-map) |
-| Examples | [slugline](https://github.com/wackazong/unifold/tree/main/examples/slugline), a tested Cargo workspace; [plantwatch](https://github.com/wackazong/unifold/tree/main/examples/plantwatch), a design written before any code, with every document convention |
+| Examples | [slugline](https://github.com/wackazong/unifold/tree/main/examples/slugline), a tested Cargo workspace; [serial-line](https://github.com/wackazong/unifold/tree/main/examples/serial-line), a small design with contracts, scenarios and the three kinds; [plantwatch](https://github.com/wackazong/unifold/tree/main/examples/plantwatch), a design written before any code, with every document convention |
 
 ## Contributing and licence
 

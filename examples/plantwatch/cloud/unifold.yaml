@@ -1,7 +1,14 @@
-summary: Server side that turns uploaded readings into plant history and alerts
+responsibility: Server side that turns uploaded readings into plant history and alerts
 kind: system
 status: planned
 owner: backend team
+not:
+  - talking to a sensor stick; readings arrive only through the public API
+  - assigning or correcting the time of a reading; cloud trusts the time a reading carries
+  - changing or deleting a single reading
+  - user accounts with passwords, recovery or sharing; an owner is whoever holds a token of that owner
+  - threshold presets and knowledge about plant species
+  - delivering a notification to a phone: push-service
 capabilities:
   public-api:
     kind: http
@@ -31,3 +38,26 @@ wiring:
   alerts.plants-api: plants.plants-api
   alerts.push: push-service
   platform.container-host: container-host
+scenarios:
+  upload-leads-to-alert:
+    summary: An upload is accepted, enters the history, is judged and opens an alert
+    source: decisions 0001 and 0003 of cloud
+    hops:
+      - public-api -> gateway.upload-batch
+      - gateway -> ingest.upload-batch
+      - ingest -> platform.publish
+      - plants -> ingest.reading-accepted
+      - plants -> platform.deliver
+      - plants -> platform.transaction
+      - plants -> platform.commit
+      - services/alerts/server -> ingest.reading-accepted
+      - services/alerts/server -> platform.deliver
+      - services/alerts/plant-lookup -> plants.lookup-by-sensor
+      - services/alerts/server -> platform.transaction
+      - services/alerts/server -> platform.commit
+      - services/alerts/notifier -> push-service.send
+      - public-api -> gateway.list-alerts
+      - gateway -> services/alerts/server.list-alerts
+      - public-api -> gateway.get-history
+      - gateway -> plants.get-history
+    expect: the upload is answered with `new` before history and evaluation have seen the reading; within 10 seconds the reading is in the history of its plant; within 1 minute the alert is open and its notification is handed to the push service; the two branches run independently and in any order

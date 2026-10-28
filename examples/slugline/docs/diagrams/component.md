@@ -8,9 +8,9 @@ The units directly inside `slugline` and how they are connected. An arrow points
 ```mermaid
 flowchart LR
   subgraph u_root["slugline"]
-    u_cli["cli"]
-    u_core["core"]
-    u_plugins__unicode["unicode"]
+    u_cli["cli (adapter)"]
+    u_core["core (logic)"]
+    u_plugins__unicode["unicode (logic)"]
   end
   p_root___slugify(["slugify"])
   p_root___plugin_dapi(["plugin-api"])
@@ -27,11 +27,11 @@ flowchart LR
   classDef plain stroke-dasharray:2 3
 ```
 
-| Unit | Kind | Summary | Status |
+| Unit | Kind | Responsibility | Status |
 |---|---|---|---|
-| [cli](../../cli/README.md) | app | The slugline command | active |
-| [core](../../core/README.md) | library | Makes slugs and defines what a transliteration plug-in must provide | active |
-| [unicode](../../plugins/unicode/README.md) | library | Transliterates Latin letters with diacritics to ASCII | active |
+| [cli](../../cli/README.md) | adapter | The slugline command | active |
+| [core](../../core/README.md) | logic | Makes slugs and defines what a transliteration plug-in must provide | active |
+| [unicode](../../plugins/unicode/README.md) | logic | Transliterates Latin letters with diacritics to ASCII | active |
 
 ### Connections
 

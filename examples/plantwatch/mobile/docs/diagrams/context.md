@@ -8,10 +8,10 @@
 ```mermaid
 flowchart LR
   subgraph u_root["plantwatch"]
-    u_cloud["cloud"]
-    u_device["device"]
-    u_emulator["emulator"]
-    u_mobile["mobile"]
+    u_cloud["cloud (system)"]
+    u_device["device (firmware)"]
+    u_emulator["emulator (tool)"]
+    u_mobile["mobile (app)"]
   end
   n_root___push_dservice{{"push-service"}}
   p_root___app_dui(["app-ui"])
@@ -28,7 +28,7 @@ flowchart LR
   class u_mobile focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [cloud](../../../cloud/README.md) | system | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](../../../cloud/docs/diagrams/component.md) |
 | [device](../../../device/README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../../device/docs/diagrams/component.md) |
@@ -37,15 +37,15 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| sensor-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [device/link](../../../device/link/README.md) (planned) (real) | ble-link |  |
-| sensor-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [emulator](../../../emulator/README.md) (planned) (simulated) | ble-link |  |
-| cloud-api | http | [contract](../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../cloud/services/gateway/README.md) (planned) | public-api |  |
-| push-service | http | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| sensor-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [device/link](../../../device/link/README.md) (planned) (real) | ble-link |
+| sensor-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [emulator](../../../emulator/README.md) (planned) (simulated) | ble-link |
+| cloud-api | http | [contract](../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../cloud/services/gateway/README.md) (planned) | public-api |
+| push-service | http | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| app-ui | ui | [contract](../../../docs/references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| app-ui | ui | [contract](../../../docs/references/app-ui.md) | outside the project, as capability `app-ui` of the root | |

@@ -8,9 +8,9 @@
 ```mermaid
 flowchart LR
   subgraph u_mobile["mobile"]
-    u_mobile__ble_dclient["ble-client"]
-    u_mobile__sync["sync"]
-    u_mobile__ui["ui"]
+    u_mobile__ble_dclient["ble-client (library)"]
+    u_mobile__sync["sync (library)"]
+    u_mobile__ui["ui (adapter)"]
   end
   n_mobile___sensor_dlink{{"sensor-link"}}
   u_mobile__sync -->|"sensor-readings"| u_mobile__ble_dclient
@@ -24,22 +24,22 @@ flowchart LR
   class u_mobile__ble_dclient focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [ble-client](../../README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** | [context](context.md) |
 | [sync](../../../sync/README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** | [context](../../../sync/docs/diagrams/context.md) |
-| [ui](../../../ui/README.md) | library | Screens of the phone app | **planned** | [context](../../../ui/docs/diagrams/context.md) |
+| [ui](../../../ui/README.md) | adapter | Screens of the phone app | **planned** | [context](../../../ui/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [device/link](../../../../device/link/README.md) (planned) (real) | ble-link |  |
-| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [emulator](../../../../emulator/README.md) (planned) (simulated) | ble-link |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [device/link](../../../../device/link/README.md) (planned) (real) | ble-link |
+| sensor-link | protocol | [contract](../../../../docs/references/ble-profile/index.md) | [emulator](../../../../emulator/README.md) (planned) (simulated) | ble-link |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| sensor-readings | library | [contract](../../../docs/references/sensor-readings.md) |  | [mobile/sync](../../../sync/README.md) (planned) | sensor-readings |
-| pairing | library | [contract](../../../docs/references/pairing.md) |  | [mobile/ui](../../../ui/README.md) (planned) | pairing |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| sensor-readings | library | [contract](../../../docs/references/sensor-readings.md) | [mobile/sync](../../../sync/README.md) (planned) | sensor-readings |
+| pairing | library | [contract](../../../docs/references/pairing.md) | [mobile/ui](../../../ui/README.md) (planned) | pairing |

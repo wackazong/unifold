@@ -8,10 +8,10 @@ The units directly inside `alerts` and how they are connected. An arrow points f
 ```mermaid
 flowchart LR
   subgraph u_cloud__services__alerts["alerts"]
-    u_cloud__services__alerts__notifier["notifier"]
-    u_cloud__services__alerts__plant_dlookup["plant-lookup"]
-    u_cloud__services__alerts__rules["rules"]
-    u_cloud__services__alerts__server["server"]
+    u_cloud__services__alerts__notifier["notifier (adapter)"]
+    u_cloud__services__alerts__plant_dlookup["plant-lookup (adapter)"]
+    u_cloud__services__alerts__rules["rules (library)"]
+    u_cloud__services__alerts__server["server (app)"]
   end
   n_cloud__services__alerts___push{{"push"}}
   n_cloud__services__alerts___plants_dapi{{"plants-api"}}
@@ -35,7 +35,7 @@ flowchart LR
   class u_cloud__services__alerts__notifier,u_cloud__services__alerts__plant_dlookup,u_cloud__services__alerts__rules,u_cloud__services__alerts__server planned
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [notifier](../../notifier/README.md) | adapter | Turns an opened alert into one notification to the owner | **planned** | [context](../../notifier/docs/diagrams/context.md) |
 | [plant-lookup](../../plant-lookup/README.md) | adapter | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** | [context](../../plant-lookup/docs/diagrams/context.md) |

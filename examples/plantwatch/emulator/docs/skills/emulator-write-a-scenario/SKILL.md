@@ -31,5 +31,5 @@ The result is a file `<name>.scenario.json` that the emulator plays, and a check
 
 ## Reference
 
-- [Scenario format](../../../../docs/references/scenario-control.md): members, tracks, events, and the rules for rejection
-- [scenario-control API](../../../../docs/references/scenario-control.md): the requests used in steps 7 and 8
+- [Scenario format](../../../../docs/references/scenario-control/index.md): members, tracks, events, and the rules for rejection
+- [scenario-control API](../../../../docs/references/scenario-control/index.md): the requests used in steps 7 and 8

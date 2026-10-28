@@ -8,9 +8,9 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud__services__alerts["alerts"]
-    u_cloud__services__alerts__plant_dlookup["plant-lookup"]
-    u_cloud__services__alerts__rules["rules"]
-    u_cloud__services__alerts__server["server"]
+    u_cloud__services__alerts__plant_dlookup["plant-lookup (adapter)"]
+    u_cloud__services__alerts__rules["rules (library)"]
+    u_cloud__services__alerts__server["server (app)"]
   end
   u_cloud__services__alerts__server -->|"evaluation"| u_cloud__services__alerts__rules
   u_cloud__services__alerts__rules -->|"thresholds"| u_cloud__services__alerts__plant_dlookup
@@ -22,7 +22,7 @@ flowchart LR
   class u_cloud__services__alerts__rules focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [plant-lookup](../../../plant-lookup/README.md) | adapter | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** | [context](../../../plant-lookup/docs/diagrams/context.md) |
 | [rules](../../README.md) | library | Evaluates readings against the thresholds of a plant | **planned** | [context](context.md) |
@@ -30,12 +30,12 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| thresholds | library | [contract](../../../docs/references/thresholds.md) | [cloud/services/alerts/plant-lookup](../../../plant-lookup/README.md) (planned) | thresholds |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| thresholds | library | [contract](../../../docs/references/thresholds.md) | [cloud/services/alerts/plant-lookup](../../../plant-lookup/README.md) (planned) | thresholds |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| evaluation | library | [contract](../../../docs/references/evaluation.md) |  | [cloud/services/alerts/server](../../../server/README.md) (planned) | evaluation |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| evaluation | library | [contract](../../../docs/references/evaluation.md) | [cloud/services/alerts/server](../../../server/README.md) (planned) | evaluation |

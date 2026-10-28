@@ -17,6 +17,7 @@ A change that alters no rule, such as a typing mistake, a clearer sentence or a 
    ```sh
    python3 tests/conformance.py
    python3 docs/skills/unifold/scripts/unifold.py check --fix examples/slugline
+   python3 docs/skills/unifold/scripts/unifold.py check --fix examples/serial-line
    python3 docs/skills/unifold/scripts/unifold.py check --fix examples/plantwatch
    python3 site/build.py --check
    ```

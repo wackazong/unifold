@@ -8,10 +8,10 @@ The units directly inside `device` and how they are connected. An arrow points f
 ```mermaid
 flowchart LR
   subgraph u_device["device"]
-    u_device__hal["hal"]
-    u_device__link["link"]
-    u_device__sampling["sampling"]
-    u_device__store["store"]
+    u_device__hal["hal (adapter)"]
+    u_device__link["link (library)"]
+    u_device__sampling["sampling (library)"]
+    u_device__store["store (library)"]
   end
   n_device___ambient_dsensor{{"ambient-sensor"}}
   n_device___soil_dprobe{{"soil-probe"}}
@@ -32,9 +32,9 @@ flowchart LR
   class u_device__hal,u_device__link,u_device__sampling,u_device__store planned
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [hal](../../hal/README.md) | library | Hardware abstraction of the sensor stick board | **planned** | [context](../../hal/docs/diagrams/context.md) |
+| [hal](../../hal/README.md) | adapter | Hardware abstraction of the sensor stick board | **planned** | [context](../../hal/docs/diagrams/context.md) |
 | [link](../../link/README.md) | library | Implements the BLE profile on top of the radio | **planned** | [context](../../link/docs/diagrams/context.md) |
 | [sampling](../../sampling/README.md) | library | Takes a calibrated reading at every sampling interval | **planned** | [context](../../sampling/docs/diagrams/context.md) |
 | [store](../../store/README.md) | library | Keeps readings on the sensor stick until they have been delivered | **planned** | [context](../../store/docs/diagrams/context.md) |

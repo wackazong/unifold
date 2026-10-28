@@ -19,7 +19,7 @@ Says: an alert is stored with `notification` set to `pending`. A separate delive
 Here: `server` implements both steps and never notifies from the handling of an event. Delivery can repeat.
 
 ### [alerts: alerts API](../../../../../docs/references/alerts-api.md)
-<!-- unifold:cites sha=deafec13 -->
+<!-- unifold:cites sha=976cf787 -->
 
 Says, as the contract that this unit implements: every request to `/v1/alerts` requires `X-Owner-Id`, and answers are limited to that owner. An alert belongs to the owner named when it opened. An alert is stored within 30 seconds after its event arrives. `id`, `plant_id`, `quantity`, `bound`, `threshold`, `opened_at` and `opened_value` never change; the closing fields and `notification` change once.
 
@@ -34,19 +34,26 @@ Here: the value that `server` stores unread per sensor stick, and the rows that 
 
 ## From cloud
 
-### [cloud: public API, alerts](../../../../../../docs/references/public-api/alerts.md)
-<!-- unifold:cites sha=46c8f57f -->
+### [cloud: public API, alerts](../../../../../../docs/references/public-api/alert.md)
+<!-- unifold:cites sha=d21ddf40 -->
 
-Says, as far as this unit implements it: an alert has the fields `id`, `plant_id`, `quantity`, `bound`, `state`, `threshold`, `opened_at`, `opened_value`, `closed_at`, `closed_reason` and `notification`. It closes with `expired` when no reading of its plant was judged for 30 days. The notification is `pending`, `sent` or `failed`, and `failed` after 24 hours. Closed alerts are kept for 2 years. `GET /v1/alerts` lists in descending order of `opened_at`; `GET /v1/alerts/{alert_id}` reads one.
+Says, as far as this unit implements it: an alert has the fields `id`, `plant_id`, `quantity`, `bound`, `state`, `threshold`, `opened_at`, `opened_value`, `closed_at`, `closed_reason` and `notification`. It closes with `expired` when no reading of its plant was judged for 30 days. The notification is `pending`, `sent` or `failed`, and `failed` after 24 hours. Closed alerts are kept for 2 years.
 
 Here: the rows that `server` stores and the answers it gives. Expiry and retention are jobs of `server`.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=d259494b -->
+<!-- unifold:cites sha=81a51124 -->
 
-Says: an error has the body `{"code", "message"}`. A list has at most 1 000 items per page.
+Says: a list has at most 1 000 items per page. The error response and its codes are the part `error` of the same contract.
 
-Here: the errors and the paging of `alerts-api`.
+Here: the paging of `alerts-api`.
+
+### [cloud: public API, errors](../../../../../../docs/references/public-api/error.md)
+<!-- unifold:cites sha=6973d698 -->
+
+Says: an error has the body `{"code", "message"}`; `400` is `invalid_request`, `404` `not_found`, `503` `unavailable`.
+
+Here: the errors of `alerts-api`.
 
 ### [cloud/0004 Every event consumer is idempotent](../../../../../docs/decisions/0004-every-event-consumer-is-idempotent.md)
 <!-- unifold:cites sha=02a8c4c1 -->

@@ -1,11 +1,19 @@
-summary: Keeps plants, history and alerts on the phone and in step with the server
+responsibility: Keeps plants, history and alerts on the phone and in step with the server
 kind: library
 status: planned
+secret:
+  what: the local store and the exchange with the server
+  decision: docs/decisions/0001-upload-in-batches-per-sensor-stick-and-retry-with-growing-pauses.md
+not:
+  - talking to sensor sticks, and converting tick counts to times: sensor-readings
+  - deciding whether a plant needs attention; sync stores thresholds and alerts and compares nothing
+  - showing anything, including notifications
+  - history older than 90 days
 capabilities:
   plant-data:
     kind: library
     summary: Plants, history and alerts, readable offline and updated when they change
-    contract: ../docs/references/plant-data.md
+    contract: ../docs/references/plant-data/index.md
 needs:
   sensor-readings:
     kind: library

@@ -8,10 +8,10 @@
 ```mermaid
 flowchart LR
   subgraph u_device["device"]
-    u_device__hal["hal"]
-    u_device__link["link"]
-    u_device__sampling["sampling"]
-    u_device__store["store"]
+    u_device__hal["hal (adapter)"]
+    u_device__link["link (library)"]
+    u_device__sampling["sampling (library)"]
+    u_device__store["store (library)"]
   end
   u_device__sampling -->|"sensor-io, timer"| u_device__hal
   u_device__store -->|"readings"| u_device__sampling
@@ -24,23 +24,23 @@ flowchart LR
   class u_device__sampling focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [hal](../../../hal/README.md) | library | Hardware abstraction of the sensor stick board | **planned** | [context](../../../hal/docs/diagrams/context.md) |
+| [hal](../../../hal/README.md) | adapter | Hardware abstraction of the sensor stick board | **planned** | [context](../../../hal/docs/diagrams/context.md) |
 | [link](../../../link/README.md) | library | Implements the BLE profile on top of the radio | **planned** | [context](../../../link/docs/diagrams/context.md) |
 | [sampling](../../README.md) | library | Takes a calibrated reading at every sampling interval | **planned** | [context](context.md) |
 | [store](../../../store/README.md) | library | Keeps readings on the sensor stick until they have been delivered | **planned** | [context](../../../store/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| sensor-io | library | [contract](../../../docs/references/sensor-io.md) | [device/hal](../../../hal/README.md) (planned) | sensor-io |  |
-| timer | library | [contract](../../../docs/references/timer.md) | [device/hal](../../../hal/README.md) (planned) | timer |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| sensor-io | library | [contract](../../../docs/references/sensor-io.md) | [device/hal](../../../hal/README.md) (planned) | sensor-io |
+| timer | library | [contract](../../../docs/references/timer.md) | [device/hal](../../../hal/README.md) (planned) | timer |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| readings | library | [contract](../../../docs/references/readings.md) |  | [device/store](../../../store/README.md) (planned) | readings |
-| readings | library | [contract](../../../docs/references/readings.md) |  | [device/link](../../../link/README.md) (planned) | live-readings |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| readings | library | [contract](../../../docs/references/readings.md) | [device/store](../../../store/README.md) (planned) | readings |
+| readings | library | [contract](../../../docs/references/readings.md) | [device/link](../../../link/README.md) (planned) | live-readings |

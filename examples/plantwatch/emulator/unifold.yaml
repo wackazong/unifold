@@ -1,6 +1,14 @@
-summary: Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware
+responsibility: Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware
 kind: tool
 status: planned
+secret:
+  what: how a scenario is turned into readings and served over a BLE controller of the host
+  decision: docs/decisions/0001-speak-real-ble-through-a-controller-of-the-host.md
+not:
+  - raw sensor signals and calibration; a scenario states values in percent, lux and degrees Celsius
+  - energy use, memory wear and radio timing of real hardware
+  - the role of a central
+  - deciding whether a plant needs attention; the program produces readings and knows no thresholds
 capabilities:
   ble-link:
     kind: protocol
@@ -9,4 +17,4 @@ capabilities:
   scenario-control:
     kind: http
     summary: Loads a scenario of sensor values and moves simulated time forward
-    contract: ../docs/references/scenario-control.md
+    contract: ../docs/references/scenario-control/index.md

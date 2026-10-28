@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://unifold.md/0.3/unifold.schema.json
+unifold: "0.3"
+name: serial-line
+responsibility: Opens a session to a device over a serial line and sends it data
+status: planned
+capabilities:
+  host:
+    summary: Open a session, send data, close
+    contract: docs/references/host.md
+needs:
+  uart:
+    summary: The serial port of the host computer, as a byte stream
+    contract: docs/references/uart.md
+  clock:
+    summary: The current time in milliseconds
+    contract: docs/references/clock.md
+    platform: true
+wiring:
+  host: session.host
+  session.transport: transport.transport
+  session.clock: clock
+  transport.frames: codec.frames
+  transport.uart: uart
+scenarios:
+  open:
+    summary: The host opens a session and the device acknowledges
+    source: proto §5.1
+    hops:
+      - host -> session.open
+      - session -> clock.now
+      - session -> transport.send
+      - transport/serial -> codec.encode
+      - transport/serial -> uart.write
+      - session -> transport.receive
+      - transport/serial -> uart.read
+      - transport/serial -> transport/framing.feed
+      - transport/framing -> codec.decode
+    expect: one frame `1F 01 01 12` on the line; after the device's `1F 01 81 9B`, open returns ok and the state is open
+  open-times-out:
+    summary: The host opens a session and the device stays silent
+    source: proto §5.1, §5.4
+    hops:
+      - host -> session.open
+      - session -> clock.now
+      - session -> transport.send
+      - transport/serial -> codec.encode
+      - transport/serial -> uart.write
+      - session -> transport.receive
+      - transport/serial -> uart.read
+    expect: one frame `1F 01 01 12` on the line; once `OPEN_TIMEOUT_MS` have passed, open fails with `timeout` and the state is closed
+  send-data:
+    summary: The host sends data inside an open session
+    source: proto §5.3
+    hops:
+      - host -> session.send
+      - session -> transport.send
+      - transport/serial -> codec.encode
+      - transport/serial -> uart.write
+    expect: one frame `1F 03 03 68 69 C2` on the line for the data `68 69`; nothing is read
+  close:
+    summary: The host closes the session and the device acknowledges
+    source: proto §5.2
+    hops:
+      - host -> session.close
+      - session -> clock.now
+      - session -> transport.send
+      - transport/serial -> codec.encode
+      - transport/serial -> uart.write
+      - session -> transport.receive
+      - transport/serial -> uart.read
+      - transport/serial -> transport/framing.feed
+      - transport/framing -> codec.decode
+    expect: one frame `1F 01 02 1B` on the line; after the device's `1F 01 82 92`, close returns ok and the state is closed
+  garbage-before-frame:
+    summary: Bytes that are not part of a frame arrive before the ACK
+    source: proto §4.3
+    hops:
+      - session -> transport.receive
+      - transport/serial -> uart.read
+      - transport/serial -> transport/framing.feed
+      - transport/framing -> codec.decode
+    expect: the bytes `00 FF 1E` before the frame `1F 01 81 9B` are dropped and receive returns the payload `81`

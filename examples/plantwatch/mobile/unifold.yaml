@@ -1,7 +1,14 @@
-summary: Phone app that collects readings from sensor sticks, shows the plants and relays data to the server
+responsibility: Phone app that collects readings from sensor sticks, shows the plants and relays data to the server
 kind: app
 status: planned
 owner: app team
+not:
+  - deciding whether a plant needs attention; the app shows the alerts it receives: cloud-api
+  - delivering and displaying notifications; the operating system shows them: push-service
+  - accounts with passwords; an owner is whoever holds a token of that owner, and a second phone joins through a code shown on the first
+  - history older than 90 days
+  - updating the software of a sensor stick
+  - layouts for tablets, watches or desktop computers
 capabilities:
   app-ui:
     kind: ui
@@ -28,3 +35,13 @@ wiring:
   ble-client.sensor-link: sensor-link
   sync.cloud-api: cloud-api
   ui.push-service: push-service
+scenarios:
+  change-a-threshold-offline:
+    summary: The owner changes a threshold without a network connection, and the change reaches the server later
+    source: decision 0001 of mobile
+    hops:
+      - app-ui -> ui.edit-plant
+      - ui -> sync.change-plant
+      - ui -> sync.plant
+      - sync -> cloud-api.put-plant
+    expect: the screen shows the new value within 1 second, marked "not yet sent"; until the server has the new threshold, alerts follow the old one; after the next exchange the plant is `in step` and the mark is gone

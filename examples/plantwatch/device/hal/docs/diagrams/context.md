@@ -8,10 +8,10 @@
 ```mermaid
 flowchart LR
   subgraph u_device["device"]
-    u_device__hal["hal"]
-    u_device__link["link"]
-    u_device__sampling["sampling"]
-    u_device__store["store"]
+    u_device__hal["hal (adapter)"]
+    u_device__link["link (library)"]
+    u_device__sampling["sampling (library)"]
+    u_device__store["store (library)"]
   end
   n_device___ambient_dsensor{{"ambient-sensor"}}
   n_device___soil_dprobe{{"soil-probe"}}
@@ -28,25 +28,25 @@ flowchart LR
   class u_device__hal focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [hal](../../README.md) | library | Hardware abstraction of the sensor stick board | **planned** | [context](context.md) |
+| [hal](../../README.md) | adapter | Hardware abstraction of the sensor stick board | **planned** | [context](context.md) |
 | [link](../../../link/README.md) | library | Implements the BLE profile on top of the radio | **planned** | [context](../../../link/docs/diagrams/context.md) |
 | [sampling](../../../sampling/README.md) | library | Takes a calibrated reading at every sampling interval | **planned** | [context](../../../sampling/docs/diagrams/context.md) |
 | [store](../../../store/README.md) | library | Keeps readings on the sensor stick until they have been delivered | **planned** | [context](../../../store/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| soil-probe | hardware | [contract](../../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root | | |
-| ambient-sensor | hardware | [contract](../../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root | | |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| soil-probe | hardware | [contract](../../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root | |
+| ambient-sensor | hardware | [contract](../../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| sensor-io | library | [contract](../../../docs/references/sensor-io.md) |  | [device/sampling](../../../sampling/README.md) (planned) | sensor-io |
-| radio | library | [contract](../../../docs/references/radio.md) |  | [device/link](../../../link/README.md) (planned) | radio |
-| flash | library | [contract](../../../docs/references/flash.md) |  | [device/store](../../../store/README.md) (planned) | flash |
-| timer | library | [contract](../../../docs/references/timer.md) |  | [device/sampling](../../../sampling/README.md) (planned) | timer |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| sensor-io | library | [contract](../../../docs/references/sensor-io.md) | [device/sampling](../../../sampling/README.md) (planned) | sensor-io |
+| radio | library | [contract](../../../docs/references/radio.md) | [device/link](../../../link/README.md) (planned) | radio |
+| flash | library | [contract](../../../docs/references/flash.md) | [device/store](../../../store/README.md) (planned) | flash |
+| timer | library | [contract](../../../docs/references/timer.md) | [device/sampling](../../../sampling/README.md) (planned) | timer |

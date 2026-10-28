@@ -39,24 +39,50 @@ Says: a public operation keeps its path and requires `X-Owner-Id`; an internal o
 
 Here: the two groups of operations of `plants-api`, and its health check.
 
-### [cloud: public API, plants](../../../../../docs/references/public-api/plants.md)
-<!-- unifold:cites sha=5aad3303 -->
+### [cloud: public API, plants](../../../../../docs/references/public-api/plant.md)
+<!-- unifold:cites sha=66992485 -->
 
 Says, as the contract that this unit implements:
 
 - A plant has `id`, `name` (1 to 60 characters), an optional `sensor_id`, optional `thresholds` with `min`, `max` or both per quantity, and the server fields `latest_reading`, `created_at` and `updated_at`.
-- `PUT /v1/plants/{plant_id}` creates or replaces all client fields; `GET` reads one plant or lists all; `DELETE` removes the plant with its history and answers `204` also when the plant does not exist.
 - A sensor stick is attached to at most one plant across all owners.
-- `GET /v1/plants/{plant_id}/history` returns items in ascending order of time with the resolutions `raw` (90 days), `hour` and `day` (2 years). An aggregate has `start`, `count` and `min`, `mean`, `max` per quantity.
 
-Here: the contract of the operations for an owner. `plants` serves them exactly as defined.
+Here: the plant as `plants` stores and returns it; `list-plants` and `get-plant` of the same contract return it as it is.
+
+### [cloud: public API, put a plant](../../../../../docs/references/public-api/put-plant.md)
+<!-- unifold:cites sha=cb997ef6 -->
+
+Says: `PUT /v1/plants/{plant_id}` creates the plant or replaces all its client fields; a field absent in the body is removed; the history stays. `400` for a threshold out of range or `min` not below `max`; `409` `sensor_already_attached` and `409` `plant_limit_reached` at the 51st plant.
+
+Here: `plants` serves it exactly as defined, as one transaction.
+
+### [cloud: public API, delete a plant](../../../../../docs/references/public-api/delete-plant.md)
+<!-- unifold:cites sha=d5590cd0 -->
+
+Says: `DELETE` removes the plant and its history, detaches the sensor stick, and answers `204` also when the plant does not exist.
+
+Here: `plants` also deletes the aggregates of the plant.
+
+### [cloud: public API, history](../../../../../docs/references/public-api/get-history.md)
+<!-- unifold:cites sha=a522b196 -->
+
+Says: `GET /v1/plants/{plant_id}/history` returns items in ascending order of time with the resolutions `raw` (90 days), `hour` and `day` (2 years). An aggregate has `start`, `count` and `min`, `mean`, `max` per quantity. A late reading changes the aggregates of its hour and day.
+
+Here: what `plants` stores and how long; [data model](../references/data-model.md) says how.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=d259494b -->
+<!-- unifold:cites sha=81a51124 -->
 
-Says, as part of the same contract: an error has the body `{"code", "message"}`; the codes include `not_found`, `sensor_already_attached`, `plant_limit_reached` and `unavailable`. A change to a plant is visible to the next request. An owner has at most 50 plants; a page has at most 1 000 items.
+Says, as part of the same contract: a change to a plant is visible to the next request. An owner has at most 50 plants; a page has at most 1 000 items.
 
-Here: the errors, the limits and the consistency of `plants-api`.
+Here: the limits and the consistency of `plants-api`.
+
+### [cloud: public API, errors](../../../../../docs/references/public-api/error.md)
+<!-- unifold:cites sha=6973d698 -->
+
+Says: an error has the body `{"code", "message"}`; the codes include `invalid_request`, `not_found`, `sensor_already_attached`, `plant_limit_reached` and `unavailable`.
+
+Here: the errors of `plants-api`.
 
 ## From plantwatch
 

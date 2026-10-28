@@ -1,6 +1,15 @@
-summary: Registry of plants with their sensors, thresholds and reading history
+responsibility: Registry of plants with their sensors, thresholds and reading history
 kind: service
 status: planned
+secret:
+  what: how the history of a plant is stored and aggregated
+  decision: docs/decisions/0001-raw-readings-for-90-days-hourly-aggregates-for-2-years.md
+not:
+  - accepting or validating uploaded readings
+  - deciding whether a plant needs attention; plants stores thresholds and compares nothing with them
+  - threshold presets and plant species
+  - knowing owners beyond their identifier; plants trusts the owner id it is given
+  - telling anybody that a plant changed; others ask when they need to know
 capabilities:
   plants-api:
     kind: http

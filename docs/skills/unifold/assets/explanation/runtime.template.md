@@ -1,14 +1,27 @@
 # Runtime of <folder-name>
 
-<Scenarios that cross several parts and that no single part can tell: a sequence, a state machine, the order of a start. Mermaid, drawn by hand.>
+<How this unit behaves while it runs. A story that walks through several units is a scenario in the manifest, where it is checked and drawn; here is what one unit does over time.>
 
-## <Scenario>
+## States
 
-<One sentence: what the picture shows and which parts appear.>
+| State | Enters when | Leaves when | To |
+|---|---|---|---|
+| <state> | <event> | <event> | <state> |
 
 ```mermaid
-sequenceDiagram
-    participant A as <part>
-    participant B as <part>
-    A->>B: <message>
+stateDiagram-v2
+    [*] --> <state>
+    <state> --> <other-state>: <event>
 ```
+
+## Start and stop
+
+<What happens at start, in order, and what a stop leaves behind.>
+
+## Timing and limits
+
+<Timeouts and deadlines by constant name, concurrency, how much the unit holds at most.>
+
+## Failure
+
+<What the unit does when something fails: which state it falls back to, what it reports.>

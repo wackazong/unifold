@@ -1,6 +1,15 @@
-summary: Takes a calibrated reading at every sampling interval
+responsibility: Takes a calibrated reading at every sampling interval
 kind: library
 status: planned
+secret:
+  what: the calibration from raw values to percent, lux and degrees
+  decision: docs/decisions/0001-calibrate-per-probe-type-not-per-board.md
+not:
+  - keeping readings; a reading that no subscriber keeps is gone
+  - sending readings anywhere
+  - changing the sampling interval after start
+  - smoothing over several readings; every reading stands for one moment
+  - judging whether a value is good or bad for a plant
 capabilities:
   readings:
     kind: library

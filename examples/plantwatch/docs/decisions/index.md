@@ -3,7 +3,7 @@
 
 [README.md](../../README.md) · [AGENTS.md](../../AGENTS.md)
 
-Only accepted decisions bind.
+Accepted and derived decisions bind.
 
 | No. | Decision | Status | Date |
 |---|---|---|---|

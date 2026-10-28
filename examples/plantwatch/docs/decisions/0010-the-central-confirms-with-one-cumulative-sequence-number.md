@@ -59,4 +59,4 @@ Chosen option: "confirm explicitly with one number", because it separates readin
 ## More Information
 
 The procedure is defined in
-[procedures.md](../references/ble-profile/procedures.md).
+[confirm.md](../references/ble-profile/confirm.md).

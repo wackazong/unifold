@@ -1,6 +1,16 @@
-summary: Screens of the phone app
-kind: library
+responsibility: Screens of the phone app
+kind: adapter
 status: planned
+secret:
+  what: the screens and the ways between them
+  decision: docs/decisions/0001-the-plant-list-is-home-and-alerts-have-no-screen-of-their-own.md
+not:
+  - fetching readings from sensor sticks
+  - storing data and exchanging data with a server: plant-data
+  - deciding whether a plant needs attention
+  - composing or delivering notifications: push-service
+  - layouts for landscape, tablets or watches
+  - units other than percent, lux and degrees Celsius
 capabilities:
   app-ui:
     kind: ui
@@ -10,7 +20,7 @@ needs:
   plant-data:
     kind: library
     summary: Plants, history and alerts, readable offline and updated when they change
-    contract: ../docs/references/plant-data.md
+    contract: ../docs/references/plant-data/index.md
   pairing:
     kind: library
     summary: Finds a new sensor stick nearby and binds it to this phone
@@ -18,4 +28,9 @@ needs:
   push-service:
     kind: http
     summary: Registers this phone for the notifications of an owner and delivers them to it
-    contract: ../../docs/references/push-service.md
+    contract:
+      path: ../../docs/references/push-service.md
+      parts:
+        - register
+        - end-registration
+        - deliver

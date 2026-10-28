@@ -1,7 +1,12 @@
-summary: Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE
+responsibility: Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE
 kind: firmware
 status: planned
 owner: firmware team
+not:
+  - wall-clock time; the firmware counts ticks and never knows the date
+  - judging a reading; the firmware knows no plant and no threshold
+  - any radio other than BLE, and the role of a central
+  - updating itself
 capabilities:
   ble-link:
     kind: protocol

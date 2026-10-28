@@ -8,9 +8,9 @@
 ```mermaid
 flowchart LR
   subgraph u_root["plantwatch"]
-    u_emulator["emulator"]
-    u_mobile["mobile"]
-    u_test_drig["test-rig"]
+    u_emulator["emulator (tool)"]
+    u_mobile["mobile (app)"]
+    u_test_drig["test-rig (test)"]
   end
   u_mobile -.->|"sensor-link → ble-link (simulated)"| u_emulator
   u_test_drig -.->|"device-under-test → ble-link (simulated)"| u_emulator
@@ -23,7 +23,7 @@ flowchart LR
   class u_emulator focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [emulator](../../README.md) | tool | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | **planned** | [context](context.md) |
 | [mobile](../../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../../mobile/docs/diagrams/component.md) |
@@ -31,8 +31,8 @@ flowchart LR
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) |  | [mobile/ble-client](../../../mobile/ble-client/README.md) (planned) (simulated) | sensor-link |
-| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) |  | [test-rig](../../../test-rig/README.md) (planned) (simulated) | device-under-test |
-| scenario-control | http | [contract](../../../docs/references/scenario-control.md) |  | [test-rig](../../../test-rig/README.md) (planned) | scenario-control |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [mobile/ble-client](../../../mobile/ble-client/README.md) (planned) (simulated) | sensor-link |
+| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [test-rig](../../../test-rig/README.md) (planned) (simulated) | device-under-test |
+| scenario-control | http | [contract](../../../docs/references/scenario-control/index.md) | [test-rig](../../../test-rig/README.md) (planned) | scenario-control |

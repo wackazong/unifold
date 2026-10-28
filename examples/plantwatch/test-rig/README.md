@@ -30,13 +30,6 @@ Without it the rig runs in the configuration `real`: it skips every test that ne
 
 The rig uses a token of an owner that exists for testing only. It removes every plant of this owner at the start of a run, creates the plants it needs, and removes them at the end.
 
-## Out of scope
-
-- Tests of a single part. Each part tests itself.
-- What happens on a phone: screens, background fetching, the arrival of a notification. The rig observes the alert, not the message about it.
-- Load, endurance and energy measurements.
-- Starting or deploying what it tests. Device and API exist before a run.
-
 ## Read next
 
 1. [docs/references/test-catalogue.md](docs/references/test-catalogue.md): the promises under test

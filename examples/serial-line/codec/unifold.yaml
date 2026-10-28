@@ -1,0 +1,13 @@
+responsibility: Encodes a payload into the bytes of a frame and decodes a frame from bytes
+kind: logic
+status: planned
+secret:
+  what: the frame layout and its checksum
+  decision: docs/decisions/0001-a-frame-is-magic-length-payload-and-crc.md
+not:
+  - cutting a byte stream into frames
+  - the meaning of a payload
+capabilities:
+  frames:
+    summary: Encode a payload into a frame, decode a frame from bytes
+    contract: ../docs/references/frames.md

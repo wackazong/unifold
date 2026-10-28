@@ -24,6 +24,8 @@ The first is **wiring by the parent with a completeness rule**. A unit states ne
 
 The second is the pair of **context file and direction rules** ([0003](../decisions/0003-allow-upward-links-only-in-context.md)). Hierarchical documentation usually lets children inherit silently from parents, which makes a child impossible to understand alone. unifold keeps the hierarchy and makes the inheritance explicit in one file per unit, with a stamp that shows when a restatement is stale ([0026](../decisions/0026-stamp-every-restatement-with-a-hash-of-its-source.md)).
 
+The third is **scenarios as checked declarations** ([0069](../decisions/0069-declare-scenarios-with-hops-across-levels.md)). A story of the system is written as hops, each a call from a unit to a part of a contract, and the checker resolves every hop against the wiring and the contracts. A story that needs a connection nobody declared is an error; a connection that no story uses is a warning; and the sequence diagram is generated, so it cannot disagree with the map. Sequence diagrams exist in every architecture method; here they are derived from declarations that a tool checks, across levels of the tree.
+
 ## Three principles
 
 1. **The folder is the unit.** Units are folders of the real code layout, and a unit holds code. unifold adds no folders of its own except `docs/`. Something that several units share, such as a protocol definition, is a document in the references of the unit above them, which every side names as its contract.
@@ -36,12 +38,13 @@ The second is the pair of **context file and direction rules** ([0003](../decisi
 |---|---|
 | A port that the application provides | An entry of `capabilities` |
 | A port that the application requires, in its own terms | An entry of `needs`. It names the contract that it and its provider share. |
-| Adapter | A unit that needs one thing and provides another, usually of a different `kind` |
+| Adapter | A unit of kind `adapter`: the one unit that talks to one external system, a need of the root ([0066](../decisions/0066-three-well-known-kinds-with-rules.md)) |
+| Pure domain logic | A unit of kind `logic`: no input or output, no memory between calls; time and randomness arrive as parameters, so its tests need no fake |
 | Composition root | The `wiring` of the parent |
-| Test double | Another provider for the same need, as a named alternative |
+| Test double | The `## Fake` of a contract: a replay of its examples, or a simplified behaviour with faults, defined where both sides see it; or another provider as a named alternative |
 | Two adapters for one port | Capabilities that name the same contract |
 
-A unit that holds rules of the domain names its needs in the words of the domain. If such a need is met behind a network or a device, an adapter unit stands in between ([wiring](wiring.md)).
+A unit that holds rules of the domain names its needs in the words of the domain. If such a need is met behind a network or a device, an adapter unit stands in between ([wiring](wiring.md)). The three well-known kinds make this checkable: a `logic` unit reaches no need of the root, and a need of the root is reached only by adapters, unless it is a `platform` service such as a clock.
 
 ## Domain-driven design
 
@@ -59,7 +62,7 @@ A unit that holds rules of the domain names its needs in the words of the domain
 
 | Principle | Where it shows |
 |---|---|
-| Single responsibility | `## Why` in `README.md` states the one reason the unit exists. A summary that needs "and" to join unrelated things suggests a split. |
+| Single responsibility | `responsibility` states the one thing the unit is responsible for, and `secret` the one piece of knowledge it hides ([0067](../decisions/0067-declare-the-secret-and-the-not-of-a-unit.md)); `## Why` gives the reasons. A responsibility that needs "and" to join unrelated things suggests a split. |
 | Open for extension | New behaviour arrives as a new unit or a new provider. The wiring changes; the users do not. |
 | Substitution | Every alternative meets all that the need expects. |
 | Interface segregation | Several narrow capabilities instead of one that every user depends on in full. |
@@ -69,9 +72,9 @@ A unit that holds rules of the domain names its needs in the words of the domain
 ## Test first
 
 - A guarantee names something that can be observed. "Fast" is not a guarantee; "answers within 200 ms for a batch of 500" is.
-- A contract contains examples: inputs with expected results. They become the first tests.
-- `verified-by` points at the tests that hold a unit to a contract. It is honest to leave it out. It is not honest to point it at something that does not test the capability.
-- The order of work for a new capability is: example in the contract, failing test, code, then `status: active`.
+- A contract contains examples per part: inputs with expected results. They become the first tests of the provider, and they are the whole behaviour of a replay fake ([0068](../decisions/0068-give-a-contract-a-body-with-parts-and-a-fake.md)).
+- A scenario becomes an integration test: the real units wired together, fakes only at the needs of the root, and `expect` says what the test asserts.
+- The order of work for a new capability is: example in the contract, failing test, code, then `status: active`. A pointer to tests was removed ([0071](../decisions/0071-remove-verified-by.md)): nothing ran it.
 
 ## Why three ways in for agents
 

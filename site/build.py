@@ -51,14 +51,15 @@ TUT = ROOT / "docs" / "tutorials"
 CHAPTERS = [
     ("spec", REF / "spec.md", "The standard", "The whole standard on one page: manifest, wiring, documents, what a checker guarantees.", "Standard"),
     ("documents", REF / "documents.md", "Documents", "The files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, where a file may point.", "Reference"),
-    ("writing", REF / "writing.md", "Writing", "How each document is written: context items, decisions, references, skills, tutorials, explanation files, the review checklist.", "Reference"),
+    ("writing", REF / "writing.md", "Writing", "How each document is written: context items, decisions, references, contracts, skills, tutorials, explanation files, the review checklist.", "Reference"),
+    ("contracts", REF / "contracts.md", "Contracts", "The one document of a connection: parts with signatures and examples, the fake, folders, the template.", "Reference"),
     ("agents", REF / "agents.md", "Agents", "How coding agents find and use unifold, per agent.", "Reference"),
     ("tool", REF / "tool.md", "Tool", "The reference tool: commands, output, hooks, continuous integration.", "Reference"),
     ("tool-json", REF / "tool-json.md", "Tool JSON", "The JSON that the reference tool prints.", "Reference"),
     ("rules", REF / "rules.md", "Rules", "Every finding the reference tool reports.", "Reference"),
     ("requirements", EXPL / "requirements.md", "Requirements", "What the standard must achieve, for which repositories it fits, where the value is.", "Explanation"),
     ("reasoning", EXPL / "reasoning.md", "Reasoning", "Where the parts come from, what unifold adds, the design ideas behind it, Diátaxis and arc42.", "Explanation"),
-    ("wiring", EXPL / "wiring.md", "Wiring", "Wiring in practice: names, passing needs up, several children on one provider, alternatives, adapters, services.", "Explanation"),
+    ("wiring", EXPL / "wiring.md", "Wiring", "Wiring in practice: names, passing needs up, several children on one provider, alternatives, adapters, the kinds of units, scenarios, services.", "Explanation"),
     ("invariants", EXPL / "invariants.md", "Invariants", "What is true of the standard, the skills and the tool at every moment.", "Explanation"),
     ("risks", EXPL / "risks.md", "Risks", "Risks and known limits of the standard.", "Explanation"),
     ("first-map", TUT / "first-map.md", "Your first map", "A tutorial: a root manifest, two units, a connection, the first diagram, documents for one unit.", "Tutorial"),
@@ -809,7 +810,7 @@ def build() -> None:
         if not need.exists():
             die(f"{need.relative_to(ROOT)} is missing.")
 
-    version = "0.2"
+    version = "0.3"
     for name in ("unifold.yaml",):
         f = ROOT / name
         if f.exists():

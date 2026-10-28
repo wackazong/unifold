@@ -51,7 +51,7 @@ Here: the form of `sensor_id` and the range of `first_sequence_number` in a scen
 
 Says: bodies are JSON in UTF-8 with lower-case field names with underscores. An error has `code` and `message`. A request that repeats an earlier successful request succeeds again.
 
-Here: the form of the [scenario-control API](../../../docs/references/scenario-control.md). Requests name absolute targets, so that a repetition changes nothing.
+Here: the form of the [scenario-control API](../../../docs/references/scenario-control/index.md). Requests name absolute targets, so that a repetition changes nothing.
 
 ### [plantwatch: glossary](../../../docs/references/glossary.md)
 <!-- unifold:cites sha=082ae761 -->

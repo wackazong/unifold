@@ -1,5 +1,5 @@
 ---
-status: rejected
+status: superseded by 0073
 date: 2026-10-24
 decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---

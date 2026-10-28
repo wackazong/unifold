@@ -8,9 +8,9 @@
 ```mermaid
 flowchart LR
   subgraph u_root["plantwatch"]
-    u_cloud["cloud"]
-    u_mobile["mobile"]
-    u_test_drig["test-rig"]
+    u_cloud["cloud (system)"]
+    u_mobile["mobile (app)"]
+    u_test_drig["test-rig (test)"]
   end
   n_root___push_dservice{{"push-service"}}
   n_root___container_dhost{{"container-host"}}
@@ -26,7 +26,7 @@ flowchart LR
   class u_cloud focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [cloud](../../README.md) | system | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](component.md) |
 | [mobile](../../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../../mobile/docs/diagrams/component.md) |
@@ -34,14 +34,14 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| push-service | http | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
-| container-host | infrastructure | [contract](../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root | | |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| push-service | http | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
+| container-host | infrastructure | [contract](../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| public-api | http | [contract](../../../docs/references/public-api/index.md) |  | [mobile/sync](../../../mobile/sync/README.md) (planned) | cloud-api |
-| public-api | http | [contract](../../../docs/references/public-api/index.md) |  | [test-rig](../../../test-rig/README.md) (planned) | cloud-api |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| public-api | http | [contract](../../../docs/references/public-api/index.md) | [mobile/sync](../../../mobile/sync/README.md) (planned) | cloud-api |
+| public-api | http | [contract](../../../docs/references/public-api/index.md) | [test-rig](../../../test-rig/README.md) (planned) | cloud-api |

@@ -1,6 +1,13 @@
-summary: Decides when a plant needs attention and notifies its owner once
+responsibility: Decides when a plant needs attention and notifies its owner once
 kind: service
 status: planned
+not:
+  - storing thresholds or plants; alerts asks for them: plants-api
+  - storing readings or history
+  - reminders; an alert that stays open sends nothing more
+  - alerts about missing data, such as a sensor stick that has gone silent
+  - acknowledging or closing an alert by hand
+  - choosing which phones get a notification: push
 capabilities:
   alerts-api:
     kind: http
@@ -37,3 +44,18 @@ wiring:
   server.event-bus: event-bus
   server.reading-events: reading-events
   server.sql-db: sql-db
+scenarios:
+  handle-a-reading:
+    summary: One reading event is judged, the alerts it causes are stored, and an opened alert is notified
+    source: decisions 0001 and 0002 of alerts
+    hops:
+      - server -> event-bus.deliver
+      - server -> reading-events.reading-accepted
+      - server -> sql-db.transaction
+      - server -> rules.evaluate
+      - rules -> plant-lookup.lookup
+      - plant-lookup -> plants-api.lookup-by-sensor
+      - server -> event-bus.commit
+      - server -> notifier.notify
+      - notifier -> push.send
+    expect: the alerts to open and close and the new evaluation state are stored in one transaction, then the event is confirmed; for an opened alert one notification is handed to the push service and the alert's notification becomes `sent`, also after a restart, since the delivery step is not tied to the event

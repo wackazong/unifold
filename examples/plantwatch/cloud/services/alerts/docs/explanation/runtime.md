@@ -36,38 +36,6 @@ The first diagram is the state of the alert, the second the state of its notific
 
 ## Handling one reading
 
-The sequence shows the direct children of `alerts` and its needs.
+The scenario [handle-a-reading](../diagrams/scenario-handle-a-reading.md) follows one reading event through the direct children of `alerts` and its needs: `server` reads the evaluation state, `rules` judges the reading with the thresholds that `plant-lookup` fetches, `server` stores the alerts and the new state in one transaction and confirms the event, and `notifier` hands the notification of an opened alert to the push service.
 
-```mermaid
-sequenceDiagram
-    participant B as event-bus
-    participant S as server
-    participant R as rules
-    participant L as plant-lookup
-    participant P as plants-api
-    participant D as sql-db
-    participant N as notifier
-    participant U as push
-    B->>S: reading event
-    S->>D: read evaluation state of the sensor stick
-    S->>R: evaluate(reading, state)
-    R->>L: lookup(sensor id)
-    opt plant-lookup has to ask the registry
-        L->>P: lookup by sensor id
-        P-->>L: plant, owner, thresholds
-    end
-    L-->>R: attached, with plant, owner, thresholds
-    R-->>S: plant, alerts to open or close, new state
-    S->>D: store alerts and new state in one transaction
-    D-->>S: committed
-    S->>B: confirm event
-    opt an alert was opened
-        S->>N: notify(alert)
-        N->>U: notification
-        U-->>N: taken
-        N-->>S: sent
-        S->>D: notification = sent
-    end
-```
-
-The last block, notifying, is not tied to the event. It runs for every stored alert whose notification is pending, also after a restart.
+The last step, notifying, is not tied to the event. It runs for every stored alert whose notification is pending, also after a restart.

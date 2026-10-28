@@ -18,6 +18,7 @@ documents where they belong, the generated files current.
   capability PATH NAME        both ends of every connection of one entry
   impact PATH [CAPABILITY]    everything that depends on a unit or capability
   tree [PATH]                 the unit tree
+  model [PATH]                the resolved project as JSON, with a stable schema
   stamp [PATH]                confirm context items: write and refresh their stamps
   cited-by FILE               context items and links that cite FILE
   skills [sync] [PATH]        list skills, or write stubs where agents look for them
@@ -46,8 +47,9 @@ except ImportError:                                   # pragma: no cover
                      "`uv run unifold.py`, or install PyYAML (python3 -m pip install pyyaml).\n")
     sys.exit(2)
 
-TOOL_VERSION = "0.2"
-SPEC_VERSIONS = ("0.2",)
+TOOL_VERSION = "0.3"
+SPEC_VERSIONS = ("0.3",)
+MODEL_VERSION = "0.3"
 SITE_URL = "https://unifold.md"
 MANIFEST = "unifold.yaml"
 MAX_LINES = 200
@@ -76,7 +78,7 @@ README_TEMPLATE = """# <folder-name>
 
 ## Why
 
-<Why this unit exists and why it is cut this way: the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them.>
+<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them.>
 
 ## Capabilities
 
@@ -94,10 +96,6 @@ README_TEMPLATE = """# <folder-name>
 
 <Only what the contract does not say: what this unit expects beyond it, never who supplies it. For an optional need: what the unit does without it.>
 
-## Out of scope
-
-- <What this unit deliberately does not do, so that nobody asks for it here.>
-
 ## Commands
 
 <!-- Optional: the few commands to build, test and run this unit. Delete the section otherwise. -->
@@ -107,12 +105,20 @@ README_TEMPLATE = """# <folder-name>
 <!-- Optional: a few links into docs/ whose order matters. Delete the section otherwise. -->
 """   # the same text as the skill asset assets/README.template.md
 ROOT_KEYS = ("unifold", "name", "ignore", "diagrams", "diagram-links", "max-lines")
-UNIT_KEYS = ("summary", "kind", "status", "owner", "capabilities", "needs", "wiring")
-CAPABILITY_KEYS = ("summary", "kind", "contract", "verified-by")
-NEED_KEYS = ("summary", "kind", "contract", "verified-by", "optional")
+UNIT_KEYS = ("responsibility", "kind", "status", "owner", "secret", "not", "capabilities", "needs", "wiring",
+             "scenarios")
+CAPABILITY_KEYS = ("summary", "kind", "contract")
+NEED_KEYS = ("summary", "kind", "contract", "optional", "platform")
+SCENARIO_KEYS = ("summary", "source", "hops", "expect")
 STATUSES = ("planned", "active", "deprecated")
+WELL_KNOWN_KINDS = ("logic", "stateful", "adapter")
+PART_KINDS = ("command", "query", "event", "type")
 DIAGRAM_MODES = ("parents", "all", "none")
-DECISION_STATUS = re.compile(r"^(proposed|accepted|rejected|deprecated|superseded by (\d{4}))$")
+DECISION_STATUS = re.compile(r"^(proposed|accepted|rejected|deprecated|derived|superseded by (\d{4}))$")
+HOP = re.compile(r"^\s*(\S.*?)\s*->\s*(\S.*?)\s*$")
+PART_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+CONSTANT_PATTERN = r"\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b"
+FIELD_LINE = re.compile(r"^(Kind|Pre|Result|Errors|Examples):\s*(.*?)\s*$")
 DECISION_FILE = re.compile(r"^(\d{4})-[a-z0-9][a-z0-9-]*\.md$")
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ENTRY_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
@@ -129,26 +135,28 @@ FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 TABLE_RULE = re.compile(r"^\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?$")
 ATX = re.compile(r"^ {0,3}(#{1,6})(?:\s+(.*?))?\s*#*\s*$")
 
-# rule id: (severity, what the rule demands, how to fix a finding)
+# rule id: (severity, what the rule demands, how to fix a finding); the same table as docs/references/rules.md
 RULES = {
-    "S1": ("error", "The root manifest states a version of the standard that this tool supports, as a string.",
-           "Write `unifold: \"0.2\"` in the root `unifold.yaml`."),
+    "S1": ("error", "The root manifest states `unifold: \"0.3\"`, as a string.",
+           "Write `unifold: \"0.3\"` in the root `unifold.yaml`. A 0.2 project is rewritten by hand: `summary` of a unit becomes `responsibility`, `verified-by` goes, a unit with children gets a `kind`."),
     "S3": ("error", "Every unit has a `README.md`.",
            "Write the file (the template is in the `unifold` skill)."),
     "S7": ("error", "Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`.",
            "Correct the front matter."),
-    "S9": ("error", "A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has a valid `status` and an ISO `date`; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision.",
-           "Correct the file name or the front matter."),
+    "S9": ("error", "A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has an ISO `date` and a `status` that is proposed, accepted, rejected, deprecated, superseded by NNNN, or derived; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision; `derived` has `derived-from` and a section `## Source says`.",
+           "Correct the file name or the front matter; give a derived decision the passage it rests on."),
     "S12": ("info", "Every entry directly in `docs/` is one of `tutorials`, `skills`, `references`, `explanation`, `decisions`, `diagrams`.",
-            "Move the file or folder into the folder of its kind: tutorials (learn), skills (do), references (look up), explanation (understand)."),
+           "Move the file or folder into the folder of its kind: tutorials (learn), skills (do), references (look up), explanation (understand)."),
     "M1": ("error", "A manifest is a YAML mapping without duplicate keys.",
            "Correct the YAML. The unit and its wiring are not checked until it parses."),
-    "M2": ("error", "A manifest has a one-line `summary` and otherwise only the keys, types and values of the standard; root-only keys are in the root; names of capabilities and needs use letters, digits, `-` and `_` and start with a letter or digit; no summary is a placeholder (`<...>`).",
-           "Correct the key or value named in the message. Project-specific keys start with `x-`."),
-    "M7": ("error", "`contract` is a path, relative to the manifest, to a Markdown file that exists in `docs/references/` of this unit or of an ancestor. `verified-by` is a URL or a path, relative to the manifest, that exists and lies in this unit, an ancestor or a descendant.",
+    "M2": ("error", "A manifest has a one-line `responsibility` and otherwise only the keys, types and values of the standard; a unit with children below the root states a `kind`; root-only keys are in the root; `platform` stands on a need of the root only; `contract` is a path or a mapping with `path` and `parts`; names of capabilities, needs and scenarios use letters, digits, `-` and `_` and start with a letter or digit; no text is a placeholder (`<...>`).",
+           "Correct the key or value named in the message. `summary` of a unit is `responsibility` since 0.3. Project-specific keys start with `x-`."),
+    "M7": ("error", "`contract` is a path, relative to the manifest, to a Markdown file that exists in `docs/references/` of this unit or of an ancestor.",
            "Write the contract as `docs/references/<topic>.md` of the unit that wires the connection, and name it from both sides. A schema file is not a contract, and a definition from outside the project is linked from the reference by its URL. Otherwise correct the path, create the file, or remove the key until there is something to point at."),
-    "M10": ("warn", "No summary is still `TODO`.",
-            "Replace `TODO` with one line that says what the unit, capability or need is."),
+    "M10": ("warn", "No responsibility or summary is still `TODO`.",
+           "Replace `TODO` with one line that says what the unit, capability or need is."),
+    "M11": ("error", "Every name under `parts` is a part of the named contract: a `###` heading under `## Parts`, or a file in the contract folder.",
+           "Correct the name, or add the part to the contract."),
     "W1": ("error", "Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A bare key names a capability or a need of the unit, not both. A need of a child is passed up only to a need that the unit does not meet inside, and a need that a child meets inside is not wired again. A connection joins two units; a folder is never a provider.",
            "Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`."),
     "W2": ("error", "Every need of every child is connected by a line in the parent's wiring, unless it is `optional` or the child meets it inside.",
@@ -162,26 +170,56 @@ RULES = {
     "W9": ("warn", "An `active` unit does not get a mandatory need from a provider that is `planned` or `deprecated` (default alternative).",
            "Correct the status, or wire a provider that exists."),
     "W11": ("error", "Every side of a connection names a contract, and both sides name the same document.",
-            "Write the definition as a reference of this unit, the one that holds the wiring, or of a unit above it, and point both sides at it with `contract`."),
+           "Write the definition as a reference of this unit, the one that holds the wiring, or of a unit above it, and point both sides at it with `contract`."),
+    "K1": ("info", "A unit's `kind` is one of the well-known values `logic`, `stateful` and `adapter`.",
+           "Use a well-known kind where one fits; any other value is allowed and carries no rule."),
+    "K2": ("warn", "A `logic` unit is logic throughout: every child is a `logic` unit, and the final provider of every need is a `logic` unit, so no need reaches a need of the root.",
+           "Move the input, output or state the finding names into a `stateful` or `adapter` unit, or change the kind."),
+    "K3": ("warn", "The final provider of no need of an `adapter` is an `adapter`.",
+           "Let both talk to a `stateful` or `logic` unit in between, or merge them: one adapter talks to one external system."),
+    "K4": ("warn", "A need of the root without `platform: true` is finally reached only by `adapter` units. Silent for a unit that states no `kind`.",
+           "Put an adapter between the unit named and the external system, or mark a host service `platform: true`."),
+    "K5": ("error", "`secret` is a mapping with `what`, one line, and `decision`, a path relative to the manifest that exists and is a decision of this unit or of an ancestor.",
+           "Write the decision that says why this is the secret, and point at it."),
+    "K6": ("error", "`not` is a list; an item is a one-line text, or one line mapped to a need of the unit.",
+           "Write each item as text, or as `thing: need` where `need` is a need of this unit."),
+    "N1": ("error", "Every hop resolves to one connection, its part is in that connection's contract, and no name is ambiguous: a name that is both a descendant and a capability or need of the holding unit, or two connections between the same units whose contracts both have the part.",
+           "Wire the connection the hop needs, add the part to the contract, or rename what is ambiguous."),
+    "N2": ("error", "A scenario has `summary`, `hops` (a list of `caller -> target.part`) and `expect`; its name follows the rule for names.",
+           "Complete the scenario."),
+    "N3": ("warn", "Every wiring line of a unit is used by a hop of a scenario that passes through the unit. Silent where no scenario passes through the unit.",
+           "Write the scenario that needs the line, or remove the connection."),
+    "C1": ("warn", "A contract has `## Parts` with at least one part, each with `Kind:` command, query, event or type.",
+           "Write the parts as [writing.md](writing.md#contracts) says."),
+    "C2": ("warn", "A command or query has `Pre:`, `Result:`, `Errors:` and an `Examples:` table with at least one row.",
+           "Complete the part; the examples are the first tests."),
+    "C3": ("warn", "Every part has a fenced code block, its signature.",
+           "Write the signature in the notation the header names."),
+    "C4": ("warn", "A type is defined once within the subtree of the unit that holds the contract.",
+           "Keep one definition and link to it from the other contract."),
+    "C5": ("warn", "A contract has `## Fake`.",
+           "Say what stands in for the contract in the tests of its consumers."),
     "L1": ("error", "The target of every relative link in a hand-written document exists, including its anchor: a heading, or the first cell of a table row.",
            "Correct the link."),
     "L2": ("error", "A relative link stays inside the project, and no link is an absolute path.",
            "Write the link relative to this file; cite things outside the project by full URL."),
-    "L7": ("warn", "`docs/explanation/context.md` cites no decision that is rejected, deprecated or superseded, and an `active` unit cites no decision that is still `proposed`.",
+    "L7": ("warn", "`docs/explanation/context.md` cites no decision that is rejected, deprecated or superseded, and an `active` unit cites no decision that is still `proposed`; `derived` binds.",
            "Cite the successor, or have the decision accepted."),
     "L9": ("warn", "Every item of `docs/explanation/context.md` is a `###` heading with a link, followed by a paragraph that starts with `Says` and one that starts with `Here`.",
            "Complete the item."),
     "L10": ("warn", "Every context item carries a stamp, and the cited part (the file, or the section or table row that the fragment of the link names) has not changed since the stamp was written.",
-            "Read the cited source again, correct `Says`, then run `unifold stamp`. Only `unifold stamp` writes stamps; `check --fix` never does."),
-    "L11": ("warn", "A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract` or `verified-by`. No other link goes sideways or deeper.",
-            "Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`."),
+           "Read the cited source again, correct `Says`, then run `unifold stamp`. Only `unifold stamp` writes stamps; `check --fix` never does."),
+    "L11": ("warn", "A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract`. No other link goes sideways or deeper.",
+           "Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`."),
     "T1": ("warn", "A hand-written document has at most `max-lines` lines (default 200).",
            "Split the file: a reference into parts, the long why into `docs/explanation/reasoning.md`, a procedure into a skill."),
     "T4": ("warn", "The `## Why` section of `README.md` has at most 20 lines that are not blank.",
            "Move the long form to `docs/explanation/reasoning.md`."),
     "T5": ("warn", "A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest.",
            "Rename or remove the section; the manifest is the list of capabilities and needs."),
-    "G1": ("error", "Every generated file exists, is not ignored by git, and equals what the generator writes now; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
+    "T6": ("warn", "Where the unit or an ancestor has `docs/references/constants.md`, every name in a code span of the unit's hand-written documents that matches the table's name pattern is a row of the nearest such table or of one above it. The table has the columns `Name` and `Value` first; the pattern is `name-pattern` in its front matter, by default capitals in at least two words. Fenced blocks are not read. Silent where no table exists.",
+           "Add the row to the constants table, or correct the name."),
+    "G1": ("error", "Every generated file exists, is not ignored by git, and equals what the generator writes now, the scenario diagrams included; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
            "Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command."),
 }
 SEVERITY_ORDER = {"error": 0, "warn": 1, "info": 2}
@@ -473,8 +511,30 @@ class Unit:
         self.name = os.path.basename(path)
         if parent is None:
             self.name = _text(manifest.get("name")) or self.name
-        self.summary = " ".join(_text(manifest.get("summary")).split())
+        self.responsibility = " ".join(_text(manifest.get("responsibility")).split())
         self.kind = _text(manifest.get("kind"))
+        secret = manifest.get("secret")
+        self.secret = {"what": " ".join(_text(secret.get("what")).split()),
+                       "decision": _text(secret.get("decision")) or None} if isinstance(secret, dict) else None
+        self.nots: list = []                    # [(text, need or None)]
+        for item in (manifest.get("not") if isinstance(manifest.get("not"), list) else []):
+            if isinstance(item, str):
+                self.nots.append((" ".join(item.split()), None))
+            elif isinstance(item, dict) and len(item) == 1:
+                text, need = next(iter(item.items()))
+                self.nots.append((" ".join(str(text).split()), str(need) if need is not None else ""))
+        self.scenarios: dict = {}               # name -> {summary, source, expect, hops: [raw], x: {}}
+        raw = manifest.get("scenarios")
+        if isinstance(raw, dict):
+            for name, spec in raw.items():
+                spec = spec if isinstance(spec, dict) else {}
+                hops = spec.get("hops")
+                self.scenarios[str(name)] = {
+                    "summary": " ".join(_text(spec.get("summary")).split()),
+                    "source": " ".join(_text(spec.get("source")).split()),
+                    "expect": " ".join(_text(spec.get("expect")).split()),
+                    "hops": [h for h in hops if isinstance(h, str)] if isinstance(hops, list) else [],
+                    "x": {k: v for k, v in spec.items() if isinstance(k, str) and k.startswith("x-")}}
         status = manifest.get("status")
         self.status = status if status in STATUSES else "active"
         self.own_owner = _text(manifest.get("owner"))
@@ -496,12 +556,19 @@ class Unit:
             for name, value in raw.items():
                 spec = {"summary": value} if isinstance(value, str) else \
                     value if isinstance(value, dict) else {}
+                contract, parts = spec.get("contract"), None
+                if isinstance(contract, dict):
+                    raw_parts = contract.get("parts")
+                    parts = [str(x) for x in raw_parts] if isinstance(raw_parts, list) else None
+                    contract = contract.get("path")
                 out[str(name)] = {
                     "summary": " ".join(_text(spec.get("summary")).split()),
                     "kind": _text(spec.get("kind")),
-                    "contract": _text(spec.get("contract")) or None,
-                    "verified-by": _text(spec.get("verified-by")) or None,
-                    "optional": spec.get("optional") is True}
+                    "contract": _text(contract) or None,
+                    "parts": parts,
+                    "optional": spec.get("optional") is True,
+                    "platform": spec.get("platform") is True,
+                    "x": {k: v for k, v in spec.items() if isinstance(k, str) and k.startswith("x-")}}
         return out
 
     @property
@@ -1105,14 +1172,14 @@ def check_manifest(project: Project, unit: Unit):
     def bad(message, *key, fix=None):
         project.add("M2", where, message, lines.get(tuple(key)) if key else None, fix)
 
-    def summary_of(value, label, *key):
+    def summary_of(value, label, *key, field="summary"):
         if not isinstance(value, str) or not value.strip():
-            bad(f"{label} needs a 'summary': one line of text", *key)
+            bad(f"{label} needs a '{field}': one line of text", *key)
         elif "\n" in value.strip():
-            bad(f"the summary of {label} must be one line", *key)
+            bad(f"the {field} of {label} must be one line", *key)
         elif PLACEHOLDER.match(value.strip()):
-            bad(f"the summary of {label} is a placeholder ({value.strip()}); write the "
-                "summary, or `TODO` for a draft", *key)
+            bad(f"the {field} of {label} is a placeholder ({value.strip()}); write the "
+                f"{field}, or `TODO` for a draft", *key)
         elif TODO.match(value.strip()):
             todo.append(label)
 
@@ -1128,14 +1195,24 @@ def check_manifest(project: Project, unit: Unit):
             bad("key 'unit' is not used: the name of a unit is the name of its folder"
                 + (" (the root may set `name`)" if unit.is_root else ""), key,
                 fix="Delete the line.")
+        elif key == "summary":
+            bad("key 'summary' on a unit is 'responsibility' since unifold 0.3: what the unit is "
+                "responsible for, in one sentence", key, fix="Rename the key to `responsibility`.")
         else:
             close = difflib.get_close_matches(key.lower(), ROOT_KEYS + UNIT_KEYS, 1)
             hint = f"; did you mean '{close[0]}'?" if close else ""
             bad(f"unknown key '{key}'{hint}", key)
-    summary_of(manifest.get("summary"), "the unit", "summary")
+    summary_of(manifest.get("responsibility"), "the unit", "responsibility", field="responsibility")
     for key in ("kind", "owner", "name", "diagram-links"):
         if key in manifest and not _text(manifest[key]):
             bad(f"'{key}' must be text, not {show_value(manifest[key])}", key)
+    if unit.children and not unit.is_root and not unit.kind:
+        bad("a unit with children states a `kind`: what the box is to its parent's wiring "
+            "(`logic`, `stateful`, `adapter`, or a word of the project)", fix="Add `kind:` to the manifest.")
+    if unit.kind and unit.kind not in WELL_KNOWN_KINDS:
+        project.add("K1", where, f"kind '{unit.kind}' is not one of {', '.join(WELL_KNOWN_KINDS)}; "
+                                 "no rule applies to it", lines.get(("kind",)))
+    check_unit_fields(project, unit)
     for key, allowed in (("status", STATUSES), ("diagrams", DIAGRAM_MODES)):
         value = manifest.get(key, allowed[0])
         if key in manifest and (not isinstance(value, str) or value not in allowed):
@@ -1176,8 +1253,9 @@ def check_manifest(project: Project, unit: Unit):
                 continue
             summary_of(spec.get("summary"), label, section, name)
             for key, value in spec.items():
-                if isinstance(key, str) and (key in allowed or key.startswith("x-")):
-                    continue
+                if isinstance(key, str) and (key in allowed or key.startswith("x-")
+                                             or key in ("platform", "verified-by")):
+                    continue                          # platform and verified-by are reported below
                 if value is None and isinstance(key, str) and " " in key:
                     bad(f"{label}: '{key}' is read as a key. A comma inside `{{...}}` ends "
                         "the value: quote the summary, or write the entry on separate lines",
@@ -1194,18 +1272,18 @@ def check_manifest(project: Project, unit: Unit):
             if "optional" in spec and not isinstance(spec["optional"], bool):
                 bad(f"{label}: 'optional' must be true or false, not "
                     f"{show_value(spec['optional'])}", section, name, "optional")
-            for field in ("contract", "verified-by"):
-                if field not in spec:
-                    continue
-                value = spec[field]
-                line = lines.get((section, name, field))
-                if not isinstance(value, str) or not value.strip():
-                    bad(f"{label}: '{field}' must be one path or URL, not {show_value(value)}",
-                        section, name, field)
-                    continue
-                problem = path_problem(project, unit, value.strip(), field == "contract")
-                if problem:
-                    project.add("M7", where, f"{label}: '{field}' {problem}: {value.strip()}", line)
+            if "platform" in spec:
+                if not isinstance(spec["platform"], bool):
+                    bad(f"{label}: 'platform' must be true or false, not "
+                        f"{show_value(spec['platform'])}", section, name, "platform")
+                elif section != "needs" or not unit.is_root:
+                    bad(f"{label}: 'platform' is allowed on a need of the root only; it marks a "
+                        "service of the host such as time or randomness", section, name, "platform")
+            if "verified-by" in spec:
+                bad(f"{label}: 'verified-by' was removed in unifold 0.3; nothing ran it", section, name,
+                    "verified-by", fix="Delete the line. The examples of the contract are the tests.")
+            if "contract" in spec:
+                check_contract_key(project, unit, label, spec["contract"], section, name)
     raw = manifest.get("wiring")
     if raw is not None and not isinstance(raw, dict):
         bad(f"'wiring' must be a mapping of need to provider, not {show_value(raw)}", "wiring")
@@ -1213,11 +1291,101 @@ def check_manifest(project: Project, unit: Unit):
         project.add("M2", where, message, line)
     if todo:
         shown = ", ".join(todo[:6]) + (f" and {len(todo) - 6} more" if len(todo) > 6 else "")
-        project.add("M10", where, f"summary still says TODO: {shown}", lines.get(("summary",)))
+        project.add("M10", where, f"TODO instead of a text: {shown}", lines.get(("responsibility",)))
 
 
-def path_problem(project: Project, unit: Unit, value: str, contract: bool = False):
-    """Why a contract or verified-by value is not acceptable, or None."""
+def check_contract_key(project: Project, unit: Unit, label: str, value, section: str, name: str):
+    """`contract` is a path, or a mapping with `path` and `parts` (rules M2, M7, M11)."""
+    where, lines = unit.manifest_path, unit.lines
+    line = lines.get((section, name, "contract"))
+    parts = None
+    if isinstance(value, dict):
+        unknown = [k for k in value if k not in ("path", "parts")]
+        if unknown:
+            project.add("M2", where, f"{label}: 'contract' has the keys `path` and `parts`, not "
+                                     f"'{unknown[0]}'", line)
+        parts = value.get("parts")
+        if parts is not None and (not isinstance(parts, list)
+                                  or not all(isinstance(x, str) and x.strip() for x in parts)):
+            project.add("M2", where, f"{label}: 'parts' must be a list of part names", line)
+            parts = None
+        value = value.get("path")
+    if not isinstance(value, str) or not value.strip():
+        project.add("M2", where, f"{label}: 'contract' must be one path, or a mapping with `path` and "
+                                 f"`parts`, not {show_value(value)}", line)
+        return
+    problem = path_problem(project, unit, value.strip(), True)
+    if problem:
+        project.add("M7", where, f"{label}: 'contract' {problem}: {value.strip()}", line)
+        return
+    if parts:
+        contract = contract_of_path(project, contract_target(project, unit, value.strip())[1])
+        for part in parts:
+            if part not in contract["parts"]:
+                known = ", ".join(contract["parts"]) or "none"
+                project.add("M11", where, f"{label}: part '{part}' is not a part of {project.rel(contract['path'])} "
+                                          f"(its parts: {known})", line)
+
+
+def check_unit_fields(project: Project, unit: Unit):
+    """`secret` (K5) and `not` (K6)."""
+    where, lines, manifest = unit.manifest_path, unit.lines, unit.manifest
+    if "secret" in manifest:
+        secret, line = manifest["secret"], lines.get(("secret",))
+        if not isinstance(secret, dict) or set(secret) - {"what", "decision"} or not secret:
+            project.add("K5", where, "`secret` is a mapping with `what` and `decision`", line)
+        else:
+            what = secret.get("what")
+            if not isinstance(what, str) or not what.strip() or "\n" in what.strip():
+                project.add("K5", where, "`secret.what` is one line of text", lines.get(("secret", "what"), line))
+            decision = secret.get("decision")
+            if not isinstance(decision, str) or not decision.strip():
+                project.add("K5", where, "`secret.decision` is a path to a decision",
+                            lines.get(("secret", "decision"), line))
+            else:
+                problem = decision_problem(project, unit, decision.strip())
+                if problem:
+                    project.add("K5", where, f"`secret.decision` {problem}: {decision.strip()}",
+                                lines.get(("secret", "decision"), line))
+    if "not" in manifest:
+        items, line = manifest["not"], lines.get(("not",))
+        if not isinstance(items, list):
+            project.add("K6", where, f"`not` is a list, not {show_value(items)}", line)
+        else:
+            for item in items:
+                if isinstance(item, str):
+                    if not item.strip() or "\n" in item.strip():
+                        project.add("K6", where, "an item of `not` is one line of text", line)
+                elif isinstance(item, dict) and len(item) == 1:
+                    text, need = next(iter(item.items()))
+                    if not isinstance(need, str) or need not in unit.needs:
+                        project.add("K6", where, f"`not` item '{text}' names '{need}', which is not a need of "
+                                                 f"this unit (needs: {', '.join(unit.needs) or 'none'})", line)
+                else:
+                    project.add("K6", where, "an item of `not` is one line of text, or one line mapped to a "
+                                             f"need of this unit, not {show_value(item)}", line)
+
+
+def decision_problem(project: Project, unit: Unit, value: str):
+    """Why a `secret.decision` path is not acceptable, or None."""
+    if SCHEME.match(value) or os.path.isabs(value):
+        return "must be a path relative to the manifest"
+    target = os.path.normpath(os.path.join(unit.path, value))
+    if not project.inside(target):
+        return "points outside the project"
+    if project.kind_of(target) != "file":
+        return "does not exist"
+    kind, owner = project.owner_of(target)
+    if kind != "unit" or (owner is not unit and owner not in unit.ancestors()):
+        return "is not a decision of this unit or of an ancestor"
+    folder = os.path.join(owner.path, "docs", "decisions") + os.sep
+    if not target.startswith(folder) or not DECISION_FILE.match(os.path.basename(target)):
+        return "is not a file in docs/decisions/ of this unit or of an ancestor"
+    return None
+
+
+def path_problem(project: Project, unit: Unit, value: str, contract: bool = True):
+    """Why a contract value is not acceptable, or None."""
     if SCHEME.match(value) and not re.match(r"^[A-Za-z]:[\\/]", value):
         return "must be a reference in docs/references/, not a URL; the reference links the URL" \
             if contract else None
@@ -1244,7 +1412,7 @@ def path_problem(project: Project, unit: Unit, value: str, contract: bool = Fals
 
 
 def contract_target(project: Project, unit: Unit, value):
-    """(display text, absolute path or None, URL or None) for a contract or verified-by value."""
+    """(display text, absolute path or None, URL or None) for a contract value."""
     if not value:
         return "", None, None
     if SCHEME.match(value):
@@ -1472,19 +1640,28 @@ def decision_info(project: Project, path: str) -> dict:
     meta = doc.meta if isinstance(doc.meta, dict) else {}
     status = meta.get("status")
     date = meta.get("date")
+    answer = next((h for h in doc.headings if h[1] == 2 and h[3] == "answer"), None)
+    answer_empty = None
+    if answer is not None:
+        section = doc.section(answer[3]) or []
+        answer_empty = not any(line.strip() for line in section[1:])
     return {"path": path, "name": os.path.basename(path),
             "title": doc.title() or os.path.basename(path)[:-3],
             "status": " ".join(status.split()) if isinstance(status, str) else "",
             "raw-status": status,
             "date": date.isoformat() if hasattr(date, "isoformat") else str(date or ""),
             "makers": meta.get("decision-makers"), "error": doc.meta_error,
+            "derived-from": " ".join(_text(meta.get("derived-from")).split()) or None,
+            "source-says": any(h[1] == 2 and h[3] == "source-says" for h in doc.headings),
+            "answer": None if answer is None else {"empty": answer_empty},
             "has-meta": doc.meta is not None and bool(meta)}
 
 
 def status_mark(status: str) -> str:
     """How a status that is not in force is shown to readers and agents."""
     return {"planned": "planned: not built yet", "deprecated": "deprecated: to be removed",
-            "proposed": "proposed: not accepted, does not bind"}.get(status, status)
+            "proposed": "proposed: not accepted, does not bind",
+            "derived": "derived: a source settles it; binds until a person accepts it"}.get(status, status)
 
 
 def context_items(doc: Doc) -> list:
@@ -1604,6 +1781,66 @@ def check_documents(project: Project, unit: Unit):
                 break
     if project.kind_of(context) == "file":
         check_context(project, unit, context)
+    check_constants(project, unit)
+
+
+def constants_table(project: Project, unit: Unit):
+    """The nearest docs/references/constants.md of `unit` or an ancestor: (path, names, pattern), or None."""
+    for owner in [unit] + unit.ancestors():
+        path = os.path.join(owner.path, "docs", "references", "constants.md")
+        if project.kind_of(path) == "file":
+            return constants_of(project, path)
+    return None
+
+
+def constants_of(project: Project, path: str):
+    doc = project.doc(path)
+    names, prose = set(), doc.prose
+    for index, (number, line) in enumerate(prose):
+        text = line.strip()
+        if not text.startswith("|") or TABLE_RULE.match(text):
+            continue
+        cells = [c.strip() for c in re.split(r"(?<!\\)\|", text.strip("|"))]
+        if index + 1 < len(prose) and TABLE_RULE.match(prose[index + 1][1].strip()):
+            if len(cells) < 2 or cells[0].strip("`* ").lower() != "name" or cells[1].strip("`* ").lower() != "value":
+                return None                     # another table: not a constants table
+            continue
+        if cells:
+            names.add(heading_slug(cells[0]).upper().replace("-", "_"))
+            names.add(re.sub(r"[`*]", "", cells[0]).strip())
+    meta = doc.meta if isinstance(doc.meta, dict) else {}
+    pattern = meta.get("name-pattern") if isinstance(meta.get("name-pattern"), str) else CONSTANT_PATTERN
+    try:
+        compiled = re.compile(pattern)
+    except re.error:
+        compiled = re.compile(CONSTANT_PATTERN)
+    return path, names, compiled
+
+
+def check_constants(project: Project, unit: Unit):
+    """T6: every constant name in a code span of a hand-written document is a row of a constants table."""
+    tables = []
+    for owner in [unit] + unit.ancestors():
+        path = os.path.join(owner.path, "docs", "references", "constants.md")
+        if project.kind_of(path) == "file":
+            found = constants_of(project, path)
+            if found:
+                tables.append(found)
+    if not tables:
+        return
+    nearest, names, pattern = tables[0]
+    for _, more, _ in tables[1:]:
+        names = names | more
+    for path in managed_files(project, unit):
+        if generated_location(unit, path):
+            continue
+        doc = project.doc(path)
+        for number, line in doc.prose:
+            for match in CODE_SPAN.finditer(line):
+                for name in pattern.findall(match.group(2)):
+                    name = name if isinstance(name, str) else name[0]
+                    if name and name not in names:
+                        project.add("T6", path, f"`{name}` is not a row of {project.rel(nearest)}", number)
 
 
 def check_decisions(project: Project, unit: Unit):
@@ -1628,7 +1865,7 @@ def check_decisions(project: Project, unit: Unit):
         status = DECISION_STATUS.match(info["status"])
         if not status:
             project.add("S9", path, f"status is {show_value(info['raw-status'])}; allowed: "
-                                    "proposed, accepted, rejected, deprecated, superseded by NNNN", 2)
+                                    "proposed, accepted, rejected, deprecated, superseded by NNNN, derived", 2)
         elif status.group(2) and status.group(2) not in numbers:
             project.add("S9", path, f"status names decision {status.group(2)}, which does not "
                                     "exist in this unit", 2)
@@ -1637,17 +1874,22 @@ def check_decisions(project: Project, unit: Unit):
                         + (f", not '{info['date']}'" if info["date"] else ""), 2)
         if info["status"] == "accepted" and not info["makers"]:
             project.add("S9", path, "an accepted decision names its `decision-makers`", 2)
+        if info["status"] == "derived":
+            if not info["derived-from"]:
+                project.add("S9", path, "a derived decision names the passage in `derived-from`", 2)
+            if not info["source-says"]:
+                project.add("S9", path, "a derived decision has a section `## Source says` that restates "
+                                        "the passage", 2)
 
 
 def manifest_targets(project: Project, unit: Unit) -> set:
-    """The files that the manifest of `unit` names as contract or verified-by."""
+    """The files that the manifest of `unit` names as contract."""
     out = set()
     for entries in (unit.capabilities, unit.needs):
         for spec in entries.values():
-            for field in ("contract", "verified-by"):
-                target = contract_target(project, unit, spec.get(field))[1]
-                if target:
-                    out.add(target)
+            target = contract_target(project, unit, spec.get("contract"))[1]
+            if target:
+                out.add(target)
     return out
 
 
@@ -1714,7 +1956,7 @@ def check_links(project: Project, unit: Unit, path: str, doc: Doc, is_context: b
                 status = decision_info(project, target)["status"]
                 if status.startswith(("rejected", "deprecated", "superseded")):
                     project.add("L7", path, f"cites a decision that is {status}: {link}", line)
-                elif status == "proposed" and unit.status == "active":
+                elif status == "proposed" and unit.status == "active":   # derived binds
                     project.add("L7", path, "an active unit relies on a decision that is "
                                             f"still proposed: {link}", line)
         else:
@@ -1789,6 +2031,431 @@ def stamp_all(project: Project, below: str = None) -> list:
                 (below is None or unit.path == below or unit.path.startswith(below + os.sep)):
             rows += stamp_file(project, path)
     return rows
+
+
+# ----- contracts
+
+def contract_of_path(project: Project, path: str) -> dict:
+    """A contract, parsed once: its parts and what each has.
+
+    {"path", "folder": bool, "has-parts": bool, "has-fake": bool, "parts": {name: part}} where a
+    part is {"kind", "fence", "fields": set, "examples": rows, "line", "file"}. A file named
+    index.md is a contract folder: its parts are the other .md files beside it.
+    """
+    cache = project.__dict__.setdefault("_contracts", {})
+    found = cache.get(path)
+    if found is not None:
+        return found
+    doc = project.doc(path)
+    out = {"path": path, "folder": os.path.basename(path) == "index.md", "parts": {},
+           "has-parts": any(h[1] == 2 and h[3] == "parts" for h in doc.headings),
+           "has-fake": any(h[1] == 2 and h[3] == "fake" for h in doc.headings), "fake": None}
+    fake = next((h for h in doc.headings if h[1] == 2 and h[3] == "fake"), None)
+    if fake is not None:
+        first = next((line.strip() for line in (doc.section("fake") or [])[1:] if line.strip()), "")
+        out["fake"] = "real" if "the real implementation" in first.lower() else "described"
+
+    def part_of(lines: list, start_line: int, file: str) -> dict:
+        part = {"kind": None, "fence": False, "fields": set(), "examples": 0, "line": start_line, "file": file}
+        fence, table, in_examples = None, [], False
+        for line in lines:
+            match = FENCE.match(line)
+            if fence:
+                if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) \
+                        and not match.group(2).strip():
+                    fence = None
+                continue
+            if match and not (match.group(1)[0] == "`" and "`" in match.group(2)):
+                fence, part["fence"] = match.group(1), True
+                continue
+            field = FIELD_LINE.match(line)
+            if field:
+                part["fields"].add(field.group(1))
+                if field.group(1) == "Kind":
+                    part["kind"] = field.group(2).strip().lower()
+                in_examples = field.group(1) == "Examples"
+                table = []
+                continue
+            text = line.strip()
+            if in_examples:
+                if text.startswith("|"):
+                    table.append(text)
+                elif text:
+                    in_examples = False
+                part["examples"] = max(part["examples"], len([r for r in table[2:] if not TABLE_RULE.match(r)]))
+        return part
+
+    if out["folder"]:
+        folder = os.path.dirname(path)
+        for name in project.listdir(folder):
+            file = os.path.join(folder, name)
+            if name.endswith(".md") and name != "index.md" and os.path.isfile(file):
+                part_doc = project.doc(file)
+                out["parts"][name[:-3]] = part_of(part_doc.lines[part_doc.body_start:], 1, file)
+    else:
+        headings = doc.headings
+        inside = False
+        for index, (number, level, text, slug) in enumerate(headings):
+            if level == 2:
+                inside = slug == "parts"
+            elif level == 3 and inside:
+                end = next((n for n, lvl, _, _ in headings[index + 1:] if lvl <= 3), len(doc.lines) + 1)
+                out["parts"][heading_slug(text)] = part_of(doc.lines[number:end - 1], number, path)
+    cache[path] = out
+    return out
+
+
+def contracts_of_project(project: Project) -> dict:
+    """{absolute contract path: [units whose manifests name it]} for every contract named."""
+    out: dict = {}
+    for unit in project.units:
+        if unit.broken:
+            continue
+        for entries in (unit.capabilities, unit.needs):
+            for spec in entries.values():
+                target = contract_target(project, unit, spec.get("contract"))[1]
+                if target and project.kind_of(target) == "file" \
+                        and path_problem(project, unit, spec["contract"]) is None:
+                    out.setdefault(target, []).append(unit)
+    return out
+
+
+def check_contracts(project: Project):
+    """C1 to C5: the body of every contract that a manifest names."""
+    types: dict = {}                                  # type name -> [(holder unit, contract path)]
+    for path, users in sorted(contracts_of_project(project).items()):
+        contract = contract_of_path(project, path)
+        holder = project.unit_at(path)
+        if not contract["has-parts"]:
+            project.add("C1", path, "no `## Parts` section; a contract lists its parts, one `###` heading each")
+        elif not contract["parts"]:
+            project.add("C1", path, "`## Parts` holds no part" + (
+                " (a contract folder holds one .md file per part beside index.md)" if contract["folder"] else ""))
+        for name, part in contract["parts"].items():
+            where, line = part["file"], part["line"]
+            if part["kind"] not in PART_KINDS:
+                project.add("C1", where, f"part '{name}' has `Kind: {part['kind'] or ''}`; one of "
+                                         + ", ".join(PART_KINDS), line)
+            if not part["fence"]:
+                project.add("C3", where, f"part '{name}' has no fenced code block with its signature", line)
+            if part["kind"] in ("command", "query"):
+                missing = [f for f in ("Pre", "Result", "Errors") if f not in part["fields"]]
+                if "Examples" not in part["fields"]:
+                    missing.append("Examples")
+                elif part["examples"] < 1:
+                    missing.append("a row in the Examples table")
+                if missing:
+                    project.add("C2", where, f"part '{name}' lacks " + ", ".join(f"`{m}:`" if m[0].isupper() and " " not in m else m for m in missing), line)
+            if part["kind"] == "type":
+                types.setdefault(name, []).append((holder, where, line))
+        if not contract["has-fake"]:
+            project.add("C5", path, "no `## Fake` section: say what stands in for this contract in the tests "
+                                    "of its consumers")
+    for name, places in sorted(types.items()):
+        for index, (holder, where, line) in enumerate(places):
+            for other_holder, other_where, _ in places[:index]:
+                if other_where == where:
+                    continue
+                if holder is other_holder or holder in other_holder.ancestors() or other_holder in holder.ancestors():
+                    project.add("C4", where, f"type '{name}' is also defined in {project.rel(other_where)}; "
+                                             "one definition in a subtree, the other contract links to it", line)
+                    break
+
+
+# ----- kinds
+
+def check_kinds(project: Project):
+    """K2, K3 and K4: the rules of the well-known kinds."""
+    for unit in project.units:
+        if unit.broken:
+            continue
+        where = unit.manifest_path
+        if unit.kind == "logic":
+            for child in unit.children:
+                if child.kind != "logic":
+                    project.add("K2", where, f"logic unit has the child '{child.ref_in_parent()}' of kind "
+                                             f"'{child.kind or 'none'}'; a logic unit is logic throughout",
+                                unit.lines.get(("kind",)))
+            for need in unit.needs:
+                for item in providers_of(unit, need):
+                    if item["where"] == "outside":
+                        project.add("K2", where, f"need '{need}' of a logic unit reaches the need "
+                                                 f"'{item['capability']}' of the root; a logic unit does no "
+                                                 "input or output", unit.lines.get(("needs", need)))
+                    elif item["unit"].kind != "logic":
+                        project.add("K2", where, f"need '{need}' of a logic unit is finally provided by "
+                                                 f"'{item['unit'].rel}' of kind '{item['unit'].kind or 'none'}'",
+                                    unit.lines.get(("needs", need)))
+        if unit.kind == "adapter":
+            for need in unit.needs:
+                for item in providers_of(unit, need):
+                    if item["where"] == "unit" and item["unit"].kind == "adapter":
+                        project.add("K3", where, f"need '{need}' of an adapter is finally provided by the "
+                                                 f"adapter '{item['unit'].rel}'; one adapter talks to one "
+                                                 "external system", unit.lines.get(("needs", need)))
+    root = project.root_unit
+    if root is not None and not root.broken:
+        for need, spec in root.needs.items():
+            if spec["platform"] or need in root.inner:
+                continue
+            for user, _ in final_users(root, need):
+                if user is not root and user.kind and user.kind != "adapter":
+                    project.add("K4", root.manifest_path, f"need '{need}' of the root is finally reached by "
+                                                          f"'{user.rel}' of kind '{user.kind or 'none'}'; an "
+                                                          "external system is reached by adapters only",
+                                root.lines.get(("needs", need)))
+
+
+# ----- scenarios
+
+def chain_of_need(unit: Unit, need: str) -> list:
+    """Every (unit, capability, [(holder, key)]) that provides for a need of `unit`, at every level
+    on the way to the final provider, with the wiring lines used so far."""
+    out: list = []
+
+    def down(target: Unit, capability: str, via: list):
+        out.append((target, capability, list(via)))
+        conn = target.impl.get(capability)
+        if conn:
+            for entry in conn.entries:
+                down(entry.unit, entry.capability, via + [(target, conn.key)])
+
+    inside = unit.inner.get(need)
+    if inside is not None:
+        for entry in inside.entries:
+            down(entry.unit, entry.capability, [(unit, inside.key)])
+        return out
+    current, name, via = unit, need, []
+    while current.parent is not None:
+        conn = current.parent.conn.get((current, name))
+        if conn is None:
+            return out
+        via = via + [(current.parent, conn.key)]
+        passed = None
+        for entry in conn.entries:
+            if entry.kind == "child":
+                down(entry.unit, entry.capability, via)
+            else:
+                passed = entry.capability
+        if passed is None:
+            return out
+        current, name = current.parent, passed
+    return out
+
+
+def chain_up(unit: Unit, need: str, holder: Unit):
+    """(name of the need at `holder`, lines used) when a need of `unit` is passed up to `holder`, else None."""
+    current, name, via = unit, need, []
+    while current is not holder:
+        if current.parent is None:
+            return None
+        conn = current.parent.conn.get((current, name))
+        if conn is None:
+            return None
+        via.append((current.parent, conn.key))
+        passed = [e.capability for e in conn.entries if e.kind == "own"]
+        if not passed:
+            return None
+        current, name = current.parent, passed[0]
+    return name, via
+
+
+def find_descendant(project: Project, holder: Unit, path: str):
+    """The unit below `holder` at `path` (segments by '/', plain folders included), or None."""
+    target = os.path.normpath(os.path.join(holder.path, *[p for p in path.strip("/").split("/") if p]))
+    unit = project.by_path.get(target)
+    if unit is not None and unit is not holder and unit.depth_below(holder):
+        return unit
+    unit = holder                                     # by unit names, plain folders left out
+    for part in [p for p in path.strip("/").split("/") if p]:
+        found = [c for c in unit.children if c.name == part]
+        if len(found) != 1:
+            return None
+        unit = found[0]
+    return unit if unit is not holder else None
+
+
+def resolve_hop(project: Project, holder: Unit, hop: str):
+    """Resolve one hop of a scenario of `holder`.
+
+    Returns (result, error). result: {"caller", "target", "part", "contract": abs path, "via":
+    [(unit, key)], "caller-unit", "target-unit"}; the unit fields are None for a bare capability
+    or need of the holder.
+    """
+    match = HOP.match(hop)
+    if not match:
+        return None, f"a hop is written `caller -> target.part`, not '{hop}'"
+    caller_text, target_text = match.group(1), match.group(2)
+    target_path, _, part = target_text.rpartition(".")
+    if not target_path or not part:
+        return None, f"the target of hop '{hop}' is `unit.part` or `need.part`"
+
+    def lookup(name: str, side: str):
+        unit = find_descendant(project, holder, name)
+        entry = name in (holder.capabilities if side == "capability" else holder.needs)
+        if unit is not None and entry:
+            return None, None, f"'{name}' is both a unit below and a {side} of this unit; rename one"
+        if unit is None and not entry:
+            other = "need" if side == "capability" else "capability"
+            hint = f"; it is a {other} of this unit, and a {other} is not a {'caller' if side == 'capability' else 'target'}" \
+                if name in (holder.needs if side == "capability" else holder.capabilities) else ""
+            return None, None, f"'{name}' is neither a unit below this one nor a {side} of it{hint}"
+        return unit, (name if entry else None), None
+
+    caller, caller_cap, error = lookup(caller_text, "capability")
+    if error:
+        return None, error
+    target, target_need, error = lookup(target_path, "need")
+    if error:
+        return None, error
+
+    def has_part(contract_path):
+        return contract_path and contract_of_path(project, contract_path)["parts"].get(part) is not None
+
+    def contract_path_of(owner: Unit, spec: dict):
+        return contract_target(project, owner, spec.get("contract"))[1]
+
+    found = []                                       # (contract path, via)
+    if caller is not None and target is not None:
+        for need, spec in caller.needs.items():
+            for unit, capability, via in chain_of_need(caller, need):
+                if unit is target:
+                    found.append((contract_path_of(caller, spec), via, need))
+                    break
+        if not found:
+            return None, f"no need of '{caller_text}' is provided for by '{target_path}'"
+    elif caller_cap is not None and target is not None:
+        spec = holder.capabilities[caller_cap]
+        for unit, capability, via in chain_of_need_of_capability(holder, caller_cap):
+            if unit is target:
+                found.append((contract_path_of(holder, spec), via, caller_cap))
+                break
+        if not found:
+            return None, f"capability '{caller_cap}' of this unit is not implemented by '{target_path}'"
+    elif caller is not None and target_need is not None:
+        for need, spec in caller.needs.items():
+            up = chain_up(caller, need, holder)
+            if up and up[0] == target_need:
+                found.append((contract_path_of(caller, spec), up[1], need))
+        if not found:
+            return None, f"no need of '{caller_text}' is passed up to the need '{target_need}' of this unit"
+    else:
+        if holder.children:
+            return None, (f"a hop from the capability '{caller_cap}' to the need '{target_need}' of this unit "
+                          "is for a unit without children; here it goes through the children")
+        found.append((contract_path_of(holder, holder.needs[target_need]), [], target_need))
+    with_part = [f for f in found if has_part(f[0])]
+    if not with_part:
+        contracts = sorted({project.rel(f[0]) for f in found if f[0]} or {"none"})
+        return None, f"part '{part}' is not in the contract {', '.join(contracts)}"
+    if len(with_part) > 1:
+        return None, (f"'{caller_text}' reaches '{target_path}' through {len(with_part)} connections whose contracts "
+                      f"both have the part '{part}' (needs {', '.join(f[2] for f in with_part)}); rename one part")
+    contract, via, _ = with_part[0]
+    return {"caller": caller_text, "target": target_path, "part": part, "contract": contract, "via": via,
+            "caller-unit": caller, "target-unit": target, "caller-capability": caller_cap,
+            "target-need": target_need}, None
+
+
+def chain_of_need_of_capability(unit: Unit, capability: str) -> list:
+    """Every (unit, capability, lines) that implements a capability of `unit`, at every level down."""
+    out: list = []
+
+    def down(target: Unit, name: str, via: list):
+        conn = target.impl.get(name)
+        if conn:
+            for entry in conn.entries:
+                out.append((entry.unit, entry.capability, via + [(target, conn.key)]))
+                down(entry.unit, entry.capability, via + [(target, conn.key)])
+
+    down(unit, capability, [])
+    return out
+
+
+def resolved_scenarios(project: Project) -> list:
+    """Every scenario of the project with its hops resolved: [{"unit", "name", "spec", "hops": [(hop,
+    result, error)]}], cached."""
+    cached = project.__dict__.get("_scenarios")
+    if cached is not None:
+        return cached
+    out = []
+    for unit in project.units:
+        if unit.broken:
+            continue
+        for name, spec in unit.scenarios.items():
+            hops = [(hop, *resolve_hop(project, unit, hop)) for hop in spec["hops"]]
+            out.append({"unit": unit, "name": name, "spec": spec, "hops": hops})
+    project.__dict__["_scenarios"] = out
+    return out
+
+
+def scenarios_through(project: Project, unit: Unit) -> list:
+    """The scenarios whose hops name `unit` or use a wiring line of it."""
+    out = []
+    for scenario in resolved_scenarios(project):
+        for _, result, _ in scenario["hops"]:
+            if result and (result["caller-unit"] is unit or result["target-unit"] is unit
+                           or any(holder is unit for holder, _ in result["via"])
+                           or scenario["unit"] is unit):
+                out.append(scenario)
+                break
+    return out
+
+
+def check_scenarios(project: Project):
+    """N1, N2 and N3."""
+    used: dict = {}                                   # unit -> set of wiring keys used by hops
+    for unit in project.units:
+        if unit.broken:
+            continue
+        raw = unit.manifest.get("scenarios")
+        if raw is not None and not isinstance(raw, dict):
+            project.add("M2", unit.manifest_path, f"'scenarios' must be a mapping of names, not {show_value(raw)}",
+                        unit.lines.get(("scenarios",)))
+            continue
+        for name, spec in (raw or {}).items():
+            line = unit.lines.get(("scenarios", str(name)))
+            if not isinstance(name, str) or not ENTRY_NAME.match(name):
+                project.add("M2", unit.manifest_path, f"the name of scenario '{name}' may contain only letters, "
+                                                      "digits, '-' and '_'", line)
+            if not isinstance(spec, dict):
+                project.add("N2", unit.manifest_path, f"scenario '{name}' must be a mapping with summary, hops "
+                                                      f"and expect, not {show_value(spec)}", line)
+                continue
+            for key in spec:
+                if isinstance(key, str) and (key in SCENARIO_KEYS or key.startswith("x-")):
+                    continue
+                project.add("M2", unit.manifest_path, f"scenario '{name}': unknown key '{key}'", line)
+            missing = [k for k in ("summary", "hops", "expect") if not spec.get(k)]
+            if missing:
+                project.add("N2", unit.manifest_path, f"scenario '{name}' lacks " + ", ".join(f"`{m}`" for m in missing),
+                            line)
+            hops = spec.get("hops")
+            if hops is not None and (not isinstance(hops, list) or not all(isinstance(h, str) for h in hops)):
+                project.add("N2", unit.manifest_path, f"scenario '{name}': `hops` is a list of `caller -> target.part`",
+                            line)
+            for key in ("summary", "expect", "source"):
+                if key in spec and (not isinstance(spec[key], str) or not spec[key].strip()):
+                    project.add("N2", unit.manifest_path, f"scenario '{name}': `{key}` is one line of text", line)
+    unresolved: set = set()                           # holders of a scenario with an unresolved hop
+    for scenario in resolved_scenarios(project):
+        unit, name = scenario["unit"], scenario["name"]
+        line = unit.lines.get(("scenarios", name))
+        for hop, result, error in scenario["hops"]:
+            if error:
+                project.add("N1", unit.manifest_path, f"scenario '{name}', hop '{hop}': {error}", line)
+                unresolved.add(unit)
+            else:
+                for holder, key in result["via"]:
+                    used.setdefault(holder, set()).add(key)
+    for unit, keys in used.items():
+        wiring = unit.manifest.get("wiring")
+        if not isinstance(wiring, dict) or unit in unresolved:   # fix N1 first
+            continue
+        for key in wiring:
+            if str(key).strip() not in keys:
+                project.add("N3", unit.manifest_path, f"wiring line '{key}' is used by no hop of the scenarios "
+                                                      "that pass through this unit", unit.lines.get(("wiring", str(key))))
 
 
 # ----- generated files
@@ -1880,6 +2547,11 @@ def side_id(unit: Unit, side: str, capability: str) -> str:
 def label(text: str) -> str:
     """Text inside a quoted Mermaid label."""
     return str(text).replace('"', "#quot;").replace("\n", " ")
+
+
+def unit_label(unit: Unit) -> str:
+    """The name of a unit in a diagram, with its kind where it has one."""
+    return f"{unit.name} ({unit.kind})" if unit.kind else unit.name
 
 
 def diagram_kinds(project: Project, unit: Unit) -> list:
@@ -2048,12 +2720,12 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
         if unit.status in marks:
             marks[unit.status].append(node_id(unit))
         if expanded(unit):
-            lines.append(f'{indent}subgraph {node_id(unit)}["{label(unit.name)}"]')
+            lines.append(f'{indent}subgraph {node_id(unit)}["{label(unit_label(unit))}"]')
             for child in unit.children:
                 emit(child, indent + "  ")
             lines.append(f"{indent}end")
         else:
-            lines.append(f'{indent}{node_id(unit)}["{label(unit.name)}"]')
+            lines.append(f'{indent}{node_id(unit)}["{label(unit_label(unit))}"]')
             click = click_line(project, node_id(unit), best_diagram(project, unit), out_dir)
             if click:
                 clicks.append(click)
@@ -2103,12 +2775,12 @@ def status_cell(unit: Unit) -> str:
 def unit_table(project: Project, units: list, out_dir: str) -> list:
     targets = [best_diagram(project, unit) for unit in units]
     extra = any(targets)
-    rows = ["| Unit | Kind | Summary | Status |" + (" Diagram |" if extra else ""),
+    rows = ["| Unit | Kind | Responsibility | Status |" + (" Diagram |" if extra else ""),
             "|---|---|---|---|" + ("---|" if extra else "")]
     for unit, target in zip(units, targets):
         name = file_link(project, out_dir, unit.name, os.path.join(unit.path, "README.md"))
         link = f"[{os.path.basename(target)[:-3]}]({link_to(out_dir, target)})" if target else ""
-        rows.append(f"| {name} | {cell(unit.kind)} | {cell(unit.summary)} | "
+        rows.append(f"| {name} | {cell(unit.kind)} | {cell(unit.responsibility)} | "
                     f"{status_cell(unit)} |" + (f" {link} |" if extra else ""))
     return rows
 
@@ -2137,34 +2809,30 @@ def connection_tables(project: Project, unit: Unit, out_dir: str) -> list:
     rows = []
     if unit.needs:
         rows += ["", "### Who provides what this unit needs", "",
-                 "| Need | Kind | Contract | Provided by | Capability | Verified by |",
-                 "|---|---|---|---|---|---|"]
+                 "| Need | Kind | Contract | Provided by | Capability |",
+                 "|---|---|---|---|---|"]
         for need, spec in unit.needs.items():
             head = f"| {need} | {cell(spec['kind'])} | " \
                    f"{path_link(project, unit, spec['contract'], out_dir, 'contract')} | "
             found = providers_of(unit, need)
             if not found:
                 note = "nobody (optional)" if spec["optional"] else "**no provider**"
-                rows.append(head + f"{note} | | |")
+                rows.append(head + f"{note} | |")
             for item in found:
                 note = via_note(item)
                 if item["where"] == "outside":
                     rows.append(head + f"outside the project, as need `{item['capability']}` of the "
-                                       f"root{note} | | |")
+                                       f"root{note} | |")
                 else:
                     target = item["unit"]
-                    theirs = target.capabilities.get(item["capability"], {})
-                    rows.append(
-                        head + f"{unit_ref(project, target, out_dir)}{note} | {item['capability']} | "
-                        f"{path_link(project, target, theirs.get('verified-by'), out_dir, 'checks')} |")
+                    rows.append(head + f"{unit_ref(project, target, out_dir)}{note} | {item['capability']} |")
     if unit.capabilities:
         rows += ["", "### Who uses what this unit provides", "",
-                 "| Capability | Kind | Contract | Verified by | Used by | As need |",
-                 "|---|---|---|---|---|---|"]
+                 "| Capability | Kind | Contract | Used by | As need |",
+                 "|---|---|---|---|---|"]
         for capability, spec in unit.capabilities.items():
             head = f"| {capability} | {cell(spec['kind'])} | " \
-                   f"{path_link(project, unit, spec['contract'], out_dir, 'contract')} | " \
-                   f"{path_link(project, unit, spec['verified-by'], out_dir, 'checks')} | "
+                   f"{path_link(project, unit, spec['contract'], out_dir, 'contract')} | "
             found = users_of(unit, capability)
             if not found:
                 rows.append(head + "nobody | |")
@@ -2245,6 +2913,55 @@ def diagrams_for(project: Project, unit: Unit) -> dict:
     return out
 
 
+def scenario_page(project: Project, scenario: dict) -> str:
+    """docs/diagrams/scenario-<name>.md: a sequence diagram of the hops, end to end, and a table."""
+    unit, name, spec = scenario["unit"], scenario["name"], scenario["spec"]
+    out_dir = os.path.join(unit.path, "docs", "diagrams")
+
+    names: list = []
+    for hop, result, error in scenario["hops"]:
+        for text in ((result["caller"], result["target"]) if result else
+                     [s.strip() for s in hop.split("->", 1)] if "->" in hop else [hop]):
+            text = text.rsplit(".", 1)[0] if text is not hop and "." in text and result is None else text
+            if text not in names:
+                names.append(text)
+    ids = {n: "p" + safe_id(n) for n in names}
+    lines = ["sequenceDiagram"]
+    for n in names:
+        lines.append(f'  participant {ids[n]} as {label(n)}')
+    rows = ["| # | Caller | Target | Part | Contract |", "|---|---|---|---|---|"]
+    for index, (hop, result, error) in enumerate(scenario["hops"], 1):
+        if result:
+            caller, target = result["caller"], result["target"]
+            lines.append(f"  {ids[caller]}->>{ids[target]}: {index} · {label(result['part'])}")
+            contract = file_link(project, out_dir, os.path.basename(result["contract"])[:-3], result["contract"])
+            rows.append(f"| {index} | `{cell(caller)}` | `{cell(target)}` | `{cell(result['part'])}` | {contract} |")
+        else:
+            rows.append(f"| {index} | `{cell(hop)}` | | | **does not resolve** |")
+    if spec["expect"]:
+        last = names[-1] if names else None
+        if last:
+            lines.append(f"  Note over {ids[names[0]]},{ids[last]}: Expect: {label(spec['expect'])}"
+                         if len(names) > 1 else f"  Note over {ids[last]}: Expect: {label(spec['expect'])}")
+    crumbs = []
+    for ancestor in reversed(unit.ancestors()):
+        crumbs.append(file_link(project, out_dir, ancestor.name, best_diagram(project, ancestor)))
+    crumbs.append(f"**{cell(unit.name)}**")
+    nav = []
+    readme = os.path.join(unit.path, "README.md")
+    if project.kind_of(readme) == "file":
+        nav.append(f"[README]({link_to(out_dir, readme)})")
+    nav += [f"[{kind}]({kind}.md)" for kind in diagram_kinds(project, unit)]
+    intro = [f"**{cell(spec['summary'])}**" if spec["summary"] else "",
+             f"Source: {cell(spec['source'])}" if spec["source"] else "",
+             f"Expect: {cell(spec['expect'])}" if spec["expect"] else ""]
+    return "\n".join([MARK, f"# Scenario: {name}", "", " / ".join(crumbs) + "".join(" · " + n for n in nav), "",
+                      *[line for line in intro if line], "",
+                      "A unit is named by its path from `" + unit.name + "`; a capability or need of `" + unit.name
+                      + "` is named bare. Every hop is a call along one connection of the map.", "",
+                      "```mermaid", *lines, "```", "", *rows, ""])
+
+
 def skill_stubs(project: Project) -> dict:
     """{stub name: (unit, skill)} for every skill of the project.
 
@@ -2315,10 +3032,10 @@ def agents_block(project: Project) -> str:
         lines += ["", " ".join(f"{t}: the skill [{n}](docs/skills/{n}/SKILL.md)." for n, t in skills)]
     units = [u for u in project.units if u.parent is not None]
     if units and len(units) <= INDEX_LIMIT:
-        lines += ["", "| Unit | Path | Summary |", "|---|---|---|"]
+        lines += ["", "| Unit | Path | Responsibility |", "|---|---|---|"]
         for unit in units:
             mark = f" ({unit.status})" if unit.status != "active" else ""
-            lines.append(f"| {cell(unit.name)} | `{cell(unit.rel)}` | {cell(unit.summary)}{mark} |")
+            lines.append(f"| {cell(unit.name)} | `{cell(unit.rel)}` | {cell(unit.responsibility)}{mark} |")
     elif units:
         lines += ["", f"{len(units)} units; `{tool} tree` lists them."]
     lines.append(BLOCK_END)
@@ -2406,6 +3123,11 @@ def generate(project: Project, force=()) -> dict:
             out[os.path.join(folder, "architecture.md")] = page(
                 project, unit, kinds, "architecture", f"Architecture diagram: {name}", intro,
                 chart, after)
+    if project.diagrams != "none":
+        for scenario in resolved_scenarios(project):
+            unit = scenario["unit"]
+            folder = os.path.join(unit.path, "docs", "diagrams")
+            out[os.path.join(folder, f"scenario-{scenario['name']}.md")] = scenario_page(project, scenario)
     for unit in project.units:
         infos = decisions_of(project, unit)
         if not infos:
@@ -2414,7 +3136,7 @@ def generate(project: Project, force=()) -> dict:
         rows = ["| No. | Decision | Status | Date |", "|---|---|---|---|"]
         for info in infos:
             status = info["status"]
-            shown = f"**{status_mark(status)}**" if status == "proposed" else cell(status)
+            shown = f"**{status_mark(status)}**" if status in ("proposed", "derived") else cell(status)
             rows.append(f"| {info['name'][:4]} | [{cell(info['title'])}]({url_path(info['name'])}) | "
                         f"{shown} | {info['date']} |")
         nav = [f"[{n}]({link_to(folder, os.path.join(unit.path, n))})"
@@ -2422,7 +3144,7 @@ def generate(project: Project, force=()) -> dict:
                if n == "AGENTS.md" or project.kind_of(os.path.join(unit.path, n)) == "file"]
         out[os.path.join(folder, "index.md")] = "\n".join(
             [MARK, f"# Decisions of {unit.name}", "", *([" · ".join(nav), ""] if nav else []),
-             "Only accepted decisions bind.", "", *rows, ""])
+             "Accepted and derived decisions bind.", "", *rows, ""])
     stubs = skill_stubs(project)
     for stub_dir in STUB_DIRS:
         base = os.path.join(project.root, *stub_dir.split("/"))
@@ -2482,15 +3204,13 @@ def describe(project: Project, unit: Unit) -> dict:
 
     def brief(other: Unit) -> dict:
         return {"path": other.rel, "name": other.name, "status": other.status,
-                "summary": other.summary}
+                "responsibility": other.responsibility}
 
     def provider(item: dict) -> dict:
         if item["where"] == "outside":
             return {"outside": True, "root-need": item["capability"], "config": item["config"]}
         target = item["unit"]
-        spec = target.capabilities.get(item["capability"], {})
         return {"unit": target.rel, "status": target.status, "capability": item["capability"],
-                "verified-by": contract_target(project, target, spec.get("verified-by"))[0] or None,
                 "config": item["config"]}
 
     def user(item: dict) -> dict:
@@ -2503,12 +3223,13 @@ def describe(project: Project, unit: Unit) -> dict:
     def entry(spec: dict) -> dict:
         return {"kind": spec["kind"] or None, "summary": spec["summary"],
                 "contract": contract_target(project, unit, spec["contract"])[0] or None,
-                "verified-by": contract_target(project, unit, spec["verified-by"])[0] or None}
+                "parts": spec["parts"]}
 
     files = [rel(p) for p in managed_files(project, unit) if not generated_location(unit, p)]
     return {
-        "name": unit.name, "path": unit.rel, "summary": unit.summary,
+        "name": unit.name, "path": unit.rel, "responsibility": unit.responsibility,
         "kind": unit.kind or None, "status": unit.status, "owner": unit.owner or None,
+        "secret": secret_data(project, unit), "not": [{"text": text, "need": need} for text, need in unit.nots],
         "manifest": rel(unit.manifest_path),
         "parent": brief(unit.parent) if unit.parent else None,
         "children": [brief(c) for c in unit.children],
@@ -2516,9 +3237,11 @@ def describe(project: Project, unit: Unit) -> dict:
         "capabilities": {capability: {**entry(spec),
                             "used-by": [user(i) for i in users_of(unit, capability)]}
                      for capability, spec in unit.capabilities.items()},
-        "needs": {need: {**entry(spec), "optional": spec["optional"],
+        "needs": {need: {**entry(spec), "optional": spec["optional"], "platform": spec["platform"],
                          "provided-by": [provider(i) for i in providers_of(unit, need)]}
                   for need, spec in unit.needs.items()},
+        "scenarios": [{"unit": s["unit"].rel, "name": s["name"], "summary": s["spec"]["summary"]}
+                      for s in scenarios_through(project, unit)],
         "skills": [{"name": s["name"], "path": rel(s["path"]), "description": s["description"]}
                    for s in skills_of(project, unit) if s["exists"]],
         "decisions": [{"path": rel(d["path"]), "title": d["title"], "status": d["status"]}
@@ -2531,9 +3254,18 @@ def describe(project: Project, unit: Unit) -> dict:
     }
 
 
+def secret_data(project: Project, unit: Unit):
+    if unit.secret is None:
+        return None
+    decision = unit.secret["decision"]
+    target = os.path.normpath(os.path.join(unit.path, decision)) if decision else None
+    return {"what": unit.secret["what"],
+            "decision": project.rel(target) if target and project.inside(target) else decision}
+
+
 def mark(status) -> str:
     """` [planned: not built yet]` for anything that is not in force, else ''."""
-    return f" [{status_mark(status)}]" if status and status not in ("active", "accepted") else ""
+    return f" [{status_mark(status)}]" if status and status not in ("active", "accepted", "derived") else ""
 
 
 def named(rel: str) -> str:
@@ -2546,9 +3278,13 @@ def print_show(info: dict):
         if value:
             print(f"{name:<10}{value}")
     line("unit", f"{info['name']}  ({info['path']}){mark(info['status'])}")
-    line("summary", info["summary"])
+    line("does", info["responsibility"])
     line("status", " · ".join(x for x in (
-        info["status"], info["kind"], info["owner"] and "owner " + info["owner"]) if x))
+        info["status"], info["kind"] and "kind " + info["kind"], info["owner"] and "owner " + info["owner"]) if x))
+    if info.get("secret"):
+        line("secret", f"{info['secret']['what']}  decision {info['secret']['decision']}")
+    for item in info.get("not") or []:
+        line("not", item["text"] + (f"  → need '{item['need']}'" if item["need"] else ""))
     line("manifest", info["manifest"])
     parent = info["parent"]
     line("parent", (parent["name"] if parent["path"] == "." else parent["path"])
@@ -2558,8 +3294,8 @@ def print_show(info: dict):
     if info["capabilities"]:
         print("capabilities")
     for capability, spec in info["capabilities"].items():
-        extra = "".join(f"  {name} {spec[key]}" for key, name in (
-            ("contract", "contract"), ("verified-by", "verified by")) if spec[key])
+        extra = f"  contract {spec['contract']}" if spec["contract"] else ""
+        extra += f" (parts {', '.join(spec['parts'])})" if spec.get("parts") else ""
         kind = f" ({spec['kind']})" if spec["kind"] else ""
         print(f"  {capability}{kind}: {spec['summary']}{extra}")
         for item in spec["used-by"] or [None]:
@@ -2574,10 +3310,11 @@ def print_show(info: dict):
     if info["needs"]:
         print("needs")
     for need, spec in info["needs"].items():
-        extra = "".join(f"  {name} {spec[key]}" for key, name in (
-            ("contract", "contract"), ("verified-by", "verified by")) if spec[key])
-        kind = f" ({spec['kind']}{', optional' if spec['optional'] else ''})" \
-            if spec["kind"] else " (optional)" if spec["optional"] else ""
+        extra = f"  contract {spec['contract']}" if spec["contract"] else ""
+        extra += f" (parts {', '.join(spec['parts'])})" if spec.get("parts") else ""
+        flags = [x for x in (spec["kind"], "optional" if spec["optional"] else "",
+                             "platform" if spec.get("platform") else "") if x]
+        kind = f" ({', '.join(flags)})" if flags else ""
         print(f"  {need}{kind}: {spec['summary']}{extra}")
         for item in spec["provided-by"] or [None]:
             if item is None:
@@ -2588,10 +3325,11 @@ def print_show(info: dict):
                 print(f"      provided from outside the project (need '{item['root-need']}' "
                       f"of the root){note}")
             else:
-                more = "".join(f"  {name} {item[key]}" for key, name in (
-                    ("verified-by", "verified by"),) if item.get(key))
                 print(f"      provided by {named(item['unit'])}{mark(item['status'])} capability "
-                      f"'{item['capability']}'{note}{more}")
+                      f"'{item['capability']}'{note}")
+    for scenario in info.get("scenarios") or []:
+        held = "" if scenario["unit"] == info["path"] else f"  (held by {named(scenario['unit'])})"
+        print(f"scenario  {scenario['name']}: {scenario['summary']}{held}")
     for skill in info["skills"]:
         print(f"skill     {skill['name']}: {skill['path']}")
     for decision in info["decisions"]:
@@ -2623,7 +3361,7 @@ def capability_data(project: Project, unit: Unit, name: str) -> dict:
         return {"unit": owner.rel, "status": owner.status, "side": side, "name": entry,
                 "kind": spec.get("kind") or None, "summary": spec.get("summary", ""),
                 "contract": contract_target(project, owner, spec.get("contract"))[0] or None,
-                "verified-by": contract_target(project, owner, spec.get("verified-by"))[0] or None,
+                "parts": spec.get("parts"),
                 "optional": bool(spec.get("optional")) if side == "needs" else None,
                 "readme": readme_section(project, owner, entry) or None, **(extra or {})}
 
@@ -2667,9 +3405,8 @@ def print_capability(data: dict):
         side = "capabilities" if item["side"] == "capabilities" else "needs"
         print(f"--- {named(item['unit'])}{mark(item['status'])} {side} '{item['name']}'"
               f"{kind}{note}: {item['summary']}")
-        for key, text in (("contract", "contract"), ("verified-by", "verified by")):
-            if item.get(key):
-                print(f"    {text}: {item[key]}")
+        if item.get("contract"):
+            print(f"    contract: {item['contract']}" + (f" (parts {', '.join(item['parts'])})" if item.get("parts") else ""))
         if item.get("optional"):
             print("    optional")
         if item["readme"]:
@@ -2804,7 +3541,7 @@ def tree_data(project: Project, depth=None) -> list:
             continue
         out.append({"path": unit.rel, "name": unit.name, "depth": level,
                     "status": unit.status, "kind": unit.kind or None,
-                    "summary": unit.summary, "parent": unit.parent.rel if unit.parent else None,
+                    "responsibility": unit.responsibility, "parent": unit.parent.rel if unit.parent else None,
                     "capabilities": list(unit.capabilities), "needs": list(unit.needs),
                     "children": [c.rel for c in unit.children],
                     "nested-projects": [project.rel(p) for p in unit.foreign]})
@@ -2911,11 +3648,11 @@ def install_agents(root: str) -> list:
 
 
 def root_manifest_text(name: str) -> str:
-    """The root manifest that `init` writes: the version, the name, and a summary to fill in."""
+    """The root manifest that `init` writes: the version, the name, and a responsibility to fill in."""
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
         name = json.dumps(name, ensure_ascii=False)
     return (f"# yaml-language-server: $schema={SITE_URL}/{SPEC_VERSIONS[-1]}/unifold.schema.json\n"
-            f"unifold: \"{SPEC_VERSIONS[-1]}\"\nname: {name}\nsummary: TODO\n")
+            f"unifold: \"{SPEC_VERSIONS[-1]}\"\nname: {name}\nresponsibility: TODO\n")
 
 
 def ask(question: str) -> bool:
@@ -2960,7 +3697,7 @@ def init_project(target: str, agents=False, interactive=False) -> dict:
                                    "a nested project, checked on its own")
         write_text(manifest, root_manifest_text(os.path.basename(root)))
         result["written"].append(MANIFEST)
-        result["notes"].append("the root manifest says `summary: TODO`. The units of the "
+        result["notes"].append("the root manifest says `responsibility: TODO`. The units of the "
                                "repository are written by hand or with the skill "
                                "`unifold-convert`; this tool drafts none")
     readme = os.path.join(root, "README.md")
@@ -3108,19 +3845,22 @@ async function render(){
   el("tree").innerHTML = "<ul>" + tree(".") + "</ul>" + (legend ? `<p class="legend">${legend}</p>` : "");
   const chain = []; for (let p = u.parent; p; p = byPath[p.path].parent) chain.unshift(p.path);
   el("crumbs").innerHTML = chain.map(p => `<a class="go" data-path="${esc(p)}">${esc(byPath[p].name)}</a>`).concat(esc(u.name)).join(" / ");
-  el("title").innerHTML = esc(u.name) + badge(u.status); el("summary").textContent = u.summary;
+  el("title").innerHTML = esc(u.name) + badge(u.status); el("summary").textContent = u.responsibility;
   el("meta").innerHTML = [u.kind, u.owner && "owner " + u.owner].filter(Boolean).map(esc)
     .concat([`<a href="${esc(file(u.manifest))}">manifest</a>`], u.readme ? [`<a href="${esc(file(u.readme))}">README</a>`] : [],
             u.agents ? [`<a href="${esc(file(u.agents))}">AGENTS.md</a>`] : []).join(" · ");
   el("tabs").innerHTML = kinds.map(k => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${k}</button>`).join("");
   let html = "";
   const p = Object.entries(u.capabilities), n = Object.entries(u.needs);
-  if (p.length) html += "<h2>Capabilities</h2><table><tr><th>Capability</th><th>Kind</th><th>Summary</th><th>Contract</th><th>Verified by</th><th>Used by</th></tr>"
-    + p.map(([k, v]) => `<tr id="capability:${esc(k)}"><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}</td><td>${ref(v["verified-by"])}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
-  if (n.length) html += "<h2>Needs</h2><table><tr><th>Need</th><th>Kind</th><th>Summary</th><th>Provided by</th></tr>"
-    + n.map(([k, v]) => `<tr id="need:${esc(k)}"><td><code>${esc(k)}</code>${v.optional ? " <span class='mute'>optional</span>" : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${who(v["provided-by"], "capability")}</td></tr>`).join("") + "</table>";
-  if (u.children.length) html += "<h2>Units inside</h2><table><tr><th>Unit</th><th>Summary</th></tr>"
-    + u.children.map(c => `<tr><td>${pick(c.path, c.name)}</td><td>${esc(c.summary)}</td></tr>`).join("") + "</table>";
+  if (u.secret) html += `<p><strong>Secret:</strong> ${esc(u.secret.what)} (${ref(u.secret.decision)})</p>`;
+  if (u.not && u.not.length) html += "<p><strong>Not:</strong> " + u.not.map(n => esc(n.text) + (n.need ? ` → <code>${esc(n.need)}</code>` : "")).join("; ") + "</p>";
+  if (p.length) html += "<h2>Capabilities</h2><table><tr><th>Capability</th><th>Kind</th><th>Summary</th><th>Contract</th><th>Used by</th></tr>"
+    + p.map(([k, v]) => `<tr id="capability:${esc(k)}"><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}${v.parts ? " <span class='mute'>(" + v.parts.map(esc).join(", ") + ")</span>" : ""}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
+  if (n.length) html += "<h2>Needs</h2><table><tr><th>Need</th><th>Kind</th><th>Summary</th><th>Contract</th><th>Provided by</th></tr>"
+    + n.map(([k, v]) => `<tr id="need:${esc(k)}"><td><code>${esc(k)}</code>${v.optional ? " <span class='mute'>optional</span>" : ""}${v.platform ? " <span class='mute'>platform</span>" : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}${v.parts ? " <span class='mute'>(" + v.parts.map(esc).join(", ") + ")</span>" : ""}</td><td>${who(v["provided-by"], "capability")}</td></tr>`).join("") + "</table>";
+  if (u.children.length) html += "<h2>Units inside</h2><table><tr><th>Unit</th><th>Kind</th><th>Responsibility</th></tr>"
+    + u.children.map(c => `<tr><td>${pick(c.path, c.name)}</td><td>${esc(byPath[c.path].kind)}</td><td>${esc(c.responsibility)}</td></tr>`).join("") + "</table>";
+  if (u.scenarios && u.scenarios.length) html += "<h2>Scenarios</h2><ul>" + u.scenarios.map(s => `<li><code>${esc(s.name)}</code>: ${esc(s.summary)}${s.unit !== u.path ? " <span class='mute'>(held by " + esc(s.unit === "." ? model.name : s.unit) + ")</span>" : ""}</li>`).join("") + "</ul>";
   if (u.skills.length) html += "<h2>Skills</h2><ul>" + u.skills.map(s => `<li><a href="${esc(file(s.path))}">${esc(s.name)}</a>: ${esc(s.description)}</li>`).join("") + "</ul>";
   if (u.decisions.length) html += "<h2>Decisions</h2><ul>" + u.decisions.map(d => `<li><a href="${esc(file(d.path))}">${esc(d.title)}</a>${badge(d.status || "no status")}</li>`).join("") + "</ul>";
   el("info").innerHTML = html;
@@ -3238,7 +3978,7 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
 
 # --------------------------------------------------------------- commands
 
-def run_check(path: str, fix=False, strict=False, only=None) -> dict:
+def run_check(path: str, fix=False, strict=False, only=None, ignore=None) -> dict:
     """Check the project that contains `path`. Returns the result as plain data."""
     project = open_project(path, need_usable=False)
     fixed = None
@@ -3250,15 +3990,22 @@ def run_check(path: str, fix=False, strict=False, only=None) -> dict:
             if not unit.broken:
                 check_manifest(project, unit)
             check_wiring(project, unit)
+        check_kinds(project)
+        check_scenarios(project)
+        check_contracts(project)
         for unit in project.units:
             check_documents(project, unit)
         check_generated(project)
-    seen, findings = set(), []
+    seen, findings, ignored = set(), [], {}
     for item in project.findings:
         key = (item["rule"], item["file"], item["line"], item["message"])
-        if key not in seen and (not only or item["rule"] in only):
-            seen.add(key)
-            findings.append(item)
+        if key in seen or (only and item["rule"] not in only):
+            continue
+        seen.add(key)
+        if ignore and item["rule"] in ignore:
+            ignored[item["rule"]] = ignored.get(item["rule"], 0) + 1
+            continue
+        findings.append(item)
     first = {"M1": 0, "S1": 0}
     findings.sort(key=lambda f: (first.get(f["rule"], 1), sort_key(f["file"]) if f["file"] != "."
                                  else [], f["line"] or 0, SEVERITY_ORDER[f["severity"]],
@@ -3267,7 +4014,7 @@ def run_check(path: str, fix=False, strict=False, only=None) -> dict:
     rules: dict = {}
     for item in findings:
         rules[item["rule"]] = rules.get(item["rule"], 0) + 1
-    summary = {"units": len(project.units), **counts, "rules": rules,
+    summary = {"units": len(project.units), **counts, "rules": rules, "ignored": dict(sorted(ignored.items())),
                "root": project.root, "tool": TOOL_VERSION}
     if fixed is not None:
         summary["fixed"] = fixed
@@ -3290,9 +4037,10 @@ def print_check(result: dict, quiet=False):
               f"{len(fixed['removed'])} removed")
     if fixed and fixed["refused"]:
         print("not overwritten (no generated marker): " + ", ".join(fixed["refused"]))
-    per_rule = ", ".join(f"{rule}×{count}" for rule, count in sorted(summary["rules"].items()))
+    per_rule = [f"{rule}×{count}" for rule, count in sorted(summary["rules"].items())]
+    per_rule += [f"{rule}×{count} ignored" for rule, count in sorted(summary.get("ignored", {}).items())]
     print(f"{summary['units']} unit(s): {summary['error']} error(s), {summary['warn']} "
-          f"warning(s), {summary['info']} info" + (f"  [{per_rule}]" if per_rule else ""))
+          f"warning(s), {summary['info']} info" + (f"  [{', '.join(per_rule)}]" if per_rule else ""))
 
 
 def print_github(result: dict):
@@ -3314,6 +4062,108 @@ def print_github(result: dict):
     summary = result["summary"]
     print(f"unifold: {summary['units']} unit(s), {summary['error']} error(s), "
           f"{summary['warn']} warning(s), {summary['info']} info")
+
+
+def build_model(project: Project) -> dict:
+    """The resolved project as plain data: the schema `unifold-model` of tool-json.md."""
+    rel = project.rel
+
+    def end(item: dict, side: str) -> dict:
+        if item["where"] == "outside":
+            key = "root-need" if side == "provider" else "root-capability"
+            return {"outside": True, key: item["capability" if side == "provider" else "need"],
+                    "config": item.get("config")}
+        return {"unit": item["unit"].rel, "capability" if side == "provider" else "need":
+                item["capability" if side == "provider" else "need"], "config": item.get("config")}
+
+    def contract_parts(unit: Unit, spec: dict):
+        target = contract_target(project, unit, spec.get("contract"))[1]
+        if not target or project.kind_of(target) != "file":
+            return None, None
+        contract = contract_of_path(project, target)
+        return ([{"name": name, "kind": part["kind"]} for name, part in contract["parts"].items()],
+                contract["fake"])
+
+    def entry(unit: Unit, name: str, spec: dict, side: str) -> dict:
+        parts, fake = contract_parts(unit, spec)
+        data = {"name": name, "summary": spec["summary"], "kind": spec["kind"] or None,
+                "contract": contract_target(project, unit, spec["contract"])[0] or None,
+                "parts": spec["parts"], "contract-parts": parts, "fake": fake}
+        if side == "needs":
+            data.update({"optional": spec["optional"], "platform": spec["platform"],
+                         "final-providers": [end(i, "provider") for i in providers_of(unit, name)]})
+        else:
+            data["final-users"] = [end(i, "user") for i in users_of(unit, name)]
+        data["x"] = spec.get("x", {})
+        return data
+
+    def wiring_rows(unit: Unit) -> list:
+        rows = []
+        for capability, conn in unit.impl.items():
+            for e in conn.entries:
+                rows.append({"key": conn.key, "value": e.raw, "alternative": e.config, "form": "implemented-by",
+                             "user": None, "need": None, "provider": e.unit.rel, "capability": e.capability,
+                             "to-need": None})
+        for need, conn in unit.inner.items():
+            for e in conn.entries:
+                rows.append({"key": conn.key, "value": e.raw, "alternative": e.config, "form": "met-inside",
+                             "user": unit.rel, "need": need, "provider": e.unit.rel, "capability": e.capability,
+                             "to-need": None})
+        for (child, need), conn in unit.conn.items():
+            for e in conn.entries:
+                if e.kind == "child":
+                    rows.append({"key": conn.key, "value": e.raw, "alternative": e.config, "form": "connection",
+                                 "user": child.rel, "need": need, "provider": e.unit.rel,
+                                 "capability": e.capability, "to-need": None})
+                else:
+                    rows.append({"key": conn.key, "value": e.raw, "alternative": e.config, "form": "passed-up",
+                                 "user": child.rel, "need": need, "provider": None, "capability": None,
+                                 "to-need": e.capability})
+        return rows
+
+    by_unit = {}
+    for scenario in resolved_scenarios(project):
+        hops = []
+        for hop, result, error in scenario["hops"]:
+            if result:
+                hops.append({"caller": result["caller"], "target": result["target"], "part": result["part"],
+                             "contract": rel(result["contract"]),
+                             "caller-unit": result["caller-unit"].rel if result["caller-unit"] else None,
+                             "target-unit": result["target-unit"].rel if result["target-unit"] else None,
+                             "via": [{"unit": holder.rel, "key": key} for holder, key in result["via"]]})
+            else:
+                hops.append({"caller": None, "target": None, "part": None, "contract": None,
+                             "caller-unit": None, "target-unit": None, "via": [],
+                             "unresolved": hop, "error": error})
+        spec = scenario["spec"]
+        by_unit.setdefault(scenario["unit"], []).append(
+            {"name": scenario["name"], "summary": spec["summary"], "source": spec["source"] or None,
+             "expect": spec["expect"], "hops": hops, "x": spec["x"]})
+    units = []
+    for unit in project.units:
+        readme = os.path.join(unit.path, "README.md")
+        units.append({
+            "path": unit.rel, "name": unit.name, "parent": unit.parent.rel if unit.parent else None,
+            "children": [c.rel for c in unit.children], "responsibility": unit.responsibility,
+            "kind": unit.kind or None, "status": unit.status, "owner": unit.owner or None,
+            "readme": rel(readme) if project.kind_of(readme) == "file" else None,
+            "secret": secret_data(project, unit),
+            "not": [{"text": text, "need": need} for text, need in unit.nots],
+            "capabilities": [entry(unit, n, s, "capabilities") for n, s in unit.capabilities.items()],
+            "needs": [entry(unit, n, s, "needs") for n, s in unit.needs.items()],
+            "wiring": wiring_rows(unit),
+            "scenarios": by_unit.get(unit, []),
+            "decisions": [{"path": rel(d["path"]), "title": d["title"], "status": d["status"], "date": d["date"],
+                           "derived-from": d["derived-from"], "answer": d["answer"]}
+                          for d in decisions_of(project, unit)],
+            "documents": {kind: [rel(p) for _, p in items] for kind, items in documents_of(project, unit).items()},
+            "x": {k: v for k, v in unit.manifest.items() if isinstance(k, str) and k.startswith("x-")}})
+    root = project.root_unit
+    root_needs = [{"name": need, "platform": spec["platform"],
+                   "reached-by": sorted({u.rel for u, _ in final_users(root, need) if u is not root})}
+                  for need, spec in root.needs.items() if need not in root.inner]
+    return {"unifold-model": MODEL_VERSION, "tool": TOOL_VERSION, "project": root.name, "root": project.root,
+            "units": units, "root-needs": root_needs}
 
 
 def unit_for(project: Project, path: str) -> Unit:
@@ -3345,6 +4195,8 @@ COMMANDS = {
     "capability": "print both ends of every connection of one capability or need",
     "impact": "list everything that depends on a unit or capability, and who cites its files",
     "tree": "print the unit tree with status, capabilities and needs",
+    "model": "print the resolved project as JSON with a stable schema: units, connections, final "
+             "providers, scenarios, decisions",
     "stamp": "write or refresh the stamps of the context items at or below PATH, and print "
              "each one with the source it cites",
     "cited-by": "list the context items and links that cite FILE",
@@ -3387,7 +4239,10 @@ def build_parser() -> argparse.ArgumentParser:
                      help="github: workflow annotations")
     cmd.add_argument("--rule", action="append", metavar="ID",
                      help="report only this rule (repeatable)")
+    cmd.add_argument("--ignore", action="append", metavar="ID",
+                     help="drop the findings of this rule from the output and the exit code (repeatable)")
     command("generate")
+    command("model")
     command("show")
     cmd = command("capability", path=False)
     cmd.add_argument("path", help="folder of the unit")
@@ -3461,7 +4316,8 @@ def run(args) -> int:
         if args.format == "json":
             args.json = True
         result = run_check(args.path, args.fix, args.strict,
-                           {r.upper() for r in args.rule} if args.rule else None)
+                           {r.upper() for r in args.rule} if args.rule else None,
+                           {r.upper() for r in args.ignore} if args.ignore else None)
         if args.json:
             print(json.dumps(result, indent=1, ensure_ascii=False))
         elif args.format == "github":
@@ -3527,6 +4383,9 @@ def run(args) -> int:
         return 0
     if name == "tree":
         emit(args, tree_data(project, args.depth), lambda: print_tree(project, args.depth))
+        return 0
+    if name == "model":
+        print(json.dumps(build_model(project), indent=1, ensure_ascii=False))
         return 0
     if name == "site":
         out = build_site(project, os.path.abspath(args.output) if args.output

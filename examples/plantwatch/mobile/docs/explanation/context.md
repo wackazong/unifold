@@ -12,16 +12,16 @@ Says: the BLE profile and the reading schema are references of plantwatch. Every
 Here: `sensor-link` names the profile as its contract; the app implements the central side of major version 1. It stores and uploads readings in the form of the schema, cited below.
 
 ### [plantwatch: reading schema](../../../docs/references/reading-schema.md)
-<!-- unifold:cites sha=888e575a -->
+<!-- unifold:cites sha=047250bf -->
 
 Says: a reading has a sensor id, a sequence number, a tick count, a time with a flag for an estimate, and soil moisture, light and temperature, each optional. Sensor id and sequence number identify it. It has a JSON form and a binary form, version 1.0; a minor version only adds optional fields.
 
 Here: the app stores and uploads readings in the JSON form and gives a reading its `taken_at` from the tick count before it is stored.
 
 ### [plantwatch: app UI](../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=aa5d729a -->
+<!-- unifold:cites sha=e244d4e6 -->
 
-Says: per plant the app shows the latest reading, the history and what the plant needs; it works offline; a plant in need produces one notification.
+Says: per plant the app shows the latest reading and 90 days of history, plants with an open alert first with the reason; it works offline; a tap on a notification opens the plant it is about.
 
 Here: the capability `app-ui` of this unit is that promise. The app shows and reacts to notifications; that there is only one per alert is not its doing.
 

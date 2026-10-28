@@ -1,0 +1,26 @@
+responsibility: Moves frames through the serial port with deadlines
+kind: adapter
+status: planned
+secret:
+  what: opening the port, writing to it and reading it with deadlines
+  decision: ../docs/decisions/0001-the-line-is-one-unit-cut-into-port-and-reassembly.md
+not:
+  - frame layout: frames
+  - cutting the stream into frames: framing
+capabilities:
+  transport:
+    summary: Send one payload as a frame; receive the next frame's payload
+    contract: ../../docs/references/transport.md
+needs:
+  framing:
+    summary: Cut the bytes read so far into frames
+    contract: ../docs/references/framing.md
+  frames:
+    summary: Encode a payload into the bytes of a frame
+    contract:
+      path: ../../docs/references/frames.md
+      parts:
+        - encode
+  uart:
+    summary: The serial port, as a byte stream
+    contract: ../../docs/references/uart.md

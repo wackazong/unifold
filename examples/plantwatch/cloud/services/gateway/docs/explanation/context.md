@@ -12,17 +12,37 @@ Says: one service is reachable from outside. It authenticates and routes and doe
 Here: this unit is that service. It never passes on a request without a verified token, and never an owner id that came from outside.
 
 ### [cloud: public API](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=d259494b -->
+<!-- unifold:cites sha=81a51124 -->
 
 Says, as far as this unit implements it:
 
 - All operations lie under `/v1`: `POST /v1/owners` and `POST /v1/tokens` for tokens, paths below `/v1/sensors/` for uploads, `/v1/plants` and below for plants and history, `/v1/alerts` and below for alerts.
-- Every request except `POST /v1/owners` carries `Authorization: Bearer <token>`. A token stands for one owner, is opaque to the client and valid for 365 days. Both token operations answer `201` with `token` and `expires_at`; the first also with `owner_id`.
+- Every request except `POST /v1/owners` carries `Authorization: Bearer <token>`. A token stands for one owner, is opaque to the client and valid for 365 days. The token operations are the parts `create-owner` and `create-token`.
 - Limits: 1 MB per request body, 120 requests per minute per token, 10 new owners per hour per client address.
-- Errors have the body `{"code", "message"}`: `401` `unauthenticated`, `404` `not_found`, `413` `payload_too_large`, `429` `rate_limited` with the header `Retry-After`, `503` `unavailable`.
-- Every request may be repeated.
+- Every request may be repeated. The error response is the part `error`.
 
 Here: the contract of the capability `public-api`. `gateway` implements the token operations, the limits and these errors itself. It passes the three groups of paths on to the needs `ingest-api`, `plants-api` and `alerts-api` without looking at their bodies.
+
+### [cloud: public API, create an owner](../../../../../docs/references/public-api/create-owner.md)
+<!-- unifold:cites sha=6fc41781 -->
+
+Says: `POST /v1/owners` needs no token and no body; it answers `201` with `owner_id`, `token` and `expires_at`, and `429` beyond 10 requests per hour from one client address.
+
+Here: `gateway` serves this operation itself.
+
+### [cloud: public API, create a token](../../../../../docs/references/public-api/create-token.md)
+<!-- unifold:cites sha=1ed15eae -->
+
+Says: `POST /v1/tokens` has no body and answers `201` with a new `token` and `expires_at` for the owner of the token in the request; the old token stays valid until it expires.
+
+Here: `gateway` serves this operation itself.
+
+### [cloud: public API, errors](../../../../../docs/references/public-api/error.md)
+<!-- unifold:cites sha=6973d698 -->
+
+Says: errors have the body `{"code", "message"}`: `401` `unauthenticated`, `404` `not_found`, `413` `payload_too_large`, `429` `rate_limited` with the header `Retry-After`, `503` `unavailable`.
+
+Here: `gateway` answers `401`, `413` and `429` itself and passes on the errors of its providers unchanged.
 
 ### [cloud: calls between services](../../../../docs/references/service-calls.md)
 <!-- unifold:cites sha=f87b1f71 -->

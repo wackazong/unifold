@@ -1,33 +1,18 @@
 # Runtime of plantwatch
 
-Scenarios that cross several parts and that no single part can tell. Which parts exist is in the [component diagram](../diagrams/component.md).
+Stories that cross several parts and that no single part can tell are scenarios in `unifold.yaml`, where the checker follows every hop through the wiring and the generator draws them. Which parts exist is in the [component diagram](../diagrams/component.md).
 
 ## The path of a reading
 
-This sequence crosses several parts and is therefore drawn here. It shows only the parts directly inside plantwatch and the outside world.
+The way of a reading from the pot to the owner is told in four scenarios, each drawn end to end:
 
-```mermaid
-sequenceDiagram
-    participant S as device (or emulator)
-    participant P as mobile
-    participant C as cloud
-    participant N as push service
-    loop every sampling interval
-        S->>S: take a reading, store it
-    end
-    Note over S,P: phone comes into range
-    P->>S: connect, ask for stored readings
-    S-->>P: readings with tick counts
-    P->>P: convert ticks to UTC, store
-    P->>S: confirm up to sequence number n
-    S->>S: delete confirmed readings
-    Note over P,C: phone has a network connection
-    P->>C: upload batch
-    C-->>P: accepted, including duplicates
-    C->>C: evaluate against thresholds
-    opt plant needs attention, no open alert yet
-        C->>N: notify the owner's phones
-        N-->>P: notification
-    end
-    P->>C: fetch plants, history, alerts
-```
+| Scenario | Story |
+|---|---|
+| [take-a-reading](../diagrams/scenario-take-a-reading.md) | the sensor stick wakes, measures, stores the reading and sleeps again |
+| [fetch-readings](../diagrams/scenario-fetch-readings.md) | a phone comes into range, fetches the stored readings, stores them and confirms them |
+| [upload-and-alert](../diagrams/scenario-upload-and-alert.md) | the phone uploads, the server opens an alert, the owner is notified once and sees the plant first in the list |
+| [first-plant](../diagrams/scenario-first-plant.md) | an owner starts the app, adds a plant and pairs a sensor stick |
+
+Two more scenarios tell how the parts are exercised and run: [end-to-end-alert-test](../diagrams/scenario-end-to-end-alert-test.md), the rig driving the simulated sensor stick through a dry spell, and [start-the-server-side](../diagrams/scenario-start-the-server-side.md), the container host starting the services.
+
+What holds along the whole path: a reading is taken at the sampling interval whether or not a phone is near; the phone confirms to the sensor stick only what it has stored; the server answers an upload before it has judged the reading; and the owner's phone learns about an alert through the push service and through the next exchange, whichever comes first.

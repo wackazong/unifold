@@ -19,14 +19,6 @@ The trade-off: recognition of duplicates is exact in normal operation and only b
 - `ingest` depends on nothing but the event bus. It answers uploads with `200` while no subscriber of its events is running.
 - For a sensor stick with more than 1 000 gaps in its sequence numbers, a reading in an old gap can be reported as `duplicate` without having been accepted.
 
-## Out of scope
-
-- Storing readings for queries.
-- Knowing which plant a sensor stick belongs to, or who owns it.
-- Verifying tokens. `ingest` trusts the caller identity it is given.
-- Judging a reading against thresholds.
-- Correcting a reading, or replacing an accepted one.
-
 ## Read next
 
 1. [ingest API](../../docs/references/ingest-api.md): the upload operation and the checks

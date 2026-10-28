@@ -6,6 +6,3 @@ The `slugline` command: it prints its arguments as one slug, or one slug for eac
 
 A command is the cheapest way to try the library and to use it from a shell pipeline. The crate holds only argument parsing and input handling, so that every rule about what a slug looks like stays in one place, the library it depends on. The command, not the library, needs the transliteration plug-in: it is the one place that knows which letters its users type.
 
-## Out of scope
-
-- Options beyond those of the contract: no configuration file, no locale.

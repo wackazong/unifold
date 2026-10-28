@@ -20,8 +20,8 @@ Here: `notify` is called more than once for the same alert. Making the repeat ha
 
 ## From cloud
 
-### [cloud: public API, alerts](../../../../../../docs/references/public-api/alerts.md)
-<!-- unifold:cites sha=46c8f57f -->
+### [cloud: public API, alerts](../../../../../../docs/references/public-api/alert.md)
+<!-- unifold:cites sha=d21ddf40 -->
 
 Says, as the part of the contract that this unit implements: each alert leads to one notification to the owner, sent when the alert opens. It carries the alert `id` and the `plant_id`. `sent` means that the push service has taken it, `failed` that it refused for good. An alert has a `quantity` and a `bound`; light is judged by the highest value of a day.
 
@@ -36,8 +36,8 @@ Here: the means by which a repeated call stays harmless.
 
 ## From plantwatch
 
-### [plantwatch: push service, for a sender](../../../../../../docs/references/push-service.md#for-a-sender)
-<!-- unifold:cites sha=fe988229 -->
+### [plantwatch: push service, for a sender](../../../../../../docs/references/push-service.md)
+<!-- unifold:cites sha=0e97e4ac -->
 
 Says: a sender hands the service a notification for an owner, with an identifier under which a repeat replaces the earlier one. Delivery is not guaranteed.
 

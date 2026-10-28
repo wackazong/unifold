@@ -27,8 +27,8 @@ Here: the value that `evaluate` takes and returns, and the entries of its result
 
 ## From cloud
 
-### [cloud: public API, alerts](../../../../../../docs/references/public-api/alerts.md)
-<!-- unifold:cites sha=46c8f57f -->
+### [cloud: public API, alerts](../../../../../../docs/references/public-api/alert.md)
+<!-- unifold:cites sha=d21ddf40 -->
 
 Says, as the behaviour that this unit implements:
 
@@ -41,7 +41,7 @@ Says, as the behaviour that this unit implements:
 Here: `rules` implements exactly this and chooses the margins within the bound. Closing with `expired` is not its business.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=d259494b -->
+<!-- unifold:cites sha=81a51124 -->
 
 Says: a changed threshold applies to readings that are evaluated more than 60 seconds after the change.
 

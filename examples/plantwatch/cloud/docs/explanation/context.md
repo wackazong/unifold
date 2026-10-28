@@ -12,7 +12,7 @@ Says: the BLE profile and the reading schema are references of plantwatch. Every
 Here: `public-api` names the API as its contract; a reading inside an upload has the form of the schema, cited below. `cloud` keeps fields it does not know.
 
 ### [plantwatch: reading schema](../../../docs/references/reading-schema.md)
-<!-- unifold:cites sha=888e575a -->
+<!-- unifold:cites sha=047250bf -->
 
 Says: a reading has a sensor id, a sequence number, a tick count, a time with a flag for an estimate, and soil moisture, light and temperature, each optional. Sensor id and sequence number identify it. It has a JSON form and a binary form, version 1.0; a minor version only adds optional fields.
 

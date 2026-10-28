@@ -18,13 +18,6 @@ What must stay true: a service relies on the two contracts without knowing the p
 
 `platform` asks for three volumes: one for the bus, one for the database and one for database backups. The backup volume lies on other storage than the database volume. `platform` publishes no port.
 
-## Out of scope
-
-- Tables, indexes and migrations. They belong to the service that owns the schema.
-- The content and the meaning of messages. `platform` knows topic names and nothing about the events in them.
-- Redundancy. Version 1 runs one instance of each.
-- Logs and metrics of services.
-
 ## Read next
 
 1. [event bus](../docs/references/event-bus.md): contract of `event-bus`

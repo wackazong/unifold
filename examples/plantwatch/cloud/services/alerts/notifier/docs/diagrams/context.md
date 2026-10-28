@@ -8,8 +8,8 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud__services__alerts["alerts"]
-    u_cloud__services__alerts__notifier["notifier"]
-    u_cloud__services__alerts__server["server"]
+    u_cloud__services__alerts__notifier["notifier (adapter)"]
+    u_cloud__services__alerts__server["server (app)"]
   end
   n_cloud__services__alerts___push{{"push"}}
   u_cloud__services__alerts__server -->|"notification"| u_cloud__services__alerts__notifier
@@ -22,19 +22,19 @@ flowchart LR
   class u_cloud__services__alerts__notifier focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [notifier](../../README.md) | adapter | Turns an opened alert into one notification to the owner | **planned** | [context](context.md) |
 | [server](../../../server/README.md) | app | Process that consumes readings, stores the alerts they lead to and answers queries about them | **planned** | [context](../../../server/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| push | http | [contract](../../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| push | http | [contract](../../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| notification | library | [contract](../../../docs/references/notification.md) |  | [cloud/services/alerts/server](../../../server/README.md) (planned) | notification |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| notification | library | [contract](../../../docs/references/notification.md) | [cloud/services/alerts/server](../../../server/README.md) (planned) | notification |

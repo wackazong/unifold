@@ -28,13 +28,6 @@ The trade-off: `server` treats the evaluation state as a value it cannot read. I
 
 `server` waits up to 10 seconds for an outcome.
 
-## Out of scope
-
-- Comparing a value with a threshold.
-- Looking up plants or thresholds.
-- Wording a notification or talking to a push service.
-- Changing an alert on request of a caller.
-
 ## Read next
 
 1. [docs/references/processing.md](docs/references/processing.md): what is stored, the handling of an event, delivery of notifications, expiry

@@ -27,18 +27,11 @@ What must stay true: `sync` acknowledges a batch only after it is stored durably
 
 `sync` counts a request without an answer after 20 seconds as "try again later".
 
-## Out of scope
-
-- Talking to sensor sticks, and converting tick counts to times.
-- Deciding whether a plant needs attention. `sync` stores thresholds and alerts and compares nothing.
-- Showing anything, including notifications.
-- History older than 90 days.
-
 ## Read next
 
 1. [docs/references/local-store.md](docs/references/local-store.md): what is kept and in which states
 2. [docs/references/exchange.md](docs/references/exchange.md): the exchange with the server
-3. [plant data](../docs/references/plant-data.md): the contract of the provided capability
+3. [plant data](../docs/references/plant-data/index.md): the contract of the provided capability
 4. [docs/references/glossary.md](docs/references/glossary.md): query and command, upload state, waiting change, pause
 5. [Context diagram](docs/diagrams/context.md)
 6. [docs/explanation/context.md](docs/explanation/context.md): what `sync` inherits from above

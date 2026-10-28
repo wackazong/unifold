@@ -1,6 +1,14 @@
-summary: Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants
+responsibility: Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants
 kind: adapter
 status: planned
+secret:
+  what: how long an answer of the registry is kept and how a failed request is repeated
+  decision: docs/decisions/0001-keep-an-answer-for-at-most-60-seconds.md
+not:
+  - judging a reading, or deciding what happens to a reading while the answer is unavailable
+  - any other operation of the registry; plant-lookup changes nothing there
+  - keeping answers across a restart, or sharing them between instances
+  - telling its caller that a plant has changed; it answers when asked
 capabilities:
   thresholds:
     kind: library
@@ -10,4 +18,7 @@ needs:
   plants-api:
     kind: http
     summary: An HTTP lookup that returns the plant a sensor stick is attached to, with owner and thresholds
-    contract: ../../../docs/references/plants-api.md
+    contract:
+      path: ../../../docs/references/plants-api.md
+      parts:
+        - lookup-by-sensor

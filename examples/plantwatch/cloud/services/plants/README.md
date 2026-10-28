@@ -18,14 +18,6 @@ The trade-off: queries and event handling share one service and one database. A 
 
 `plants` plans with at most 25 920 raw readings and 17 520 hourly aggregates per plant.
 
-## Out of scope
-
-- Accepting or validating uploaded readings.
-- Deciding whether a plant needs attention. `plants` stores thresholds and does not compare anything with them.
-- Threshold presets and plant species.
-- Knowing owners beyond their identifier. `plants` trusts the owner id it is given.
-- Telling anybody that a plant changed. Others ask when they need to know.
-
 ## Read next
 
 1. [plants API](../../docs/references/plants-api.md): the operations and their guarantees

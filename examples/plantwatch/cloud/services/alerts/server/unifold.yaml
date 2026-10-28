@@ -1,6 +1,14 @@
-summary: Process that consumes readings, stores the alerts they lead to and answers queries about them
+responsibility: Process that consumes readings, stores the alerts they lead to and answers queries about them
 kind: app
 status: planned
+secret:
+  what: the storage of alerts and the delivery of their notifications
+  decision: ../docs/decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md
+not:
+  - comparing a value with a threshold: evaluation
+  - looking up plants or thresholds
+  - wording a notification or talking to a push service: notification
+  - changing an alert on request of a caller
 capabilities:
   alerts-api:
     kind: http

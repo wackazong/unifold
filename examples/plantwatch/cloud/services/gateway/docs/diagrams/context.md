@@ -8,10 +8,10 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud["cloud"]
-    u_cloud__services__alerts["alerts"]
-    u_cloud__services__gateway["gateway"]
-    u_cloud__services__ingest["ingest"]
-    u_cloud__services__plants["plants"]
+    u_cloud__services__alerts["alerts (service)"]
+    u_cloud__services__gateway["gateway (service)"]
+    u_cloud__services__ingest["ingest (service)"]
+    u_cloud__services__plants["plants (service)"]
   end
   p_cloud___public_dapi(["public-api"])
   u_cloud__services__gateway -->|"ingest-api"| u_cloud__services__ingest
@@ -26,7 +26,7 @@ flowchart LR
   class u_cloud__services__gateway focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [alerts](../../../alerts/README.md) | service | Decides when a plant needs attention and notifies its owner once | **planned** | [component](../../../alerts/docs/diagrams/component.md) |
 | [gateway](../../README.md) | service | Single entry point of the server side that authenticates callers and routes requests | **planned** | [context](context.md) |
@@ -35,15 +35,15 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| ingest-api | http | [contract](../../../../docs/references/ingest-api.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | ingest-api |  |
-| plants-api | http | [contract](../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api |  |
-| alerts-api | http | [contract](../../../../docs/references/alerts-api.md) | [cloud/services/alerts/server](../../../alerts/server/README.md) (planned) | alerts-api |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| ingest-api | http | [contract](../../../../docs/references/ingest-api.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | ingest-api |
+| plants-api | http | [contract](../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api |
+| alerts-api | http | [contract](../../../../docs/references/alerts-api.md) | [cloud/services/alerts/server](../../../alerts/server/README.md) (planned) | alerts-api |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| public-api | http | [contract](../../../../../docs/references/public-api/index.md) |  | [mobile/sync](../../../../../mobile/sync/README.md) (planned) | cloud-api |
-| public-api | http | [contract](../../../../../docs/references/public-api/index.md) |  | [test-rig](../../../../../test-rig/README.md) (planned) | cloud-api |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| public-api | http | [contract](../../../../../docs/references/public-api/index.md) | [mobile/sync](../../../../../mobile/sync/README.md) (planned) | cloud-api |
+| public-api | http | [contract](../../../../../docs/references/public-api/index.md) | [test-rig](../../../../../test-rig/README.md) (planned) | cloud-api |

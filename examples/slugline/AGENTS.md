@@ -19,7 +19,7 @@ This repository has a [unifold](https://unifold.md) map. A folder with a `unifol
 - `unifold capability PATH NAME`: both ends of one connection, with contracts
 - `unifold check`: is the map consistent (`--fix` rewrites generated files)
 
-| Unit | Path | Summary |
+| Unit | Path | Responsibility |
 |---|---|---|
 | cli | `cli` | The slugline command |
 | core | `core` | Makes slugs and defines what a transliteration plug-in must provide |

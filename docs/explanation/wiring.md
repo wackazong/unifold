@@ -69,6 +69,45 @@ capabilities:
 
 If a need and its provider state different kinds, for example `library` and `http`, the checker reports it. Usually a part is missing: an adapter, which is a unit that needs the one and provides the other. Do not change the kind of the need to make the finding go away.
 
+## Kinds of units
+
+`kind` on a unit is free text, and three values carry rules:
+
+| Kind | Meaning | Rule |
+|---|---|---|
+| `logic` | A pure calculation. No input or output, no memory between calls. Takes time and randomness as parameters. | Logic throughout: every child is a `logic` unit, the final provider of each need is a `logic` unit, and no need reaches a need of the root. |
+| `stateful` | Keeps state, such as a session or a state machine. | May need anything. |
+| `adapter` | The one unit that talks to one external system, a need of the root. | The final provider of none of its needs is an `adapter`. |
+
+A need of the root is finally reached only by adapters, unless it is marked `platform: true`; a unit that states no kind is not judged: a service of the host such as time or randomness, which is not an external system and whose contract describes a controllable fake, such as a clock that tests move forward. A unit with children carries a kind too; it says what the box is to its parent's wiring. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`. The root has no kind.
+
+What the kinds give: a logic unit can be tested without any fake, so its tests are the cheapest and its examples the most trustworthy; an adapter is the only place where an external protocol lives, so an integration harness puts fakes at the needs of the root and nowhere else; a stateful unit is where state machines live, so its `runtime.md` is where a reviewer looks for them. Any other value is allowed; the checker says so once, as information, and applies no rule.
+
+## Scenarios
+
+A scenario tells one story as the chain of calls it causes, in the manifest of a unit under `scenarios`. Each hop is `caller -> target.part`. A unit is named by its path from the holding unit; a capability or need of the holding unit is named bare:
+
+```yaml
+scenarios:
+  open:
+    summary: The host opens a session
+    source: proto §5
+    hops:
+      - host -> session.open
+      - session -> transport.send
+      - transport/serial -> uart.write
+    expect: one frame 1F 00 on the line
+```
+
+| Hop | Resolves through | The part is looked up in |
+|---|---|---|
+| `unit -> other-unit.part` | A need of the caller, followed up and down until the target provides for it, at whatever level | the contract of that need |
+| `capability -> unit.part` | The capability of the holding unit, followed down to the target that implements it | the contract of that capability |
+| `unit -> need.part` | A need of the caller, passed up until it reaches that need of the holding unit | the contract of that need |
+| `capability -> need.part`, in a unit without children | Nothing: the capability's implementation uses the need | the contract of that need |
+
+The contract of a connection is one document at every level, so the part is found wherever the hop is written. A name is looked up as a descendant first, then as a capability or need of the holding unit; a name that is both is an error that asks for a rename, as are two connections between the same two units whose contracts both have the part. A scenario belongs to the lowest unit that contains every unit it names; a hop to a need of the root belongs to the root. A story may cross levels, and its diagram is drawn end to end. Every wiring line should appear in a hop of some scenario: a connection that no story needs should not exist.
+
 ## Contracts of a connection
 
 A connection carries information in some form: a wire format, a schema, a trait, a command line. The contract of the connection is the reference that defines that form, with examples, and both sides name it. It is not the kind: `http` says how the sides talk, the contract says what they say. And it is not a schema file such as `openapi.yaml` or a `.proto`, even where code is generated from one: such a file stays with the code that uses it. The checker reports a connection whose two sides name different documents, or none.

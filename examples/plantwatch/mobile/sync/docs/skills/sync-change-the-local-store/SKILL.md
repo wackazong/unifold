@@ -10,7 +10,7 @@ The store on a phone holds readings that exist nowhere else until the server has
 ## Steps
 
 1. **Describe the change in the reference first.** Edit [local-store.md](../../references/local-store.md): the table "What is kept", the state diagram or the retention table. If the change adds a state, say for every state when a thing enters and leaves it.
-2. **Check where the fact belongs.** If the change adds a field that readers of the data see, it is part of the data model cited in [context.md](../../explanation/context.md) and of [plant-data.md](../../../../docs/references/plant-data.md). A field of the data model is not decided in this unit: stop and tell the human. A field only the store needs stays here.
+2. **Check where the fact belongs.** If the change adds a field that readers of the data see, it is part of the data model cited in [context.md](../../explanation/context.md) and of [plant-data.md](../../../../docs/references/plant-data/index.md). A field of the data model is not decided in this unit: stop and tell the human. A field only the store needs stays here.
 3. **Check the size.** Recompute the table "Size" in [local-store.md](../../references/local-store.md) for the upper bound.
 4. **Raise the layout version** by one and write the migration from the previous version. A migration
    - runs in one transaction, so a phone that is switched off in the middle starts it again from the old layout,
@@ -33,5 +33,5 @@ The store on a phone holds readings that exist nowhere else until the server has
 ## Reference
 
 - [local-store.md](../../references/local-store.md)
-- [plant-data.md](../../../../docs/references/plant-data.md)
+- [plant-data.md](../../../../docs/references/plant-data/index.md)
 - [exchange.md](../../references/exchange.md)

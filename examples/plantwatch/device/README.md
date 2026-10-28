@@ -33,13 +33,6 @@ Where the BLE profile leaves a choice or sets only a bound, a central observes t
 
 Limit: a sensor stick gives readings for 16 383 starts.
 
-## Out of scope
-
-- Wall-clock time. The firmware counts ticks and never knows the date.
-- Judging a reading. The firmware knows no plant and no threshold.
-- Any radio other than BLE, and the role of a central.
-- Updating itself.
-
 ## Read next
 
 1. [docs/explanation/reasoning.md](docs/explanation/reasoning.md): why the firmware is cut this way

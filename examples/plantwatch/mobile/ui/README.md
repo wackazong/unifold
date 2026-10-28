@@ -33,18 +33,10 @@ Every screen, its states and the ways between the screens are in [screens](docs/
 
 Notifications that are not allowed or not delivered cost nothing else: `ui` shows every alert that `plant-data` contains on its screens.
 
-## Out of scope
-
-- Fetching readings, storing data, exchanging data with a server.
-- Deciding whether a plant needs attention.
-- Composing or delivering notifications.
-- Layouts for landscape, tablets or watches.
-- Units other than percent, lux and degrees Celsius.
-
 ## Read next
 
 1. [screens](docs/references/screens.md): the screens, the ways between them, and the states every screen has
-2. [plant data](../docs/references/plant-data.md): the contract of `plant-data`, with the examples the screens are tested with
+2. [plant data](../docs/references/plant-data/index.md): the contract of `plant-data`, with the examples the screens are tested with
 3. [docs/references/presets.md](docs/references/presets.md): threshold presets
 4. [docs/references/glossary.md](docs/references/glossary.md): screen, state, mark, bar, span
 5. [Context diagram](docs/diagrams/context.md)

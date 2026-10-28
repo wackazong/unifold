@@ -1,6 +1,14 @@
-summary: Keeps readings on the sensor stick until they have been delivered
+responsibility: Keeps readings on the sensor stick until they have been delivered
 kind: library
 status: planned
+secret:
+  what: the layout of readings in the flash blocks and the recovery after power loss
+  decision: docs/decisions/0001-a-ring-of-blocks-for-readings-and-a-journal-for-marks.md
+not:
+  - deciding that a reading has been delivered; store is told
+  - any index other than the sequence number; no search by time or value
+  - storing anything that is not a reading; no settings, no keys
+  - changing or correcting a stored reading
 capabilities:
   reading-log:
     kind: library

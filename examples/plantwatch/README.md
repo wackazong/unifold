@@ -16,21 +16,15 @@ The decision that shapes everything else is that the sensor stick talks only to 
 
 ## This example
 
-**This is a design written before any code.** It is the example of [unifold](https://unifold.md) that shows every document convention of the standard, in all 22 units. That is much more than a unit should cost. Start with the small example, slugline, which is a folder beside this one in the unifold repository, and come back here to see how READMEs, explanation files, decisions, context items and skills look when a team chooses to write them.
+**This is a design written before any code.** It is the example of [unifold](https://unifold.md) that shows every document convention of the standard, in all 22 units. That is much more than a unit should cost. Start with the small example, slugline, which is a folder beside this one in the unifold repository, and come back here to see how READMEs, contracts with their parts and fakes, explanation files, decisions, context items, scenarios and skills look when a team chooses to write them.
 
-Every unit has `status: planned`, and every decision in force is accepted: the documents are the design, and no product code exists yet. The [architecture diagram](docs/diagrams/architecture.md) shows all units and how they depend on each other; [unifold.html](unifold.html), written by `unifold site`, is the same map as a page in which every box can be clicked.
+Every unit has `status: planned`, and every decision in force is accepted: the documents are the design, and no product code exists yet. The [architecture diagram](docs/diagrams/architecture.md) shows all units and how they depend on each other; [unifold.html](unifold.html), written by `unifold site`, is the same map as a page in which every box can be clicked. Nine scenarios in the manifests of plantwatch, `cloud`, `cloud/services/alerts` and `mobile` tell the stories that cross units, from a reading in the pot to the notification on the phone; the generator draws each as a sequence diagram, listed in [runtime.md](docs/explanation/runtime.md).
 
 ## Capabilities
 
 ### `app-ui`
 
-The end-to-end catalogue named as `verified-by` in the manifest checks the path from a sensor value to an alert and to the notification being handed on. It cannot observe a phone. What the screens show, and use without a network, are checked by the part that builds the app, once its checks exist.
-
-## Out of scope
-
-- Automatic watering. plantwatch tells people; it does not act.
-- Sensor sticks that reach the server by themselves. See [decision 0001](docs/decisions/0001-the-phone-relays-between-sensor-and-server.md).
-- Identifying plant species. The user sets the thresholds or picks a preset.
+The end-to-end catalogue of `test-rig` checks the path from a sensor value to an alert and to the notification being handed on. It cannot observe a phone. What the screens show, and use without a network, are checked by the part that builds the app, once its checks exist.
 
 ## Read next
 

@@ -53,8 +53,8 @@ Consequences:
 | `status: planned` | The text describes an intention. The code may not exist. |
 | A decision with `status: proposed` | Nobody has agreed to it yet. Only accepted decisions bind. |
 | A warning about a stamp | A restatement in `docs/explanation/context.md` may no longer match its source. Read the source. |
-| `summary: TODO` | A placeholder that nobody has completed. |
-| `verified-by` | A pointer to tests. unifold does not run them. |
+| `responsibility: TODO`, `summary: TODO` | A placeholder that nobody has completed. |
+| Decision with `status: derived` | A source settles it, says the author. Whether the passage says so is a review question. |
 
 `show` and `capability` print the status of every unit they mention and mark planned units and proposed decisions.
 

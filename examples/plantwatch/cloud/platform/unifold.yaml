@@ -1,6 +1,15 @@
-summary: Shared infrastructure of the services - message bus and database
-kind: infrastructure
+responsibility: Shared infrastructure of the services - message bus and database
+kind: adapter
 status: planned
+secret:
+  what: the products behind the bus and the database, and how they are operated
+  decision: docs/decisions/0001-postgresql-and-a-kafka-compatible-broker.md
+not:
+  - tables, indexes and migrations; they belong to the service that owns the schema
+  - the content and the meaning of messages; platform knows topic names and nothing about the events in them
+  - redundancy; version 1 runs one instance of each
+  - logs and metrics of services
+  - running the containers and keeping their volumes: container-host
 capabilities:
   event-bus:
     kind: queue

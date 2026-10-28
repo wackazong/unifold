@@ -1,6 +1,15 @@
-summary: Evaluates readings against the thresholds of a plant
+responsibility: Evaluates readings against the thresholds of a plant
 kind: library
 status: planned
+secret:
+  what: the margins and the state with which a reading is judged
+  decision: docs/decisions/0001-flapping-is-prevented-by-a-margin-on-closing.md
+not:
+  - storing anything, including its own state
+  - closing an alert because time has passed; rules acts only when it is given a reading
+  - telling anybody about an alert
+  - deciding what a good threshold is
+  - fetching thresholds over a network, repeating a failed lookup or keeping an answer: thresholds
 capabilities:
   evaluation:
     kind: library

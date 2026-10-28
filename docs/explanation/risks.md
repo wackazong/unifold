@@ -17,6 +17,7 @@ What can go wrong with the standard as it stands, what it knowingly does not do,
 - **The tree is the only structure.** A unit has one parent. Views across the folder tree, and configurations that choose between alternatives, are not modelled ([0010](../decisions/0010-units-follow-the-code-layout.md)).
 - **A need used deep in the tree costs a line at every level.** It is declared in each unit on the way up and passed up by a line in each parent: a manifest shows everything its unit needs, and the wiring every connection, so that each can be read alone ([0048](../decisions/0048-write-every-connection-out-and-let-a-unit-wire-its-own-need.md)).
 - **Flat systems put all wiring in one file.** For a set of services without intermediate folders, the root manifest holds every connection, one line per need and child ([0032](../decisions/0032-write-every-unit-out-in-the-wiring.md)).
-- **`verified-by` is never run** ([0030](../decisions/0030-let-contract-and-verified-by-point-anywhere-in-the-project.md)).
+- **The body of a contract is checked for its form, not its truth.** A part with a fenced block, examples and a fake can still be wrong; the examples are tests only once somebody runs them ([0068](../decisions/0068-give-a-contract-a-body-with-parts-and-a-fake.md)).
+- **A derived decision can claim what its source does not say** ([0070](../decisions/0070-add-the-decision-status-derived.md)). The form shows the passage; review reads it.
 - **Boxes are fully clickable only in the explorer.** On code hosts it depends on the host.
 - **One repository.** Relations between repositories are needs of the root; no map across repositories is produced.

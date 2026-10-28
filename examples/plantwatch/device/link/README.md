@@ -35,13 +35,6 @@ Limits: at the default ATT MTU, `link` sends one reading per notification. To a 
 
 `link` takes all time from the tick counts of the radio events. It has no other source of time.
 
-## Out of scope
-
-- Measuring and storing. `link` serves what it is given.
-- The role of a central: `link` never scans and never connects.
-- Deciding what the profile should say.
-- Anything a central does with a reading.
-
 ## Read next
 
 1. [radio](../docs/references/radio.md): what `link` expects of the radio

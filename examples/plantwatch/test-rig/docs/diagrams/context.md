@@ -8,10 +8,10 @@
 ```mermaid
 flowchart LR
   subgraph u_root["plantwatch"]
-    u_cloud["cloud"]
-    u_device["device"]
-    u_emulator["emulator"]
-    u_test_drig["test-rig"]
+    u_cloud["cloud (system)"]
+    u_device["device (firmware)"]
+    u_emulator["emulator (tool)"]
+    u_test_drig["test-rig (test)"]
   end
   p_root___test_dreport(["test-report"])
   u_test_drig -->|"device-under-test → ble-link (real)"| u_device
@@ -27,7 +27,7 @@ flowchart LR
   class u_test_drig focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [cloud](../../../cloud/README.md) | system | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](../../../cloud/docs/diagrams/component.md) |
 | [device](../../../device/README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../../device/docs/diagrams/component.md) |
@@ -36,15 +36,15 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| device-under-test | protocol | [contract](../../../docs/references/ble-profile/index.md) | [device/link](../../../device/link/README.md) (planned) (real) | ble-link |  |
-| device-under-test | protocol | [contract](../../../docs/references/ble-profile/index.md) | [emulator](../../../emulator/README.md) (planned) (simulated) | ble-link |  |
-| scenario-control | http | [contract](../../../docs/references/scenario-control.md) | [emulator](../../../emulator/README.md) (planned) | scenario-control |  |
-| cloud-api | http | [contract](../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../cloud/services/gateway/README.md) (planned) | public-api |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| device-under-test | protocol | [contract](../../../docs/references/ble-profile/index.md) | [device/link](../../../device/link/README.md) (planned) (real) | ble-link |
+| device-under-test | protocol | [contract](../../../docs/references/ble-profile/index.md) | [emulator](../../../emulator/README.md) (planned) (simulated) | ble-link |
+| scenario-control | http | [contract](../../../docs/references/scenario-control/index.md) | [emulator](../../../emulator/README.md) (planned) | scenario-control |
+| cloud-api | http | [contract](../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../cloud/services/gateway/README.md) (planned) | public-api |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| test-report | file | [contract](../../../docs/references/test-report.md) |  | outside the project, as capability `test-report` of the root | |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| test-report | file | [contract](../../../docs/references/test-report.md) | outside the project, as capability `test-report` of the root | |

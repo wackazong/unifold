@@ -12,7 +12,7 @@ The [standard](spec.md) asks every unit for a manifest and a `README.md`. This c
 └── docs/
     ├── tutorials/      learn: a lesson that leads to a first result
     ├── skills/         do: a procedure for a task, for people and agents
-    ├── references/     look up: contracts, formats, glossary.md
+    ├── references/     look up: contracts, formats, glossary.md, constants.md
     ├── explanation/    understand: context.md, requirements.md, reasoning.md,
     │                   invariants.md, runtime.md, deployment.md, risks.md
     ├── decisions/      choices between options, with reasons; index generated
@@ -41,13 +41,12 @@ A fact has one home; other files link to it. A text that teaches, instructs, sta
 | Section | Content |
 |---|---|
 | `# <name>` | Then one paragraph: what the unit is for, and for whom. |
-| `## Why` | Required. Why the unit exists, what makes it change, why it is cut this way, what must stay true. At most 20 lines that are not blank; the long form is `docs/explanation/reasoning.md`. |
+| `## Why` | Required. Why the unit exists, what makes it change, why it is cut this way, what must stay true: the long form of its `secret` and its `not`. At most 20 lines that are not blank; the long form is `docs/explanation/reasoning.md`. |
 | `## Capabilities`, `## Needs` | Only where the summary and the contract do not say everything. One `###` subsection for each such capability or need; the heading is the name in code font, for example ``### `invoices` ``. A subsection says only what the contract does not: what this unit adds beyond it, in a form that can be checked, its own limits, and for an optional need what the unit does without it. It does not repeat the contract or link to it as a matter of course: the manifest names the contract. |
-| `## Out of scope` | What the unit does not do. |
 | `## Commands` | Optional. The few commands to build, test and run the unit. |
 | `## Read next` | Optional. A few links into `docs/` whose order matters. |
 
-- Every `README.md`, the root's included, has these sections in this order. A section without content is deleted, not left empty. The template is in the `unifold` skill; `unifold init` writes it for a root that has no `README.md`.
+- Every `README.md`, the root's included, has these sections in this order. A section without content is deleted, not left empty. What the unit does not do is `not` in the manifest, not a section. The template is in the `unifold` skill; `unifold init` writes it for a root that has no `README.md`.
 - A `README.md` MUST NOT describe how the unit works inside, and SHOULD NOT name the units around it or list children, capabilities or connections: the manifest and the generated diagrams hold those, and `unifold show` prints them.
 - The root's `README.md` is also the front page of the project. It adds what a front page needs, such as installation, a comparison or a licence, between `## Why` and `## Capabilities` or after `## Read next`. A `README.md` that a package registry publishes keeps its usual content and links to the project by full URLs.
 
@@ -65,7 +64,7 @@ The explanation files are [arc42](https://arc42.org) cut down to what the folder
 | `requirements.md` | What the unit must achieve, for whom it is and is not, and its quality goals in order of priority. | 1, 10 |
 | `reasoning.md` | The long form of `## Why`: the forces, the trade-offs, the ideas the unit is built on, the alternatives that were rejected. | 4 |
 | `invariants.md` | What must always, or never, be true inside the unit. | 2, 8 |
-| `runtime.md` | Sequences, state machines, the order of a start. | 6 |
+| `runtime.md` | How the unit behaves while it runs: states and transitions, start and stop, timing, concurrency, limits, failure. A story across several units is a scenario in the manifest. | 6 |
 | `deployment.md` | Where things run, instances, volumes, what survives a restart, what is reachable from outside. | 7 |
 | `risks.md` | Risks, known limits and technical debt, each with what would remove it. | 11 |
 
@@ -84,7 +83,7 @@ These rules keep a parent small and a child understandable alone. They hold for 
 | Down | Only to a direct child: its folder or its `README.md`. Never into its `docs/`, its `AGENTS.md` or its code, and never to a unit below a child. |
 | Up | Only from `docs/explanation/context.md`, and only to an ancestor's `README.md`, decisions and references. Each link comes with a restatement and a stamp ([writing.md](writing.md)). |
 | Sideways | Never. What the unit wants from a sibling is a need in the manifest. |
-| To a contract | Free. A file that the unit's manifest names as `contract` or `verified-by` may be linked from any file of the unit, wherever it lies. |
+| To a contract | Free. A file that the unit's manifest names as `contract` may be linked from any file of the unit, wherever it lies. |
 | Outside the project | Full URLs. The standard is cited as `https://unifold.md`. A nested project is linked by its `README.md` only. |
 
 ## What belongs where
@@ -92,8 +91,8 @@ These rules keep a parent small and a child understandable alone. They hold for 
 | You want to write down | It goes to |
 |---|---|
 | What a capability guarantees | `README.md`, and its `contract` for the exact definition |
-| A wire format, a schema, a convention, a term | `docs/references/` |
-| What a connection between two children exchanges | `docs/references/` of this unit, named as `contract` by both sides |
+| A wire format, a schema, a convention, a term, a fixed value | `docs/references/`; terms in `glossary.md`, values in `constants.md` |
+| What a connection between two children exchanges | `docs/references/` of this unit, named as `contract` by both sides ([contracts.md](contracts.md)) |
 | Why the unit exists or is cut this way | `README.md` `## Why`, long form `docs/explanation/reasoning.md` |
 | A choice between options, and its reasons | `docs/decisions/` |
 | A rule that holds in this unit | `docs/explanation/invariants.md`; conventions in `docs/references/conventions.md` |
@@ -102,6 +101,8 @@ These rules keep a parent small and a child understandable alone. They hold for 
 | How to do a recurring task | `docs/skills/` |
 | How a newcomer gets to a first result | `docs/tutorials/` |
 | Which units exist and how they connect | Nowhere by hand: the manifests and `docs/diagrams/` |
+| What the unit does not do, and who does it instead | `not` in the manifest |
+| A story that walks through several units | `scenarios` in the manifest of the lowest unit that contains them; the diagram is generated |
 
 ## Beside what is already there
 

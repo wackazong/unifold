@@ -14,14 +14,6 @@ Light shows why judging needs memory: a reading at night is dark for every plant
 
 What must stay true: the function is deterministic, and it never asks to open what is open.
 
-## Out of scope
-
-- Storing anything, including its own state.
-- Closing an alert because time has passed. `rules` acts only when it is given a reading.
-- Telling anybody about an alert.
-- Deciding what a good threshold is.
-- Fetching thresholds over a network, repeating a failed lookup or keeping an answer. That is the part of whoever provides `thresholds`.
-
 ## Read next
 
 1. [evaluation](../docs/references/evaluation.md): the function, the rules, the margins, the state

@@ -1,16 +1,23 @@
-summary: The slugline command
-kind: app
+responsibility: The slugline command
+kind: adapter
+not:
+  - the rules of a slug: slugify
+  - the character tables: transliteration
 capabilities:
   slugline-command:
     kind: cli
     summary: Prints its arguments as one slug, or one slug for each line of standard input
     contract: ../docs/references/slugline-command.md
-    verified-by: tests/cli.rs
 needs:
   slugify:
     kind: library
     summary: A function that turns one string into one slug, with or without a plug-in
-    contract: ../docs/references/slugify.md
+    contract:
+      path: ../docs/references/slugify.md
+      parts:
+        - slugify
+        - slugify-with
+        - options
   transliteration:
     kind: library
     summary: A plug-in that replaces letters with diacritics by ASCII letters

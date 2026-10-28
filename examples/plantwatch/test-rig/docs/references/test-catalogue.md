@@ -4,7 +4,7 @@ The end-to-end promises the rig tests. Each test has an id that is never reused 
 
 ## The product promise behind the tests
 
-The catalogue is named as what verifies the product's `app-ui` ([context.md](../explanation/context.md)). The rig observes the public API, not a phone, so it verifies that promise as far as it shows there.
+The catalogue tests the promise of the product's `app-ui` ([context.md](../explanation/context.md)). The rig observes the public API, not a phone, so it verifies that promise as far as it shows there.
 
 | Part of the promise | Verified by | Observed as |
 |---|---|---|

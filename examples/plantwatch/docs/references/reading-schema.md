@@ -28,7 +28,7 @@ Defines what a reading is: its fields, its identity, its JSON form and its binar
 ## Immutability
 
 - The fields carried in the binary form are fixed when the sensor stick takes the reading.
-- `sensor_id`, `taken_at` and `time_estimated` are added once, by the central that fetches the reading from the sensor stick. The rule for computing `taken_at` is the time reference procedure of the [BLE profile](ble-profile/procedures.md).
+- `sensor_id`, `taken_at` and `time_estimated` are added once, by the central that fetches the reading from the sensor stick. The rule for computing `taken_at` is the time reference procedure of the [BLE profile](ble-profile/time-reference.md).
 - After that, no holder changes any field. A holder that receives a reading it already has keeps the one it has and reports success.
 
 ## JSON form

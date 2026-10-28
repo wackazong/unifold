@@ -13,7 +13,7 @@ unifold init
 unifold check
 ```
 
-`init` writes `unifold.yaml` with the version of the standard, the name of the folder and `summary: TODO`. If the repository has no `README.md`, it writes one from the template, with placeholders in angle brackets. `check` prints three warnings and no error: the `TODO`, and two example headings of the template. A project of one unit already conforms.
+`init` writes `unifold.yaml` with the version of the standard, the name of the folder and `responsibility: TODO`. If the repository has no `README.md`, it writes one from the template, with placeholders in angle brackets. `check` prints three warnings and no error: the `TODO`, and two example headings of the template. A project of one unit already conforms.
 
 Replace the `TODO` with one line that says what the repository is. In `README.md`, write the first paragraph and the `## Why`, and delete the sections that do not apply yet. Run `unifold check --fix`. It reports no error and no warning.
 
@@ -23,7 +23,7 @@ Give the folder that others depend on most a manifest and a front page:
 
 ```yaml
 # platform/unifold.yaml
-summary: Shared runtime services
+responsibility: Shared runtime services
 capabilities:
   clock: The current time
 ```
@@ -46,7 +46,7 @@ Give `billing/` a manifest with a need, and a `README.md` like the one of `platf
 
 ```yaml
 # billing/unifold.yaml
-summary: Creates invoices
+responsibility: Creates invoices
 needs:
   clock: A time source
 ```
@@ -65,9 +65,9 @@ Connect the need in the unit above both folders, here the root:
 
 ```yaml
 # unifold.yaml in the root
-unifold: "0.2"
+unifold: "0.3"
 name: shop
-summary: Shop backend
+responsibility: Shop backend
 wiring:
   billing.clock: platform.clock
 ```
@@ -88,10 +88,14 @@ Write `docs/references/clock.md` in the root: a few lines on what the clock give
 ```yaml
 # platform/unifold.yaml
 capabilities:
-  clock: {summary: The current time, contract: ../docs/references/clock.md}
+  clock:
+    summary: The current time
+    contract: ../docs/references/clock.md
 # billing/unifold.yaml
 needs:
-  clock: {summary: A time source, contract: ../docs/references/clock.md}
+  clock:
+    summary: A time source
+    contract: ../docs/references/clock.md
 ```
 
 Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s)`. The component diagram now shows two boxes and an arrow from `billing` to `platform`, labelled `clock`. The check does not read your code: keeping the code and the map in step is part of every change, and of its review.

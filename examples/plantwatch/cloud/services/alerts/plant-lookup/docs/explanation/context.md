@@ -28,14 +28,21 @@ Says: an internal operation lies below `/internal/v1/` and carries no owner. A c
 Here: how `plant-lookup` calls whoever provides `plants-api`, and why `lookup` takes at most 17 seconds.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=d259494b -->
+<!-- unifold:cites sha=81a51124 -->
 
-Says: a changed threshold applies to readings that are evaluated more than 60 seconds after the change. An error has a `code`; `404` is `not_found`.
+Says: a changed threshold applies to readings that are evaluated more than 60 seconds after the change.
 
-Here: the longest time an answer is kept, and the answer that means `unattached`.
+Here: the longest time an answer is kept.
 
-### [cloud: public API, plants](../../../../../../docs/references/public-api/plants.md)
-<!-- unifold:cites sha=5aad3303 -->
+### [cloud: public API, errors](../../../../../../docs/references/public-api/error.md)
+<!-- unifold:cites sha=6973d698 -->
+
+Says: an error has the body `{"code", "message"}`; `404` is `not_found`, `503` is `unavailable`.
+
+Here: the answer of the registry that means `unattached`, and the one that is repeated.
+
+### [cloud: public API, plants](../../../../../../docs/references/public-api/plant.md)
+<!-- unifold:cites sha=66992485 -->
 
 Says: thresholds are given per quantity as an object with `min`, `max` or both. A plant has a `name` of 1 to 60 characters.
 

@@ -44,8 +44,9 @@ RULES_MD = REPO / "docs/references/rules.md"
 README_TEMPLATE = REPO / "docs/skills/unifold/assets/README.template.md"
 MARK = "<!-- unifold:generated - do not edit; run `unifold generate` -->"
 
-ROOT = 'unifold: "0.2"\nsummary: A demo\n'
-UNIT = "summary: A part\n"
+ROOT = 'unifold: "0.3"\nresponsibility: A demo\n'
+UNIT = "responsibility: A part\n"
+COMPOSITE = UNIT + "kind: stateful\n"              # a unit with children states a kind
 X = "ref:x"                                       # the contract both sides of x name
 NEEDS_X = "needs:\n  x: {kind: library, summary: Needs x, contract: %s}\n" % X
 AT_ROOT_X = NEEDS_X.replace(X, "docs/references/x.md")   # NEEDS_X in a root written by hand
@@ -57,7 +58,22 @@ DECISION = "---\nstatus: {status}\ndate: {date}\n{more}---\n# A decision\n\nText
 ITEM = ("# Context of a\n\n### [demo/0001 A decision](../../../docs/decisions/0001-x.md)\n"
         "{stamp}\nSays: x holds.\n\nHere: a does y.\n")
 CONTEXT = "a/docs/explanation/context.md"
-WHY = "# {name}\n\nWhat it is for.\n\n## Why\n\n" + "{lines}" + "\n## Out of scope\n\nNothing.\n"
+WHY = "# {name}\n\nWhat it is for.\n\n## Why\n\n" + "{lines}" + "\n## Commands\n\nNone.\n"
+FENCE = "```"
+
+
+def contract_text(name: str, parts=None) -> str:
+    """A contract with a complete body: one query per part (default: one type named after the contract)."""
+    out = [f"# {name}", "", f"Contract of `{name}`. Notation: wit.", "Sources: none", "", "## Parts", ""]
+    for part in (parts or [(name, "type")]):
+        part, kind = part if isinstance(part, tuple) else (part, "query")
+        out += [f"### {part}", "", f"Kind: {kind}", "", FENCE + "wit", f"{part}: func() -> u32;" if kind != "type"
+                else f"record {part} {{ v: u32 }}", FENCE, ""]
+        if kind in ("command", "query"):
+            out += ["Pre: none.", "Result: a number.", "Errors: none.", "Examples:", "",
+                    "| Case | Input | Expected |", "|---|---|---|", f"| one | `{part}()` | 1 |", ""]
+    out += ["## Fake", "", "Replays the examples.", ""]
+    return "\n".join(out)
 SKILL = "---\nname: do-it\ndescription: Does it.\n---\n# Do it\n"
 AGENTS_FIX = ("AGENTS.md is generated. Move its content into README.md (`## Why`) and "
               "docs/, delete the file, then run `unifold check --fix`.")
@@ -71,10 +87,12 @@ def stamp(text: str) -> str:
     return f"<!-- unifold:cites sha={digest} -->\n"
 
 
-def project(root: str = "", units: dict | None = None, files: dict | None = None) -> dict:
+def project(root: str = "", units: dict | None = None, files: dict | None = None,
+            contracts: dict | None = None) -> dict:
     """A project: a manifest and a README.md per unit. AGENTS.md is generated. A file
     whose value is None is left out. `ref:NAME` in a manifest becomes the path from the
-    unit to docs/references/NAME.md of the root, which is written too."""
+    unit to docs/references/NAME.md of the root, which is written too, with the parts
+    `contracts` gives it (default: one type named after it)."""
     names: set = set()
 
     def refs(text: str, folder: str) -> str:
@@ -88,7 +106,7 @@ def project(root: str = "", units: dict | None = None, files: dict | None = None
         out[f"{path}/unifold.yaml"] = UNIT + refs(manifest, path)
         out[f"{path}/README.md"] = README.format(name=path.rsplit("/", 1)[-1])
     for name in sorted(names):
-        out[f"docs/references/{name}.md"] = f"# {name}\n\nThe contract of {name}.\n"
+        out[f"docs/references/{name}.md"] = contract_text(name, (contracts or {}).get(name))
     out.update(files or {})
     return {k: v for k, v in out.items() if v is not None}
 
@@ -98,6 +116,13 @@ def with_decision(status="proposed", more="", date="2026-10-07", name="0001-x.md
 
 
 CONTEXT_FILES = {**with_decision(), CONTEXT: ITEM.format(stamp="")}
+DERIVED = "---\nstatus: derived\ndate: 2026-10-07\nderived-from: proto §4\n---\n# A decision\n\n## Source says\n\nText.\n"
+# a root capability `api` implemented by a, which needs x from b; the contracts have the parts serve and do
+SCENARIO_ROOT = ("capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n"
+                 "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a -> b.do\n    expect: e\n")
+SCENARIO_UNITS = {"a": NEEDS_X + "capabilities:\n  api: {summary: s, contract: ref:api}\n", "b": CAPABILITY_X}
+SCENARIO_CONTRACTS = {"api": ["serve"], "x": ["do"]}
+CONSTANTS = "# Constants\n\n| Name | Value |\n|---|---|\n| `MAX_SIZE` | 3 |\n"
 
 # name, files, expected findings, options (generate, args)
 CASES = [
@@ -109,7 +134,7 @@ CASES = [
     ("clean-unit-below-plain-folder", project(WIRED, {"parts/a": NEEDS_X, "parts/b": CAPABILITY_X}), []),
     ("clean-pass-up", project(NEEDS_X + "wiring:\n  a.x: x\n", {"a": NEEDS_X}), []),
     ("clean-pass-up-two-levels", project(NEEDS_X + "wiring:\n  a.x: x\n",
-                                         {"a": NEEDS_X + "wiring:\n  deep.x: x\n", "a/deep": NEEDS_X}), []),
+                                         {"a": "kind: stateful\n" + NEEDS_X + "wiring:\n  deep.x: x\n", "a/deep": NEEDS_X}), []),
     ("clean-pass-up-to-a-need-of-another-name",
      project("needs:\n  x: One\n  y: {summary: Two, contract: ref:x}\nwiring:\n  a.x: y\n", {"a": NEEDS_X}), []),
     ("clean-path-form-reference", project(
@@ -129,25 +154,54 @@ CASES = [
         "wiring:\n  p: a.p\n  a.n: n\n",
         {"a": "capabilities:\n  p: {kind: http, summary: s, contract: ../docs/references/p.md}\n"
               "needs:\n  n: {kind: http, summary: s, contract: ../docs/references/n.md}\n"},
-        {"docs/references/p.md": "# p\n", "docs/references/n.md": "# n\n"}), []),
+        {"docs/references/p.md": contract_text("p"), "docs/references/n.md": contract_text("n")}), []),
     ("clean-kind-stated-on-one-side-only",
      project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {summary: Offers x, contract: ref:x}\n"}), []),
     ("clean-ignored-folder", project("ignore: [vendor]\n", files={
         "vendor/dep/unifold.yaml": "summary: [broken\n"}), []),
     ("clean-nested-project-is-not-checked", project("", files={
-        "inner/unifold.yaml": 'unifold: "0.2"\nsummary: Inner\nwiring:\n  nobody.x: nothing.y\n'}), []),
+        "inner/unifold.yaml": 'unifold: "0.3"\nresponsibility: Inner\nwiring:\n  nobody.x: nothing.y\n'}), []),
     ("clean-units-below-folder-named-target", project(WIRED, {"target/a": NEEDS_X, "target/b": CAPABILITY_X}), []),
-    ("clean-contract-in-ancestor-verified-by-url", project("capabilities:\n  x: {summary: s, contract: ref:x}\n"
-                                                         "wiring:\n  x: a.x\n", {
-        "a": "capabilities:\n  x:\n    summary: s\n    contract: ref:x\n"
-             "    verified-by: https://example.org/ci\n"}), []),
-    ("clean-verified-by-in-child", project("capabilities:\n  x: {summary: s, contract: ref:x, "
-                                      "verified-by: b/tests}\nwiring:\n  x: b.x\n",
-                                      {"b": CAPABILITY_X}, {"b/tests/t.txt": "x\n"}), []),
+    ("clean-contract-in-ancestor", project("capabilities:\n  x: {summary: s, contract: ref:x}\n"
+                                           "wiring:\n  x: a.x\n", {
+        "a": "capabilities:\n  x:\n    summary: s\n    contract: ref:x\n"}), []),
+    ("clean-contract-with-parts", project(WIRED, {
+        "a": "needs:\n  x:\n    summary: s\n    contract:\n      path: ref:x\n      parts: [do]\n", "b": CAPABILITY_X},
+        contracts={"x": ["do", ("thing", "type")]}), []),
+    ("clean-unit-fields", project("", {"a": "kind: logic\nsecret:\n  what: the layout\n  decision: docs/decisions/0001-x.md\n"
+                                            "not:\n  - parsing: x\n  - sending\n" + NEEDS_X.replace("library", "library, optional: true"),
+                                       }, {"a/docs/decisions/0001-x.md": DECISION.format(status="proposed", date="2026-10-07", more="")}), []),
+    ("clean-secret-decision-of-an-ancestor", project("", {"a": "secret:\n  what: w\n  decision: ../docs/decisions/0001-x.md\n"},
+                                                      with_decision()), []),
+    ("clean-platform-need-of-the-root", project("needs:\n  clock: {summary: s, contract: ref:clock, platform: true}\n"
+                                                "wiring:\n  a.clock: clock\n",
+                                                {"a": "needs:\n  clock: {summary: s, contract: ref:clock}\n"}), []),
+    ("clean-kinds-throughout", project("needs:\n  port: {summary: s, contract: ref:port}\nwiring:\n  s.calc: l.calc\n  s.port: ad.port\n  ad.port: port\n", {
+        "s": "kind: stateful\nneeds:\n  calc: {summary: s, contract: ref:calc}\n  port: {summary: s, contract: ref:port}\n",
+        "l": "kind: logic\ncapabilities:\n  calc: {summary: s, contract: ref:calc}\n",
+        "ad": "kind: adapter\ncapabilities:\n  port: {summary: s, contract: ref:port}\nneeds:\n  port: {summary: s, contract: ref:port}\n"}), []),
+    ("clean-scenario", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), []),
+    ("clean-scenario-across-levels", project(
+        "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n"
+        "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a/inner -> b.do\n      - a -> b.do\n    expect: e\n",
+        {"a": "kind: stateful\n" + NEEDS_X + "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  inner.x: x\n",
+         "a/inner": NEEDS_X, "b": CAPABILITY_X}, contracts=SCENARIO_CONTRACTS), []),
+    ("clean-scenario-in-a-leaf", project("", {"a": NEEDS_X.replace("library", "library, optional: true")
+                                                  + "capabilities:\n  api: {summary: s, contract: ref:api}\n"
+                                                  "scenarios:\n  s1:\n    summary: s\n    hops: ['api -> x.do']\n    expect: e\n"},
+                                         contracts=SCENARIO_CONTRACTS), ["warn W3 unifold.yaml"]),
+    ("clean-derived-decision", project("", {"a": ""}, {**{"docs/decisions/0001-x.md": DERIVED},
+                                                     CONTEXT: ITEM.format(stamp=stamp(DERIVED))}), []),
+    ("clean-constants", project(files={"docs/references/constants.md": CONSTANTS,
+                                       "README.md": "# demo\n\nAt most `MAX_SIZE` things; `CRC32` and `GET` are no names.\n"}), []),
+    ("clean-contract-folder", project(WIRED, {"a": "needs:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n",
+                                              "b": "capabilities:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n"}, {
+        "docs/references/x/index.md": "# x\n\nContract of x. Notation: wit.\n\n## Parts\n\n- [do](do.md)\n\n## Fake\n\nReplays.\n",
+        "docs/references/x/do.md": "# do\n\nKind: query\n\n```wit\ndo: func() -> u32;\n```\n\nPre: none.\nResult: r.\nErrors: none.\nExamples:\n\n| Case | Input | Expected |\n|---|---|---|\n| one | `do()` | 1 |\n"}), []),
     ("clean-fragment-of-the-contract-ignored", project(WIRED, {
         "a": "needs:\n  x: {summary: s, contract: ../docs/references/x.md#part}\n",
         "b": "capabilities:\n  x: {summary: s, contract: ../docs/references/x.md}\n"},
-        {"docs/references/x.md": "# x\n"}), []),
+        {"docs/references/x.md": contract_text("x")}), []),
     ("clean-extension-keys", project("x-team: red\n", {"a": "x-anything: {a: 1}\n"}), []),
     ("clean-diagrams-none", project("diagrams: none\n" + WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}), []),
     ("clean-with-documents", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
@@ -164,11 +218,13 @@ CASES = [
         **with_decision()}), []),
     ("clean-own-need-wired-to-a-child", project(NEEDS_X + "wiring:\n  x: b.x\n", {"b": CAPABILITY_X}), []),
     ("clean-need-met-inside-is-not-wired-above",
-     project("", {"a": NEEDS_X + "wiring:\n  x: inner.x\n", "a/inner": CAPABILITY_X}), []),
+     project("", {"a": "kind: stateful\n" + NEEDS_X + "wiring:\n  x: inner.x\n", "a/inner": CAPABILITY_X}), []),
     # ------------------------------------------------------------ S: structure
-    ("S1-unsupported-version", {"unifold.yaml": 'unifold: "9.9"\nsummary: A demo\n'},
+    ("S1-unsupported-version", {"unifold.yaml": 'unifold: "9.9"\nresponsibility: A demo\n'},
      ["error S1 unifold.yaml"]),
-    ("S1-version-is-not-a-string", {"unifold.yaml": "unifold: 0.10\nsummary: A demo\n"},
+    ("S1-version-0-2-is-not-read", {"unifold.yaml": 'unifold: "0.2"\nsummary: A demo\n'},
+     ["error S1 unifold.yaml"]),
+    ("S1-version-is-not-a-string", {"unifold.yaml": "unifold: 0.10\nresponsibility: A demo\n"},
      ["error S1 unifold.yaml"]),
     ("S3-root-without-readme", project(files={"README.md": None}), ["error S3 ."]),
     ("S3-child-without-readme", project("", {"a": ""}, {"a/README.md": None}), ["error S3 a"]),
@@ -192,6 +248,10 @@ CASES = [
      ["error S9 docs/decisions/0001-y.md"]),
     ("S9-file-name", project(files=with_decision(name="first-choice.md")),
      ["error S9 docs/decisions/first-choice.md"]),
+    ("S9-derived-without-derived-from", project(files={"docs/decisions/0001-x.md": DERIVED.replace("derived-from: proto §4\n", "")}),
+     ["error S9 docs/decisions/0001-x.md"]),
+    ("S9-derived-without-source-says", project(files={"docs/decisions/0001-x.md": DERIVED.replace("## Source says", "## Context")}),
+     ["error S9 docs/decisions/0001-x.md"]),
     ("S12-entries-of-another-kind-in-docs", project(files={
         "docs/notes.md": "# Notes\n", "docs/site/index.html": "<p>x</p>\n", "docs/.hidden": "x\n"}),
      ["info S12 docs/notes.md", "info S12 docs/site"]),
@@ -201,18 +261,36 @@ CASES = [
     # ------------------------------------------------------------- M: manifest
     ("M1-invalid-yaml-in-child-reports-once", project(WIRED, {"a": NEEDS_X, "b": "capabilities: [x\n"}),
      ["error M1 b/unifold.yaml"]),
-    ("M1-duplicate-key", project("", {"a": "summary: again\n"}), ["error M1 a/unifold.yaml"]),
+    ("M1-duplicate-key", project("", {"a": "responsibility: again\n"}), ["error M1 a/unifold.yaml"]),
     ("M1-key-is-a-list", project("", {"a": "[a, b]: c\n"}), ["error M1 a/unifold.yaml"]),
-    ("M1-broken-root-manifest", {"unifold.yaml": ROOT + "summary: twice\n"}, ["error M1 unifold.yaml"]),
+    ("M1-broken-root-manifest", {"unifold.yaml": ROOT + "responsibility: twice\n"}, ["error M1 unifold.yaml"]),
     ("M1-children-of-broken-unit-keep-their-parent", project(
         "", {"a": "wiring: [\n", "a/deep": NEEDS_X}), ["error M1 a/unifold.yaml"]),
+    ("M2-summary-on-a-unit", project("", {"a": ""}, {"a/unifold.yaml": "summary: A part\n"}),
+     ["error M2 a/unifold.yaml", "error M2 a/unifold.yaml"]),
+    ("M2-verified-by-removed", project("capabilities:\n  x: {summary: s, contract: ref:x, verified-by: tests}\n"),
+     ["error M2 unifold.yaml"]),
+    ("M2-composite-without-kind", project("", {"a": "", "a/deep": ""}),
+     ["error M2 a/unifold.yaml"]),
+    ("M2-platform-on-a-need-of-a-child", project("", {"a": "needs:\n  clock: {summary: s, optional: true, platform: true}\n"}),
+     ["error M2 a/unifold.yaml"]),
+    ("M2-platform-on-a-capability", project("capabilities:\n  x: {summary: s, platform: true}\n"), ["error M2 unifold.yaml"]),
+    ("M2-contract-mapping-with-unknown-key", project("capabilities:\n  x:\n    summary: s\n    contract:\n      path: ref:x\n      verified: yes\n"),
+     ["error M2 unifold.yaml"]),
+    ("M2-contract-mapping-without-path", project("capabilities:\n  x:\n    summary: s\n    contract:\n      parts: [a]\n"),
+     ["error M2 unifold.yaml"]),
+    ("M2-scenario-name-with-dot", project("scenarios:\n  v1.open:\n    summary: s\n    hops: ['x -> y.z']\n    expect: e\n"),
+     ["error M2 unifold.yaml", "error N1 unifold.yaml"]),
+    ("M11-part-not-in-contract", project(WIRED, {
+        "a": "needs:\n  x:\n    summary: s\n    contract:\n      path: ref:x\n      parts: [do, gone]\n", "b": CAPABILITY_X},
+        contracts={"x": ["do"]}), ["error M11 a/unifold.yaml"]),
     ("M2-unknown-key", project("colour: blue\n"), ["error M2 unifold.yaml"]),
     ("M2-old-key-unit", project("", {"a": "unit: a\n"}), ["error M2 a/unifold.yaml"]),
-    ("M2-no-summary", {"unifold.yaml": 'unifold: "0.2"\n', "README.md": README}, ["error M2 unifold.yaml"]),
-    ("M2-placeholder-summary", {"unifold.yaml": 'unifold: "0.2"\nsummary: <what the project is, in one line>\n',
-                                "README.md": README}, ["error M2 unifold.yaml"]),
-    ("M2-summary-over-two-lines", {"unifold.yaml": 'unifold: "0.2"\nsummary: |\n  one\n  two\n',
-                                   "README.md": README}, ["error M2 unifold.yaml"]),
+    ("M2-no-responsibility", {"unifold.yaml": 'unifold: "0.3"\n', "README.md": README}, ["error M2 unifold.yaml"]),
+    ("M2-placeholder-responsibility", {"unifold.yaml": 'unifold: "0.3"\nresponsibility: <what the project is, in one line>\n',
+                                       "README.md": README}, ["error M2 unifold.yaml"]),
+    ("M2-responsibility-over-two-lines", {"unifold.yaml": 'unifold: "0.3"\nresponsibility: |\n  one\n  two\n',
+                                          "README.md": README}, ["error M2 unifold.yaml"]),
     ("M2-root-key-in-child", project("", {"a": "ignore: [x]\n"}), ["error M2 a/unifold.yaml"]),
     ("M2-status-as-boolean", project("status: yes\n"), ["error M2 unifold.yaml"]),
     ("M2-level-is-no-key", project("level: full\n"), ["error M2 unifold.yaml"]),
@@ -240,8 +318,6 @@ CASES = [
      ["error M2 unifold.yaml"]),
     ("M7-contract-missing", project("capabilities:\n  x: {summary: s, contract: docs/api.md}\n"),
      ["error M7 unifold.yaml"]),
-    ("M7-verified-by-missing", project("capabilities:\n  x: {summary: s, verified-by: tests}\n"),
-     ["error M7 unifold.yaml"]),
     ("M7-contract-outside-project", project("capabilities:\n  x: {summary: s, contract: ../elsewhere.md}\n"),
      ["error M7 unifold.yaml"]),
     ("M7-contract-url", project("capabilities:\n  x: {summary: s, contract: https://example.org/api}\n"),
@@ -249,7 +325,7 @@ CASES = [
     ("M7-contract-in-unit-below", project("capabilities:\n  x: {summary: s, contract: a/docs/references/x.md}\n"
                                           "wiring:\n  x: a.x\n",
         {"a": "capabilities:\n  x: {summary: s, contract: docs/references/x.md}\n"},
-        {"a/docs/references/x.md": "# x\n"}),
+        {"a/docs/references/x.md": contract_text("x")}),
      ["error M7 unifold.yaml"]),
     ("M7-contract-not-a-reference", project("capabilities:\n  x: {summary: s, contract: openapi.yaml}\n",
                                             files={"openapi.yaml": "openapi: 3.1.0\n"}),
@@ -257,9 +333,9 @@ CASES = [
     ("M7-contract-in-sibling-unit", project(WIRED, {
         "a": "needs:\n  x: {summary: s, contract: ../b/docs/references/x.md}\n",
         "b": "capabilities:\n  x: {summary: s, contract: docs/references/x.md}\n"},
-        {"b/docs/references/x.md": "# x\n"}),
+        {"b/docs/references/x.md": contract_text("x")}),
      ["error M7 a/unifold.yaml"]),
-    ("M10-summary-todo", project("", {"a": ""}, {"a/unifold.yaml": "summary: TODO\nneeds:\n  x: {summary: TODO, optional: true}\n"}),
+    ("M10-responsibility-todo", project("", {"a": ""}, {"a/unifold.yaml": "responsibility: TODO\nneeds:\n  x: {summary: TODO, optional: true}\n"}),
      ["warn M10 a/unifold.yaml"]),
     # --------------------------------------------------------------- W: wiring
     ("W1-unknown-capability", project("wiring:\n  a.x: b.y\n", {"a": NEEDS_X, "b": CAPABILITY_X}),
@@ -269,7 +345,7 @@ CASES = [
     ("W1-wrong-direction", project("wiring:\n  b.x: a.x\n", {"a": NEEDS_X, "b": CAPABILITY_X}),
      ["error W1 unifold.yaml", "error W2 unifold.yaml", "warn W3 unifold.yaml"]),
     ("W1-reference-to-grandchild", project(
-        "wiring:\n  a.x: deep.x\n", {"a": NEEDS_X, "b": "", "b/deep": CAPABILITY_X}),
+        "wiring:\n  a.x: deep.x\n", {"a": NEEDS_X, "b": "kind: stateful\n", "b/deep": CAPABILITY_X}),
      ["error W1 unifold.yaml", "error W2 unifold.yaml", "warn W3 b/unifold.yaml"]),
     ("W1-capability-wired-to-own-need", project("capabilities:\n  p: s\nneeds:\n  n: s\nwiring:\n  p: n\n"),
      ["error W1 unifold.yaml"]),
@@ -302,7 +378,7 @@ CASES = [
         NEEDS_X + "wiring:\n  x: b.x\n  a.x: x\n", {"a": NEEDS_X, "b": CAPABILITY_X}),
      ["error W1 unifold.yaml", "error W2 unifold.yaml"]),
     ("W1-parent-wires-a-need-its-child-meets-inside", project(
-        "wiring:\n  a.x: b.x\n", {"a": NEEDS_X + "wiring:\n  x: inner.x\n", "a/inner": CAPABILITY_X,
+        "wiring:\n  a.x: b.x\n", {"a": "kind: stateful\n" + NEEDS_X + "wiring:\n  x: inner.x\n", "a/inner": CAPABILITY_X,
                                   "b": CAPABILITY_X}),
      ["error W1 unifold.yaml", "warn W3 unifold.yaml"]),
     ("W2-need-without-provider", project("", {"a": NEEDS_X, "b": CAPABILITY_X}),
@@ -352,6 +428,76 @@ CASES = [
      ["warn W9 unifold.yaml"]),
     ("W9-not-for-optional-needs", project(WIRED, {
         "a": "needs:\n  x: {summary: s, optional: true, contract: ref:x}\n", "b": CAPABILITY_X + "status: planned\n"}), []),
+    # ------------------------------------------------ K: kinds and unit fields
+    ("K1-kind-not-well-known", project("", {"a": "kind: library\n"}), ["info K1 a/unifold.yaml"]),
+    ("K2-logic-unit-with-a-stateful-child", project("", {"a": "kind: logic\n", "a/deep": "kind: stateful\n"}),
+     ["warn K2 a/unifold.yaml"]),
+    ("K2-logic-unit-needs-a-stateful-provider", project(WIRED, {"a": "kind: logic\n" + NEEDS_X, "b": "kind: stateful\n" + CAPABILITY_X}),
+     ["warn K2 a/unifold.yaml"]),
+    ("K2-logic-unit-reaches-a-need-of-the-root", project(NEEDS_X + "wiring:\n  a.x: x\n", {"a": "kind: logic\n" + NEEDS_X}),
+     ["warn K2 a/unifold.yaml", "warn K4 unifold.yaml"]),
+    ("K3-adapter-needs-an-adapter", project(WIRED, {"a": "kind: adapter\n" + NEEDS_X, "b": "kind: adapter\n" + CAPABILITY_X}),
+     ["warn K3 a/unifold.yaml"]),
+    ("K4-root-need-reached-by-a-stateful-unit", project(NEEDS_X + "wiring:\n  a.x: x\n", {"a": "kind: stateful\n" + NEEDS_X}),
+     ["warn K4 unifold.yaml"]),
+    ("K5-secret-without-decision", project("", {"a": "secret:\n  what: w\n"}), ["error K5 a/unifold.yaml"]),
+    ("K5-secret-decision-missing", project("", {"a": "secret:\n  what: w\n  decision: docs/decisions/0009-x.md\n"}),
+     ["error K5 a/unifold.yaml"]),
+    ("K5-secret-decision-of-a-sibling", project("", {"a": "secret:\n  what: w\n  decision: ../b/docs/decisions/0001-x.md\n", "b": ""},
+                                               {"b/docs/decisions/0001-x.md": DECISION.format(status="proposed", date="2026-10-07", more="")}),
+     ["error K5 a/unifold.yaml"]),
+    ("K5-secret-as-text", project("", {"a": "secret: the layout\n"}), ["error K5 a/unifold.yaml"]),
+    ("K6-not-names-an-unknown-need", project("", {"a": "not:\n  - parsing: codec\n"}), ["error K6 a/unifold.yaml"]),
+    ("K6-not-as-text", project("", {"a": "not: parsing\n"}), ["error K6 a/unifold.yaml"]),
+    # ------------------------------------------------ N: scenarios
+    ("N1-hop-without-a-connection", project(SCENARIO_ROOT.replace("      - a -> b.do\n", "      - b -> a.do\n"), SCENARIO_UNITS,
+                                            contracts=SCENARIO_CONTRACTS), ["error N1 unifold.yaml"]),
+    ("N1-part-not-in-the-contract", project(SCENARIO_ROOT.replace("b.do", "b.undo"), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+     ["error N1 unifold.yaml"]),
+    ("N1-unknown-name", project(SCENARIO_ROOT.replace("a -> b.do", "a -> nobody.do"), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+     ["error N1 unifold.yaml"]),
+    ("N1-name-is-a-unit-and-a-capability", project(SCENARIO_ROOT.replace("api: a.api", "api: api.api").replace("a.x: b.x", "api.x: b.x"),
+                                                   {"api": SCENARIO_UNITS["a"], "b": CAPABILITY_X}, contracts=SCENARIO_CONTRACTS),
+     ["error N1 unifold.yaml", "error N1 unifold.yaml"]),
+    ("N1-hop-not-in-the-form", project(SCENARIO_ROOT.replace("- a -> b.do", "- a calls b"), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+     ["error N1 unifold.yaml"]),
+    ("N1-two-connections-with-the-part", project(
+        "wiring:\n  a.x: b.x\n  a.y: b.y\nscenarios:\n  s1:\n    summary: s\n    hops: ['a -> b.do']\n    expect: e\n",
+        {"a": NEEDS_X + "  y: {summary: s, contract: ref:y}\n", "b": CAPABILITY_X + "  y: {summary: s, contract: ref:y}\n"},
+        contracts={"x": ["do"], "y": ["do"]}), ["error N1 unifold.yaml"]),
+    ("N2-scenario-without-expect", project(SCENARIO_ROOT.replace("    expect: e\n", ""), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+     ["error N2 unifold.yaml"]),
+    ("N2-scenario-as-text", project("scenarios:\n  s1: a story\n"), ["error N2 unifold.yaml"]),
+    ("N3-wiring-line-without-a-hop", project(SCENARIO_ROOT.replace("      - a -> b.do\n", ""), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+     ["warn N3 unifold.yaml"]),
+    # ------------------------------------------------ C: contracts
+    ("C1-contract-without-parts", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+                                          {"docs/references/x.md": "# x\n\n## Fake\n\nReplays.\n"}), ["warn C1 docs/references/x.md"]),
+    ("C1-part-with-unknown-kind", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+                                          {"docs/references/x.md": contract_text("x", [("do", "call")])}), ["warn C1 docs/references/x.md"]),
+    ("C2-query-without-examples", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+                                          {"docs/references/x.md": contract_text("x", ["do"]).replace("| one | `do()` | 1 |\n", "")}),
+     ["warn C2 docs/references/x.md"]),
+    ("C2-command-without-pre", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+                                       {"docs/references/x.md": contract_text("x", [("do", "command")]).replace("Pre: none.\n", "")}),
+     ["warn C2 docs/references/x.md"]),
+    ("C3-part-without-a-signature", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+                                            {"docs/references/x.md": contract_text("x").replace(FENCE + "wit\nrecord x { v: u32 }\n" + FENCE + "\n", "")}),
+     ["warn C3 docs/references/x.md"]),
+    ("C4-type-defined-twice-in-a-subtree", project("wiring:\n  a.x: b.x\n  a.y: b.y\n",
+                                                   {"a": NEEDS_X + "  y: {summary: s, contract: ref:y}\n", "b": CAPABILITY_X + "  y: {summary: s, contract: ref:y}\n"},
+                                                   contracts={"x": [("thing", "type")], "y": [("thing", "type")]}),
+     ["warn C4 docs/references/y.md"]),
+    ("C4-same-type-in-two-subtrees-is-fine", project("", {
+        "a": "kind: stateful\nwiring:\n  p.x: q.x\n", "a/p": "needs:\n  x: {summary: s, contract: ../docs/references/x.md}\n",
+        "a/q": "capabilities:\n  x: {summary: s, contract: ../docs/references/x.md}\n",
+        "b": "kind: stateful\nwiring:\n  p.x: q.x\n", "b/p": "needs:\n  x: {summary: s, contract: ../docs/references/x.md}\n",
+        "b/q": "capabilities:\n  x: {summary: s, contract: ../docs/references/x.md}\n"},
+        {"a/docs/references/x.md": contract_text("x", [("thing", "type")]), "b/docs/references/x.md": contract_text("x", [("thing", "type")])}), []),
+    ("C5-contract-without-fake", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+                                         {"docs/references/x.md": contract_text("x").replace("## Fake\n\nReplays the examples.\n", "")}),
+     ["warn C5 docs/references/x.md"]),
+    ("C-rules-only-for-named-contracts", project(files={"docs/references/notes.md": "# Notes\n\nNo parts here.\n"}), []),
     # ------------------------------------------------ L, T: documents
     ("L1-broken-link", project(files={"README.md": "# demo\n\n[gone](docs/gone.md)\n"}),
      ["error L1 README.md"]),
@@ -385,7 +531,7 @@ CASES = [
         "a/README.md": "# a\n\n[b](../b/README.md)\n"}), ["warn L11 a/README.md"]),
     ("L11-link-into-child", project("", {"a": ""}, {"README.md": "# demo\n\n[a](a/AGENTS.md)\n"}),
      ["warn L11 README.md"]),
-    ("L11-link-below-a-child", project("", {"a": "", "a/deep": ""}, {
+    ("L11-link-below-a-child", project("", {"a": "kind: stateful\n", "a/deep": ""}, {
         "README.md": "# demo\n\n[deep](a/deep/README.md)\n"}), ["warn L11 README.md"]),
     ("L2-absolute-link", project(files={"README.md": "# demo\n\n[x](/docs/x.md)\n"}),
      ["error L2 README.md"]),
@@ -401,6 +547,8 @@ CASES = [
     ("L7-active-unit-cites-proposed-decision", project("", {"a": ""}, {
         **with_decision(), CONTEXT: ITEM.format(stamp="<!-- unifold:cites sha=00000000 -->\n")}),
      [f"warn L7 {CONTEXT}", f"warn L10 {CONTEXT}"]),
+    ("L7-derived-decision-binds", project("", {"a": ""}, {
+        "docs/decisions/0001-x.md": DERIVED, CONTEXT: ITEM.format(stamp=stamp(DERIVED))}), []),
     ("L9-item-without-says", project("", {"a": "status: planned\n"}, {
         **with_decision(),
         CONTEXT: "# Context of a\n\n### [demo/0001](../../../docs/decisions/0001-x.md)\n\nHere: y.\n"}),
@@ -419,6 +567,16 @@ CASES = [
     ("T5-readme-heading-not-in-manifest", project("capabilities:\n  x: s\n", files={
         "README.md": "# demo\n\n## Capabilities\n\n### `x`\n\nText.\n\n### `gone`\n\nText.\n"}),
      ["warn T5 README.md"]),
+    ("T6-constant-not-a-row", project(files={"docs/references/constants.md": CONSTANTS,
+                                             "README.md": "# demo\n\nAt most `MAX_SIZE` and `MAX_OTHER`.\n\n```text\n`NOT_READ`\n```\n"}),
+     ["warn T6 README.md"]),
+    ("T6-row-of-an-ancestor-counts", project("", {"a": ""}, {"docs/references/constants.md": CONSTANTS,
+                                                            "a/docs/references/constants.md": CONSTANTS.replace("MAX_SIZE", "MIN_SIZE"),
+                                                            "a/README.md": "# a\n\n`MAX_SIZE`, `MIN_SIZE`, `NO_ROW`.\n"}),
+     ["warn T6 a/README.md"]),
+    ("T6-own-pattern", project(files={"docs/references/constants.md": "---\nname-pattern: \"\\\\bK_[a-z]+\\\\b\"\n---\n" + CONSTANTS.replace("MAX_SIZE", "K_size"),
+                                      "README.md": "# demo\n\n`K_size` is a row, `K_other` is not, `MAX_SIZE` does not match.\n"}),
+     ["warn T6 README.md"]),
     # ------------------------------------------------------ G: generated files
     ("G1-generated-file-missing", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md"],
@@ -452,7 +610,10 @@ CASES = [
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 a/docs/diagrams/context.md",
       "error G1 docs/diagrams/component.md"],
      {"generate": False}),
-    ("G1-architecture-only-with-grandchildren", project("", {"a": "", "a/deep": ""}),
+    ("G1-scenario-diagram-missing", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+     ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md",
+      "error G1 docs/diagrams/scenario-s1.md"], {"generate": False}),
+    ("G1-architecture-only-with-grandchildren", project("", {"a": "kind: stateful\n", "a/deep": ""}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 a/deep/AGENTS.md",
       "error G1 a/docs/diagrams/component.md", "error G1 a/docs/diagrams/context.md",
       "error G1 docs/diagrams/architecture.md", "error G1 docs/diagrams/component.md"],
@@ -534,7 +695,7 @@ def scenario_json_on_failure(runner: Runner, tmp: str):
               f"{command[0]} --json outside a project: {data}")
     data, done = runner.json("check", "--json", str(empty / "missing"))
     check(done.returncode == 2 and data["ok"] is False, "check on a missing path")
-    broken = new_project(tmp, {"unifold.yaml": ROOT + "summary: twice\n", "a/unifold.yaml": UNIT})
+    broken = new_project(tmp, {"unifold.yaml": ROOT + "responsibility: twice\n", "a/unifold.yaml": UNIT})
     data, done = runner.json("check", "--json", str(broken / "a"))
     check(done.returncode == 1 and not data["ok"] and data["findings"][0]["rule"] == "M1"
           and data["findings"][0]["file"] == "unifold.yaml" and data["findings"][0]["line"] == 3,
@@ -569,6 +730,14 @@ def scenario_finding_shape(runner: Runner, tmp: str):
     check(runner.run("check", "--strict", str(folder2)).returncode == 1, "--strict: exit 1")
     only = runner.findings(folder, "--rule", "W3")
     check(only == ["warn W3 unifold.yaml"], f"--rule: {only}")
+    data, done = runner.json("check", "--json", "--strict", "--ignore", "W3", str(folder2))
+    check(done.returncode == 0 and data["ok"] and data["findings"] == [] and data["summary"]["ignored"] == {"W3": 1}
+          and data["summary"]["warn"] == 0, f"--ignore drops the finding and counts it: {data['summary']}")
+    text = runner.run("check", "--strict", "--ignore", "W3", str(folder2)).stdout
+    check("W3×1 ignored" in text, f"the summary line names the ignored rule: {text}")
+    data, done = runner.json("check", "--json", "--ignore", "W1", str(folder))
+    check(done.returncode == 1 and data["summary"]["ignored"] == {"W1": 1} and data["summary"]["error"] == 1,
+          f"--ignore drops an error too, whatever the severity: {data['summary']}")
 
 
 def scenario_generate_is_idempotent(runner: Runner, tmp: str):
@@ -577,7 +746,7 @@ def scenario_generate_is_idempotent(runner: Runner, tmp: str):
         "wiring:\n  a.x: {real: b.x, fake: c.x}\n  a.log: log\n  b.log: log\n  deep.log: log\n",
         {"a": NEEDS_X + "  log: {summary: Logs, contract: ref:log}\n",
          "b": CAPABILITY_X + "needs:\n  log: {summary: Logs, contract: ref:log}\n",
-         "c": CAPABILITY_X,
+         "c": "kind: stateful\n" + CAPABILITY_X,
          "my plugins/deep": "status: planned\nneeds:\n  log: {summary: Logs, contract: ref:log}\n",
          "c/inner": ""},
         with_decision())
@@ -622,7 +791,7 @@ def scenario_show_port_impact(runner: Runner, tmp: str):
         "needs:\n  clock: {summary: A time source, contract: ref:clock}\n"
         "capabilities:\n  api: {summary: s, contract: ref:api}\n"
         "wiring:\n  api: web.api\n  web.store: db.store\n  web.log: db.log\n  web.clock: clock\n",
-        {"web": "capabilities:\n  api: {summary: s, contract: ref:api}\n"
+        {"web": "kind: stateful\ncapabilities:\n  api: {summary: s, contract: ref:api}\n"
                 "needs:\n  store: {summary: s, contract: ref:schema}\n"
                 "  log: {summary: s, contract: ref:log}\n"
                 "  clock: {summary: s, contract: ref:clock}\n"
@@ -911,8 +1080,8 @@ def scenario_init(runner: Runner, tmp: str):
     check(not (folder / "crates/core/unifold.yaml").exists()
           and not (folder / "crates/cli/unifold.yaml").exists(), "init writes no manifest below the root")
     root = (folder / "unifold.yaml").read_text()
-    check('unifold: "0.2"' in root and "\nname: demo\n" in root and "summary: TODO" in root
-          and "https://unifold.md/0.2/unifold.schema.json" in root,
+    check('unifold: "0.3"' in root and "\nname: demo\n" in root and "responsibility: TODO" in root
+          and "https://unifold.md/0.3/unifold.schema.json" in root,
           f"root manifest: {root}")
     check(runner.findings(folder) == ["warn M10 unifold.yaml", "warn T5 README.md", "warn T5 README.md"],
           f"after init: only warnings, the TODO and the template placeholders: {runner.findings(folder)}")
@@ -1040,7 +1209,7 @@ def scenario_robustness(runner: Runner, tmp: str):
     check(found == ["warn W7 unifold.yaml"], f"a cycle through 1200 siblings: {found[:5]}")
     deep = Path(tmp) / "deep" / "demo"
     write_files(deep, {"unifold.yaml": ROOT, "README.md": README.format(name="demo"), **{
-        "/".join(["d"] * n) + "/unifold.yaml": UNIT for n in range(1, 40)}, **{
+        "/".join(["d"] * n) + "/unifold.yaml": COMPOSITE if n < 39 else UNIT for n in range(1, 40)}, **{
         "/".join(["d"] * n) + "/README.md": README.format(name="d") for n in range(1, 40)}})
     runner.run("generate", str(deep))
     check(runner.findings(deep) == [], "39 levels deep")
@@ -1096,7 +1265,61 @@ def scenario_gitignore(runner: Runner, tmp: str):
     check(found == ["error G1 docs/diagrams/component.md"], f"an ignored generated file is reported: {found}")
 
 
+def scenario_model(runner: Runner, tmp: str):
+    """`model --json` prints the resolved project with the schema of tool-json.md."""
+    files = project("needs:\n  clock: {summary: s, contract: ref:clock, platform: true}\n"
+                    + SCENARIO_ROOT.replace("  a.x: b.x\n", "  a.x: b.x\n  a.clock: clock\n")
+                                   .replace("      - a -> b.do\n", "      - a -> b.do\n      - a -> clock.now\n"),
+                    {"a": NEEDS_X + "  clock: {summary: s, contract: ref:clock}\n"
+                          "capabilities:\n  api: {summary: s, contract: ref:api}\n"
+                                              "secret:\n  what: w\n  decision: docs/decisions/0001-x.md\nnot:\n  - y: x\nx-maike-group: g\n",
+                                              "b": "kind: logic\n" + CAPABILITY_X},
+                    {"a/docs/decisions/0001-x.md": DECISION.format(status="proposed", date="2026-10-07", more=""),
+                     "docs/decisions/0001-q.md": DECISION.format(status="proposed", date="2026-10-07", more="") + "\n## Answer\n\n"},
+                    contracts={**SCENARIO_CONTRACTS, "clock": ["now"]})
+    folder = new_project(tmp, files)
+    runner.run("generate", str(folder))
+    check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
+    data, done = runner.json("model", "--json", str(folder))
+    check(done.returncode == 0 and data["unifold-model"] == "0.3" and data["project"] == "demo", f"model: {data.keys()}")
+    units = {u["path"]: u for u in data["units"]}
+    check([u["path"] for u in data["units"]] == [".", "a", "b"], "units in order, the root first")
+    a = units["a"]
+    check(a["secret"] == {"what": "w", "decision": "a/docs/decisions/0001-x.md"} and a["not"] == [{"text": "y", "need": "x"}]
+          and a["x"] == {"x-maike-group": "g"} and a["kind"] is None, f"unit fields: {a['secret']} {a['not']} {a['x']}")
+    x = next(n for n in a["needs"] if n["name"] == "x")
+    check(x["final-providers"] == [{"unit": "b", "capability": "x", "config": None}]
+          and x["contract-parts"] == [{"name": "do", "kind": "query"}] and x["parts"] is None
+          and x["fake"] == "described", f"need: {x}")
+    clock = next(n for n in a["needs"] if n["name"] == "clock")
+    check(clock["final-providers"] == [{"outside": True, "root-need": "clock", "config": None}], f"outside: {clock}")
+    api = next(c for c in a["capabilities"] if c["name"] == "api")
+    check(api["final-users"] == [{"outside": True, "root-capability": "api", "config": None}], f"users: {api}")
+    root = units["."]
+    forms = sorted(w["form"] for w in root["wiring"])
+    check(forms == ["connection", "implemented-by", "passed-up"], f"wiring forms: {forms}")
+    scenario = root["scenarios"][0]
+    check(scenario["name"] == "s1" and scenario["hops"][0]["via"] == [{"unit": ".", "key": "api"}]
+          and scenario["hops"][1] == {"caller": "a", "target": "b", "part": "do", "contract": "docs/references/x.md",
+                                      "caller-unit": "a", "target-unit": "b", "via": [{"unit": ".", "key": "a.x"}]}
+          and scenario["hops"][2]["via"] == [{"unit": ".", "key": "a.clock"}], f"hops: {scenario['hops']}")
+    check(data["root-needs"] == [{"name": "clock", "platform": True, "reached-by": ["a"]}], f"root needs: {data['root-needs']}")
+    question = root["decisions"][0]
+    check(question["answer"] == {"empty": True} and question["status"] == "proposed" and question["derived-from"] is None,
+          f"decision: {question}")
+    check(a["decisions"][0]["answer"] is None, "a decision without an Answer section")
+    scenario_md = (folder / "docs/diagrams/scenario-s1.md").read_text()
+    check(scenario_md.startswith(MARK) and "sequenceDiagram" in scenario_md and "| 2 | `a` | `b` | `do` |" in scenario_md,
+          f"scenario diagram: {scenario_md}")
+    data, _ = runner.json("show", "--json", str(folder / "b"))
+    check(data["responsibility"] == "A part" and data["kind"] == "logic" and data["scenarios"] == [
+        {"unit": ".", "name": "s1", "summary": "s"}], f"show lists the scenarios through a unit: {data['scenarios']}")
+    text = runner.run("show", str(folder / "a")).stdout
+    check("secret    w" in text and "not       y  → need 'x'" in text and "scenario  s1" in text, f"show text: {text}")
+
+
 SCENARIOS = [
+    ("scenario-model", scenario_model),
     ("scenario-gitignore", scenario_gitignore),
     ("scenario-json-on-failure", scenario_json_on_failure),
     ("scenario-finding-shape-text-github-strict", scenario_finding_shape),

@@ -1,11 +1,12 @@
-summary: Transliterates Latin letters with diacritics to ASCII
-kind: library
+responsibility: Transliterates Latin letters with diacritics to ASCII
+kind: logic
+not:
+  - the rules of a slug; it answers one character at a time
 capabilities:
   transliteration:
     kind: library
     summary: Replaces Latin letters that have diacritics, and ligatures, by ASCII letters
     contract: ../../docs/references/transliteration.md
-    verified-by: tests/latin.rs
 needs:
   plugin-api:
     kind: library

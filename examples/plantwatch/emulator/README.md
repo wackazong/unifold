@@ -40,16 +40,9 @@ Limits:
 - One process simulates one sensor stick.
 - At start the program loads the built-in scenario `steady` (constant mid-range values, sampling interval 900 s) and runs simulated time at rate 1. It then behaves like a sensor stick with nobody controlling it. Loading a scenario replaces `steady`.
 
-## Out of scope
-
-- Raw sensor signals and calibration. A scenario states values in percent, lux and degrees Celsius.
-- Energy use, memory wear and radio timing of real hardware.
-- The role of a central.
-- Deciding whether a plant needs attention. The program produces readings and knows no thresholds.
-
 ## Read next
 
-1. [scenario control](../docs/references/scenario-control.md): the HTTP API and, linked from it, the scenario document
+1. [scenario control](../docs/references/scenario-control/index.md): the HTTP API and, linked from it, the scenario document
 2. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
 3. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above
 4. [Context diagram](docs/diagrams/context.md)

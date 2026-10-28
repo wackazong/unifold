@@ -14,14 +14,6 @@ The interface is four libraries and not one, so that a caller states only what i
 
 `hal` delivers the events and alarms of all four libraries one after another, never two at the same time. Whenever no event is being handled, `hal` puts the board to sleep; a caller does nothing for that. Asleep, the board keeps counting time and keeps the radio schedule, and draws the sleep current stated in the [board](docs/references/board.md) reference.
 
-## Out of scope
-
-- Converting raw values to percent, lux or degrees.
-- Deciding when to measure, what to keep and what to send.
-- The meaning of GATT attributes and the layout of data in the blocks.
-- Measuring the cell voltage for others. No capability provides it.
-- Replacing the program of the board over the radio.
-
 ## Read next
 
 1. The contracts of the four capabilities: [sensor-io](../docs/references/sensor-io.md), [radio](../docs/references/radio.md), [flash](../docs/references/flash.md), [timer](../docs/references/timer.md)

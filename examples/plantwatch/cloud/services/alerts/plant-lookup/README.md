@@ -12,13 +12,6 @@ The one real choice is what to do between asking every time and answering from m
 
 What must stay true: no answer is older than 60 seconds, and no failure reaches the caller as anything but `unavailable`.
 
-## Out of scope
-
-- Judging a reading, or deciding what happens to a reading while the answer is `unavailable`.
-- Any other operation of the registry. `plant-lookup` changes nothing there.
-- Keeping answers across a restart, or sharing them between instances.
-- Telling its caller that a plant has changed. It answers when asked.
-
 ## Read next
 
 1. [thresholds lookup](../docs/references/thresholds.md): the function, how answers of the registry are mapped, the kept answers

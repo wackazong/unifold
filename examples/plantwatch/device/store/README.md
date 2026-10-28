@@ -34,13 +34,6 @@ Limits: Read returns within 2 ms. A mark takes up to 2 ms, and up to 110 ms once
 
 `store` ignores a reading whose sequence number is not higher than the highest it has received.
 
-## Out of scope
-
-- Deciding that a reading has been delivered. `store` is told.
-- Any index other than the sequence number: no search by time or value.
-- Storing anything that is not a reading: no settings, no keys.
-- Changing or correcting a stored reading.
-
 ## Read next
 
 1. [docs/references/flash-layout.md](docs/references/flash-layout.md): blocks, slots, recovery, test cases

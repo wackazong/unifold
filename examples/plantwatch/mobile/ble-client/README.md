@@ -18,14 +18,6 @@ What must stay true: the client never confirms a reading to a sensor stick befor
 
 The client fetches by itself: when the operating system reports a paired sensor stick, when the program comes onto the screen, and when the consumer asks. In the background it fetches each sensor stick at most 4 times a day. It runs one fetch at a time.
 
-## Out of scope
-
-- Storing readings. The client holds a reading only between receiving it and the consumer's acknowledgement.
-- Binding a sensor stick to a plant.
-- Judging values beyond their valid range. The client knows no thresholds.
-- Live values. The client fetches stored readings only.
-- Updating or configuring a sensor stick.
-
 ## Read next
 
 1. [docs/references/fetch-session.md](docs/references/fetch-session.md): a fetch as a state machine, with sizes and timeouts

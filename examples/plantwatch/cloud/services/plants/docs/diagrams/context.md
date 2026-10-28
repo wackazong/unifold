@@ -8,11 +8,11 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud["cloud"]
-    u_cloud__platform["platform"]
-    u_cloud__services__alerts["alerts"]
-    u_cloud__services__gateway["gateway"]
-    u_cloud__services__ingest["ingest"]
-    u_cloud__services__plants["plants"]
+    u_cloud__platform["platform (adapter)"]
+    u_cloud__services__alerts["alerts (service)"]
+    u_cloud__services__gateway["gateway (service)"]
+    u_cloud__services__ingest["ingest (service)"]
+    u_cloud__services__plants["plants (service)"]
   end
   u_cloud__services__plants -->|"event-bus, sql-db"| u_cloud__platform
   u_cloud__services__gateway -->|"plants-api"| u_cloud__services__plants
@@ -26,9 +26,9 @@ flowchart LR
   class u_cloud__services__plants focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [platform](../../../../platform/README.md) | infrastructure | Shared infrastructure of the services - message bus and database | **planned** | [context](../../../../platform/docs/diagrams/context.md) |
+| [platform](../../../../platform/README.md) | adapter | Shared infrastructure of the services - message bus and database | **planned** | [context](../../../../platform/docs/diagrams/context.md) |
 | [alerts](../../../alerts/README.md) | service | Decides when a plant needs attention and notifies its owner once | **planned** | [component](../../../alerts/docs/diagrams/component.md) |
 | [gateway](../../../gateway/README.md) | service | Single entry point of the server side that authenticates callers and routes requests | **planned** | [context](../../../gateway/docs/diagrams/context.md) |
 | [ingest](../../../ingest/README.md) | service | Accepts uploaded readings and announces each accepted one as an event | **planned** | [context](../../../ingest/docs/diagrams/context.md) |
@@ -36,15 +36,15 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| reading-events | events | [contract](../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events |  |
-| sql-db | db | [contract](../../../../docs/references/sql-db.md) | [cloud/platform](../../../../platform/README.md) (planned) | sql-db |  |
-| event-bus | queue | [contract](../../../../docs/references/event-bus.md) | [cloud/platform](../../../../platform/README.md) (planned) | event-bus |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| reading-events | events | [contract](../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events |
+| sql-db | db | [contract](../../../../docs/references/sql-db.md) | [cloud/platform](../../../../platform/README.md) (planned) | sql-db |
+| event-bus | queue | [contract](../../../../docs/references/event-bus.md) | [cloud/platform](../../../../platform/README.md) (planned) | event-bus |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| plants-api | http | [contract](../../../../docs/references/plants-api.md) |  | [cloud/services/gateway](../../../gateway/README.md) (planned) | plants-api |
-| plants-api | http | [contract](../../../../docs/references/plants-api.md) |  | [cloud/services/alerts/plant-lookup](../../../alerts/plant-lookup/README.md) (planned) | plants-api |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| plants-api | http | [contract](../../../../docs/references/plants-api.md) | [cloud/services/gateway](../../../gateway/README.md) (planned) | plants-api |
+| plants-api | http | [contract](../../../../docs/references/plants-api.md) | [cloud/services/alerts/plant-lookup](../../../alerts/plant-lookup/README.md) (planned) | plants-api |

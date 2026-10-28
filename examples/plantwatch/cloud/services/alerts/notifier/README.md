@@ -22,15 +22,6 @@ A repeat that reaches a phone after the owner has dismissed the first notificati
 
 `notifier` sends data fields of up to 40 characters each.
 
-## Out of scope
-
-- Deciding whether or when to notify. `notifier` notifies when it is called.
-- Repeating a failed attempt by itself.
-- Remembering which alerts were notified.
-- Registering phones or knowing which phones an owner has.
-- Notifying about anything but an opened alert: no reminders, no "alert closed".
-- Languages other than English.
-
 ## Read next
 
 1. [notification](../docs/references/notification.md): the function, the outcomes, the request to the push service, the texts

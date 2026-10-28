@@ -35,8 +35,8 @@ Before you write manifests for a large repository, tell the person which folders
 
 Write each manifest from the template [unifold.template.yaml](../unifold/assets/unifold.template.yaml), from the point of view of that unit:
 
-1. `summary`: what the unit is, in one line. The README and the package description help; write `TODO` only when you cannot say it.
-2. `capabilities`: what the unit provides to others. Name each after what it provides, not after the package or the technology: `matcher`, not `grep-regex`. Declare one capability per thing that others depend on separately; a package with one public interface has one. Add `verified-by` where tests check it; leave it out rather than point at something that does not fit. The `contract` comes with the wiring, below.
+1. `responsibility`: what the unit is responsible for, in one sentence. The README and the package description help; write `TODO` only when you cannot say it. A unit with children also gets a `kind`.
+2. `capabilities`: what the unit provides to others. Name each after what it provides, not after the package or the technology: `matcher`, not `grep-regex`. Declare one capability per thing that others depend on separately; a package with one public interface has one. The `contract` comes with the wiring, below.
 3. `needs`: what the unit needs from outside, in its own words, never who provides it: `clock`, `cart-store`, `api-definition`. Do not declare the language runtime, the standard library, registry packages or logging. Declare one need per thing; two packages that give the same thing are one need.
 4. `status: planned` where the code does not exist yet; `kind` where it says something (`service`, `library`, `cli`, `adapter`); `owner` where known.
 5. A need of the project itself is a need of the root: a database, a cloud API, a cluster. What it provides to the outside is a capability of the root.
@@ -65,7 +65,7 @@ Repeat until `check` reports no error. Then compare with the code, because the t
 Tell the person:
 
 - the units you chose and the candidates you left out, with the reason;
-- every capability and need whose name or summary is a guess;
+- every capability and need whose name or summary is a guess, and every responsibility that is one;
 - the uses between folders that you found in the code and the map does not show yet: the work that remains;
 - the warnings that remain and the summaries that are still `TODO`;
 - that the map is a proposal. A person accepts it by reading it, not by running the check.

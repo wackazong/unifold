@@ -1,6 +1,14 @@
-summary: Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware
+responsibility: Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware
 kind: test
 status: planned
+secret:
+  what: the rig's own central and the catalogue of promises it tests
+  decision: docs/decisions/0003-the-rig-is-its-own-central.md
+not:
+  - tests of a single part; each part tests itself
+  - what happens on a phone; screens, background fetching, the arrival of a notification
+  - load, endurance and energy measurements
+  - starting or deploying what it tests; device and API exist before a run
 capabilities:
   test-report:
     kind: file
@@ -14,7 +22,7 @@ needs:
   scenario-control:
     kind: http
     summary: Lets a test set sensor values and advance time; exists only with a simulated device
-    contract: ../docs/references/scenario-control.md
+    contract: ../docs/references/scenario-control/index.md
     optional: true
   cloud-api:
     kind: http

@@ -8,9 +8,9 @@ The units directly inside `mobile` and how they are connected. An arrow points f
 ```mermaid
 flowchart LR
   subgraph u_mobile["mobile"]
-    u_mobile__ble_dclient["ble-client"]
-    u_mobile__sync["sync"]
-    u_mobile__ui["ui"]
+    u_mobile__ble_dclient["ble-client (library)"]
+    u_mobile__sync["sync (library)"]
+    u_mobile__ui["ui (adapter)"]
   end
   n_mobile___sensor_dlink{{"sensor-link"}}
   n_mobile___cloud_dapi{{"cloud-api"}}
@@ -30,11 +30,11 @@ flowchart LR
   class u_mobile__ble_dclient,u_mobile__sync,u_mobile__ui planned
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [ble-client](../../ble-client/README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** | [context](../../ble-client/docs/diagrams/context.md) |
 | [sync](../../sync/README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** | [context](../../sync/docs/diagrams/context.md) |
-| [ui](../../ui/README.md) | library | Screens of the phone app | **planned** | [context](../../ui/docs/diagrams/context.md) |
+| [ui](../../ui/README.md) | adapter | Screens of the phone app | **planned** | [context](../../ui/docs/diagrams/context.md) |
 
 ### Connections
 

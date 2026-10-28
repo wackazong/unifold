@@ -24,15 +24,6 @@ In the background the app fetches each sensor stick at most 4 times a day. After
 
 The app does not depend on delivery. Every alert that a notification announces is on the screens after the next exchange with the server.
 
-## Out of scope
-
-- Deciding whether a plant needs attention. The app shows the alerts it receives through `cloud-api`.
-- Delivering and displaying notifications. Whoever provides `push-service` delivers them and the operating system shows them.
-- Accounts with passwords. An owner is whoever holds a token of that owner; a second phone joins through a code shown on the first.
-- History older than 90 days.
-- Updating the software of a sensor stick.
-- Layouts for tablets, watches or desktop computers.
-
 ## Read next
 
 1. [docs/tutorials/first-plant.md](docs/tutorials/first-plant.md): for an owner with a new sensor stick, up to the first reading on the screen

@@ -8,9 +8,9 @@
 ```mermaid
 flowchart LR
   subgraph u_mobile["mobile"]
-    u_mobile__ble_dclient["ble-client"]
-    u_mobile__sync["sync"]
-    u_mobile__ui["ui"]
+    u_mobile__ble_dclient["ble-client (library)"]
+    u_mobile__sync["sync (library)"]
+    u_mobile__ui["ui (adapter)"]
   end
   n_mobile___cloud_dapi{{"cloud-api"}}
   u_mobile__sync -->|"sensor-readings"| u_mobile__ble_dclient
@@ -24,21 +24,21 @@ flowchart LR
   class u_mobile__sync focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [ble-client](../../../ble-client/README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** | [context](../../../ble-client/docs/diagrams/context.md) |
 | [sync](../../README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** | [context](context.md) |
-| [ui](../../../ui/README.md) | library | Screens of the phone app | **planned** | [context](../../../ui/docs/diagrams/context.md) |
+| [ui](../../../ui/README.md) | adapter | Screens of the phone app | **planned** | [context](../../../ui/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| sensor-readings | library | [contract](../../../docs/references/sensor-readings.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | sensor-readings |  |
-| cloud-api | http | [contract](../../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../../cloud/services/gateway/README.md) (planned) | public-api |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| sensor-readings | library | [contract](../../../docs/references/sensor-readings.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | sensor-readings |
+| cloud-api | http | [contract](../../../../docs/references/public-api/index.md) | [cloud/services/gateway](../../../../cloud/services/gateway/README.md) (planned) | public-api |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| plant-data | library | [contract](../../../docs/references/plant-data.md) |  | [mobile/ui](../../../ui/README.md) (planned) | plant-data |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| plant-data | library | [contract](../../../docs/references/plant-data/index.md) | [mobile/ui](../../../ui/README.md) (planned) | plant-data |

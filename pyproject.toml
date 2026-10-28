@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "unifold"
-version = "0.2.0"
+version = "0.3.0"
 description = "Check, draw and query the unifold architecture map of a repository"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -39,4 +39,5 @@ package-dir = { "" = "docs/skills/unifold/scripts" }
 "share/unifold/skills/unifold" = ["docs/skills/unifold/SKILL.md"]
 "share/unifold/skills/unifold/assets" = ["docs/skills/unifold/assets/*.md", "docs/skills/unifold/assets/*.yaml"]
 "share/unifold/skills/unifold/assets/explanation" = ["docs/skills/unifold/assets/explanation/*.md"]
+"share/unifold/skills/unifold/assets/contract" = ["docs/skills/unifold/assets/contract/*.md"]
 "share/unifold/skills/unifold-convert" = ["docs/skills/unifold-convert/SKILL.md"]

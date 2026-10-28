@@ -8,8 +8,8 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud__services__alerts["alerts"]
-    u_cloud__services__alerts__plant_dlookup["plant-lookup"]
-    u_cloud__services__alerts__rules["rules"]
+    u_cloud__services__alerts__plant_dlookup["plant-lookup (adapter)"]
+    u_cloud__services__alerts__rules["rules (library)"]
   end
   n_cloud__services__alerts___plants_dapi{{"plants-api"}}
   u_cloud__services__alerts__rules -->|"thresholds"| u_cloud__services__alerts__plant_dlookup
@@ -22,19 +22,19 @@ flowchart LR
   class u_cloud__services__alerts__plant_dlookup focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [plant-lookup](../../README.md) | adapter | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** | [context](context.md) |
 | [rules](../../../rules/README.md) | library | Evaluates readings against the thresholds of a plant | **planned** | [context](../../../rules/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| plants-api | http | [contract](../../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../../plants/README.md) (planned) | plants-api |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| plants-api | http | [contract](../../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../../plants/README.md) (planned) | plants-api |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| thresholds | library | [contract](../../../docs/references/thresholds.md) |  | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | thresholds |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| thresholds | library | [contract](../../../docs/references/thresholds.md) | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | thresholds |

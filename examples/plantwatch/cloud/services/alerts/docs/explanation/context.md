@@ -39,8 +39,8 @@ Says: a public operation keeps its path and requires `X-Owner-Id`. A caller wait
 
 Here: how `alerts-api` is served and how the registry of plants is asked.
 
-### [cloud: public API, alerts](../../../../../docs/references/public-api/alerts.md)
-<!-- unifold:cites sha=46c8f57f -->
+### [cloud: public API, alerts](../../../../../docs/references/public-api/alert.md)
+<!-- unifold:cites sha=d21ddf40 -->
 
 Says, as the contract that this unit implements:
 
@@ -48,12 +48,11 @@ Says, as the contract that this unit implements:
 - Soil moisture and temperature are judged per reading, light by the highest value of a day. A reading with an estimated time, or not newer than the last judged one of its sensor stick, is not judged.
 - At most one alert is open per plant, quantity and bound. It closes with `recovered` by a margin of at most 10 percent of the range of the quantity, with `threshold_changed`, or with `expired` after 30 days without a judged reading. A closed alert never opens again.
 - Each alert leads to one notification, `failed` after 24 hours. Closed alerts are kept for 2 years.
-- `GET /v1/alerts` and `GET /v1/alerts/{alert_id}` read alerts. No operation changes one.
 
 Here: the contract of `alerts-api` and the behaviour that this unit implements.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=d259494b -->
+<!-- unifold:cites sha=81a51124 -->
 
 Says: an alert and its notification follow the upload response within 1 minute. A changed threshold applies to readings evaluated more than 60 seconds later.
 

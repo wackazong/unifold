@@ -8,9 +8,9 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud__services__alerts["alerts"]
-    u_cloud__services__alerts__notifier["notifier"]
-    u_cloud__services__alerts__rules["rules"]
-    u_cloud__services__alerts__server["server"]
+    u_cloud__services__alerts__notifier["notifier (adapter)"]
+    u_cloud__services__alerts__rules["rules (library)"]
+    u_cloud__services__alerts__server["server (app)"]
   end
   n_cloud__services__alerts___event_dbus{{"event-bus"}}
   n_cloud__services__alerts___reading_devents{{"reading-events"}}
@@ -30,7 +30,7 @@ flowchart LR
   class u_cloud__services__alerts__server focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [notifier](../../../notifier/README.md) | adapter | Turns an opened alert into one notification to the owner | **planned** | [context](../../../notifier/docs/diagrams/context.md) |
 | [rules](../../../rules/README.md) | library | Evaluates readings against the thresholds of a plant | **planned** | [context](../../../rules/docs/diagrams/context.md) |
@@ -38,16 +38,16 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| reading-events | events | [contract](../../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../../ingest/README.md) (planned) | reading-events |  |
-| evaluation | library | [contract](../../../docs/references/evaluation.md) | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | evaluation |  |
-| notification | library | [contract](../../../docs/references/notification.md) | [cloud/services/alerts/notifier](../../../notifier/README.md) (planned) | notification |  |
-| sql-db | db | [contract](../../../../../docs/references/sql-db.md) | [cloud/platform](../../../../../platform/README.md) (planned) | sql-db |  |
-| event-bus | queue | [contract](../../../../../docs/references/event-bus.md) | [cloud/platform](../../../../../platform/README.md) (planned) | event-bus |  |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| reading-events | events | [contract](../../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../../ingest/README.md) (planned) | reading-events |
+| evaluation | library | [contract](../../../docs/references/evaluation.md) | [cloud/services/alerts/rules](../../../rules/README.md) (planned) | evaluation |
+| notification | library | [contract](../../../docs/references/notification.md) | [cloud/services/alerts/notifier](../../../notifier/README.md) (planned) | notification |
+| sql-db | db | [contract](../../../../../docs/references/sql-db.md) | [cloud/platform](../../../../../platform/README.md) (planned) | sql-db |
+| event-bus | queue | [contract](../../../../../docs/references/event-bus.md) | [cloud/platform](../../../../../platform/README.md) (planned) | event-bus |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| alerts-api | http | [contract](../../../../../docs/references/alerts-api.md) |  | [cloud/services/gateway](../../../../gateway/README.md) (planned) | alerts-api |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| alerts-api | http | [contract](../../../../../docs/references/alerts-api.md) | [cloud/services/gateway](../../../../gateway/README.md) (planned) | alerts-api |

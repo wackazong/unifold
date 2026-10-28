@@ -1,0 +1,41 @@
+responsibility: Sends and receives frames over the serial line
+kind: adapter
+status: planned
+secret:
+  what: how frames travel over the line, including the reassembly of a byte stream
+  decision: docs/decisions/0001-the-line-is-one-unit-cut-into-port-and-reassembly.md
+not:
+  - frame layout: frames
+  - retries after a failed write
+  - deciding what to send; the caller does
+capabilities:
+  transport:
+    summary: Send one payload as a frame; receive the next frame's payload
+    contract: ../docs/references/transport.md
+needs:
+  frames:
+    summary: The layout of a frame, to encode what is sent and decode what arrives
+    contract:
+      path: ../docs/references/frames.md
+      parts:
+        - encode
+        - decode
+        - decoded
+        - decode-error
+  uart:
+    summary: The serial port, as a byte stream
+    contract: ../docs/references/uart.md
+wiring:
+  transport: serial.transport
+  serial.framing: framing.framing
+  serial.frames: frames
+  serial.uart: uart
+  framing.frames: frames
+scenarios:
+  reassemble:
+    summary: Two frames arrive in one read
+    source: proto §4.3
+    hops:
+      - transport -> serial.receive
+      - serial -> framing.feed
+    expect: receive returns the first payload; the second frame waits in the buffer for the next call

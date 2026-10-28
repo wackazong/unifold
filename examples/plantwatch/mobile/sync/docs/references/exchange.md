@@ -11,7 +11,7 @@ The steps, sizes and pauses of one exchange between the [local store](local-stor
 | The program comes onto the screen | |
 | A network connection appears | |
 | The operating system grants a slot of scheduled background work | |
-| "Refresh" of [plant-data](../../../docs/references/plant-data.md) | Ignores a running pause |
+| "Refresh" of [plant-data](../../../docs/references/plant-data/index.md) | Ignores a running pause |
 
 One exchange runs at a time. A trigger during a running exchange causes one more exchange directly after it.
 

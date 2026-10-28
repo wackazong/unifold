@@ -1,6 +1,15 @@
-summary: Hardware abstraction of the sensor stick board
-kind: library
+responsibility: Hardware abstraction of the sensor stick board
+kind: adapter
 status: planned
+secret:
+  what: the board, its pins, its peripherals and the radio stack of its vendor
+  decision: ../docs/decisions/0002-only-one-part-touches-the-hardware.md
+not:
+  - converting raw values to percent, lux or degrees
+  - deciding when to measure, what to keep and what to send
+  - the meaning of GATT attributes and the layout of data in the blocks
+  - measuring the cell voltage for others; no capability provides it
+  - replacing the program of the board over the radio
 capabilities:
   sensor-io:
     kind: library

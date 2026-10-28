@@ -8,7 +8,7 @@ unifold unit; run `unifold show` here. Read [README.md](README.md) first: it say
 | Kind | Files |
 |---|---|
 | Learn | [first-plant](docs/tutorials/first-plant.md) |
-| Look up | [conventions](docs/references/conventions.md), [data-model](docs/references/data-model.md), [glossary](docs/references/glossary.md), [pairing](docs/references/pairing.md), [plant-data](docs/references/plant-data.md), [platform-limits](docs/references/platform-limits.md), [sensor-readings](docs/references/sensor-readings.md) |
+| Look up | [conventions](docs/references/conventions.md), [data-model](docs/references/data-model.md), [glossary](docs/references/glossary.md), [pairing](docs/references/pairing.md), [plant-data](docs/references/plant-data/index.md), [platform-limits](docs/references/platform-limits.md), [sensor-readings](docs/references/sensor-readings.md) |
 | Understand | [context](docs/explanation/context.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [runtime](docs/explanation/runtime.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

@@ -31,14 +31,6 @@ Limit: rate limits are counted per instance. With several instances a client can
 
 `gateway` waits 5 seconds for an answer of a provider and then counts the call as failed. It repeats a call that failed, so it expects every operation of `ingest-api`, `plants-api` and `alerts-api` to be safe to repeat.
 
-## Out of scope
-
-- Looking into, validating or changing a body.
-- Combining the answers of several providers into one response.
-- Storing anything: no sessions, no owners, no request log beyond the process log.
-- Terminating TLS. Whoever publishes the network port of `gateway` does that.
-- Deciding what an owner may see. Each provider limits its answers to the owner it is told.
-
 ## Read next
 
 1. [routing](docs/references/routing.md): how a request is handled and where it goes

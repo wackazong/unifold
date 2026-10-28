@@ -7,7 +7,7 @@ This repository holds the unifold standard. Read [README.md](README.md) first: i
 | Kind | Files |
 |---|---|
 | Learn | [first-map](docs/tutorials/first-map.md) |
-| Look up | [spec](docs/references/spec.md), [documents](docs/references/documents.md), [writing](docs/references/writing.md), [rules](docs/references/rules.md), [tool](docs/references/tool.md), [tool-json](docs/references/tool-json.md), [agents](docs/references/agents.md) |
+| Look up | [spec](docs/references/spec.md), [documents](docs/references/documents.md), [writing](docs/references/writing.md), [contracts](docs/references/contracts.md), [rules](docs/references/rules.md), [tool](docs/references/tool.md), [tool-json](docs/references/tool-json.md), [agents](docs/references/agents.md) |
 | Understand | [requirements](docs/explanation/requirements.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [risks](docs/explanation/risks.md), [wiring](docs/explanation/wiring.md), [decisions](docs/decisions/index.md) |
 
 ## Skills

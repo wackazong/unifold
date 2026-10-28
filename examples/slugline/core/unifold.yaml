@@ -1,13 +1,17 @@
-summary: Makes slugs and defines what a transliteration plug-in must provide
-kind: library
+responsibility: Makes slugs and defines what a transliteration plug-in must provide
+kind: logic
+secret:
+  what: the rules that make a slug
+  decision: docs/decisions/0001-a-plug-in-is-passed-with-each-call.md
+not:
+  - character tables; they are a plug-in behind the trait
+  - unique slugs
 capabilities:
   slugify:
     kind: library
-    summary: Turn a string into a slug with a chosen separator and length
+    summary: Turn a string into a slug with a chosen separator and length, with or without a plug-in
     contract: ../docs/references/slugify.md
-    verified-by: tests/slugify.rs
   plugin-api:
     kind: library
-    summary: The trait a transliteration plug-in implements, and a slugify that uses one
+    summary: The trait a transliteration plug-in implements
     contract: ../docs/references/plugin-api.md
-    verified-by: tests/plugin.rs

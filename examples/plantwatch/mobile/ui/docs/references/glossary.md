@@ -11,4 +11,4 @@ Terms that have one fixed meaning inside this unit. Inherited terms are cited in
 | Span | The stretch of time a chart covers: a day, a week or 90 days. |
 | Preset | A named set of three lower limits that the owner can pick in the plant form ([presets.md](presets.md)). |
 | Code | What one phone shows and another scans to join the same owner. |
-| Prepared data | A fixed set of plants, readings and alerts against which a screen is built and tested: the cases of the [examples of `plant-data`](../../../docs/references/plant-data.md#examples). |
+| Prepared data | A fixed set of plants, readings and alerts against which a screen is built and tested: the cases of the [examples of `plant-data`](../../../docs/references/plant-data/index.md#examples). |

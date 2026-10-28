@@ -12,25 +12,25 @@ Says: the BLE profile and the reading schema are references of plantwatch. Every
 Here: `device-under-test` and `cloud-api` name the profile and the API as their contracts. The rig builds its central from the profile and its uploads from the schema, cited below, and from nothing else.
 
 ### [plantwatch: reading schema](../../../docs/references/reading-schema.md)
-<!-- unifold:cites sha=888e575a -->
+<!-- unifold:cites sha=047250bf -->
 
 Says: a reading has a sensor id, a sequence number, a tick count, a time with a flag for an estimate, and soil moisture, light and temperature, each optional. Sensor id and sequence number identify it. It has a JSON form and a binary form, version 1.0; a minor version only adds optional fields.
 
 Here: the rig builds the readings it uploads in the JSON form and compares the readings it fetched with what the API returns.
 
 ### [plantwatch: test report](../../../docs/references/test-report.md)
-<!-- unifold:cites sha=d21981fb -->
+<!-- unifold:cites sha=35556185 -->
 
 Says: the project provides the result of the automated end-to-end tests as a JUnit XML file. A run goes against a real or a simulated sensor stick.
 
 Here: the rig's capability `test-report` is this result.
 
 ### [plantwatch: app UI](../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=aa5d729a -->
+<!-- unifold:cites sha=e244d4e6 -->
 
-Says: per plant the app shows the latest reading, the history and what the plant needs; it works offline; a plant in need produces one notification.
+Says: per plant the app shows the latest reading and 90 days of history, plants with an open alert first with the reason; it works offline; a tap on a notification opens the plant it is about.
 
-Here: the project names the [test catalogue](../references/test-catalogue.md) as what verifies this promise. The catalogue says which parts of it the rig can observe and which it cannot.
+Here: the [test catalogue](../references/test-catalogue.md) tests this promise as far as the public API shows it. It says which parts of it the rig can observe and which it cannot.
 
 ### [plantwatch/0001 The phone relays between sensor stick and server](../../../docs/decisions/0001-the-phone-relays-between-sensor-and-server.md)
 <!-- unifold:cites sha=3ad88d69 -->

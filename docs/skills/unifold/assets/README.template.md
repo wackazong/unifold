@@ -4,7 +4,7 @@
 
 ## Why
 
-<Why this unit exists and why it is cut this way: the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them.>
+<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them.>
 
 ## Capabilities
 
@@ -21,10 +21,6 @@
 ### `<need-name>`
 
 <Only what the contract does not say: what this unit expects beyond it, never who supplies it. For an optional need: what the unit does without it.>
-
-## Out of scope
-
-- <What this unit deliberately does not do, so that nobody asks for it here.>
 
 ## Commands
 

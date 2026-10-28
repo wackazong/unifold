@@ -8,9 +8,9 @@
 ```mermaid
 flowchart LR
   subgraph u_mobile["mobile"]
-    u_mobile__ble_dclient["ble-client"]
-    u_mobile__sync["sync"]
-    u_mobile__ui["ui"]
+    u_mobile__ble_dclient["ble-client (library)"]
+    u_mobile__sync["sync (library)"]
+    u_mobile__ui["ui (adapter)"]
   end
   n_mobile___push_dservice{{"push-service"}}
   p_mobile___app_dui(["app-ui"])
@@ -26,22 +26,22 @@ flowchart LR
   class u_mobile__ui focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [ble-client](../../../ble-client/README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** | [context](../../../ble-client/docs/diagrams/context.md) |
 | [sync](../../../sync/README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** | [context](../../../sync/docs/diagrams/context.md) |
-| [ui](../../README.md) | library | Screens of the phone app | **planned** | [context](context.md) |
+| [ui](../../README.md) | adapter | Screens of the phone app | **planned** | [context](context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| plant-data | library | [contract](../../../docs/references/plant-data.md) | [mobile/sync](../../../sync/README.md) (planned) | plant-data |  |
-| pairing | library | [contract](../../../docs/references/pairing.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | pairing |  |
-| push-service | http | [contract](../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | | |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| plant-data | library | [contract](../../../docs/references/plant-data/index.md) | [mobile/sync](../../../sync/README.md) (planned) | plant-data |
+| pairing | library | [contract](../../../docs/references/pairing.md) | [mobile/ble-client](../../../ble-client/README.md) (planned) | pairing |
+| push-service | http | [contract](../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| app-ui | ui | [contract](../../../../docs/references/app-ui.md) |  | outside the project, as capability `app-ui` of the root | |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| app-ui | ui | [contract](../../../../docs/references/app-ui.md) | outside the project, as capability `app-ui` of the root | |

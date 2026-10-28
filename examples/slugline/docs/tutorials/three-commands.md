@@ -11,26 +11,28 @@ This lesson is for a developer who has cloned the unifold repository and wants t
 
    The map is consistent: every need of the four units is wired, and both sides of each connection name the same contract.
 
-2. Run `unifold show plugins/unicode`. It prints the unit, its capability and its need:
+2. Run `unifold show plugins/unicode`. It prints the unit, its responsibility and kind, what it does not do, its capability and its need, and the scenario that passes through it:
 
    ```console
    $ unifold show plugins/unicode
    unit      unicode  (plugins/unicode)
-   summary   Transliterates Latin letters with diacritics to ASCII
-   status    active · library
+   does      Transliterates Latin letters with diacritics to ASCII
+   status    active · kind logic
+   not       the rules of a slug; it answers one character at a time
    manifest  plugins/unicode/unifold.yaml
    parent    slugline
    children  none
    capabilities
-     transliteration (library): Replaces Latin letters that have diacritics, and ligatures, by ASCII letters  contract docs/references/transliteration.md  verified by plugins/unicode/tests/latin.rs
+     transliteration (library): Replaces Latin letters that have diacritics, and ligatures, by ASCII letters  contract docs/references/transliteration.md
          used by cli as need 'transliteration'
    needs
      plugin-api (library): The trait a transliteration plug-in implements  contract docs/references/plugin-api.md
-         provided by core capability 'plugin-api'  verified by core/tests/plugin.rs
+         provided by core capability 'plugin-api'
+   scenario  slug-from-arguments: The command turns its arguments into one slug with the plug-in  (held by the root)
    files     plugins/unicode/README.md
    ```
 
-   Find the two indented lines: `cli` uses the capability, and `core` provides the need.
+   Find the two indented lines: `cli` uses the capability, and `core` provides the need. The last line names the scenario of the root whose hops pass through this unit; its generated diagram is `docs/diagrams/scenario-slug-from-arguments.md`.
 
 3. Run `unifold capability plugins/unicode plugin-api`. It prints both ends of that one connection:
 
@@ -40,9 +42,8 @@ This lesson is for a developer who has cloned the unifold repository and wants t
        contract: docs/references/plugin-api.md
        (no section for it in README.md)
 
-   --- core capabilities 'plugin-api' (library): The trait a transliteration plug-in implements, and a slugify that uses one
+   --- core capabilities 'plugin-api' (library): The trait a transliteration plug-in implements
        contract: docs/references/plugin-api.md
-       verified by: core/tests/plugin.rs
        (no section for it in README.md)
    ```
 

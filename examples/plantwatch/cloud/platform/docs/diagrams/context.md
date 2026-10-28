@@ -8,10 +8,10 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud["cloud"]
-    u_cloud__platform["platform"]
-    u_cloud__services__alerts["alerts"]
-    u_cloud__services__ingest["ingest"]
-    u_cloud__services__plants["plants"]
+    u_cloud__platform["platform (adapter)"]
+    u_cloud__services__alerts["alerts (service)"]
+    u_cloud__services__ingest["ingest (service)"]
+    u_cloud__services__plants["plants (service)"]
   end
   n_cloud___container_dhost{{"container-host"}}
   u_cloud__services__ingest -->|"event-bus"| u_cloud__platform
@@ -26,25 +26,25 @@ flowchart LR
   class u_cloud__platform focus
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [platform](../../README.md) | infrastructure | Shared infrastructure of the services - message bus and database | **planned** | [context](context.md) |
+| [platform](../../README.md) | adapter | Shared infrastructure of the services - message bus and database | **planned** | [context](context.md) |
 | [alerts](../../../services/alerts/README.md) | service | Decides when a plant needs attention and notifies its owner once | **planned** | [component](../../../services/alerts/docs/diagrams/component.md) |
 | [ingest](../../../services/ingest/README.md) | service | Accepts uploaded readings and announces each accepted one as an event | **planned** | [context](../../../services/ingest/docs/diagrams/context.md) |
 | [plants](../../../services/plants/README.md) | service | Registry of plants with their sensors, thresholds and reading history | **planned** | [context](../../../services/plants/docs/diagrams/context.md) |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability | Verified by |
-|---|---|---|---|---|---|
-| container-host | infrastructure | [contract](../../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root | | |
+| Need | Kind | Contract | Provided by | Capability |
+|---|---|---|---|---|
+| container-host | infrastructure | [contract](../../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Verified by | Used by | As need |
-|---|---|---|---|---|---|
-| event-bus | queue | [contract](../../../docs/references/event-bus.md) |  | [cloud/services/ingest](../../../services/ingest/README.md) (planned) | event-bus |
-| event-bus | queue | [contract](../../../docs/references/event-bus.md) |  | [cloud/services/plants](../../../services/plants/README.md) (planned) | event-bus |
-| event-bus | queue | [contract](../../../docs/references/event-bus.md) |  | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | event-bus |
-| sql-db | db | [contract](../../../docs/references/sql-db.md) |  | [cloud/services/plants](../../../services/plants/README.md) (planned) | sql-db |
-| sql-db | db | [contract](../../../docs/references/sql-db.md) |  | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | sql-db |
+| Capability | Kind | Contract | Used by | As need |
+|---|---|---|---|---|
+| event-bus | queue | [contract](../../../docs/references/event-bus.md) | [cloud/services/ingest](../../../services/ingest/README.md) (planned) | event-bus |
+| event-bus | queue | [contract](../../../docs/references/event-bus.md) | [cloud/services/plants](../../../services/plants/README.md) (planned) | event-bus |
+| event-bus | queue | [contract](../../../docs/references/event-bus.md) | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | event-bus |
+| sql-db | db | [contract](../../../docs/references/sql-db.md) | [cloud/services/plants](../../../services/plants/README.md) (planned) | sql-db |
+| sql-db | db | [contract](../../../docs/references/sql-db.md) | [cloud/services/alerts/server](../../../services/alerts/server/README.md) (planned) | sql-db |

@@ -6,11 +6,6 @@ Turns text into a URL slug: `Crème brûlée` becomes `creme-brulee`. A Rust lib
 
 A slug has to be the same forever once it is in a URL, so the rules that make one are concentrated in one crate and tested as a contract, while the part that is a matter of taste, which letters replace `é` or `ß`, is a plug-in behind a trait. The command is a thin shell over the library. As an example of unifold, the workspace is cut so that every kind of connection appears once; the [component diagram](docs/diagrams/component.md) shows them. Each child has a short `README.md`, and `core` also has a decision, invariants and a context item, so a reader can see the smallest unit and a complete one side by side.
 
-## Out of scope
-
-- Unique slugs: nothing here knows which slugs exist already.
-- Scripts other than Latin. A Cyrillic or Greek table is another plug-in.
-- A configuration file or locale for the command.
 
 ## Commands
 

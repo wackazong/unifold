@@ -23,15 +23,6 @@ What must stay true: an alert opens once, and an opened alert leads to one notif
 
 `alerts` waits up to 5 seconds for a lookup and then treats the registry as unavailable.
 
-## Out of scope
-
-- Storing thresholds or plants. `alerts` asks for them.
-- Storing readings or history.
-- Reminders. An alert that stays open sends nothing more.
-- Alerts about missing data, such as a sensor stick that has gone silent.
-- Acknowledging or closing an alert by hand.
-- Choosing which phones get a notification.
-
 ## Read next
 
 1. [docs/explanation/invariants.md](docs/explanation/invariants.md), [runtime.md](docs/explanation/runtime.md): invariants, the life of an alert, the handling of one reading

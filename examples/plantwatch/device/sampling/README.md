@@ -28,14 +28,6 @@ Limits: a board gives readings for 16 383 starts and for 262 143 readings per st
 
 `sampling` copes with seconds that are wrong by up to 100 ppm and with an alarm that comes up to 1 s late.
 
-## Out of scope
-
-- Keeping readings. A reading that no subscriber keeps is gone.
-- Sending readings anywhere.
-- Changing the sampling interval after start.
-- Smoothing over several readings. Every reading stands for one moment.
-- Judging whether a value is good or bad for a plant.
-
 ## Read next
 
 1. [docs/references/calibration.md](docs/references/calibration.md): formulas, constants and test cases

@@ -26,7 +26,7 @@ This repository has a [unifold](https://unifold.md) map. A folder with a `unifol
 - `unifold capability PATH NAME`: both ends of one connection, with contracts
 - `unifold check`: is the map consistent (`--fix` rewrites generated files)
 
-| Unit | Path | Summary |
+| Unit | Path | Responsibility |
 |---|---|---|
 | cloud | `cloud` | Server side that turns uploaded readings into plant history and alerts (planned) |
 | platform | `cloud/platform` | Shared infrastructure of the services - message bus and database (planned) |

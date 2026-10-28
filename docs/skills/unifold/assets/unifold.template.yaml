@@ -1,25 +1,39 @@
-# yaml-language-server: $schema=https://unifold.md/0.2/unifold.schema.json
-# Manifest of a unit. The folder name is the unit's name. Only 'summary' is
-# required; delete what you do not need. Standard: https://unifold.md/spec
-summary: <what the unit is, in one line>
-# unifold: "0.2"         # root only: the version of the standard
+# yaml-language-server: $schema=https://unifold.md/0.3/unifold.schema.json
+# Manifest of a unit. The folder name is the unit's name. Only 'responsibility' is
+# required; a unit with children also needs 'kind'. Delete what you do not need.
+# Standard: https://unifold.md/spec
+responsibility: <what the unit is responsible for, in one sentence>
+# unifold: "0.3"         # root only: the version of the standard
 # name: <project-name>   # root only, and every root should set it; default: the folder name
 # status: planned        # planned | active (default) | deprecated
-# kind: <library | service | app | adapter | ...>
+# kind: <logic | stateful | adapter | any other word>   # required on a unit with children
 # owner: <team or person>
+secret:
+  what: <the one piece of knowledge this unit hides, in one line>
+  decision: docs/decisions/<NNNN-title>.md   # a decision of this unit or an ancestor that says why
+not:
+  - <what this unit does not do>: <need of this unit through which it is delegated>
+  - <what this unit does not do, delegated to nobody>
 capabilities:
   <capability-name>: <what the capability provides, in one line>
   <other-capability>:
     summary: <what the capability provides, in one line>
     kind: <library | http | events | cli | ...>
     contract: ../docs/references/<topic>.md   # the reference of the parent that defines the connection
-    verified-by: <path or URL of the tests that check it>
 needs:
   <need-name>: <what this unit expects from whoever provides it>
   <other-need>:
     summary: <what this unit expects from whoever provides it>
-    optional: true       # the need may stay unconnected
-wiring:                  # only in a unit that has child units; every connection is a line
+    contract:
+      path: ../docs/references/<topic>.md
+      parts:                 # only the parts this unit uses; leave out for the whole contract
+        - <part>
+    optional: true           # the need may stay unconnected
+  <host-service>:            # root only: time, randomness
+    summary: <what the host provides>
+    contract: docs/references/<topic>.md
+    platform: true
+wiring:                      # only in a unit that has child units; every connection is a line
   <child>.<need>: <other-child>.<capability>   # a sibling meets the need of a child
   <child>.<need>: <own-need>                    # passed up to a need of this unit
   <own-need>: <child>.<capability>              # a child meets a need of this unit's own code
@@ -27,3 +41,12 @@ wiring:                  # only in a unit that has child units; every connection
   <child>.<need>:                     # named alternatives; the first is the default
     <name>: <child>.<capability>
     <other-name>: <other-child>.<capability>
+scenarios:                   # one story as the chain of calls it causes
+  <scenario-name>:
+    summary: <what happens, in one line>
+    source: <where the story comes from, free text>
+    hops:
+      - <own-capability> -> <child>.<part>        # the entry: a capability of this unit, implemented by a child
+      - <child> -> <other-child>.<part>           # a need of the caller, met by the target
+      - <child>/<grandchild> -> <own-need>.<part> # a need passed up to a need of this unit
+    expect: <the observable outcome, exact where the source gives it>

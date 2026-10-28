@@ -1,6 +1,15 @@
-summary: Finds sensor sticks and fetches their readings over BLE
+responsibility: Finds sensor sticks and fetches their readings over BLE
 kind: library
 status: planned
+secret:
+  what: the fetch session with a sensor stick and the time anchors per boot
+  decision: docs/decisions/0001-confirm-in-chunks-and-resume-at-the-oldest-unconfirmed-reading.md
+not:
+  - storing readings; the client holds a reading only between receiving it and the consumer's acknowledgement
+  - binding a sensor stick to a plant
+  - judging values beyond their valid range; the client knows no thresholds
+  - live values; the client fetches stored readings only
+  - updating or configuring a sensor stick
 capabilities:
   sensor-readings:
     kind: library

@@ -8,11 +8,11 @@ The units directly inside `plantwatch` and how they are connected. An arrow poin
 ```mermaid
 flowchart LR
   subgraph u_root["plantwatch"]
-    u_cloud["cloud"]
-    u_device["device"]
-    u_emulator["emulator"]
-    u_mobile["mobile"]
-    u_test_drig["test-rig"]
+    u_cloud["cloud (system)"]
+    u_device["device (firmware)"]
+    u_emulator["emulator (tool)"]
+    u_mobile["mobile (app)"]
+    u_test_drig["test-rig (test)"]
   end
   n_root___push_dservice{{"push-service"}}
   n_root___container_dhost{{"container-host"}}
@@ -41,7 +41,7 @@ flowchart LR
   class u_cloud,u_device,u_emulator,u_mobile,u_test_drig planned
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
 | [cloud](../../cloud/README.md) | system | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](../../cloud/docs/diagrams/component.md) |
 | [device](../../device/README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../device/docs/diagrams/component.md) |

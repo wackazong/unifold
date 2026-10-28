@@ -1,0 +1,26 @@
+responsibility: Runs the host side of a session through its states and timeouts
+kind: stateful
+status: planned
+secret:
+  what: the session state machine and its timing
+  decision: docs/decisions/0001-the-session-has-four-states.md
+not:
+  - frame layout: transport
+  - the serial port and its deadlines: transport
+  - retrying a failed open
+capabilities:
+  host:
+    summary: Open a session, send data, close
+    contract: ../docs/references/host.md
+needs:
+  transport:
+    summary: Send one payload as a frame; receive the next frame's payload
+    contract:
+      path: ../docs/references/transport.md
+      parts:
+        - send
+        - receive
+        - transport-error
+  clock:
+    summary: The current time in milliseconds, to measure timeouts
+    contract: ../docs/references/clock.md

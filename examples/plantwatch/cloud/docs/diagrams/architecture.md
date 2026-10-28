@@ -8,16 +8,16 @@
 ```mermaid
 flowchart LR
   subgraph u_cloud["cloud"]
-    u_cloud__platform["platform"]
-    subgraph u_cloud__services__alerts["alerts"]
-      u_cloud__services__alerts__notifier["notifier"]
-      u_cloud__services__alerts__plant_dlookup["plant-lookup"]
-      u_cloud__services__alerts__rules["rules"]
-      u_cloud__services__alerts__server["server"]
+    u_cloud__platform["platform (adapter)"]
+    subgraph u_cloud__services__alerts["alerts (service)"]
+      u_cloud__services__alerts__notifier["notifier (adapter)"]
+      u_cloud__services__alerts__plant_dlookup["plant-lookup (adapter)"]
+      u_cloud__services__alerts__rules["rules (library)"]
+      u_cloud__services__alerts__server["server (app)"]
     end
-    u_cloud__services__gateway["gateway"]
-    u_cloud__services__ingest["ingest"]
-    u_cloud__services__plants["plants"]
+    u_cloud__services__gateway["gateway (service)"]
+    u_cloud__services__ingest["ingest (service)"]
+    u_cloud__services__plants["plants (service)"]
   end
   n_cloud___push_dservice{{"push-service"}}
   n_cloud___container_dhost{{"container-host"}}
@@ -44,9 +44,9 @@ flowchart LR
   class u_cloud__platform,u_cloud__services__alerts,u_cloud__services__alerts__notifier,u_cloud__services__alerts__plant_dlookup,u_cloud__services__alerts__rules,u_cloud__services__alerts__server,u_cloud__services__gateway,u_cloud__services__ingest,u_cloud__services__plants planned
 ```
 
-| Unit | Kind | Summary | Status | Diagram |
+| Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [platform](../../platform/README.md) | infrastructure | Shared infrastructure of the services - message bus and database | **planned** | [context](../../platform/docs/diagrams/context.md) |
+| [platform](../../platform/README.md) | adapter | Shared infrastructure of the services - message bus and database | **planned** | [context](../../platform/docs/diagrams/context.md) |
 | [alerts](../../services/alerts/README.md) | service | Decides when a plant needs attention and notifies its owner once | **planned** | [component](../../services/alerts/docs/diagrams/component.md) |
 | [notifier](../../services/alerts/notifier/README.md) | adapter | Turns an opened alert into one notification to the owner | **planned** | [context](../../services/alerts/notifier/docs/diagrams/context.md) |
 | [plant-lookup](../../services/alerts/plant-lookup/README.md) | adapter | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** | [context](../../services/alerts/plant-lookup/docs/diagrams/context.md) |

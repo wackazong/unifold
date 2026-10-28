@@ -31,7 +31,7 @@ For a single setting the value that reaches the server last wins. sync takes the
 
 While a change waits, values that arrive from the server for the same plant do not overwrite the waiting settings on the phone.
 
-A change to a plant that the server no longer has is not written, because writing would create the plant again. The plant becomes `refused`. The states and reasons are in [plant-data.md](../../../docs/references/plant-data.md).
+A change to a plant that the server no longer has is not written, because writing would create the plant again. The plant becomes `refused`. The states and reasons are in [plant-data.md](../../../docs/references/plant-data/index.md).
 
 ### Consequences
 
