@@ -51,7 +51,7 @@ Consequences:
 | Sign | Meaning |
 |---|---|
 | `status: planned` | The text describes an intention. The code may not exist. |
-| A decision with `status: proposed` | Nobody has agreed to it yet. Only accepted decisions bind. |
+| A decision with `status: proposed` | Nobody has agreed to it yet. Only accepted and derived decisions bind. |
 | A warning about a stamp | A restatement in `docs/explanation/context.md` may no longer match its source. Read the source. |
 | `responsibility: TODO`, `summary: TODO` | A placeholder that nobody has completed. |
 | Decision with `status: derived` | A source settles it, says the author. Whether the passage says so is a review question. |

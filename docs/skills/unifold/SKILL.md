@@ -136,7 +136,7 @@ Report to the human:
 | Sign | Meaning |
 |---|---|
 | `status: planned` | An intention. The code may not exist. |
-| Decision with `status: proposed` | Not agreed yet. Only `accepted` decisions bind. |
+| Decision with `status: proposed` | Not agreed yet. Only `accepted` and `derived` decisions bind. |
 | Warning "cited source changed" | A `Says` text may be out of date. Read the source, correct `Says`, run `unifold stamp`. |
 | `responsibility: TODO`, `summary: TODO` | A placeholder that nobody completed. |
 | Decision with `status: derived` | A source settles it, says its author. Read `## Source says` against the passage before you rely on it. |
