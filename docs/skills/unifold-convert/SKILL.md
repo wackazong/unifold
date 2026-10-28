@@ -24,7 +24,7 @@ A folder is a unit when two of these hold; one is not enough:
 - it has an owner or decisions of its own;
 - a reader needs it as a box in a diagram.
 
-1. List the candidates: workspace packages, services with their own deployment, feature or module folders, firmware components, a deployment folder. A unit holds code that is built, run or deployed. A shared schema or protocol definition is not a unit; it is the contract of the connections that carry it. Write down for each candidate what it is, in one line.
+1. List the candidates: workspace packages, services with their own deployment, feature or module folders, firmware components, a deployment folder. A unit holds code that is built, run or deployed. A shared schema or protocol definition is not a unit; it is a source of the contract of the connections that carry it. Write down for each candidate what it is, in one line.
 2. Strike what is not a part: build output, test fixtures, vendored code, example and benchmark folders. Strike a package that exists only so that the build works. Folders of a framework layer (`models/`, `views/`) are not units; the feature they belong to is.
 3. Group what belongs together. A folder whose children are units is a unit itself, and its manifest holds the wiring between them. Keep the existing layout; unifold describes folders, it does not move code.
 4. Decide the depth. Start with one or two levels. Fewer units, well chosen, beat many: every unit costs attention when its surroundings change. Most folders stay plain.
@@ -46,7 +46,7 @@ Then the wiring, in the manifest of the nearest unit above both sides: `child.ne
 
 Then the contracts. Every connection carries something in some form. Both of its sides name the document that defines it. The document lies in `docs/references/` of the unit that holds the wiring, or of a unit above it, never in a sibling or a child. A need that is passed up names the same document at every level.
 
-A contract is always a Markdown reference: never a kind such as `http` or `json`, never a schema, a `.proto` or an OpenAPI file, and never a URL. A definition from outside the project is linked from the reference. Where such a file already defines the interface, it stays with the code that uses it, and the reference states the same form in prose with an example. Where nothing exists, write a short reference with the form and an example.
+A contract is always a Markdown reference: never a kind such as `http` or `json`, never a schema, a `.proto` or an OpenAPI file, and never a URL. A definition from outside the project is linked from the reference. Where such a file already defines the interface, it stays with the code that uses it; the contract names it under `Sources:`, and a part's signature may quote it in its notation. Write each contract from [contract.template.md](../unifold/assets/contract/contract.template.md) as the skill `unifold` says under "Write a contract": `## Parts` with a signature and examples for every operation, event or type the sides use, then `## Fake`. Take the examples from existing tests where there are any.
 
 ## 3. Check the map, then compare it with the code
 
