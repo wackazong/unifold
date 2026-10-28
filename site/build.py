@@ -868,10 +868,13 @@ def build() -> None:
     # machine-readable files
     (OUT / version).mkdir()
     shutil.copyfile(schema, OUT / version / "unifold.schema.json")
-    (OUT / "skill").mkdir()
-    shutil.copyfile(SKILL, OUT / "skill" / "SKILL.md")
-    (OUT / "skill" / "unifold-convert").mkdir()
-    shutil.copyfile(CONVERT_SKILL, OUT / "skill" / "unifold-convert" / "SKILL.md")
+    # the skills as they are in the repository, with their templates and scripts: the unifold skill
+    # at /skill/, the address that README.md and llms.txt give, and every folder of docs/skills/
+    # at /skill/<name>/, so that a relative link from one skill into another resolves too
+    skip = shutil.ignore_patterns(".*", "__pycache__", "*.egg-info")
+    shutil.copytree(SKILL.parent, OUT / "skill", ignore=skip)
+    for d in sorted(p for p in SKILL.parent.parent.iterdir() if p.is_dir()):
+        shutil.copytree(d, OUT / "skill" / d.name, ignore=skip)
     for lic in ("LICENSE-MIT", "LICENSE-APACHE"):
         if (ROOT / lic).exists():
             shutil.copyfile(ROOT / lic, OUT / f"{lic}.txt")
@@ -1036,6 +1039,27 @@ def check() -> int:
             problems.append(f"search.json: broken link {url}")
         elif frag and target in parsed and frag not in parsed[target].ids:
             problems.append(f"search.json: no anchor #{frag} in {target.relative_to(OUT)}")
+    # links inside the copied skills: relative ones must name a published file or folder,
+    # those to the site a page and its anchor (code is skipped; templates hold placeholders)
+    n_raw = 0
+    for f in sorted((OUT / "skill").rglob("SKILL.md")):
+        text = re.sub(r"^```.*?^```", "", f.read_text(encoding="utf-8"), flags=re.S | re.M)
+        text = re.sub(r"`[^`\n]*`", "", text)
+        for ref in re.findall(r"\]\(\s*<?([^)\s>]+)", text) + re.findall(r"<(https?://[^>\s]+)>", text):
+            if ref.startswith(SITE_URL):
+                path, _, frag = (ref[len(SITE_URL):] or "/").partition("#")
+                target = resolve(path)
+            elif re.match(r"^([a-z][a-z0-9+.-]*:|#|/)", ref, re.I):
+                continue
+            else:
+                path, frag = ref.split("#")[0], ""
+                target = Path(os.path.normpath(f.parent / path))
+                target = target if target.is_relative_to(OUT) and target.exists() else None
+            n_raw += 1
+            if target is None:
+                problems.append(f"{f.relative_to(OUT)}: broken link {ref}")
+            elif frag and target in parsed and frag not in parsed[target].ids:
+                problems.append(f"{f.relative_to(OUT)}: no anchor #{frag} in {target.relative_to(OUT)}")
     # weight of the start page: the HTML and everything it loads from this site
     index = OUT / "index.html"
     weight = index.stat().st_size
@@ -1052,7 +1076,7 @@ def check() -> int:
             problems.append(f"missing {name}")
     for pr in problems:
         print(f"check: {pr}", file=sys.stderr)
-    print(f"checked {len(own)} pages, {n_links} internal links; start page {weight / 1000:.1f} kB with its assets; "
+    print(f"checked {len(own)} pages, {n_links} internal links, {n_raw} links in the skills; start page {weight / 1000:.1f} kB with its assets; "
           f"{len(problems)} problem(s)")
     return 1 if problems else 0
 

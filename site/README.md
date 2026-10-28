@@ -19,7 +19,7 @@ uv run site/build.py --serve
 | `/spec/`, `/documents/`, `/reasoning/`, `/first-map/`, ... | `spec/index.html`, ... | the reference chapters from `docs/references/`, the explanation files from `docs/explanation/` and the tutorial from `docs/tutorials/`; `/guide`, `/adopting` and `/design` redirect |
 | `/spec.md`, ... | the same chapters as plain Markdown | |
 | `/0.3/unifold.schema.json` | | the schema, at the current version; the build stops if it is missing |
-| `/skill/SKILL.md`, `/skill/unifold-convert/SKILL.md`, `/llms.txt` | | the two skills; an index for agents |
+| `/skill/SKILL.md`, `/skill/assets/...`, `/skill/scripts/unifold.py`, `/skill/<name>/...`, `/llms.txt` | | `docs/skills/` copied as it is, templates and scripts included: the unifold skill at `/skill/`, every skill folder at `/skill/<name>/` (`/skill/unifold-convert/SKILL.md` among them), so that the relative links of a skill resolve; `--check` checks those links. `llms.txt` is an index for agents |
 | `/examples/<name>/` | `index.html` | every `examples/**/unifold.html` that exists |
 | `/search/` | `search/index.html` | the search: `search.js` searches `search.json` in the browser as you type, in the field in the header of every page and here, where all sections found are listed. The build writes that index with one entry per section of every chapter (down to `###`) and per band of the start page; `--check` checks its addresses. Without JavaScript the field in the header leads here. |
 | `/favicon.svg`, `/favicon.ico`, `/apple-touch-icon.png` | | the mark, drawn by the build from the corners in `MARK`: an SVG with light and dark colours, an ICO with 16, 32 and 48 pixels for browsers without SVG icons, a PNG for home screens |
