@@ -19,7 +19,7 @@ Says: a reading has a sensor id, a sequence number, a tick count, a time with a 
 Here: the app stores and uploads readings in the JSON form and gives a reading its `taken_at` from the tick count before it is stored.
 
 ### [plantwatch: app UI](../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=e244d4e6 -->
+<!-- unifold:cites sha=b379dec2 -->
 
 Says: per plant the app shows the latest reading and 90 days of history, plants with an open alert first with the reason; it works offline; a tap on a notification opens the plant it is about.
 

@@ -26,7 +26,7 @@ Says: the project provides the result of the automated end-to-end tests as a JUn
 Here: the rig's capability `test-report` is this result.
 
 ### [plantwatch: app UI](../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=e244d4e6 -->
+<!-- unifold:cites sha=b379dec2 -->
 
 Says: per plant the app shows the latest reading and 90 days of history, plants with an open alert first with the reason; it works offline; a tap on a notification opens the plant it is about.
 

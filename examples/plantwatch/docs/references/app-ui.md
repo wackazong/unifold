@@ -180,4 +180,4 @@ The app registers again whenever the platform changes the phone's address. When 
 
 ## Fake
 
-The tests of the owner's promises are the end-to-end tests of `test-rig`, which observe the public API, and the screen tests of `mobile` against prepared data; no fake stands in for the app. Faults it can inject: none.
+The real implementation: no fake stands in for the app. The tests of the owner's promises are the end-to-end tests of `test-rig`, which observe the public API, and the screen tests of `mobile` against prepared data.
