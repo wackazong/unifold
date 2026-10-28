@@ -15,11 +15,11 @@ A change that alters no rule, such as a typing mistake, a clearer sentence or a 
 5. Run everything:
 
    ```sh
-   python3 tests/conformance.py
-   python3 docs/skills/unifold/scripts/unifold.py check --fix examples/slugline
-   python3 docs/skills/unifold/scripts/unifold.py check --fix examples/serial-line
-   python3 docs/skills/unifold/scripts/unifold.py check --fix examples/plantwatch
-   python3 site/build.py --check
+   uv run tests/conformance.py
+   uv run docs/skills/unifold/scripts/unifold.py check --fix examples/slugline
+   uv run docs/skills/unifold/scripts/unifold.py check --fix examples/serial-line
+   uv run docs/skills/unifold/scripts/unifold.py check --fix examples/plantwatch
+   uv run site/build.py --check
    ```
 
    The workflow `check` runs the same commands, with `--strict` in place of `--fix`, on every push and pull request. `examples/serial-line` is a copy of the example of [maike](https://github.com/wackazong/maike), which checks its original against this copy at the version of unifold it pins; a change here reaches maike when maike moves its pin.

@@ -5,9 +5,9 @@
 # ///
 """Build the static site for https://unifold.md into site/_out/.
 
-    python3 site/build.py            # build
-    python3 site/build.py --serve    # build, then serve on http://localhost:8000
-    python3 site/build.py --check    # build, then check links, HTML and page weight
+    uv run site/build.py            # build
+    uv run site/build.py --serve    # build, then serve on http://localhost:8000
+    uv run site/build.py --check    # build, then check links, HTML and page weight
 
 Everything is derived from README.md, docs/references/*.md and the
 skill. Nothing is converted by hand: change the Markdown and run this again.
@@ -87,7 +87,7 @@ try:
     import markdown
     import yaml
 except ImportError as exc:  # pragma: no cover
-    die(f"{exc.name} is missing. Install with: python3 -m pip install markdown pyyaml  (or: uv run site/build.py)")
+    die(f"{exc.name} is missing. Run it with `uv run site/build.py`, or install it: python3 -m pip install markdown pyyaml")
 
 esc = html.escape
 CUR = ' aria-current="page"'

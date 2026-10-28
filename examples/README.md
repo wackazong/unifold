@@ -22,10 +22,10 @@ A standard is understood from an example faster than from its text, and every ru
 `unifold` below is the reference tool, `uvx unifold`. To check the examples with the tool of this repository instead, which may be newer:
 
 ```sh
-alias unifold="python3 $PWD/../docs/skills/unifold/scripts/unifold.py"   # in this folder
+alias unifold="uv run $PWD/../docs/skills/unifold/scripts/unifold.py"   # in this folder
 ```
 
-It needs Python 3.9 or newer with PyYAML.
+It needs [uv](https://docs.astral.sh/uv/), which installs Python and PyYAML.
 
 ```sh
 (cd slugline && cargo test --workspace && unifold check --strict)

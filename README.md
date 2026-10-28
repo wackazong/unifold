@@ -97,21 +97,17 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 
 ## Needs
 
-### Python
-
-Python 3.9 or newer with PyYAML, for the tool and the tests. The standard itself needs nothing.
-
 ### uv
 
-[uv](https://docs.astral.sh/uv/), to build the site. `uv run` installs Markdown and PyYAML from the header of `site/build.py`.
+[uv](https://docs.astral.sh/uv/), for the tool, the tests and the site. `uv run` installs Python 3.9 or newer and the packages that the header of each script names: PyYAML, and Markdown for the site. The standard itself needs nothing.
 
 ## Commands
 
 ```sh
 # test the tool
-python3 tests/conformance.py
+uv run tests/conformance.py
 # check an example
-python3 docs/skills/unifold/scripts/unifold.py check examples/plantwatch
+uv run docs/skills/unifold/scripts/unifold.py check examples/plantwatch
 # build the site and check its links
 uv run site/build.py --check
 ```

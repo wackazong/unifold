@@ -106,4 +106,4 @@ A coding agent should check when it stops, not after every edit: a unit that is 
 
 ## Testing another implementation
 
-[conformance.py](../../tests/conformance.py) holds the test cases as data: small projects with the findings that `check --json` must report, as rule, severity and file, and scenarios for `init`, stamps, `--fix`, `model`, `--ignore` and JSON on failure. `python3 tests/conformance.py --tool "CMD"` runs them against another tool; `--write DIR` writes the cases as files. An implementation conforms when all cases pass. Cases for generated files run without the reference generator, so a second generator is tested too.
+[conformance.py](../../tests/conformance.py) holds the test cases as data: small projects with the findings that `check --json` must report, as rule, severity and file, and scenarios for `init`, stamps, `--fix`, `model`, `--ignore` and JSON on failure. `uv run tests/conformance.py --tool "CMD"` runs them against another tool; `--write DIR` writes the cases as files. An implementation conforms when all cases pass. Cases for generated files run without the reference generator, so a second generator is tested too.

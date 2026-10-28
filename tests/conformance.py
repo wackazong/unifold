@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT OR Apache-2.0
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["pyyaml>=6"]
+# ///
 """Conformance suite for unifold tools.
 
 Two sorts of tests, both run through the command line only, so that another
@@ -11,11 +15,11 @@ implementation can be tested with `--tool`:
 - SCENARIOS: a sequence of commands with assertions (init, stamps, --fix,
   JSON on failure, idempotent generation, ...).
 
-    python3 tests/conformance.py                 all tests against the reference tool
-    python3 tests/conformance.py NAME ...        only tests whose name contains NAME
-    python3 tests/conformance.py --tool "CMD"    test another implementation
-    python3 tests/conformance.py --write DIR     write every case to DIR/<name>/
-    python3 tests/conformance.py --list          names of all tests
+    uv run tests/conformance.py                  all tests against the reference tool
+    uv run tests/conformance.py NAME ...         only tests whose name contains NAME
+    uv run tests/conformance.py --tool "CMD"     test another implementation
+    uv run tests/conformance.py --write DIR      write every case to DIR/<name>/
+    uv run tests/conformance.py --list           names of all tests
 
 How a case runs: the files are written to an empty folder named `demo`; then
 `CMD generate demo` (unless the case says generate=False: the cases for rule

@@ -11,7 +11,7 @@ A slug has to be the same forever once it is in a URL, so the rules that make on
 
 ```sh
 cargo test --workspace
-alias unifold='python3 ../../docs/skills/unifold/scripts/unifold.py'
+alias unifold='uv run ../../docs/skills/unifold/scripts/unifold.py'
 unifold check
 ```
 

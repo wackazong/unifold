@@ -21,8 +21,8 @@ This repository holds the unifold standard. Read [README.md](README.md) first: i
 
 The examples in `examples/` are [unifold](https://unifold.md) projects. A folder with a `unifold.yaml` is a unit: the file says what the unit provides and needs, and the unit above connects needs to providers. Read a map before you change an interface in an example; keep it true after.
 
-- `python3 docs/skills/unifold/scripts/unifold.py show PATH`: a unit, its capabilities and needs, and who is on the other side
-- `python3 docs/skills/unifold/scripts/unifold.py capability PATH NAME`: both ends of one connection, with contracts
-- `python3 docs/skills/unifold/scripts/unifold.py check`: is the map consistent (`--fix` rewrites generated files)
+- `uv run docs/skills/unifold/scripts/unifold.py show PATH`: a unit, its capabilities and needs, and who is on the other side
+- `uv run docs/skills/unifold/scripts/unifold.py capability PATH NAME`: both ends of one connection, with contracts
+- `uv run docs/skills/unifold/scripts/unifold.py check`: is the map consistent (`--fix` rewrites generated files)
 
 How to read and write the map: the skill [unifold](docs/skills/unifold/SKILL.md). How to bring folders into the map: the skill [unifold-convert](docs/skills/unifold-convert/SKILL.md).

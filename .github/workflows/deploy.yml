@@ -34,13 +34,9 @@ jobs:
       DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-      - name: Install the build dependencies
-        run: python -m pip install --quiet "pyyaml>=6" markdown
+      - uses: astral-sh/setup-uv@v6
       - name: Build the site and check its links
-        run: python site/build.py --check
+        run: uv run site/build.py --check
       - name: Check the deployment settings
         run: |
           for name in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH; do

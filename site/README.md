@@ -32,7 +32,7 @@ A Mermaid block is replaced by an inline SVG from `site/diagrams/<hash>.svg` (ha
 
 ```sh
 npm install --prefix site @mermaid-js/mermaid-cli   # or set MMDC=/path/to/mmdc
-python3 site/build.py                                # then commit site/diagrams/
+uv run site/build.py                                 # then commit site/diagrams/
 ```
 
 `MMDC_PUPPETEER_CONFIG` may name a Puppeteer configuration. Files in `site/static/` are copied as they are: the heading font Patua One (`patua-one.woff2`, the Latin subset from [Fontsource](https://fontsource.org/fonts/patua-one) 5.3.0) with its licence, the SIL Open Font License. An `og.png` there would become the preview image of every page.
