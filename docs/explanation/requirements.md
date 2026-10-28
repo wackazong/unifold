@@ -30,7 +30,7 @@ What the standard must achieve, for whom, and which qualities win when they conf
 | Application with feature folders, modular mobile app | Fits with one unit per feature or module. |
 | Framework application organised by layer (`models/`, `views/`) | Not on the layer folders. Units belong on the level of features: Django apps, Rails engines. |
 | Infrastructure modules (Terraform) | Partly. Modules map to units; environments have no place. |
-| Single package or library | A project of one unit. The map is one box; the value is the root's `README.md` and `docs/`, which hold everything a reader needs in fixed places. |
+| Single package or library | Good. A unit is a folder, not a package, so the package is one unit or one per module folder. With one unit the map is one box; the value is the root's `README.md` and `docs/`, which hold everything a reader needs in fixed places. |
 | Data pipelines, notebooks | No. The parts are files, and the pipeline tool already has the graph. |
 | System spread over several repositories | Each repository is a project of its own. The map across repositories is not produced. |
 | A design before any code | Good. Planned units, wired, give a diagram to review, and a need that no part can meet shows a missing part ([plantwatch](../../examples/plantwatch/README.md)). |

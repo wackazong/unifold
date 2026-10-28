@@ -89,7 +89,7 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 
 **Do I have to write documentation?** Every unit has a `README.md` that says what it is for and why. Everything else in `docs/` is written when there is something to say.
 
-**Does it fit a project with one package?** Yes: a project of one unit. The map is one box; unifold defines how to structure your docs ([requirements](https://unifold.md/requirements)).
+**Does it fit a project with one package?** Yes. A unit is a folder, not a package, so one package is one unit or several: its module folders, such as `src/billing/` and `src/platform/`, are units when their interfaces are worth naming. With one unit the map is one box, and the value is the root's `README.md` and `docs/` ([requirements](https://unifold.md/requirements)).
 
 **What ends up in my repository?** The `unifold.yaml` files, the generated diagrams and the generated `AGENTS.md` of every unit. The standard is not copied; the root manifest names its version. With `--agents`, also the skills, the tool and the stubs.
 
