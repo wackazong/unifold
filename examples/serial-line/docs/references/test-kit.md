@@ -7,6 +7,7 @@ How every test of this project builds fakes, wires units and waits. At most 25 l
 - `FakeClock`: `advance(ms)` moves `now()`; nothing else moves it. A `read` with a timeout on `FakeUart` advances the `FakeClock` it was given.
 - `FakeTransport`: `sent()` returns the payloads given to `send`; `script(payload)` queues an answer for `receive`; `fail_next_send()`, `fail_next_receive()` arm `line-error`.
 - The real `codec` and the real `framing` stand in for their contracts, as the contracts say.
+- `FakeHost` in `src/serial_line/testing.py` is the fake of the root capability `host`, shipped for the project's users to test their code against; this project's tests do not use it.
 - Unit tests live under `tests/<unit path>/`, one file per part, one test per Examples row named `test_<part>_<case>`.
 - Integration tests live in `tests/integration/`, one file per scenario group, one test per scenario named `test_<scenario>`.
 - `harness.py` in `tests/integration/` starts the wired system with `FakeUart` and `FakeClock` at the root needs and stops it, leaving nothing running: `with wired_system() as (host, uart, clock)`.

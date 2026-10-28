@@ -80,4 +80,4 @@ variant session-error { already-open, not-open, too-long, timeout, line-error }
 
 ## Fake
 
-Replays the examples. Any other call fails with `unexpected-call`. Faults it can inject: none; the integration harness drives the real session through a test client on the line.
+Replays the examples: answers the calls of the examples table with their results and fails any other call with `unexpected-call`. Faults it can inject: none. Shipped with the library for the tests of host programs; this project's own integration tests do not use it, the harness drives the real session through a test client on the line.
