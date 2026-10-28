@@ -141,7 +141,7 @@ A conforming checker reads a project, changes nothing, and reports findings with
 | A decision whose status is not one of [writing.md](writing.md), or a `derived` decision without `derived-from` and `## Source says` | error |
 | A generated file that is missing, ignored by version control, or differs from what the generator would write now | error |
 | A `logic` or `adapter` unit that breaks its rule; a need of the root without `platform` that a unit with another `kind` finally reaches | warn |
-| A contract whose body lacks what [writing.md](writing.md) asks for | warn |
+| A contract without `## Parts` or `## Fake`; a part without a known `Kind:` or a fenced signature; a command or query without `Pre:`, `Result:`, `Errors:` and an example; a type defined twice within one subtree | warn |
 | A wiring line of a unit that no hop of a scenario passing through the unit uses | warn |
 | A link in a hand-written document that points in a direction [documents.md](documents.md) forbids | warn |
 | A hand-written document with more lines than `max-lines` | warn |

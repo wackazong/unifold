@@ -67,6 +67,8 @@ A contract is the one document of a connection: both sides name it, the consumer
 - `## Fake` says what a stand-in for this contract does in the tests of its consumers: it replays the examples and refuses everything else, or it shows a strongly simplified behaviour that the section describes, with the faults it can inject. For a contract whose provider is a `logic` unit the section MAY say `the real implementation`.
 - A contract that outgrows the line limit becomes a folder: `index.md` holds the header and `## Parts` as a list of links, and every part is a file `<part>.md` with the same body as a `###` section. A part name resolves to a heading in the contract file or to a file in the contract folder.
 
+The checker verifies `## Parts`, `Kind:`, the signature block, the fields and examples of a command or query, the single definition of a type and `## Fake`; it does not check the header or the case of a part heading.
+
 ## Skills
 
 A skill is a how-to guide for a recurring task in the unit, in the [Agent Skills](https://agentskills.io/specification) format: `docs/skills/<name>/SKILL.md`, with a front matter that has `name`, equal to the folder name, and `description`. The description says for whom the procedure is, when it is written for an end user.
