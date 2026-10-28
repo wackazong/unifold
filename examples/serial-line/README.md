@@ -1,6 +1,6 @@
 # serial-line
 
-A program that opens a session to a device over a serial line, sends it data and closes the session, following the Serial Session Protocol. It is the small design example of unifold: three units, one of them a composite, every well-known kind once, six contracts with parts and fakes, scenarios across levels, and decisions of status derived and proposed. It is also the example of the build method [maike](https://github.com/wackazong/maike), which writes files like these from a source document.
+A program that opens a session to a device over a serial line, sends it data and closes the session, following the Serial Session Protocol. It is the small design example of unifold: three units, one of them a composite, every well-known kind once, six contracts with parts and fakes, scenarios across levels, and decisions of status derived and proposed. It is also the example of the build method [maike](https://github.com/wackazong/maike), which writes files like these from a source document. The original lives in [maike's examples/serial-line](https://github.com/wackazong/maike/tree/main/examples/serial-line); this copy differs from it only in this README, in the missing `maike/` folder with the sources, plan and review of the build and the `ignore` entry for it in `unifold.yaml`, and in the generated explorer page `unifold.html`.
 
 ## Why
 

@@ -20,9 +20,10 @@ A change that alters no rule, such as a typing mistake, a clearer sentence or a 
    python3 docs/skills/unifold/scripts/unifold.py check --fix examples/serial-line
    python3 docs/skills/unifold/scripts/unifold.py check --fix examples/plantwatch
    python3 site/build.py --check
+   python3 tests/serial_line_copy.py
    ```
 
-   The workflow `check` runs the same commands, with `--strict` in place of `--fix`, on every push and pull request.
+   The workflow `check` runs the same commands, with `--strict` in place of `--fix`, on every push and pull request. The last command compares `examples/serial-line` with its original in a [maike](https://github.com/wackazong/maike) checkout beside this repository (`../maike`) and prints the first file that differs apart from the README, `maike/`, its `ignore` entry and `unifold.html`; without that checkout it does nothing, so the workflow leaves it out.
 
 A maintainer accepts the decision by setting `status: accepted` and naming the decision-makers.
 
