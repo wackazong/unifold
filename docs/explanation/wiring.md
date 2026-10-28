@@ -17,6 +17,8 @@ Declare a need when another unit of the project provides the thing, when a stand
 
 Do not declare a need for what every unit of that sort has anyway: the language runtime, the standard library, the operating system, packages that the build tool fetches from a registry, logging.
 
+At the root, a capability is an interface that code outside the project is written against or that a person uses, such as a library API, an HTTP API, a command line or a UI, and a need is something outside that the project's code uses, such as a device, a service or the platform. A project that nobody programs against or uses directly, such as a controller that reads sensors and switches a relay, has needs and no capability. Its scenarios start where a unit reacts to a need, as the scenario `take-a-reading` of [plantwatch](../../examples/plantwatch/README.md) starts with `device/sampling -> device/hal.alarm`, and what it does is observed through the fakes of its needs.
+
 ## Names
 
 - Name a need after what is needed, in the words of the unit that has it: `clock`, `cart-store`, `matcher`. Not after who provides it today.
