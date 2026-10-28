@@ -38,7 +38,7 @@ Every unit has a `README.md`; its `docs/` follows the conventions used below, an
 | Tell a story of the system | The scenarios of the manifests on its path; the generated `docs/diagrams/scenario-<name>.md` |
 | Add a unit | The parent's `README.md` and manifest; for a repository without a map, the skill `unifold-convert` |
 | Understand why it is built this way | `README.md` `## Why`, then `docs/explanation/reasoning.md` and `docs/decisions/index.md` |
-| Find out what a term means | `docs/references/glossary.md` of the unit, then `docs/explanation/context.md` |
+| Find out what a term means | `docs/references/glossary.md` of the unit, then `docs/explanation/context.md`; a new term is a row there, from [glossary.template.md](assets/glossary.template.md) |
 | Review a change | The review checklist: <https://unifold.md/writing#review-checklist> |
 
 ## 3. Change
@@ -153,6 +153,7 @@ Report to the human:
 | `docs/decisions/NNNN-title.md` | [decision.template.md](assets/decision.template.md); a decision a source makes: [decision-derived.template.md](assets/decision-derived.template.md) |
 | `docs/references/<topic>.md` | [reference.template.md](assets/reference.template.md); a contract: [contract.template.md](assets/contract/contract.template.md), or as a folder [index.template.md](assets/contract/index.template.md) with [part.template.md](assets/contract/part.template.md) per part |
 | `docs/references/constants.md` | [constants.template.md](assets/constants.template.md) |
+| `docs/references/glossary.md` | [glossary.template.md](assets/glossary.template.md): one row per term |
 | `docs/skills/<name>/SKILL.md` | [SKILL.template.md](assets/SKILL.template.md) |
 | A section for `CONTRIBUTING.md` | [CONTRIBUTING.snippet.md](assets/CONTRIBUTING.snippet.md) |
 
