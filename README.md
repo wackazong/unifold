@@ -83,7 +83,7 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 
 **Do I need the tool?** Anyone can implement the standard, but its two promises, "checked" and "generated", need a checker. The reference tool is one Python file.
 
-**Do I need an AI agent?** No. The files are YAML and Markdown.
+**Do I need an AI agent?** No. The files are YAML and Markdown. Still, unifold is complex to maintain as a human and is a standard optimized for using it with AI agents.
 
 **Does it read my code?** No. It reads the `unifold.yaml` files and the Markdown documents, so your code may be in any language. Keeping the code and the map in step is part of every change and its review.
 
