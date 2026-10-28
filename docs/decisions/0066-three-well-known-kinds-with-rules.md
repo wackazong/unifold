@@ -26,7 +26,7 @@ Chosen option: "three well-known values with rules", because the three carry che
 | `adapter` | The one unit that talks to one external system, a need of the root | The final provider of none of its needs is an `adapter` |
 
 - A need of the root without `platform: true` is finally reached only by `adapter` units. `platform: true` marks a host service such as time or randomness, whose contract describes a controllable fake.
-- A unit with children below the root states a `kind`: it says what the box is to its parent's wiring, where the rules apply to every line. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`. The root has no kind.
+- A unit with children below the root states a `kind`: it says what the box is to its parent's wiring, where the rules apply to every line. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`. The root needs no kind but may state one.
 - Any other value gives an info finding and no rule. The connection kinds on capabilities and needs do not change.
 
 This supersedes 0058.
