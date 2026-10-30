@@ -1194,6 +1194,8 @@ def scenario_site(runner: Runner, tmp: str):
     html = out.read_text()
     check('"status": "planned"' in html and '"x"' in html and "cdn.jsdelivr.net" in html,
           "the page holds the model, its connections and status")
+    dark = re.findall(r":root(?:\[data-theme=dark\]|:not\(\[data-theme=light\]\))\{(.*?)\}", html, re.S)
+    check(len(dark) == 2 and dark[0] == dark[1], "the dark colours are the same for the button and for the system")
     fake = Path(tmp) / "mermaid.min.js"
     fake.write_text("window.mermaid = {initialize(){}, render: async () => ({svg: '<svg></svg>'})};\n")
     done = runner.run("site", str(folder), "-o", str(out.parent), "--mermaid", str(fake))
@@ -1202,6 +1204,94 @@ def scenario_site(runner: Runner, tmp: str):
           and "cdn.jsdelivr.net" not in html, "--mermaid FILE embeds the renderer; -o takes a folder")
     done = runner.run("site", str(folder), "--mermaid", str(Path(tmp) / "missing.js"))
     check(done.returncode == 2, "--mermaid with a missing file")
+
+
+def scenario_site_scenarios(runner: Runner, tmp: str):
+    folder = new_project(tmp, project(SCENARIO_ROOT.replace("expect: e", "expect: one; two"), SCENARIO_UNITS,
+                                      contracts=SCENARIO_CONTRACTS))
+    runner.run("generate", str(folder))
+    page = (folder / "docs" / "diagrams" / "scenario-s1.md").read_text()
+    check("Expect: one#59; two" in page and "wrap:" in page, "a `;` in a sequence diagram is written #59;")
+    out = Path(tmp) / "map.html"
+    done = runner.run("site", str(folder), "-o", str(out))
+    check(done.returncode == 0, f"site: {done.stderr}")
+    model = json.loads(re.search(r"const model = (.*?);\nconst MERMAID", out.read_text(), re.S).group(1))
+    scenario = (model.get("scenarios") or [{}])[0]
+    lifelines = scenario.get("diagram", {}).get("lifelines", {})
+    check(scenario.get("unit") == "." and scenario.get("name") == "s1" and len(scenario.get("hops", [])) == 2
+          and scenario.get("page") == "docs/diagrams/scenario-s1.md"
+          and "\nsequenceDiagram\n" in "\n" + scenario["diagram"]["source"], "the page holds every scenario")
+    check(re.search(r"participant \S+ as a<br/>", scenario["diagram"]["source"]) is not None,
+          "a lifeline shows its name, kind and what it does")
+    check({"name": "api", "unit": ".", "side": "capability", "entry": "api"} in lifelines.values()
+          and {"name": "b", "unit": "b"} in lifelines.values(), "a lifeline names its unit, or the side of the holder")
+
+
+def scenario_site_documents(runner: Runner, tmp: str):
+    notes = "\n".join([
+        "# Notes", "", "Text with *em*, **strong**, `a <b> code` and <script>alert(1)</script> <img src=x onerror=alert(1)>.",
+        "A [bad](javascript:alert(1)) link, [x](../../b/README.md#why), [up](#table), [file](../../logo.png), "
+        "[web](https://example.com/a?b=1&c=2) and [map](../diagrams/component.md).", "",
+        "## Table", "", "| A | B \\| C |", "|---|--:|", "| `x` | [x](x.md) |", "",
+        "- one", "  - nested", "- [x] done", "", "1. first", "2. second", "",
+        "> quoted", "", "---", "", FENCE + "yaml", "a: <b>&</b>", FENCE, "", FENCE + "mermaid", "flowchart LR", "  a --> b", FENCE, "",
+        "Kind: query", "Pre: none.", "Result: one.", ""])
+    folder = new_project(tmp, project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, files={
+        "README.md": "# demo\n\nWhat it is for, see [notes](docs/references/notes.md).\n\nMore.\n\n## Why\n\nBecause *so*.\n\n- one\n\n## Other\n\nRest.\n",
+        "b/README.md": "# Not b\n\n- a list first\n\nThe [first](#other) paragraph.\n",
+        "docs/references/notes.md": notes,
+        "docs/references/api/index.md": "# API\n\n## Parts\n\n- [get](get.md)\n",
+        "docs/references/api/get.md": "# get\n\nKind: query\n",
+        "docs/skills/do-it/SKILL.md": SKILL + "\nSteps.\n",
+        **with_decision("proposed", "decision-makers: [Ann]\n")}))
+    runner.run("generate", str(folder))
+    out = Path(tmp) / "map.html"
+    done = runner.run("site", str(folder), "-o", str(out))
+    check(done.returncode == 0, f"site: {done.stderr}")
+    model = json.loads(re.search(r"const model = (.*?);\nconst MERMAID", out.read_text(), re.S).group(1))
+    docs = model.get("docs") or {}
+    root, b, page = docs.get("README.md", {}), docs.get("b/README.md", {}), docs.get("docs/references/notes.md", {})
+    check(root.get("kind") == "readme" and root.get("title") == "demo" and "<h1" not in root.get("html", "")
+          and root.get("intro") == 'What it is for, see <a href="#.@doc:docs/references/notes.md">notes</a>.'
+          and root.get("why") == '<h2 id="md-why">Why</h2>\n<p>Because <em>so</em>.</p>\n<ul><li>one</li></ul>'
+          and "Rest." in root.get("html", ""), f"a README: its first paragraph, its Why, and the whole text for its own page: {root}")
+    check(b.get("title") == "Not b" and b.get("intro") == 'The <a href="#b@doc:README.md#other">first</a> paragraph.' and "why" not in b,
+          f"the first paragraph of a README need not come first; a README without Why has none: {b}")
+    source = next(u for u in model["units"] if u["path"] == "b")["diagrams"]["context"]["source"]
+    check("<span class='note'>A part</span>" in source, f"a box of the map shows the responsibility of its unit: {source}")
+    check("note" not in (folder / "docs" / "diagrams" / "component.md").read_text(), "the generated diagrams do not")
+    html = page.get("html", "")
+    check(page.get("unit") == "." and page.get("kind") == "references" and page.get("title") == "Notes", f"a document has its unit, kind and title: {page}")
+    check("<script" not in html and "<img" not in html and "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+          and "<code>a &lt;b&gt; code</code>" in html and "javascript:" not in html and "<em>em</em>" in html
+          and "<strong>strong</strong>" in html, "all HTML of a document is escaped; a javascript: link is text")
+    check('<a href="#b#why">x</a>' in html and '<a href="#.@doc:docs/references/notes.md#table">up</a>' in html
+          and 'logo.png">file</a>' in html and 'href="https://example.com/a?b=1&amp;c=2"' in html
+          and '<a href="#.@component">map</a>' in html,
+          "links open the unit, the document and its heading, the diagram tab, the file, or the web")
+    check('<h2 id="md-table">Table</h2>' in html and '<th class="r">B | C</th>' in html
+          and '<td><code>x</code></td>' in html, f"a table, with alignment and an escaped pipe: {html[:2000]}")
+    check("<ul><li>one\n<ul><li>nested</li></ul></li><li class=task><input type=\"checkbox\" disabled checked> done</li></ul>" in html
+          and "<ol><li>first</li><li>second</li></ol>" in html and "<blockquote><p>quoted</p></blockquote>" in html and "<hr>" in html,
+          "lists, nested and with tasks, a quote and a rule")
+    check('<pre><code class="language-yaml">a: &lt;b&gt;&amp;&lt;/b&gt;</code></pre>' in html
+          and '<pre class="mermaid">flowchart LR\n  a --&gt; b</pre>' in html, "fenced code is escaped; a Mermaid block is kept for drawing")
+    check('<p class=field><strong>Kind:</strong> query</p>' in html and '<p class=field><strong>Result:</strong> one.</p>' in html,
+          "the fields of a part are one to a line")
+    index, part = docs.get("docs/references/api/index.md", {}), docs.get("docs/references/api/get.md", {})
+    check(index.get("parts") == ["docs/references/api/get.md"] and part.get("contract") == "docs/references/api/index.md"
+          and 'href="#.@doc:docs/references/api/get.md"' in index.get("html", ""), "a folder contract: its index and its parts")
+    decision, skill = docs.get("docs/decisions/0001-x.md", {}), docs.get("docs/skills/do-it/SKILL.md", {})
+    check(decision.get("kind") == "decisions" and decision.get("status") == "proposed"
+          and ["status", '<span class="badge proposed">proposed</span>'] in decision.get("facts", [])
+          and ["decision makers", "Ann"] in decision.get("facts", []) and "---" not in decision.get("html", ""),
+          f"a decision has its status and its front matter as fields: {decision}")
+    check(skill.get("summary") == "Does it." and ["name", "do-it"] in skill.get("facts", []) and skill.get("title") == "Do it",
+          f"a skill: its description and its front matter: {skill}")
+    check("docs/diagrams/component.md" not in docs and "docs/decisions/index.md" in docs and "AGENTS.md" in docs,
+          "generated diagrams are drawn by the page, not shown as documents")
+    shown, _ = runner.json("show", "--json", str(folder))
+    check("docs" not in shown and "html" not in json.dumps(shown), "`show --json` has no rendered documents")
 
 
 def scenario_robustness(runner: Runner, tmp: str):
@@ -1339,6 +1429,8 @@ SCENARIOS = [
     ("scenario-init-agents-and-skill-stubs", scenario_agents),
     ("scenario-skill-stub-names", scenario_stub_names),
     ("scenario-site", scenario_site),
+    ("scenario-site-scenarios", scenario_site_scenarios),
+    ("scenario-site-documents", scenario_site_documents),
     ("scenario-robustness", scenario_robustness),
 ]
 

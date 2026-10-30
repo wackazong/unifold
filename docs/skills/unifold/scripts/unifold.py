@@ -2550,6 +2550,16 @@ def label(text: str) -> str:
     return str(text).replace('"', "#quot;").replace("\n", " ")
 
 
+def responsibility_note(unit: Unit) -> str:
+    """The responsibility of a unit as small text under its name, in a box of the explorer: about
+    as wide as the name (28 to 34 characters), with every character that HTML or Mermaid reads
+    as code written as an entity. A frame gets its responsibility beside its name from the page."""
+    text = " ".join(unit.responsibility.split())
+    lines = textwrap.wrap(text, max(28, min(34, round(len(unit_label(unit)) * 2.0))))   # within the 200px Mermaid wraps at
+    text = "<br/>".join("".join(f"#{ord(c)};" if c in '<>&"#;' else c for c in line) for line in lines)
+    return f"<br/><span class='note'>{text}</span>" if text else ""
+
+
 def unit_label(unit: Unit) -> str:
     """The name of a unit in a diagram, with its kind where it has one."""
     return f"{unit.name} ({unit.kind})" if unit.kind else unit.name
@@ -2597,11 +2607,12 @@ def click_line(project: Project, node: str, target, out_dir: str):
     return f'  click {node} href "{base}/{url_path(project.rel(target))}" _blank'
 
 
-def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit = None):
+def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit = None, notes=False):
     """Build one flowchart of the inside of `frame`.
 
     Without `focus`: all children, opened `depth` levels deep. With `focus` (a child of
-    `frame`): that child and the siblings it is connected to.
+    `frame`): that child and the siblings it is connected to. With `notes` (the explorer), every
+    unit and frame shows its responsibility in small text under its name.
     Returns (mermaid lines, units shown, {node id: unit}, shared connections as text).
     """
     def expanded(unit: Unit) -> bool:
@@ -2712,6 +2723,7 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
             frame_sides.setdefault(side_id(frame, "n", need), f'{{{{"{label(need)}"}}}}')
     shown: list = [frame]
     ids: dict = {node_id(frame): frame}
+    note = responsibility_note if notes else (lambda unit: "")
     lines = ["flowchart LR", f'  subgraph {node_id(frame)}["{label(frame.name)}"]']
     clicks, marks = [], {"planned": [], "deprecated": []}
 
@@ -2726,7 +2738,7 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
                 emit(child, indent + "  ")
             lines.append(f"{indent}end")
         else:
-            lines.append(f'{indent}{node_id(unit)}["{label(unit_label(unit))}"]')
+            lines.append(f'{indent}{node_id(unit)}["{label(unit_label(unit))}{note(unit)}"]')
             click = click_line(project, node_id(unit), best_diagram(project, unit), out_dir)
             if click:
                 clicks.append(click)
@@ -2755,10 +2767,10 @@ def diagram(project: Project, frame: Unit, depth: int, out_dir: str, focus: Unit
     return lines, shown, ids, shared
 
 
-def lone_context(project: Project, unit: Unit, out_dir: str):
+def lone_context(project: Project, unit: Unit, out_dir: str, notes=False):
     """A unit without a parent, alone with its capabilities and needs."""
     uid = node_id(unit)
-    lines = ["flowchart LR", f'  {uid}["{label(unit.name)}"]']
+    lines = ["flowchart LR", f'  {uid}["{label(unit.name)}{responsibility_note(unit) if notes else ""}"]']
     for capability in unit.capabilities:
         pid = side_id(unit, "p", capability)
         lines += [f'  {pid}(["{label(capability)}"])', f"  {pid} --> {uid}"]
@@ -3751,19 +3763,424 @@ def init_project(target: str, agents=False, interactive=False) -> dict:
 
 # ------------------------------------------------------------------- site
 
+MD_ITEM = re.compile(r"^( {0,3})([-*+]|(\d{1,9})[.)])(?:( +)(.*))?$")
+MD_HR = re.compile(r"^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$")
+MD_QUOTE = re.compile(r"^ {0,3}> ?(.*)$")
+MD_SETEXT = re.compile(r"^ {0,3}(=+|-+)\s*$")
+MD_REF = re.compile(r"^ {0,3}\[((?:[^\]\\]|\\.)+)\]:\s*(<[^>\n]*>|\S+)(?:\s+(\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*$")
+MD_TASK = re.compile(r"^\[([ xX])\]\s+")
+MD_URL = re.compile(r"(?<![\w/\"'=@])https?://[^\s<>\x00]*[^\s<>\x00.,:;!?\"'*_)\]]")
+MD_EMPHASIS = ((r"\*\*\*(?=\S)(.+?)(?<=\S)\*\*\*", "<strong><em>", "</em></strong>"),
+               (r"\*\*(?=\S)(.+?)(?<=\S)\*\*", "<strong>", "</strong>"),
+               (r"(?<![A-Za-z0-9_])__(?=\S)(.+?)(?<=\S)__(?![A-Za-z0-9_])", "<strong>", "</strong>"),
+               (r"(?<!\*)\*(?=[^\s*])(.+?)(?<=[^\s*])\*(?!\*)", "<em>", "</em>"),
+               (r"(?<![A-Za-z0-9_])_(?=[^\s_])(.+?)(?<=[^\s_])_(?![A-Za-z0-9_])", "<em>", "</em>"),
+               (r"~~(?=\S)(.+?)(?<=\S)~~", "<del>", "</del>"))
+LINK_SCHEMES = ("http", "https", "mailto")       # a link with another scheme in a document is shown as text
+
+
+def escape_html(text) -> str:
+    """Text for HTML, in an element or an attribute: nothing in it can open a tag or end a value."""
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+class Markdown:
+    """Markdown into HTML for the explorer: headings with anchors, paragraphs, emphasis, code, links
+    and images (inline and by reference), nested lists with tasks, GFM tables, fenced code, Mermaid
+    blocks, quotes and rules. Every character of the source is escaped, raw HTML too: only `<br>`
+    becomes a line break and comments are dropped, so the tags of the result are the ones made here.
+    `link(target)` gives the href of a link target, or None for a link not to follow. A heading has
+    the id `md-<anchor>`, its anchor as `check` reads it; a level-1 heading that opens the document
+    becomes `title`."""
+
+    def __init__(self, link):
+        self.link = link
+        self.refs, self.seen, self.keep, self.title, self.opening = {}, {}, [], None, True
+
+    def render(self, text: str) -> str:
+        lines, fence = [], None
+        for line in text.replace("\x00", "").replace("\t", "    ").split("\n"):
+            match = FENCE.match(line)                     # reference definitions are taken out, outside code
+            if fence:
+                if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) and not match.group(2).strip():
+                    fence = None
+            elif match and not (match.group(1)[0] == "`" and "`" in match.group(2)):
+                fence = match.group(1)
+            elif MD_REF.match(line):
+                label, target = MD_REF.match(line).group(1, 2)
+                self.refs.setdefault(" ".join(label.lower().split()), target.strip("<>"))
+                continue
+            lines.append(line)
+        return self.blocks(lines)
+
+    def text(self, text: str) -> str:
+        """One line of Markdown, such as a value of the front matter."""
+        return self.inline(str(text).replace("\x00", ""))
+
+    def starts(self, lines: list, i: int) -> bool:
+        """Whether line i opens a block that ends a paragraph."""
+        line, item = lines[i], MD_ITEM.match(lines[i])
+        return bool(ATX.match(line) or MD_HR.match(line) or MD_QUOTE.match(line) or FENCE.match(line)
+                    or (item and item.group(5) and (not item.group(3) or item.group(3) == "1"))
+                    or ("|" in line and i + 1 < len(lines) and "|" in lines[i + 1] and TABLE_RULE.match(lines[i + 1].strip())))
+
+    def blocks(self, lines: list, tight=False) -> str:
+        out, i, n = [], 0, len(lines)
+        while i < n:
+            line = lines[i]
+            if not line.strip():
+                i += 1
+                continue
+            if line.lstrip().startswith("<!--"):           # a comment: the mark of a generated file, a stamp
+                while i < n and "-->" not in lines[i]:
+                    i += 1
+                i += 1
+                continue
+            first, self.opening = self.opening, False
+            fence = FENCE.match(line)
+            if fence and not (fence.group(1)[0] == "`" and "`" in fence.group(2)):
+                mark, info = fence.group(1), (fence.group(2).split() or [""])[0].lower()
+                indent, body, i = len(line) - len(line.lstrip(" ")), [], i + 1
+                while i < n:
+                    end = FENCE.match(lines[i])
+                    if end and end.group(1)[0] == mark[0] and len(end.group(1)) >= len(mark) and not end.group(2).strip():
+                        i += 1
+                        break
+                    body.append(lines[i][indent:] if not lines[i][:indent].strip() else lines[i].lstrip())
+                    i += 1
+                source = escape_html("\n".join(body))
+                language = f' class="language-{info}"' if re.match(r"^[a-z0-9+#.-]+$", info) else ""
+                out.append(f'<pre class="mermaid">{source}</pre>' if info == "mermaid" else f"<pre><code{language}>{source}</code></pre>")
+                continue
+            heading = ATX.match(line)
+            if heading:
+                out.append(self.heading(len(heading.group(1)), heading.group(2) or "", first))
+                i += 1
+                continue
+            if MD_HR.match(line):
+                out.append("<hr>")
+                i += 1
+                continue
+            if "|" in line and i + 1 < n and "|" in lines[i + 1] and TABLE_RULE.match(lines[i + 1].strip()):
+                i = self.table(lines, i, out)
+                continue
+            if MD_QUOTE.match(line):
+                inner = []
+                while i < n and lines[i].strip() and (MD_QUOTE.match(lines[i]) or not self.starts(lines, i)):
+                    quoted = MD_QUOTE.match(lines[i])
+                    inner.append(quoted.group(1) if quoted else lines[i])
+                    i += 1
+                out.append(f"<blockquote>{self.blocks(inner)}</blockquote>")
+                continue
+            if MD_ITEM.match(line):
+                i = self.items(lines, i, out)
+                continue
+            para = []                                     # a paragraph, or the text of a setext heading
+            while i < n and lines[i].strip() and not (para and (MD_SETEXT.match(lines[i]) or self.starts(lines, i))):
+                para.append(lines[i].lstrip() if lines[i].endswith("  ") else lines[i].strip())
+                i += 1
+            if para and i < n and MD_SETEXT.match(lines[i]):
+                out.append(self.heading(1 if "=" in lines[i] else 2, " ".join(para), first))
+                i += 1
+                continue
+            groups = []                                   # the fields of a part of a contract (Kind, Pre, Result, ...) each on a line
+            for line in para:
+                if FIELD_LINE.match(line) or not groups:
+                    groups.append([line])
+                else:
+                    groups[-1].append(line)
+            for group in groups:
+                field = FIELD_LINE.match(group[0])
+                text = self.inline("\n".join([field.group(2)] + group[1:]) if field else "\n".join(group))
+                text = f"<strong>{field.group(1)}:</strong> {text}" if field else text
+                out.append(text if tight and len(groups) == 1 else f'<p{" class=field" if field else ""}>{text}</p>')
+        return "\n".join(o for o in out if o)
+
+    def heading(self, level: int, text: str, first: bool) -> str:
+        slug = heading_slug(text.strip())                 # the anchors of Doc.headings, which `check` checks links against
+        count = self.seen.get(slug, 0)
+        self.seen[slug] = count + 1
+        slug = slug if not count else f"{slug}-{count}"
+        html = self.inline(text.strip())
+        if level == 1 and first and self.title is None:
+            self.title = html
+            return ""
+        return f'<h{level} id="md-{escape_html(slug)}">{html}</h{level}>' if slug else f"<h{level}>{html}</h{level}>"
+
+    def table(self, lines: list, i: int, out: list) -> int:
+        def cells(row):
+            row = row.strip()
+            row = row[1:] if row.startswith("|") else row
+            row = row[:-1] if row.endswith("|") and not row.endswith("\\|") else row
+            return [c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", row)]
+        head, rule = cells(lines[i]), cells(lines[i + 1])
+        align = [' class="c"' if c.startswith(":") and c.endswith(":") else ' class="r"' if c.endswith(":") else "" for c in rule]
+        align += [""] * (len(head) - len(align))
+        rows, i = [], i + 2
+        while i < len(lines) and lines[i].strip() and "|" in lines[i] and not (ATX.match(lines[i]) or FENCE.match(lines[i])):
+            rows.append(cells(lines[i]))
+            i += 1
+        top = "<tr>" + "".join(f"<th{a}>{self.inline(c)}</th>" for c, a in zip(head, align)) + "</tr>"
+        body = "".join("<tr>" + "".join(f"<td{a}>{self.inline(c)}</td>" for c, a in zip(row + [""] * len(head), align)) + "</tr>"
+                       for row in rows)
+        out.append(f'<div class="table"><table><thead>{top}</thead>{"<tbody>" + body + "</tbody>" if body else ""}</table></div>')
+        return i
+
+    def items(self, lines: list, i: int, out: list) -> int:
+        """A list: items of one sort, each with the lines indented under it and lazy lines of its text."""
+        first = MD_ITEM.match(lines[i])
+        ordered, sort = bool(first.group(3)), first.group(2)[-1]
+        start, items, loose, n = int(first.group(3) or 1), [], False, len(lines)
+        while i < n:
+            match = MD_ITEM.match(lines[i])
+            if not match or bool(match.group(3)) != ordered or match.group(2)[-1] != sort:
+                break
+            space = match.group(4) or " "
+            width = len(match.group(1)) + len(match.group(2)) + (len(space) if len(space) <= 4 else 1)
+            content = [(match.group(5) or "") if len(space) <= 4 else space[1:] + (match.group(5) or "")]
+            i += 1
+            while i < n:
+                line = lines[i]
+                if not line.strip():
+                    content.append("")
+                elif len(line) - len(line.lstrip(" ")) >= width:
+                    content.append(line[width:])
+                elif content[-1] and not self.starts(lines, i) and not MD_ITEM.match(line):
+                    content.append(line.strip())        # a lazy line of the paragraph
+                else:
+                    break
+                i += 1
+            following = MD_ITEM.match(lines[i]) if i < n else None
+            while len(content) > 1 and not content[-1]:
+                content.pop()                           # a blank line between two items of this list makes it loose
+                loose = loose or bool(following and bool(following.group(3)) == ordered and following.group(2)[-1] == sort)
+            loose = loose or ("" in content[1:] and not any(FENCE.match(c) for c in content))
+            items.append(content)
+        html = []
+        for content in items:
+            task = MD_TASK.match(content[0])
+            if task:
+                content = [content[0][task.end():]] + content[1:]
+            box = f'<input type="checkbox" disabled{" checked" if task.group(1) != " " else ""}> ' if task else ""
+            html.append(f'<li{" class=task" if task else ""}>{box}{self.blocks(content, tight=not loose)}</li>')
+        tag = "ol" if ordered else "ul"
+        out.append(f"<{tag}{f' start={start}' if ordered and start != 1 else ''}>" + "".join(html) + f"</{tag}>")
+        return i
+
+    def hold(self, html: str) -> str:
+        """A finished piece of HTML, kept out of the text until the end."""
+        self.keep.append(html)
+        return f"\x00{len(self.keep) - 1}\x00"
+
+    def inline(self, text: str, links=True) -> str:
+        def code(match):
+            body = match.group(2).replace("\n", " ")
+            body = body[1:-1] if len(body) > 2 and body[0] == body[-1] == " " and body.strip() else body
+            return self.hold("<code>" + escape_html(body) + "</code>")
+        text = re.sub(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)", code, text, flags=re.S)
+        text = re.sub(r"(?: {2,}|\\)\n", lambda m: self.hold("<br>\n"), text)
+        text = re.sub(r"\\([!-/:-@\[-`{-~])", lambda m: self.hold(escape_html(m.group(1))), text)
+        text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+        text = re.sub(r"<br\s*/?>", lambda m: self.hold("<br>"), text, flags=re.I)
+        text = re.sub(r"&(?:#\d{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});", lambda m: self.hold(m.group()), text)   # an entity stays one
+        if links:
+            text = re.sub(r"<((?:https?|mailto):[^\s<>]+)>", lambda m: self.anchor_tag(m.group(1), escape_html(m.group(1))), text)
+            text = self.links(text)
+            text = MD_URL.sub(lambda m: self.anchor_tag(m.group(), escape_html(m.group())), text)
+        else:
+            text = self.links(text, images=True)        # the text of a link: images, no more links
+        text = escape_html(text)
+        for pattern, opening, closing in MD_EMPHASIS:
+            text = re.sub(pattern, lambda m: opening + m.group(1) + closing, text, flags=re.S)
+        while "\x00" in text:
+            text = re.sub(r"\x00(\d+)\x00", lambda m: self.keep[int(m.group(1))], text)
+        return text
+
+    def anchor_tag(self, target: str, html: str, title="") -> str:
+        href = self.link(target)
+        if href is None:
+            return self.hold(html)
+        title = f' title="{escape_html(title)}"' if title else ""
+        return self.hold(f'<a href="{escape_html(href)}"{title}>{html}</a>')
+
+    def links(self, text: str, images=False) -> str:
+        """Links and images, inline or by reference; the text of a link is read again. With
+        `images`, only images."""
+        out, at, look = [], 0, 0
+        while True:
+            start = text.find("[", look)
+            if start < 0:
+                return "".join(out) + text[at:]
+            depth, end = 0, start
+            while end < len(text):
+                depth += {"[": 1, "]": -1}.get(text[end], 0)
+                if depth == 0:
+                    break
+                end += 1
+            image = start > at and text[start - 1] == "!"
+            label, rest, target, title, stop = text[start + 1:end], text[end + 1:], None, "", end + 1
+            inline = re.match(r"\(\s*(<[^<>\n]*>|(?:[^\s()\\]|\\.|\((?:[^\s()\\]|\\.)*\))*)"
+                              r"(?:\s+(\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)", rest) if end < len(text) else None
+            if inline:
+                target, title, stop = inline.group(1).strip("<>"), (inline.group(2) or "")[1:-1], end + 1 + inline.end()
+            elif end < len(text):
+                full = re.match(r"\[((?:[^\]\\]|\\.)*)\]", rest)
+                key = " ".join((full.group(1) if full and full.group(1) else label).lower().split())
+                if key in self.refs:
+                    target, stop = self.refs[key], end + 1 + (full.end() if full else 0)
+            if target is None or (images and not image):
+                look = start + 1
+                continue
+            target = re.sub(r"\\(.)", r"\1", target)
+            out.append(text[at:start - 1 if image else start])
+            if image:
+                href, alt = self.link(target), escape_html(re.sub(r"[\[\]*_`]", "", label))
+                out.append(self.hold(f'<img src="{escape_html(href)}" alt="{alt}" loading="lazy">' if href and not href.startswith("#") else alt))
+            else:
+                out.append(self.anchor_tag(target, self.inline(label, links=False), title))
+            at = look = stop
+
+
+def site_documents(project: Project, charts: dict, scenes: set, base: str, up: str) -> dict:
+    """The Markdown files of every unit as pages of the explorer: {path: page}. A page has its
+    unit, its kind (a folder of docs/, `readme` or `other`), its title and its HTML; a page with
+    front matter its `summary` (the description) and `facts`, a decision its `status`, a part of a
+    folder contract its `contract`, a README its `intro` (its first paragraph, inline) and `why`
+    (its section `## Why`). A link between documents opens the page of the target in the
+    explorer: a README its unit (with an anchor other than `why`: its own page), a diagram file its tab, a scenario file its page; a link to any
+    other file goes to the file. `charts` is {unit: its diagram tabs}, `scenes` {(holder, name)}."""
+    files, units = {}, {u.path: u for u in project.units}
+    for unit in project.units:
+        tool = [os.path.join(unit.path, "docs", "skills", s) + os.sep for s in SKILLS] if unit is project.root_unit else []
+        top = [os.path.join(unit.path, n) for n in project.listdir(unit.path) if n.endswith(".md") and n != "README.md"]
+        for path in managed_files(project, unit) + [p for p in top if os.path.isfile(p)]:
+            if not any(path.startswith(t) for t in tool):
+                files[path] = unit
+
+    def href(route: str, anchor="") -> str:
+        return "#" + quote(route, safe="/@:") + ("#" + quote(anchor, safe="") if anchor else "")
+
+    def route(path: str):
+        """Where a path opens in the explorer, or None for a file that has no page there."""
+        unit = files.get(path)
+        if unit is not None:
+            rest = os.path.relpath(path, unit.path).replace(os.sep, "/")
+            return unit.rel if rest == "README.md" else unit.rel + "@doc:" + rest
+        if path in units:
+            return units[path].rel
+        folder, name = os.path.split(path)
+        owner = units.get(os.path.dirname(os.path.dirname(folder)))
+        if owner is None or os.path.basename(folder) != "diagrams" or not name.endswith(".md"):
+            return None
+        name = name[:-3]
+        if name.startswith("scenario-") and (owner.rel, name[9:]) in scenes:
+            return owner.rel + "@scenario:" + name[9:]
+        return owner.rel + "@" + name if name in charts.get(owner.rel, ()) else None
+
+    def show(value) -> str:
+        if isinstance(value, list):
+            return ", ".join(show(v) for v in value)
+        if isinstance(value, dict):
+            return "; ".join(f"{k}: {show(v)}" for k, v in value.items())
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        return ("true" if value else "false") if isinstance(value, bool) else "" if value is None else str(value).strip()
+
+    pages = {}
+    for path, unit in files.items():
+        doc, here = project.doc(path), route(path)
+        own = unit.rel + "@doc:README.md"                 # the page of a README, besides its unit
+        here = own if here == unit.rel else here
+
+        def link(target: str, path=path, here=here):
+            if SCHEME.match(target):
+                return target if target.split(":", 1)[0].lower() in LINK_SCHEMES else None
+            part, anchor = split_link(target)
+            if not part:
+                return href(here, anchor)
+            full = os.path.normpath(os.path.join(project.root, part.lstrip("/")) if part.startswith("/")
+                                    else os.path.join(os.path.dirname(path), part))
+            found = route(full)
+            if found and anchor not in ("", "why") and os.path.basename(full) == "README.md" and found == route(os.path.dirname(full)):
+                found += "@doc:README.md"
+            if found:
+                return href(found, anchor)
+            rel = "/".join(quote(s, safe="") for s in os.path.relpath(full, project.root).replace(os.sep, "/").split("/"))
+            return (base + "/" + rel if base else up + rel) + ("#" + quote(anchor, safe="") if anchor else "")
+
+        md = Markdown(link)
+        html = md.render("\n".join(doc.lines[doc.body_start:]))
+        rest = os.path.relpath(path, unit.path).split(os.sep)
+        kind = rest[1] if len(rest) > 2 and rest[0] == "docs" else "readme" if rest == ["README.md"] else "other"
+        page = {"unit": unit.rel, "kind": kind, "title": md.title or escape_html(os.path.basename(path)[:-3]), "html": html}
+        if kind == "readme":                              # on the page of the unit: the first paragraph on top, `## Why` above the tables
+            body, i, para = doc.lines[doc.body_start:], 0, []
+            while i < len(body) and not para and not re.match(r"^ {0,3}##\s", body[i]):
+                if FENCE.match(body[i]):                  # code is not the first paragraph
+                    i += 1
+                    while i < len(body) and not FENCE.match(body[i]):
+                        i += 1
+                elif body[i].strip() and not body[i].lstrip().startswith("<!--") and not md.starts(body, i) \
+                        and not MD_ITEM.match(body[i]) and "|" not in body[i]:
+                    while i < len(body) and body[i].strip() and not md.starts(body, i):
+                        para.append(body[i].strip())
+                        i += 1
+                i += 1
+            if para:
+                page["intro"] = Markdown(link).text("\n".join(para))
+            why = doc.section("why")
+            if why:
+                page["why"] = Markdown(link).render("\n".join(why))
+        meta = doc.meta if isinstance(doc.meta, dict) else {}
+        if meta.get("description"):
+            page["summary"] = " ".join(show(meta["description"]).split())
+        if kind == "decisions" and isinstance(meta.get("status"), str):
+            page["status"] = " ".join(meta["status"].split())
+        facts = [[str(k).replace("-", " "), md.text(show(v)) if k != "status" else
+                  f'<span class="badge {escape_html(show(v).split()[0] if show(v).split() else "")}">{escape_html(show(v))}</span>']
+                 for k, v in meta.items() if k != "description" and show(v).strip()]
+        if facts:
+            page["facts"] = facts
+        pages[project.rel(path)] = page
+    for path, unit in files.items():                     # a folder contract: its index and its parts
+        if os.path.basename(path) == "index.md" and os.sep + "references" + os.sep in path[len(unit.path):]:
+            parts = sorted(project.rel(p) for p in files if os.path.dirname(p) == os.path.dirname(path) and p != path)
+            for part in parts:
+                pages[part]["contract"] = project.rel(path)
+            if parts:
+                pages[project.rel(path)]["parts"] = parts
+    return pages
+
+
 SITE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__ · unifold</title>
+<script>/* light or dark, as on unifold.md: the button keeps a choice in localStorage and sets data-theme before the style sheet applies; without a choice the system decides */
+(() => {const root = document.documentElement, key = "unifold-theme", system = matchMedia("(prefers-color-scheme: dark)");
+try { const t = localStorage.getItem(key); if (t === "light" || t === "dark") root.dataset.theme = t; } catch {}
+const dark = () => (root.dataset.theme || (system.matches ? "dark" : "light")) === "dark";
+const show = () => document.querySelectorAll("button.theme").forEach(b => { b.hidden = false; b.setAttribute("aria-pressed", dark()); });
+const changed = () => { show(); dispatchEvent(new Event("themechange")); };
+addEventListener("DOMContentLoaded", show); system.addEventListener("change", changed);
+addEventListener("click", ev => { if (!ev.target.closest("button.theme")) return; const t = dark() ? "light" : "dark";
+  if (t === (system.matches ? "dark" : "light")) delete root.dataset.theme; else root.dataset.theme = t;   // a choice that matches the system is forgotten
+  try { root.dataset.theme ? localStorage.setItem(key, t) : localStorage.removeItem(key); } catch {}
+  changed(); });})();
+</script>
 <style>
 /* the colours, type and flat shapes of unifold.md; Patua One is there when the page is served from the site */
 @font-face{font-family:"Patua One";src:local("Patua One"),url("/patua-one.woff2") format("woff2");font-display:swap}
-:root{color-scheme:light dark;--bg:#fff;--fg:#141c20;--fg-2:#33424a;--mute:#5d6c73;--line:#e2e6e7;--hi:#0a7462;--panel:#f5f6f6;--code:#f3f5f5;--warn:#9a5b00;--warnbg:#ffe1a3;
+:root{color-scheme:light dark;--bg:#fff;--fg:#141c20;--fg-2:#33424a;--mute:#5d6c73;--line:#e2e6e7;--hi:#0a7462;--panel:#f5f6f6;--code:#eaeef0;--code-line:#d5dcdf;--warn:#9a5b00;--warnbg:#ffe1a3;
 --ink:#141c20;--paper:#fff;--unit:#e6f5f0;--unit-focus:#b5e6d9;--box-0:#f5f6f6;--box-1:#eceff0;--box-2:#e3e7e8;--frame:#c9d1d3;--accent:#0a7462;--accent-soft:#dcf2ec;--teal-hl:#bfeadf;--amber:#9a5b00;--amber-hl:#ffe1a3;
 --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;
 --slab:"Patua One",Rockwell,"Rockwell Nova","Roboto Slab",Georgia,serif;
 --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono","Cascadia Code",Menlo,Consolas,"Liberation Mono",monospace}
-@media(prefers-color-scheme:dark){:root{--bg:#0e1214;--fg:#e8eef0;--fg-2:#c3cfd3;--mute:#8e9ea5;--line:#222c31;--hi:#5fd3bb;--panel:#141a1d;--code:#161d21;--warn:#f2c56b;--warnbg:rgba(242,180,60,.2);
+/* dark: chosen with the button (data-theme on <html>) or, without a choice, by the system; both blocks hold the same tokens */
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark;--bg:#0e1214;--fg:#e8eef0;--fg-2:#c3cfd3;--mute:#8e9ea5;--line:#222c31;--hi:#5fd3bb;--panel:#141a1d;--code:#25313a;--code-line:#3a4a54;--warn:#f2c56b;--warnbg:rgba(242,180,60,.2);
+--ink:#e8eef0;--paper:#12181b;--unit:#26363c;--unit-focus:#1d5348;--box-0:#151b1e;--box-1:#1a2226;--box-2:#20292e;--frame:#33414a;--accent:#5fd3bb;--accent-soft:#173430;--teal-hl:rgba(95,211,187,.28);--amber:#f2c56b;--amber-hl:rgba(242,180,60,.28)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0e1214;--fg:#e8eef0;--fg-2:#c3cfd3;--mute:#8e9ea5;--line:#222c31;--hi:#5fd3bb;--panel:#141a1d;--code:#25313a;--code-line:#3a4a54;--warn:#f2c56b;--warnbg:rgba(242,180,60,.2);
 --ink:#e8eef0;--paper:#12181b;--unit:#26363c;--unit-focus:#1d5348;--box-0:#151b1e;--box-1:#1a2226;--box-2:#20292e;--frame:#33414a;--accent:#5fd3bb;--accent-soft:#173430;--teal-hl:rgba(95,211,187,.28);--amber:#f2c56b;--amber-hl:rgba(242,180,60,.28)}}
 *{box-sizing:border-box}body{margin:0;font:15px/1.6 var(--sans);background:var(--bg);color:var(--fg);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
 nav{width:260px;flex:none;border-right:1px solid var(--line);background:var(--panel);padding:16px 12px;overflow:auto;max-height:100vh;position:sticky;top:0}
@@ -3783,44 +4200,81 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 #diagram{border:1.5px solid var(--frame);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;background:var(--paper)}
 #diagram svg{max-width:none;height:auto;display:block;margin:0 auto}#diagram.fit svg{max-width:100%}#diagram .pick{cursor:pointer}#diagram pre{margin:8px 0 0;font-size:12px}
 /* diagrams (the label fonts are not under #diagram: Mermaid measures labels outside it): paper boxes with an ink rim and a flat offset shadow, capabilities and needs of the framing unit in amber, teal lines, framing units as dashed, shaded fields */
-#diagram .node :is(rect,polygon,path,circle,ellipse){fill:var(--paper)!important;stroke:var(--ink)!important;stroke-width:2px!important;filter:drop-shadow(4px 4px 0 var(--teal-hl))}
-#diagram .node rect{rx:8px;ry:8px}
-#diagram .node:is([id*="-p_"],[id*="-n_"]) :is(rect,polygon,path){stroke:var(--amber)!important;filter:drop-shadow(4px 4px 0 var(--amber-hl))}
-#diagram .node[id*="-u_"] :is(rect,polygon,path){fill:var(--unit)!important}   /* a unit with nothing inside stands out from the fields around it */
-#diagram .node.focus :is(rect,polygon,path){fill:var(--unit-focus)!important;stroke:var(--accent)!important;stroke-width:3px!important;filter:drop-shadow(5px 5px 0 var(--accent))}
-#diagram .node.pick:hover :is(rect,polygon,path){stroke:var(--accent)!important;filter:drop-shadow(6px 6px 0 var(--teal-hl))}
+:is(#diagram,.figure) .node :is(rect,polygon,path,circle,ellipse){fill:var(--paper)!important;stroke:var(--ink)!important;stroke-width:2px!important;filter:drop-shadow(4px 4px 0 var(--teal-hl))}
+:is(#diagram,.figure) .node rect{rx:8px;ry:8px}
+:is(#diagram,.figure) .node:is([id*="-p_"],[id*="-n_"]) :is(rect,polygon,path){stroke:var(--amber)!important;filter:drop-shadow(4px 4px 0 var(--amber-hl))}
+:is(#diagram,.figure) .node[id*="-u_"] :is(rect,polygon,path){fill:var(--unit)!important}   /* a unit with nothing inside stands out from the fields around it */
+:is(#diagram,.figure) .node.focus :is(rect,polygon,path){fill:var(--unit-focus)!important;stroke:var(--accent)!important;stroke-width:3px!important;filter:drop-shadow(5px 5px 0 var(--accent))}
+:is(#diagram,.figure) .node.pick:hover :is(rect,polygon,path){stroke:var(--accent)!important;filter:drop-shadow(6px 6px 0 var(--teal-hl))}
 .node .nodeLabel,.node text{font:600 16px/1.3 var(--sans)!important;color:var(--ink)!important;fill:var(--ink)!important}
-#diagram .cluster>rect{fill:var(--box-0)!important;stroke:var(--frame)!important;stroke-width:1.5px!important;stroke-dasharray:6 4;rx:14px;ry:14px}
-#diagram .cluster[data-depth="1"]>rect{fill:var(--box-1)!important}#diagram .cluster[data-depth="2"]>rect{fill:var(--box-2)!important}
-#diagram .cluster.focus>rect{stroke:var(--accent)!important;stroke-width:2.5px!important}
+:is(#diagram,.figure) .cluster>rect{fill:var(--box-0)!important;stroke:var(--frame)!important;stroke-width:1.5px!important;stroke-dasharray:6 4;rx:14px;ry:14px}
+:is(#diagram,.figure) .cluster[data-depth="1"]>rect{fill:var(--box-1)!important}:is(#diagram,.figure) .cluster[data-depth="2"]>rect{fill:var(--box-2)!important}
+:is(#diagram,.figure) .cluster.focus>rect{stroke:var(--accent)!important;stroke-width:2.5px!important}
 .cluster-label .nodeLabel,.cluster-label text{font:700 24px/1.2 var(--sans)!important;letter-spacing:-.01em;color:var(--ink)!important;fill:var(--ink)!important;
   --halo:var(--paper);text-shadow:0 0 3px var(--halo),0 0 3px var(--halo),0 0 2px var(--halo)}
-#diagram .cluster-label foreignObject{overflow:visible}#diagram .cluster-label foreignObject>div{display:block!important;width:max-content!important;text-align:left!important}
-#diagram .cluster.pick:hover>rect{stroke:var(--accent)!important}
-#diagram .flowchart-link{stroke:var(--accent)!important;stroke-width:2px!important;fill:none!important}
-#diagram marker path,#diagram .arrowMarkerPath{fill:var(--accent)!important;stroke:var(--accent)!important}
+:is(#diagram,.figure) .cluster-label foreignObject{overflow:visible}:is(#diagram,.figure) .cluster-label foreignObject>div{display:block!important;width:max-content!important;text-align:left!important}
+:is(#diagram,.figure) .cluster.pick:hover>rect{stroke:var(--accent)!important}
+:is(#diagram,.figure) .flowchart-link{stroke:var(--accent)!important;stroke-width:2px!important;fill:none!important}
+:is(#diagram,.figure) marker path,:is(#diagram,.figure) .arrowMarkerPath{fill:var(--accent)!important;stroke:var(--accent)!important}
 /* line labels without a background, letters with a halo in the colour of the paper: the line stays visible behind the text */
 .edgeLabel{font:500 14px/1.35 var(--sans)!important;color:var(--ink)!important}
-#diagram :is(.edgeLabel,.edgeLabel p,.labelBkg){background-color:transparent!important}#diagram .edgeLabel rect{fill:transparent!important}
-#diagram .edgeLabel p{--halo:var(--paper);text-shadow:1px 1px 0 var(--halo),-1px -1px 0 var(--halo),1px -1px 0 var(--halo),-1px 1px 0 var(--halo),0 0 2px var(--halo),0 0 3px var(--halo),0 0 4px var(--halo)}
+.cluster-label .note.beside{display:-webkit-inline-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:0 0 0 14px;vertical-align:middle;white-space:normal;text-align:left}
+.nodeLabel .note{display:inline-block;margin-top:2px;font:400 11px/1.3 var(--sans);letter-spacing:0;color:var(--mute)!important}   /* the responsibility of a unit under its name; outside #diagram too, where Mermaid measures */
+:is(#diagram,.figure) :is(.edgeLabel,.edgeLabel p,.labelBkg){background-color:transparent!important}:is(#diagram,.figure) .edgeLabel rect{fill:transparent!important}
+:is(#diagram,.figure) .edgeLabel p{--halo:var(--paper);text-shadow:1px 1px 0 var(--halo),-1px -1px 0 var(--halo),1px -1px 0 var(--halo),-1px 1px 0 var(--halo),0 0 2px var(--halo),0 0 3px var(--halo),0 0 4px var(--halo)}
+/* the sequence diagram of a scenario in the same look: units as boxes with an ink rim, capabilities and needs of the holding unit in amber, dashed lifelines, teal steps, the expectation as an amber note */
+:is(#diagram,.figure) rect.actor{fill:var(--unit)!important;stroke:var(--ink)!important;stroke-width:2px!important;rx:8px;ry:8px;filter:drop-shadow(4px 4px 0 var(--teal-hl))}
+:is(#diagram,.figure) .side rect.actor{fill:var(--paper)!important;stroke:var(--amber)!important;filter:drop-shadow(4px 4px 0 var(--amber-hl))}
+:is(#diagram,.figure) .planned rect.actor{stroke-dasharray:6 4}:is(#diagram,.figure) .deprecated rect.actor{stroke-dasharray:2 2;opacity:.6}
+:is(#diagram,.figure) .pick:hover rect.actor{stroke:var(--accent)!important;filter:drop-shadow(6px 6px 0 var(--teal-hl))}
+:is(#diagram,.figure) :is(text.actor,text.actor tspan){font-family:var(--sans)!important;font-size:15px!important;font-weight:600!important;fill:var(--ink)!important;stroke:none!important}
+:is(#diagram,.figure) :is(text.actor.kind,text.actor.kind tspan){font-size:13px!important;font-weight:400!important;font-style:italic;fill:var(--mute)!important}
+:is(#diagram,.figure) :is(text.actor.what,text.actor.what tspan){font-size:13px!important;font-weight:400!important;fill:var(--fg-2)!important}
+:is(#diagram,.figure) .actor-line{stroke:var(--frame)!important;stroke-width:1.5px!important;stroke-dasharray:6 4}
+:is(#diagram,.figure) :is(.messageLine0,.messageLine1){stroke:var(--accent)!important;stroke-width:2px!important}
+:is(#diagram,.figure) .messageText{font-family:var(--sans)!important;font-weight:500!important;fill:var(--ink)!important;stroke:var(--paper)!important;stroke-width:4px!important;stroke-linejoin:round;paint-order:stroke}
+:is(#diagram,.figure) rect.note{fill:var(--amber-hl)!important;stroke:var(--amber)!important;stroke-width:1.5px!important;rx:6px;ry:6px}:is(#diagram,.figure) rect.under{fill:var(--paper)!important;stroke:none!important;rx:6px;ry:6px}
+:is(#diagram,.figure) :is(.noteText,.noteText tspan){font-family:var(--sans)!important;fill:var(--ink)!important;stroke:none!important}
 #zoom{float:right;font:600 13px/1.2 var(--sans);padding:5px 12px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}#zoom:hover{border-color:var(--fg)}
 .st{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:baseline;border:1.5px dashed currentColor;opacity:.75}
 .st.deprecated{border-style:solid;background:linear-gradient(to top right,transparent 44%,currentColor 44% 56%,transparent 56%)}
 nav .legend{margin:14px 6px 0;font-size:12px;color:var(--mute)}nav .legend .st{margin:0 4px 0 0}
+nav .navhead{margin:20px 8px 4px;font:600 12px/1.4 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}nav .holder{margin:8px 8px 0;font-size:12px;color:var(--mute)}
+#facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:4px 0 18px;padding:12px 16px;background:var(--panel);border-left:3px solid var(--accent);border-radius:0 4px 4px 0}#facts[hidden]{display:none}
+.nw{white-space:nowrap}td.text{min-width:14em}#facts dt{font:600 12px/1.6 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute);padding-top:2px}#facts dd{margin:0}
 table{border-collapse:collapse;margin:10px 0;width:100%;font-size:14px;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
 th{background:var(--panel);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);white-space:nowrap}
-code{font:.88em var(--mono);background:var(--code);padding:.08em .32em;border-radius:3px}#info{overflow-x:auto}
-tr.flash td{animation:flash 2.4s ease-out}@keyframes flash{0%,40%{background:var(--amber-hl)}}
-@media(max-width:800px){body{display:block}nav{width:auto;max-height:none;position:static}main{padding:16px}th,td{padding:6px 8px}}
+code{font:.88em var(--mono);background:var(--code);padding:.04em .3em;border:1px solid var(--code-line);border-radius:3px}   /* inline code: a tint and a hairline, lighter than the page in dark */#info{overflow-x:auto}
+tr.flash td{animation:flash 2.4s ease-out}#diagram text.messageText.step:hover{fill:var(--accent)!important;text-decoration:underline}#diagram line.step:hover{stroke-width:4px!important}@keyframes flash{0%,40%{background:var(--amber-hl)}}
+.theme{float:right;display:flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 0 8px 16px;padding:0;border:2px solid var(--frame);border-radius:3px;background:var(--bg);color:var(--fg);cursor:pointer}
+.theme:hover{border-color:var(--fg)}.theme:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.theme[hidden],.theme[aria-pressed="true"] .sun,.theme:not([aria-pressed="true"]) .moon{display:none}
+/* a document: README.md on the page of its unit, every other Markdown file on a page of its own; set like the chapters of unifold.md */
+.prose{font-size:16px;line-height:1.65;overflow-wrap:break-word}.prose>*{max-width:46rem}.prose>:is(.table,pre,.figure){max-width:100%}.prose>:first-child{margin-top:.5em}
+.prose h2{font:400 22px/1.2 var(--slab);margin:1.9em 0 .5em}.prose h3{font:700 17px/1.3 var(--sans);margin:1.7em 0 .4em}.prose :is(h4,h5,h6){font:700 15px/1.35 var(--sans);margin:1.5em 0 .3em}
+.prose :is(p,ul,ol,blockquote){margin:.85em 0}.prose :is(ul,ol){padding-left:1.6em}.prose li{margin:.3em 0}.prose li>:is(p,ul,ol){margin:.35em 0}
+.prose p.field{margin:.5em 0}.prose li.task{list-style:none}.prose li.task>input{margin:0 .45em 0 -1.4em;accent-color:var(--accent)}
+.prose pre{margin:1.1em 0;padding:12px 16px;background:var(--code);border-radius:4px;overflow-x:auto;font:13px/1.55 var(--mono);tab-size:2}.prose pre code{background:none;border:0;padding:0;font-size:inherit}
+.prose blockquote{padding:2px 0 2px 16px;border-left:3px solid var(--frame);color:var(--fg-2)}.prose hr{border:0;border-top:1px solid var(--line);margin:2em 0}.prose img{max-width:100%;height:auto}
+.prose .table{overflow-x:auto;margin:1.1em 0}.prose .table table{margin:0}.prose .table th{white-space:normal}.prose :is(th,td).c{text-align:center}.prose :is(th,td).r{text-align:right}
+.anchor{margin-left:.35em;color:var(--mute);text-decoration:none;opacity:0;font-weight:400}:is(h2,h3,h4,h5,h6):hover>.anchor,.anchor:focus-visible{opacity:1}
+.figure{margin:1.2em 0;padding:16px;border:1.5px solid var(--frame);border-radius:4px;background:var(--paper);overflow-x:auto}.figure svg{display:block;max-width:100%;height:auto;margin:0 auto}
+:is(#diagram,.figure) .node circle.state-start{fill:var(--ink)!important}:is(#diagram,.figure) path.transition{stroke:var(--accent)!important;stroke-width:2px!important;fill:none!important}   /* a state diagram: its start, its steps */
+#info .wide>*{max-width:none}#info .wide>h2:first-child{margin-top:1.4em}#info .wide li{margin:.3em 0}#doc[hidden],#bar[hidden],#diagram[hidden]{display:none}
+#info h3{font:600 12px/1.4 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:1.4em 0 .2em}#info ul{margin:.3em 0;padding-left:1.4em}#info li{margin:.2em 0}#info li.on{font-weight:700}
+@media(hover:none){.anchor{opacity:.45}}
+@media(max-width:800px){.theme{position:absolute;top:12px;right:12px;margin:0}body{display:block}nav{width:auto;max-height:none;position:static}main{padding:16px}th,td{padding:6px 8px}
+  nav .docs{display:none}.prose{font-size:15.5px}.prose pre{padding:10px 12px}.figure{padding:10px}}
 </style></head><body>
 <nav id="tree"></nav>
 <main>
+<button class="theme" type="button" aria-label="Dark theme" aria-pressed="false" title="Light or dark" hidden><svg class="sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.3A8.5 8.5 0 1 1 10.7 3.5a6.6 6.6 0 0 0 9.8 9.8z"/></svg></button>
 <div class="crumbs mute" id="crumbs"></div>
-<h1 id="title"></h1><p id="summary"></p><p class="mute" id="meta"></p>
-<div class="tabs"><button id="zoom" hidden></button><span id="tabs"></span></div>
+<h1 id="title"></h1><p id="summary"></p><p class="mute" id="meta"></p><dl id="facts" hidden></dl>
+<article class="prose" id="doc" hidden></article>
+<div class="tabs" id="bar"><button id="zoom" hidden></button><span id="tabs"></span></div>
 <div id="diagram">Loading the diagram renderer…</div>
 <div id="shared"></div>
-<p class="mute">Click a box to open that unit, a capability or need to find it in the tables. An arrow points from a need to its provider. A dashed border marks a unit that is planned.</p>
+<p class="mute" id="hint"></p>
 <div id="info"></div>
 </main>
 __INLINE__<script type="module">
@@ -3832,7 +4286,35 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;
 const file = p => model.base ? model.base + "/" + p.split("/").map(encodeURIComponent).join("/") : model.up + p.split("/").map(encodeURIComponent).join("/");
 const badge = s => s && s !== "active" && s !== "accepted" ? ` <span class="badge ${esc(s.split(" ")[0])}">${esc(s)}</span>` : "";
 const pick = (p, t) => `<a class="go" data-path="${esc(p)}">${esc(t ?? (p === "." ? model.name : p))}</a>` + badge(byPath[p] && byPath[p].status);
-const ref = v => v ? (/^[a-z][a-z0-9+.-]*:/i.test(v) ? `<a href="${esc(v)}">${esc(v)}</a>` : `<a href="${esc(file(v))}">${esc(v)}</a>`) : "";
+const docs = model.docs || {}, KINDS = {readme: "README", tutorials: "Tutorials", references: "Reference", explanation: "Explanation", decisions: "Decisions", skills: "Skills", other: "Other"};
+const enc = s => encodeURIComponent(s).replace(/%(2F|40|3A)/g, m => decodeURIComponent(m));   // a route stays readable: unit@doc:docs/references/x.md
+const hashOf = (route, anchor) => "#" + enc(route) + (anchor ? "#" + encodeURIComponent(anchor) : "");
+const pageOf = p => { const d = docs[p]; return d && d.unit + "@doc:" + (d.unit === "." ? p : p.slice(d.unit.length + 1)); };   // the page of a document
+const routeOf = p => docs[p] && docs[p].kind === "readme" ? docs[p].unit : pageOf(p);   // a link to a README opens its unit
+const href = v => { const [p, a] = v.split("#"), r = routeOf(p); return r ? hashOf(r, a) : file(p) + (a ? "#" + encodeURIComponent(a) : ""); };   // a document opens here, any other file as it is
+const ref = v => v ? (/^[a-z][a-z0-9+.-]*:/i.test(v) ? `<a href="${esc(v)}">${esc(v)}</a>` : `<a href="${esc(href(v))}">${esc(v)}</a>`) : "";
+const part = (contract, name) => { const dir = contract.endsWith("/index.md") && contract.slice(0, -8) + name + ".md";   // a part: its file in a folder contract, its heading in a file
+  return `<a href="${esc(href(dir && docs[dir] ? dir : contract + "#" + name))}">${esc(name)}</a>`; };
+const title = p => docs[p].title || esc(p.split("/").pop().replace(/\.md$/, ""));
+const plain = h => { const t = document.createElement("template"); t.innerHTML = h; return t.content.textContent; };
+const docLink = (p, on) => on ? `<li class="on">${title(p)}</li>` : `<li><a href="${esc(href(p))}">${title(p)}</a>` + (docs[p].kind === "decisions" ? badge(docs[p].status || "no status") : "")
+  + (docs[p].kind === "skills" && docs[p].summary ? ": " + esc(docs[p].summary) : "") + "</li>";
+function groups(u){                  // the documents of a unit by kind, in the order of AGENTS.md: learn, look up, understand, decide, do
+  const of = {tutorials: u.documents.tutorials, references: u.documents.references, explanation: u.documents.explanation, decisions: u.decisions.map(d => d.path),
+    skills: u.skills.map(s => s.path), other: Object.keys(docs).filter(p => docs[p].unit === u.path && docs[p].kind === "other")};
+  return Object.entries(KINDS).map(([k, label]) => [k, label, (of[k] || []).filter(p => docs[p])]).filter(g => g[2].length);}
+function anchors(box, route){        // the link beside a heading; the ids come with the document
+  for (const h of box.querySelectorAll(":is(h2,h3,h4,h5,h6)[id^='md-']")) h.insertAdjacentHTML("beforeend", ` <a class="anchor" href="${esc(hashOf(route, h.id.slice(3)))}" aria-label="Link to this section">#</a>`);}
+let figure = 0;
+async function figures(box){         // the Mermaid blocks of a document, drawn like the map; without Mermaid they stay source
+  if (!mermaid) return;
+  for (const pre of [...box.querySelectorAll("pre.mermaid")]) {
+    try { const {svg} = await mermaid.render("f" + ++figure, pre.textContent); if (!pre.isConnected) return;
+      const f = document.createElement("div"); f.className = "figure"; f.innerHTML = svg; pre.replaceWith(f);
+    } catch (err) { if (pre.isConnected) pre.title = "The diagram could not be drawn: " + err; }
+  }
+}
+function seek(anchor){const t = anchor && document.getElementById("md-" + anchor); if (t) t.scrollIntoView();}
 let mermaid = null, mermaidError = null, fit = null, fitted = false, state = {path: ".", kind: null}, row = null;
 function shade(){                    // a framing box is shaded by how deep it sits; its name moves to its top left
   const clusters = [...el("diagram").querySelectorAll(".cluster")].map(c => [c, c.querySelector(":scope > rect").getBoundingClientRect()]);
@@ -3844,16 +4326,32 @@ function shade(){                    // a framing box is shaded by how deep it s
     name.style.setProperty("--halo", getComputedStyle(rect).fill); name.dataset.frame = c.id; c.parentNode.appendChild(name);
   }
 }
-function zoom(){const box = el("diagram"), svg = box.querySelector("svg"), b = el("zoom");
+function zoom(map){const box = el("diagram"), svg = box.querySelector("svg"), b = el("zoom");
   box.classList.remove("fit"); const room = box.clientWidth - 24, width = svg ? svg.getBoundingClientRect().width : 0;
-  const wide = width > room; fitted = wide && (fit ?? width <= room * 1.45);   // a little too wide: shrink; much too wide: scroll
+  const wide = width > room; fitted = wide && (fit ?? (map || width <= room * 1.45));   // a map opens fitted; a scenario: a little too wide shrinks, much too wide scrolls; a choice with the button holds
   b.hidden = !wide; box.classList.toggle("fit", fitted);
   b.textContent = fitted ? "Full size" : "Fit to width"; box.scrollLeft = 0;}
-function fromHash(){const h = decodeURIComponent(location.hash.slice(1)); const [p, k] = h.split("@");
-  state = {path: byPath[p] ? p : ".", kind: k || null};}
-function go(path, kind){location.hash = encodeURIComponent(path + (kind ? "@" + kind : ""));}
+const scenes = model.scenarios || [], scene = (p, n) => scenes.find(s => s.unit === p && s.name === n);
+const decode = s => { try { return decodeURIComponent(s); } catch { return s; } };
+function fromHash(){const raw = location.hash.slice(1), cut = raw.indexOf("#");   // unit@kind, holder@scenario:name or unit@doc:path, then #anchor
+  const h = decode(cut < 0 ? raw : raw.slice(0, cut)), at = h.indexOf("@"), p = at < 0 ? h : h.slice(0, at), k = at < 0 ? "" : h.slice(at + 1);
+  const s = k.startsWith("scenario:") ? scene(p, k.slice(9)) : null, d = k.startsWith("doc:") ? (p === "." ? "" : p + "/") + k.slice(4) : null;
+  state = {path: byPath[p] ? p : ".", kind: s || d || !k ? null : k, scenario: s, doc: d && docs[d] ? d : null, anchor: cut < 0 ? "" : decode(raw.slice(cut + 1))};}
+function go(path, kind){location.hash = enc(path + (kind ? "@" + kind : ""));}
 function tree(path){const u = byPath[path]; const kids = u.children.map(c => tree(c.path)).join("");
-  return `<li><a data-path="${esc(path)}" class="go${path === state.path ? " on" : ""}">${esc(u.name)}${u.status !== "active" ? `<span class="st ${esc(u.status)}" title="${esc(u.status)}"></span>` : ""}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
+  return `<li><a data-path="${esc(path)}" class="go${path === state.path && !state.scenario ? " on" : ""}">${esc(u.name)}${u.status !== "active" ? `<span class="st ${esc(u.status)}" title="${esc(u.status)}"></span>` : ""}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
+const named = p => p === "." ? model.name : p;
+const pin = (p, t) => { const st = byPath[p].status; return `<span class="nw"><a class="go" data-path="${esc(p)}">${esc(t ?? named(p))}</a>` + (st !== "active" ? `<span class="st ${esc(st)}" title="${esc(st)}"></span>` : "") + "</span>"; };   // the status as in the tree
+function docTree(u){                 // the documents of the unit shown, beside the map
+  const g = groups(u); if (!g.length) return "";
+  return `<div class="docs"><p class="navhead">Documents of ${esc(u.name)}</p>` + g.map(([k, label, paths]) => `<p class="holder">${label}</p><ul>`
+    + paths.map(p => `<li><a href="${esc(href(p))}"${p === state.doc || (state.doc && docs[state.doc].contract === p) ? ' class="on"' : ""}>${title(p)}</a></li>`).join("") + "</ul>").join("") + "</div>";}
+function map(on){for (const id of ["bar", "diagram", "shared", "hint"]) el(id).hidden = !on;}
+const sceneLink = (s, t) => `<a class="go" data-path="${esc(s.unit)}" data-scenario="${esc(s.name)}">${t ?? esc(s.name)}</a>`;
+function sceneTree(){                // every scenario of the project, under the unit that holds it when there are several
+  const holders = [...new Set(scenes.map(s => s.unit))];
+  return scenes.length ? "<p class='navhead'>Scenarios</p>" + holders.map(h => (holders.length > 1 ? `<p class="holder">${esc(named(h))}</p>` : "")
+    + "<ul>" + scenes.filter(s => s.unit === h).map(s => `<li><a class="go${s === state.scenario ? " on" : ""}" data-path="${esc(s.unit)}" data-scenario="${esc(s.name)}" title="${esc(s.summary)}">${esc(s.name)}</a></li>`).join("") + "</ul>").join("") : "";}
 const legend = ["planned", "deprecated"].filter(s => units.some(u => u.status === s))
   .map(s => `<span class="st ${s}"></span>${s}`).join(" &nbsp; ");
 function note(i){return i.config ? " <span class='mute'>(" + esc(i.config) + ")</span>" : "";}
@@ -3863,43 +4361,44 @@ function code(text){return esc(text).replace(/`([^`]+)`/g, "<code>$1</code>").re
 async function render(){
   const u = byPath[state.path]; const kinds = Object.keys(u.diagrams);
   const kind = kinds.includes(state.kind) ? state.kind : (kinds.includes("component") ? "component" : kinds[0]);
-  document.title = u.name + " · " + model.name;
-  el("tree").innerHTML = "<ul>" + tree(".") + "</ul>" + (legend ? `<p class="legend">${legend}</p>` : "");
+  el("tree").innerHTML = "<ul>" + tree(".") + "</ul>" + docTree(u) + sceneTree() + (legend ? `<p class="legend">${legend}</p>` : "");
   const chain = []; for (let p = u.parent; p; p = byPath[p.path].parent) chain.unshift(p.path);
+  if (state.doc) return reading(state.doc, chain);
+  map(true);
+  if (state.scenario) return story(state.scenario, chain);
+  el("facts").hidden = true; el("hint").textContent = "Click a box to open that unit, a capability or need to find it in the tables. An arrow points from a need to its provider. A dashed border marks a unit that is planned.";
+  document.title = u.name + " · " + model.name;
   el("crumbs").innerHTML = chain.map(p => `<a class="go" data-path="${esc(p)}">${esc(byPath[p].name)}</a>`).concat(esc(u.name)).join(" / ");
-  el("title").innerHTML = esc(u.name) + badge(u.status); el("summary").textContent = u.responsibility;
+  const readme = u.readme && docs[u.readme];   // the README: its first paragraph on top (the responsibility is in the boxes of the diagram), its Why above the tables
+  el("title").innerHTML = esc(u.name) + badge(u.status); el("summary").innerHTML = readme && readme.intro || esc(u.responsibility);
   el("meta").innerHTML = [u.kind, u.owner && "owner " + u.owner].filter(Boolean).map(esc)
-    .concat([`<a href="${esc(file(u.manifest))}">manifest</a>`], u.readme ? [`<a href="${esc(file(u.readme))}">README</a>`] : [],
-            u.agents ? [`<a href="${esc(file(u.agents))}">AGENTS.md</a>`] : []).join(" · ");
+    .concat([`<a href="${esc(file(u.manifest))}">manifest</a>`], u.readme ? [`<a href="${esc(readme ? hashOf(pageOf(u.readme)) : file(u.readme))}">README</a>`] : [],
+            u.agents ? [`<a href="${esc(href(u.agents))}">AGENTS.md</a>`] : []).join(" · ");
+  el("doc").hidden = true;
   el("tabs").innerHTML = kinds.map(k => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${k}</button>`).join("");
-  let html = "";
+  let html = readme && readme.why ? `<div class="prose wide">${readme.why}</div>` : "";   // Why, then what the unit leaves out, as sections of the same rank
   const p = Object.entries(u.capabilities), n = Object.entries(u.needs);
-  if (u.secret) html += `<p><strong>Secret:</strong> ${esc(u.secret.what)} (${ref(u.secret.decision)})</p>`;
-  if (u.not && u.not.length) html += "<p><strong>Not:</strong> " + u.not.map(n => esc(n.text) + (n.need ? ` → <code>${esc(n.need)}</code>` : "")).join("; ") + "</p>";
+  if (u.secret) html += `<div class="prose wide"><p><strong>Secret:</strong> ${esc(u.secret.what)} (${ref(u.secret.decision)})</p></div>`;
+  if (u.not && u.not.length) html += `<div class="prose wide"><h2 id="out-of-scope">Out of scope</h2><ul>` + u.not.map(n => "<li>" + code(n.text) + (n.need ? ` → <code>${esc(n.need)}</code>` : "") + "</li>").join("") + "</ul></div>";
   if (p.length) html += "<h2>Capabilities</h2><table><tr><th>Capability</th><th>Kind</th><th>Summary</th><th>Contract</th><th>Used by</th></tr>"
-    + p.map(([k, v]) => `<tr id="capability:${esc(k)}"><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}${v.parts ? " <span class='mute'>(" + v.parts.map(esc).join(", ") + ")</span>" : ""}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
+    + p.map(([k, v]) => `<tr id="capability:${esc(k)}"><td><code>${esc(k)}</code></td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}${v.parts && v.contract ? " <span class='mute'>(" + v.parts.map(n => part(v.contract, n)).join(", ") + ")</span>" : ""}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
   if (n.length) html += "<h2>Needs</h2><table><tr><th>Need</th><th>Kind</th><th>Summary</th><th>Contract</th><th>Provided by</th></tr>"
-    + n.map(([k, v]) => `<tr id="need:${esc(k)}"><td><code>${esc(k)}</code>${v.optional ? " <span class='mute'>optional</span>" : ""}${v.platform ? " <span class='mute'>platform</span>" : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}${v.parts ? " <span class='mute'>(" + v.parts.map(esc).join(", ") + ")</span>" : ""}</td><td>${who(v["provided-by"], "capability")}</td></tr>`).join("") + "</table>";
+    + n.map(([k, v]) => `<tr id="need:${esc(k)}"><td><code>${esc(k)}</code>${v.optional ? " <span class='mute'>optional</span>" : ""}${v.platform ? " <span class='mute'>platform</span>" : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.summary)}</td><td>${ref(v.contract)}${v.parts && v.contract ? " <span class='mute'>(" + v.parts.map(n => part(v.contract, n)).join(", ") + ")</span>" : ""}</td><td>${who(v["provided-by"], "capability")}</td></tr>`).join("") + "</table>";
   if (u.children.length) html += "<h2>Units inside</h2><table><tr><th>Unit</th><th>Kind</th><th>Responsibility</th></tr>"
     + u.children.map(c => `<tr><td>${pick(c.path, c.name)}</td><td>${esc(byPath[c.path].kind)}</td><td>${esc(c.responsibility)}</td></tr>`).join("") + "</table>";
-  if (u.scenarios && u.scenarios.length) html += "<h2>Scenarios</h2><ul>" + u.scenarios.map(s => `<li><code>${esc(s.name)}</code>: ${esc(s.summary)}${s.unit !== u.path ? " <span class='mute'>(held by " + esc(s.unit === "." ? model.name : s.unit) + ")</span>" : ""}</li>`).join("") + "</ul>";
-  if (u.skills.length) html += "<h2>Skills</h2><ul>" + u.skills.map(s => `<li><a href="${esc(file(s.path))}">${esc(s.name)}</a>: ${esc(s.description)}</li>`).join("") + "</ul>";
-  if (u.decisions.length) html += "<h2>Decisions</h2><ul>" + u.decisions.map(d => `<li><a href="${esc(file(d.path))}">${esc(d.title)}</a>${badge(d.status || "no status")}</li>`).join("") + "</ul>";
+  if (u.scenarios && u.scenarios.length) html += "<h2>Scenarios</h2><ul>" + u.scenarios.map(s => `<li>${scene(s.unit, s.name) ? sceneLink(s) : esc(s.name)}: ${esc(s.summary)}${s.unit !== u.path ? ` <span class="mute">(held by <a class="go" data-path="${esc(s.unit)}">${esc(named(s.unit))}</a>)</span>` : ""}</li>`).join("") + "</ul>";
+  const g = groups(u);
+  if (g.length) html += "<h2>Documents</h2>" + g.map(([k, label, paths]) => `<h3 id="docs:${k}">${label}</h3><ul>` + paths.map(p => docLink(p)).join("") + "</ul>").join("");
   el("info").innerHTML = html;
+  if (readme && readme.why) { anchors(el("info").firstChild, u.path); figures(el("info").firstChild); }
   const target = row && document.getElementById(row); row = null;   // a capability or need clicked in the diagram
   if (target) { target.scrollIntoView({behavior: "smooth", block: "center"}); target.classList.add("flash"); }
   const d = u.diagrams[kind];
   el("shared").innerHTML = d && d.shared.length ? "<p class='mute'>Shared connections, not drawn:</p><ul>" + d.shared.map(s => "<li>" + code(s) + "</li>").join("") + "</ul>" : "";
   el("zoom").hidden = true;
   if (!d) { el("diagram").textContent = "No diagram for this unit."; return; }
-  if (!mermaid) {
-    if (mermaidError) el("diagram").innerHTML = "<p>The diagram renderer (Mermaid) could not be loaded" + (MERMAID.url ? " from " + esc(MERMAID.url) : "")
-      + ". The tables below are complete without it. To embed the renderer in this page: <code>unifold site --mermaid path/to/mermaid.min.js</code>.</p><details><summary>Diagram source</summary><pre>" + esc(d.source) + "</pre></details>";
-    return;
-  }
-  try {
-    const {svg} = await mermaid.render("g" + Date.now(), d.source);
-    el("diagram").innerHTML = svg; shade(); zoom();
+  return draw(d.source, () => {
+    shade(); zoom(true);
     const ids = Object.keys(d.nodes).concat(Object.keys(d.sides));
     for (const node of el("diagram").querySelectorAll("[id]")) {
       const hit = ids.find(id => node.id === id || new RegExp("(^|-)" + id + "(-\\d+)?$").test(node.id));
@@ -3913,15 +4412,97 @@ async function render(){
     for (const name of el("diagram").querySelectorAll(".cluster-label[data-frame]")) {   // a name drawn apart from its box opens the same unit
       const frame = document.getElementById(name.dataset.frame);
       if (frame && frame.classList.contains("pick")) { name.classList.add("pick"); name.addEventListener("click", ev => {ev.stopPropagation(); frame.dispatchEvent(new MouseEvent("click"));}); }
+      const hit = frame && Object.keys(d.nodes).find(id => frame.id === id || new RegExp("(^|-)" + id + "(-\\d+)?$").test(frame.id));
+      const unit = hit && byPath[d.nodes[hit]], text = name.querySelector(".nodeLabel"), fo = name.querySelector("foreignObject");
+      if (unit && unit.responsibility && text && fo) {   // the responsibility of a frame beside its name, in two lines at most: it takes no room from the boxes below
+        const room = +frame.querySelector(":scope > rect").getAttribute("width") - +fo.getAttribute("width") - 56;
+        text.insertAdjacentHTML("beforeend", `<span class="note beside" title="${esc(unit.responsibility)}" style="max-width:${Math.round(Math.max(170, Math.min(440, room)))}px">${esc(unit.responsibility)}</span>`);
+      }
     }
-  } catch (err) { el("diagram").innerHTML = "<p>The diagram could not be drawn: " + esc(err) + "</p><pre>" + esc(d.source) + "</pre>"; }
+  });
+}
+function story(s, chain){             // a scenario: what it is and expects, its sequence diagram, its steps and its lifelines
+  const h = byPath[s.unit], d = s.diagram, lives = Object.values(d.lifelines);
+  const life = (text, unit, side) => unit ? pin(unit, text) : `<a class="go" data-path="${esc(s.unit)}" data-row="${side}:${esc(text)}"><code>${esc(text)}</code></a>`;
+  document.title = s.name + " · " + model.name;
+  el("crumbs").innerHTML = chain.concat(s.unit).map(p => `<a class="go" data-path="${esc(p)}">${esc(byPath[p].name)}</a>`).concat(esc(s.name)).join(" / ");
+  el("title").innerHTML = esc(s.name); el("summary").textContent = s.summary;
+  el("meta").innerHTML = ["scenario of " + pin(s.unit), s.hops.length + (s.hops.length === 1 ? " step" : " steps"), lives.length + " lifelines"]
+    .concat(s.page ? [`<a href="${esc(file(s.page))}">Markdown</a>`] : [], [`<a href="${esc(file(h.manifest))}">manifest</a>`]).join(" · ");
+  el("doc").hidden = true;
+  el("facts").innerHTML = (s.source ? `<dt>Source</dt><dd>${code(s.source)}</dd>` : "") + `<dt>Expect</dt><dd>${code(s.expect)}</dd>`; el("facts").hidden = false;
+  el("tabs").innerHTML = `<button class="on">sequence</button>`; el("shared").innerHTML = ""; el("zoom").hidden = true;
+  el("hint").textContent = `An arrow is one step, numbered in order: the caller uses a part of the contract of one connection of the map. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
+  let html = "<h2>Steps</h2><table><tr><th>#</th><th>Caller</th><th>Target</th><th>Part</th><th>Contract</th><th>Wiring</th></tr>" + s.hops.map((x, i) => x.unresolved
+    ? `<tr id="step:${i + 1}"><td>${i + 1}</td><td colspan="5"><code>${esc(x.unresolved)}</code> <span class="badge planned">does not resolve</span> ${esc(x.error)}</td></tr>`
+    : `<tr id="step:${i + 1}"><td>${i + 1}</td><td>${life(x.caller, x["caller-unit"], "capability")}</td><td>${life(x.target, x["target-unit"], "need")}</td><td><a href="${esc(href(x["part-file"] && x["part-file"] !== x.contract ? x["part-file"] : x.contract + "#" + x.part))}"><code>${esc(x.part)}</code></a>${x["part-kind"] ? " <span class='mute'>" + esc(x["part-kind"]) + "</span>" : ""}</td><td>${ref(x.contract)}</td><td>${x.via.map(v => `<span class="nw"><code>${esc(v.key)}</code> <span class="mute">in</span> ${pin(v.unit)}</span>`).join("<br>") || "–"}</td></tr>`).join("") + "</table>";
+  html += "<h2>Lifelines</h2><table><tr><th>Lifeline</th><th>Kind</th><th>Responsibility</th><th>Steps</th></tr>" + lives.map(l => {
+    const u = l.side ? null : byPath[l.unit], e = l.side ? h[l.side === "capability" ? "capabilities" : "needs"][l.entry] : null;
+    const steps = (k, word) => { const at = s.hops.flatMap((x, i) => x[k] === l.name ? [i + 1] : []); return at.length ? word + " " + at.join(", ") : ""; };
+    return `<tr><td>${life(l.name, u && l.unit, l.side)}</td><td>${u ? esc(u.kind) : esc(l.side + " of " + named(s.unit))}</td><td class="text">${esc(u ? u.responsibility : e && e.summary)}</td><td>${[steps("caller", "calls in"), steps("target", "called in")].filter(Boolean).join("<br>")}</td></tr>`;}).join("") + "</table>";
+  const more = scenes.filter(o => o.unit === s.unit && o !== s);
+  if (more.length) html += `<h2>More scenarios of ${esc(named(s.unit))}</h2><ul>` + more.map(o => `<li>${sceneLink(o)}: ${esc(o.summary)}</li>`).join("") + "</ul>";
+  el("info").innerHTML = html;
+  return draw(d.source, () => {
+    for (const box of el("diagram").querySelectorAll("rect.actor[name]")) {   // a lifeline, at the top and the bottom: its unit, or its row in the tables
+      const l = d.lifelines[box.getAttribute("name")], g = box.parentNode; if (!l) continue;
+      g.classList.add("pick", l.side ? "side" : byPath[l.unit].status);
+      g.querySelectorAll("text.actor").forEach((t, i) => t.classList.add(i ? (t.textContent.startsWith("«") ? "kind" : "what") : "who"));   // the lines of its box
+      g.addEventListener("click", ev => {ev.stopPropagation(); row = l.side ? l.side + ":" + l.entry : null; go(l.unit);});
+    }
+    for (const label of el("diagram").querySelectorAll("text.messageText")) {   // a step, by the number of its label: its row in the table
+      const n = /^\s*(\d+)\s*·/.exec(label.textContent), line = label.nextElementSibling; if (!n) continue;
+      for (const part of line && /messageLine/.test(line.getAttribute("class")) ? [label, line] : [label]) {
+        part.classList.add("pick", "step"); part.addEventListener("click", ev => {ev.stopPropagation(); flash("step:" + n[1]);});
+      }
+    }
+    for (const note of el("diagram").querySelectorAll("rect.note")) { const under = note.cloneNode(); under.setAttribute("class", "under"); note.before(under); }   // paper under the note: no lifeline shows through
+    zoom();
+  });
+}
+function reading(p, chain){           // a document: where it belongs, its front matter, its text, and the documents beside it
+  const d = docs[p], u = byPath[d.unit], label = KINDS[d.kind] || "Documents", whole = d.contract && docs[d.contract];
+  document.title = plain(title(p)) + " · " + model.name;
+  el("crumbs").innerHTML = chain.concat(d.unit).map(c => `<a class="go" data-path="${esc(c)}">${esc(byPath[c].name)}</a>`)
+    .concat(`<a class="go" data-path="${esc(d.unit)}" data-row="docs:${esc(d.kind)}">${label}</a>`, whole ? [`<a href="${esc(href(d.contract))}">${title(d.contract)}</a>`] : [], title(p)).join(" / ");
+  el("title").innerHTML = title(p) + badge(d.status); el("summary").textContent = d.summary || "";
+  el("meta").innerHTML = [(whole ? "Part of a contract" : label) + " of " + pin(d.unit), `<a href="${esc(file(p))}">Markdown</a>`].join(" · ");
+  el("facts").innerHTML = (d.facts || []).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join(""); el("facts").hidden = !d.facts;
+  map(false); el("doc").className = "prose"; el("doc").hidden = false; el("doc").innerHTML = d.html; anchors(el("doc"), pageOf(p));
+  const g = groups(u).find(x => x[0] === d.kind), near = whole ? whole.parts : g ? g[2] : [];
+  el("info").innerHTML = near.length > 1 ? `<h2>${whole ? "Parts of " + title(d.contract) : label + " of " + esc(u.name)}</h2><ul>` + near.map(o => docLink(o, o === p)).join("") + "</ul>" : "";
+  return figures(el("doc"));
+}
+function flash(id){const target = document.getElementById(id); if (!target) return;   // a row of the tables: in view, lit up for a moment
+  target.scrollIntoView({behavior: "smooth", block: "center"}); target.classList.remove("flash"); void target.offsetWidth; target.classList.add("flash");}
+let drawn = 0;
+async function draw(source, wire){   // Mermaid source into the diagram box; `wire` makes its boxes clickable
+  el("zoom").hidden = true;
+  if (!mermaid) {
+    if (mermaidError) el("diagram").innerHTML = "<p>The diagram renderer (Mermaid) could not be loaded" + (MERMAID.url ? " from " + esc(MERMAID.url) : "")
+      + ". The tables below are complete without it. To embed the renderer in this page: <code>unifold site --mermaid path/to/mermaid.min.js</code>.</p><details><summary>Diagram source</summary><pre>" + esc(source) + "</pre></details>";
+    return;
+  }
+  const mine = ++drawn;
+  try {
+    const {svg} = await mermaid.render("g" + Date.now(), source);
+    if (mine !== drawn) return;          // a newer page is on its way
+    el("diagram").innerHTML = svg; wire();
+  } catch (err) { el("diagram").innerHTML = "<p>The diagram could not be drawn: " + esc(err) + "</p><pre>" + esc(source) + "</pre>"; }
 }
 document.addEventListener("click", ev => {
-  const a = ev.target.closest(".go"); if (a) { go(a.dataset.path); return; }
+  const a = ev.target.closest(".go");
+  if (a) { row = a.dataset.row || null;   // a capability or need of the holder of a scenario: its row in the tables
+    if (a.dataset.scenario) go(a.dataset.path, "scenario:" + a.dataset.scenario);
+    else if (row && a.dataset.path === state.path && !state.scenario && !state.doc) render(); else go(a.dataset.path);
+    return; }
   const b = ev.target.closest("button[data-kind]"); if (b) go(state.path, b.dataset.kind);
   if (ev.target.id === "zoom") { fit = !fitted; zoom(); }
 });
-addEventListener("hashchange", () => { fromHash(); render(); });
+addEventListener("hashchange", () => { const was = state, top = !row; fromHash(); render();
+  const main = document.querySelector("main");   // another page: from its top, unless a row or a heading is to be shown
+  if (state.anchor) seek(state.anchor);
+  else if (top && (was.path !== state.path || was.scenario !== state.scenario || was.doc !== state.doc) && main.getBoundingClientRect().top < 0) main.scrollIntoView(); });
 async function loadMermaid(){
   if (window.mermaid) return window.mermaid;
   if (!MERMAID.url) throw new Error("no renderer");
@@ -3930,16 +4511,22 @@ async function loadMermaid(){
     s.onload = ok; s.onerror = () => fail(new Error("not loaded")); document.head.appendChild(s); });
   return window.mermaid;
 }
-fromHash(); render();
+fromHash(); render(); seek(state.anchor);
+function setup(){   // the renderer; set up again when light or dark changes
+  mermaid.initialize({startOnLoad: false, securityLevel: "loose", maxEdges: 2000,   // the colours come from the style sheet above
+    flowchart: {useMaxWidth: false, curve: "basis", padding: 8, nodeSpacing: 28, rankSpacing: 60,
+      subGraphTitleMargin: {top: 10, bottom: 18}},   // room for the large name of a framing unit above its content
+    sequence: {useMaxWidth: false, width: 120, actorMargin: 36, boxMargin: 12, messageMargin: 44, noteMargin: 12,   // a scenario
+      actorFontSize: 14, actorFontWeight: 500, messageFontSize: 14, messageFontWeight: 500, noteFontSize: 14, noteAlign: "left"},
+    theme: "base", themeVariables: {fontFamily: getComputedStyle(document.body).getPropertyValue("--sans"), fontSize: "16px",
+      darkMode: getComputedStyle(document.documentElement).colorScheme === "dark"}});   // dark as the style sheet has it: by the button or by the system
+}
 try {
   mermaid = await loadMermaid();
-  mermaid.initialize({startOnLoad: false, securityLevel: "loose", maxEdges: 2000,   // the colours come from the style sheet above
-    flowchart: {useMaxWidth: false, curve: "basis", padding: 14, nodeSpacing: 44, rankSpacing: 64,
-      subGraphTitleMargin: {top: 10, bottom: 18}},   // room for the large name of a framing unit above its content
-    theme: "base", themeVariables: {fontFamily: getComputedStyle(document.body).getPropertyValue("--sans"), fontSize: "16px",
-      darkMode: matchMedia("(prefers-color-scheme: dark)").matches}});
+  setup();
 } catch (err) { mermaid = null; mermaidError = err; }
 render();
+addEventListener("themechange", () => { if (mermaid) { setup(); render(); } });   // light or dark changed: draw again in the new colours
 </script></body></html>
 """
 
@@ -3973,25 +4560,46 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
             info[key] = project.rel(path) if project.kind_of(path) == "file" else None
         charts = {}
         if unit.parent is not None:
-            charts["context"] = diagram(project, unit.parent, 0, out_dir, focus=unit)
+            charts["context"] = diagram(project, unit.parent, 0, out_dir, focus=unit, notes=True)
         elif not unit.children:
-            charts["context"] = (lone_context(project, unit, out_dir), [unit],
+            charts["context"] = (lone_context(project, unit, out_dir, notes=True), [unit],
                                  {node_id(unit): unit}, [])
         if unit.children:
-            charts["component"] = diagram(project, unit, 1, out_dir)
+            charts["component"] = diagram(project, unit, 1, out_dir, notes=True)
         if any(c.children for c in unit.children):
-            charts["architecture"] = diagram(project, unit, MAX_DEPTH, out_dir)
+            charts["architecture"] = diagram(project, unit, MAX_DEPTH, out_dir, notes=True)
         info["diagrams"] = {kind: {"source": "\n".join(value[0]),
                                    "nodes": {i: u.rel for i, u in value[2].items()},
                                    "sides": {i: side for i, side in sides.items()
                                              if re.search(rf"^\s+{i}\b", "\n".join(value[0]), re.M)},
                                    "shared": value[3]} for kind, value in charts.items()}
         units.append(info)
+    scenarios = []                                    # the scenario pages: the data of `model`, a lifeline per name
+    for scenario in resolved_scenarios(project):
+        holder, data = scenario["unit"], scenario_data(project, scenario)
+        lines, ids = scenario_sequence(scenario)
+        lifelines = {}                                # participant id -> its unit, or a capability or need of the holder
+        for (_, result, _), hop in zip(scenario["hops"], data["hops"]):
+            if not result:
+                continue
+            part = contract_of_path(project, result["contract"])["parts"].get(result["part"]) or {}
+            hop["part-kind"], hop["part-file"] = part.get("kind"), project.rel(part["file"]) if part.get("file") else None
+            for name, unit, side, entry in ((result["caller"], result["caller-unit"], "capability", result["caller-capability"]),
+                                            (result["target"], result["target-unit"], "need", result["target-need"])):
+                lifelines[ids[name]] = {"name": name, "unit": unit.rel} if unit else \
+                    {"name": name, "unit": holder.rel, "side": side, "entry": entry}
+        page = os.path.join(holder.path, "docs", "diagrams", f"scenario-{scenario['name']}.md")
+        scenarios.append({**data, "unit": holder.rel, "page": project.rel(page) if project.kind_of(page) == "file" else None,
+                          "diagram": {"source": "\n".join(lines),
+                                      "lifelines": {i: lifelines[i] for i in ids.values() if i in lifelines}}})
     project.links = saved
     base = saved.rstrip("/") if saved not in ("none", "relative") else ""
     up = os.path.relpath(project.root, out_dir).replace(os.sep, "/")
-    model = {"name": project.root_unit.name, "units": units, "base": base,
-             "up": "" if up == "." else up + "/"}
+    up = "" if up == "." else up + "/"
+    docs = site_documents(project, {u["path"]: u["diagrams"] for u in units},
+                          {(s["unit"], s["name"]) for s in scenarios}, base, up)
+    model = {"name": project.root_unit.name, "units": units, "scenarios": scenarios, "docs": docs,
+             "base": base, "up": up}
     parts = {"__TITLE__": cell(project.root_unit.name).replace("<", "&lt;"),
              "__MODEL__": json.dumps(model, ensure_ascii=False).replace("</", "<\\/"),
              "__MERMAID__": json.dumps(source), "__INLINE__": inline}
@@ -4088,6 +4696,25 @@ def print_github(result: dict):
           f"{summary['warn']} warning(s), {summary['info']} info")
 
 
+def scenario_data(project: Project, scenario: dict) -> dict:
+    """One resolved scenario as plain data: an entry of `scenarios` in the schema `unifold-model`."""
+    rel, hops = project.rel, []
+    for hop, result, error in scenario["hops"]:
+        if result:
+            hops.append({"caller": result["caller"], "target": result["target"], "part": result["part"],
+                         "contract": rel(result["contract"]),
+                         "caller-unit": result["caller-unit"].rel if result["caller-unit"] else None,
+                         "target-unit": result["target-unit"].rel if result["target-unit"] else None,
+                         "via": [{"unit": holder.rel, "key": key} for holder, key in result["via"]]})
+        else:
+            hops.append({"caller": None, "target": None, "part": None, "contract": None,
+                         "caller-unit": None, "target-unit": None, "via": [],
+                         "unresolved": hop, "error": error})
+    spec = scenario["spec"]
+    return {"name": scenario["name"], "summary": spec["summary"], "source": spec["source"] or None,
+            "expect": spec["expect"], "hops": hops, "x": spec["x"]}
+
+
 def build_model(project: Project) -> dict:
     """The resolved project as plain data: the schema `unifold-model` of tool-json.md."""
     rel = project.rel
@@ -4147,22 +4774,7 @@ def build_model(project: Project) -> dict:
 
     by_unit = {}
     for scenario in resolved_scenarios(project):
-        hops = []
-        for hop, result, error in scenario["hops"]:
-            if result:
-                hops.append({"caller": result["caller"], "target": result["target"], "part": result["part"],
-                             "contract": rel(result["contract"]),
-                             "caller-unit": result["caller-unit"].rel if result["caller-unit"] else None,
-                             "target-unit": result["target-unit"].rel if result["target-unit"] else None,
-                             "via": [{"unit": holder.rel, "key": key} for holder, key in result["via"]]})
-            else:
-                hops.append({"caller": None, "target": None, "part": None, "contract": None,
-                             "caller-unit": None, "target-unit": None, "via": [],
-                             "unresolved": hop, "error": error})
-        spec = scenario["spec"]
-        by_unit.setdefault(scenario["unit"], []).append(
-            {"name": scenario["name"], "summary": spec["summary"], "source": spec["source"] or None,
-             "expect": spec["expect"], "hops": hops, "x": spec["x"]})
+        by_unit.setdefault(scenario["unit"], []).append(scenario_data(project, scenario))
     units = []
     for unit in project.units:
         readme = os.path.join(unit.path, "README.md")
