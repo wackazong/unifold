@@ -122,6 +122,7 @@ scenarios:
       - mobile/ble-client -> device/link.advertising
       - mobile/ui -> mobile/ble-client.pair
       - mobile/ble-client -> device/link.open-session
+      - mobile/ble-client -> device/link.info
       - mobile/ui -> mobile/sync.change-plant
       - mobile/sync -> cloud/services/gateway.create-owner
       - mobile/sync -> cloud/services/gateway.put-plant
