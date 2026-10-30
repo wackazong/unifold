@@ -4227,7 +4227,7 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 .tabs button{font:600 14px/1.2 var(--sans);padding:6px 14px;margin-right:6px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}
 .tabs button:hover{border-color:var(--fg)}
 .tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);box-shadow:3px 3px 0 var(--teal-hl)}
-#diagram{border:1.5px solid var(--frame);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;background:var(--paper)}
+#diagram{border:1.5px solid var(--frame);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;background:var(--paper)}#diagram.story{max-height:none}   /* a map scrolls inside its frame; a scenario takes the height it needs */
 #diagram svg{max-width:none;height:auto;display:block;margin:0 auto}#diagram.fit svg{max-width:100%}#diagram .pick{cursor:pointer}#diagram pre{margin:8px 0 0;font-size:12px}
 /* diagrams (the label fonts are not under #diagram: Mermaid measures labels outside it): paper boxes with an ink rim and a flat offset shadow, capabilities and needs of the framing unit in amber, teal lines, framing units as dashed, shaded fields */
 :is(#diagram,.figure) .node :is(rect,polygon,path,circle,ellipse){fill:var(--paper)!important;stroke:var(--ink)!important;stroke-width:2px!important;filter:drop-shadow(4px 4px 0 var(--teal-hl))}
@@ -4426,7 +4426,7 @@ async function render(){
   if (target) { target.scrollIntoView({behavior: "smooth", block: "center"}); target.classList.add("flash"); }
   const d = u.diagrams[kind];
   el("shared").innerHTML = d && d.shared.length ? "<p class='mute'>Shared connections, not drawn:</p><ul>" + d.shared.map(s => "<li>" + code(s) + "</li>").join("") + "</ul>" : "";
-  el("zoom").hidden = true;
+  el("zoom").hidden = true; el("diagram").classList.remove("story");
   if (!d) { el("diagram").textContent = "No diagram for this unit."; return; }
   return draw(d.source, () => {
     shade(); zoom(true);
@@ -4462,7 +4462,7 @@ function story(s, chain){             // a scenario: what it is and expects, its
     .concat(s.page ? [`<a href="${esc(file(s.page))}">Markdown</a>`] : [], [`<a href="${esc(file(h.manifest))}">manifest</a>`]).join(" · ");
   el("doc").hidden = true;
   el("facts").innerHTML = (s.source ? `<dt>Source</dt><dd>${code(s.source)}</dd>` : "") + `<dt>Expect</dt><dd>${code(s.expect)}</dd>`; el("facts").hidden = false;
-  el("tabs").innerHTML = `<button class="on">sequence</button>`; el("shared").innerHTML = ""; el("zoom").hidden = true;
+  el("tabs").innerHTML = `<button class="on">sequence</button>`; el("shared").innerHTML = ""; el("zoom").hidden = true; el("diagram").classList.add("story");
   el("hint").textContent = `An arrow is one step, numbered in order, along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
   let html = "<h2>Steps</h2><table><tr><th>#</th><th>Caller</th><th>Target</th><th>Part</th><th>Contract</th><th>Wiring</th></tr>" + s.hops.map((x, i) => x.unresolved
     ? `<tr id="step:${i + 1}"><td>${i + 1}</td><td colspan="5"><code>${esc(x.unresolved)}</code> <span class="badge planned">does not resolve</span> ${esc(x.error)}</td></tr>`
