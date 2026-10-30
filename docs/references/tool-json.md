@@ -27,7 +27,7 @@ For `check`, the object also has `summary` and an empty `findings` list, so that
 ```json
 {"ok": false,
  "summary": {"units": 12, "error": 1, "warn": 0, "info": 0, "rules": {"W2": 1},
-             "ignored": {"C2": 3}, "root": "/work/shop", "tool": "0.3"},
+             "ignored": {"C2": 3}, "root": "/work/shop", "tool": "0.3.1"},
  "findings": [
   {"rule": "W2", "severity": "error", "file": "cloud/unifold.yaml", "line": 14,
    "message": "need 'alerts.push' has no provider",
@@ -122,7 +122,7 @@ The first end is the capability or need asked for; the others are every final us
 `unifold model` prints the resolved map of the whole project. Its schema is `unifold-model` 0.3 and changes only with a decision; within 0.3 keys are added, never removed or changed in meaning. Keys that start with `x-` in a manifest, a capability, a need or a scenario are passed through untouched under `x`. A process tool reads this and nothing else.
 
 ```json
-{"unifold-model": "0.3", "tool": "0.3", "project": "serial-line", "root": "/work/serial-line",
+{"unifold-model": "0.3", "tool": "0.3.1", "project": "serial-line", "root": "/work/serial-line",
  "units": [
   {"path": "transport", "name": "transport", "parent": ".", "children": ["transport/framing", "transport/serial"],
    "responsibility": "Sends and receives frames over the serial line", "kind": "adapter",
