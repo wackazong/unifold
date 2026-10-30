@@ -43,7 +43,7 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 .tabs button{font:600 14px/1.2 var(--sans);padding:6px 14px;margin-right:6px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}
 .tabs button:hover{border-color:var(--fg)}
 .tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);box-shadow:3px 3px 0 var(--teal-hl)}
-#diagram{border:1.5px solid var(--frame);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;background:var(--paper)}#diagram.story{max-height:none}   /* a map scrolls inside its frame; a scenario takes the height it needs */
+#diagram{position:relative;border:1.5px solid var(--frame);border-radius:4px;padding:20px;margin:12px 0;overflow:auto;max-height:85vh;background:var(--paper)}#diagram.story{max-height:none}   /* a map scrolls inside its frame; a scenario takes the height it needs */
 #diagram svg{max-width:none;height:auto;display:block;margin:0 auto}#diagram.fit svg{max-width:100%}#diagram .pick{cursor:pointer}#diagram pre{margin:8px 0 0;font-size:12px}
 /* diagrams (the label fonts are not under #diagram: Mermaid measures labels outside it): paper boxes with an ink rim and a flat offset shadow, capabilities and needs of the framing unit in amber, teal lines, framing units as dashed, shaded fields */
 :is(#diagram,.figure) .node :is(rect,polygon,path,circle,ellipse){fill:var(--paper)!important;stroke:var(--ink)!important;stroke-width:2px!important;filter:drop-shadow(4px 4px 0 var(--teal-hl))}
@@ -94,7 +94,8 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 #diagram.trace .node.lit :is(rect,polygon,path){stroke-width:3px!important}#diagram.trace .node.now :is(rect,polygon,path){stroke:var(--amber)!important;filter:drop-shadow(4px 4px 0 var(--amber-hl))}
 #diagram.trace .cluster.now>rect{stroke:var(--amber)!important;stroke-width:3px!important}
 #diagram text.steps{font:700 17px var(--sans);fill:var(--ink);stroke:var(--paper);stroke-width:5px;paint-order:stroke;stroke-linejoin:round}
-#diagram .runner{fill:var(--amber);stroke:var(--ink);stroke-width:2px}#diagram .runner.hollow{fill:var(--paper);stroke:var(--amber);stroke-width:3.5px}
+#diagram .runner{position:absolute;left:-11px;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--amber);border:2px solid var(--ink);pointer-events:none;will-change:transform}#diagram .runner.hollow{background:var(--paper);border:3.5px solid var(--amber)}   /* an HTML dot above the drawing: a moving SVG shape leaves traces in Safari */
+#diagram.trace .edgeLabel.lit :is(p,span){color:var(--ink)!important}   /* the colour only: a bolder label would overflow the width Mermaid measured for it */
 tr.now td{background:var(--amber-hl)}
 .st{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:baseline;border:1.5px dashed currentColor;opacity:.75}
 .st.deprecated{border-style:solid;background:linear-gradient(to top right,transparent 44%,currentColor 44% 56%,transparent 56%)}
@@ -375,17 +376,18 @@ function trace(s, f, m){              // the map of `f` with the path of the sce
     const legs = steps.flatMap(st => st.edges.length   // a step runs each of its connections; a query comes back hollow; a step not on the map is only marked
       ? st.edges.flatMap(p => st.query ? [{st, p, back: st.reverse}, {st, p, back: !st.reverse, hollow: true}] : [{st, p, back: st.reverse}]) : [{st}]);
     if (!legs.length || !paths.length) return;
-    const dot = document.createElementNS(NS, "circle"); dot.setAttribute("r", 11); dot.setAttribute("class", "runner"); paths[0].parentNode.parentNode.appendChild(dot);
+    const dot = document.createElement("div"); dot.className = "runner"; dot.hidden = true; box.appendChild(dot);
     const mine = ++run, button = el("play"); let k = 0, since = null, playing = true;
     const mark = st => {              // the current step: its chip in the strip, its row in the table, its connections and boxes
       for (const e of document.querySelectorAll(".now")) e.classList.remove("now");
       const r = document.getElementById("step:" + st.n); if (r) r.classList.add("now"); for (const e of st.edges.concat(st.ends)) e.classList.add("now");
       const strip = el("strip"), c = strip.querySelector(`.chip[data-step="${st.n}"]`); if (!c) return; c.classList.add("now");
       if (strip.scrollWidth > strip.clientWidth) strip.scrollTo({left: c.offsetLeft - strip.clientWidth / 2 + c.offsetWidth / 2, behavior: "smooth"}); };
-    const place = (leg, e) => {       // the dot at a point of the leg, from 0 to 1
-      if (!leg.p) { dot.style.display = "none"; return; }
-      const at = leg.p.getPointAtLength(leg.p.getTotalLength() * (leg.back ? 1 - e : e));
-      dot.setAttribute("cx", at.x); dot.setAttribute("cy", at.y); dot.classList.toggle("hollow", !!leg.hollow); dot.style.display = ""; };
+    const place = (leg, e) => {       // the dot at a point of the leg, from 0 to 1: the point of the path, mapped into the box
+      if (!leg.p) { dot.hidden = true; return; }
+      const at = leg.p.getPointAtLength(leg.p.getTotalLength() * (leg.back ? 1 - e : e)), m = leg.p.getScreenCTM(), r = box.getBoundingClientRect();
+      const x = m.a * at.x + m.c * at.y + m.e - r.left - box.clientLeft + box.scrollLeft, y = m.b * at.x + m.d * at.y + m.f - r.top - box.clientTop + box.scrollTop;
+      dot.style.transform = `translate(${x}px, ${y}px)`; dot.classList.toggle("hollow", !!leg.hollow); dot.hidden = false; };
     function tick(now){
       if (mine !== run || !box.isConnected || !playing) return;
       const leg = legs[k], D = leg.p ? 1100 : 500, R = k + 1 === legs.length ? 1600 : 250;   // the time of a leg and the rest after it, longer at the end of the story
