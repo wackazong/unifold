@@ -7,7 +7,7 @@
 Source: requirements of plantwatch, the public API, consistency
 Expect: within 1 minute after the upload response the alert is open on the server and its notification is handed to the push service; the phone shows one notification, a tap opens "Monstera", and the plant is first in the list with "needs water"
 
-A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it.
+A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one.
 
 ```mermaid
 ---
@@ -23,13 +23,9 @@ sequenceDiagram
   participant pmobile__ui as mobile/ui<br/>«adapter»<br/>Screens of the phone app
   participant papp_dui as app-ui<br/>«ui»<br/>Shows the state of each plant<br/>and tells the user when to water<br/>it
   pmobile__sync->>pcloud__services__gateway: 1 · upload-batch
-  activate pcloud__services__gateway
-  deactivate pcloud__services__gateway
   pcloud__services__alerts__notifier->>ppush_dservice: 2 · send
   activate ppush_dservice
   ppush_dservice-)pmobile__ui: 3 · deliver
-  activate pmobile__ui
-  deactivate pmobile__ui
   deactivate ppush_dservice
   papp_dui->>pmobile__ui: 4 · notification-tap
   activate pmobile__ui

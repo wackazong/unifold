@@ -7,7 +7,7 @@
 Source: proto §5.3
 Expect: one frame `1F 03 03 68 69 C2` on the line for the data `68 69`; nothing is read
 
-A unit is named by its path from `serial-line`; a capability or need of `serial-line` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it.
+A unit is named by its path from `serial-line`; a capability or need of `serial-line` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one.
 
 ```mermaid
 ---
@@ -31,8 +31,6 @@ sequenceDiagram
   pcodec-->>ptransport__serial: ↩ 3
   deactivate pcodec
   ptransport__serial->>puart: 4 · write
-  activate puart
-  deactivate puart
   deactivate ptransport
   deactivate psession
   Note over phost,puart: wrap: Expect: one frame `1F 03 03 68 69 C2` on the line for the data `68 69`#59; nothing is read

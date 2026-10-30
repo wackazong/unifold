@@ -7,7 +7,7 @@
 Source: BLE profile, fetch stored readings and confirm
 Expect: the 96 readings 4711 to 4806 are stored on the phone with a UTC time each and are marked delivered on the sensor stick; the phone disconnects and the readings wait for the next upload
 
-A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it.
+A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one.
 
 ```mermaid
 ---
@@ -24,8 +24,6 @@ sequenceDiagram
   pmobile__ble_dclient->>pdevice__link: 1 · open-session
   activate pdevice__link
   pdevice__link->>pdevice__hal: 2 · answer
-  activate pdevice__hal
-  deactivate pdevice__hal
   deactivate pdevice__link
   pmobile__ble_dclient->>pdevice__link: 3 · status
   activate pdevice__link
@@ -38,8 +36,6 @@ sequenceDiagram
   pdevice__store-->>pdevice__link: ↩ 5
   deactivate pdevice__store
   pdevice__link->>pdevice__hal: 6 · send
-  activate pdevice__hal
-  deactivate pdevice__hal
   deactivate pdevice__link
   pmobile__ble_dclient-)pmobile__sync: 7 · batch
   activate pmobile__sync
@@ -48,8 +44,6 @@ sequenceDiagram
   pmobile__ble_dclient->>pdevice__link: 9 · confirm
   activate pdevice__link
   pdevice__link->>pdevice__store: 10 · mark-delivered
-  activate pdevice__store
-  deactivate pdevice__store
   deactivate pdevice__link
   deactivate pmobile__ble_dclient
   deactivate pmobile__sync

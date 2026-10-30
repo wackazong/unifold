@@ -7,7 +7,7 @@
 Source: tutorial first-plant of mobile
 Expect: the sensor stick is bonded and listed as paired, "Monstera" exists on the phone and on the server with the sensor stick attached, and the phone is registered for the notifications of the new owner
 
-A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it.
+A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one.
 
 ```mermaid
 ---
@@ -27,46 +27,32 @@ sequenceDiagram
   papp_dui->>pmobile__ui: 1 · owner
   activate pmobile__ui
   pmobile__ui->>pmobile__sync: 2 · start
-  activate pmobile__sync
-  deactivate pmobile__sync
   deactivate pmobile__ui
   papp_dui->>pmobile__ui: 3 · edit-plant
   activate pmobile__ui
   pmobile__ui->>pmobile__sync: 4 · create-plant
-  activate pmobile__sync
-  deactivate pmobile__sync
   deactivate pmobile__ui
   papp_dui->>pmobile__ui: 5 · pair
   activate pmobile__ui
   pmobile__ui->>pmobile__ble_dclient: 6 · search
   activate pmobile__ble_dclient
-  pmobile__ble_dclient-->>pmobile__ui: ↩ 6
-  deactivate pmobile__ble_dclient
-  deactivate pmobile__ui
   pdevice__link-)pmobile__ble_dclient: 7 · advertising
-  activate pmobile__ble_dclient
+  pmobile__ble_dclient-->>pmobile__ui: ↩ 6
   deactivate pmobile__ble_dclient
   pmobile__ui->>pmobile__ble_dclient: 8 · pair
   activate pmobile__ble_dclient
   pmobile__ble_dclient->>pdevice__link: 9 · open-session
   activate pdevice__link
+  pdevice__hal-)pdevice__link: 10 · radio-event
   deactivate pdevice__link
   deactivate pmobile__ble_dclient
-  pdevice__hal-)pdevice__link: 10 · radio-event
-  activate pdevice__link
-  deactivate pdevice__link
   pmobile__ui->>pmobile__sync: 11 · change-plant
   activate pmobile__sync
   pmobile__sync->>pcloud__services__gateway: 12 · create-owner
-  activate pcloud__services__gateway
-  deactivate pcloud__services__gateway
   pmobile__sync->>pcloud__services__gateway: 13 · put-plant
-  activate pcloud__services__gateway
-  deactivate pcloud__services__gateway
   deactivate pmobile__sync
   pmobile__ui->>ppush_dservice: 14 · register
-  activate ppush_dservice
-  deactivate ppush_dservice
+  deactivate pmobile__ui
   Note over papp_dui,ppush_dservice: wrap: Expect: the sensor stick is bonded and listed as paired, #quot;Monstera#quot; exists on the phone and on the server with the sensor stick attached, and the phone is registered for the notifications of the new owner
 ```
 

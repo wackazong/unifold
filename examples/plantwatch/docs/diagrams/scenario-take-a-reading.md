@@ -7,7 +7,7 @@
 Source: runtime of device, the sleep and wake cycle
 Expect: one reading with the next sequence number and the tick count of the measurement is in the log and survives power loss; a connected central is notified of it as Live reading and of the new Status; the board sleeps until the next alarm
 
-A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it.
+A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one.
 
 ```mermaid
 ---
@@ -43,18 +43,12 @@ sequenceDiagram
   pdevice__sampling-)pdevice__store: 6 · new-reading
   activate pdevice__store
   pdevice__store->>pdevice__hal: 7 · write
-  activate pdevice__hal
-  deactivate pdevice__hal
   deactivate pdevice__store
   pdevice__sampling-)pdevice__link: 8 · new-reading
   activate pdevice__link
   pdevice__link->>pdevice__hal: 9 · send
-  activate pdevice__hal
-  deactivate pdevice__hal
   deactivate pdevice__link
   pdevice__sampling->>pdevice__hal: 10 · set-alarm
-  activate pdevice__hal
-  deactivate pdevice__hal
   deactivate pdevice__sampling
   Note over pdevice__sampling,pdevice__link: wrap: Expect: one reading with the next sequence number and the tick count of the measurement is in the log and survives power loss#59; a connected central is notified of it as Live reading and of the new Status#59; the board sleeps until the next alarm
 ```

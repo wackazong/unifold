@@ -7,7 +7,7 @@
 Source: decisions 0001 and 0003 of cloud
 Expect: the upload is answered with `new` before history and evaluation have seen the reading; within 10 seconds the reading is in the history of its plant; within 1 minute the alert is open and its notification is handed to the push service; the two branches run independently and in any order
 
-A unit is named by its path from `cloud`; a capability or need of `cloud` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it.
+A unit is named by its path from `cloud`; a capability or need of `cloud` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one.
 
 ```mermaid
 ---
@@ -30,41 +30,25 @@ sequenceDiagram
   pgateway->>pingest: 2 · upload-batch
   activate pingest
   pingest->>pplatform: 3 · publish
-  activate pplatform
-  deactivate pplatform
   pingest-)pplants: 4 · reading-accepted
   activate pplants
-  deactivate pplants
-  deactivate pingest
-  deactivate pgateway
   pplatform-)pplants: 5 · deliver
-  activate pplants
   pplants->>pplatform: 6 · transaction
-  activate pplatform
-  deactivate pplatform
   pplants->>pplatform: 7 · commit
-  activate pplatform
-  deactivate pplatform
   deactivate pplants
   pingest-)pservices__alerts__server: 8 · reading-accepted
   activate pservices__alerts__server
-  deactivate pservices__alerts__server
   pplatform-)pservices__alerts__server: 9 · deliver
-  activate pservices__alerts__server
   deactivate pservices__alerts__server
+  deactivate pingest
+  deactivate pgateway
   pservices__alerts__plant_dlookup->>pplants: 10 · lookup-by-sensor
   activate pplants
   pplants-->>pservices__alerts__plant_dlookup: ↩ 10
   deactivate pplants
   pservices__alerts__server->>pplatform: 11 · transaction
-  activate pplatform
-  deactivate pplatform
   pservices__alerts__server->>pplatform: 12 · commit
-  activate pplatform
-  deactivate pplatform
   pservices__alerts__notifier->>ppush_dservice: 13 · send
-  activate ppush_dservice
-  deactivate ppush_dservice
   ppublic_dapi->>pgateway: 14 · list-alerts
   activate pgateway
   pgateway->>pservices__alerts__server: 15 · list-alerts

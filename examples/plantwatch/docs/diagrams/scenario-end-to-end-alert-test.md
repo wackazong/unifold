@@ -7,7 +7,7 @@
 Source: test catalogue of test-rig, ALERT-01
 Expect: no alert 60 seconds after the first upload; within 60 seconds after the second, one open alert for the plant with soil moisture below the limit and its notification reported as handed on; after the third, the same alert and no other; the report has ALERT-01 passed and the exit status is 0
 
-A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it.
+A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every step is one hop along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one.
 
 ```mermaid
 ---
@@ -23,26 +23,12 @@ sequenceDiagram
   ptest_dreport->>ptest_drig: 1 · run
   activate ptest_drig
   ptest_drig->>pemulator: 2 · put-scenario
-  activate pemulator
-  deactivate pemulator
   ptest_drig->>pcloud__services__gateway: 3 · put-plant
-  activate pcloud__services__gateway
-  deactivate pcloud__services__gateway
   ptest_drig->>pemulator: 4 · put-time
-  activate pemulator
-  deactivate pemulator
   ptest_drig->>pemulator: 5 · open-session
-  activate pemulator
-  deactivate pemulator
   ptest_drig->>pemulator: 6 · fetch
-  activate pemulator
-  deactivate pemulator
   ptest_drig->>pemulator: 7 · confirm
-  activate pemulator
-  deactivate pemulator
   ptest_drig->>pcloud__services__gateway: 8 · upload-batch
-  activate pcloud__services__gateway
-  deactivate pcloud__services__gateway
   ptest_drig->>pcloud__services__gateway: 9 · list-alerts
   activate pcloud__services__gateway
   pcloud__services__gateway-->>ptest_drig: ↩ 9

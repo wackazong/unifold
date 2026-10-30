@@ -2945,7 +2945,9 @@ def scenario_sequence(scenario: dict) -> tuple:
     an event from the target that raises it to the caller that receives it, with an open arrowhead.
     The receiver of a step is active until a lifeline further out makes the next step, or the
     scenario ends; a unit below the receiver acts for it, as it implements the receiver's
-    capability. A query answers with a dashed arrow when its receiver's activation ends."""
+    capability. An event from an idle provider lands on the activation of a busy receiver, or
+    starts one. A query answers with a dashed arrow when its receiver's activation ends. A
+    command that nothing follows inside leaves no bar, only its arrow."""
     names: list = []
     for hop, result, error in scenario["hops"]:
         for text in ((result["caller"], result["target"]) if result else
@@ -2985,13 +2987,22 @@ def scenario_sequence(scenario: dict) -> tuple:
             continue
         kind = result.get("kind")
         sender, receiver = (result["target"], result["caller"]) if kind == "event" else (result["caller"], result["target"])
-        while busy and not within(sender, busy[-1][0]):   # the steps inside the last one are over when a lifeline further out acts
+        lands = kind == "event" and not any(within(sender, b[0]) for b in busy) and any(within(receiver, b[0]) for b in busy)
+        while busy and not within(receiver if lands else sender, busy[-1][0]):   # the steps inside the last one are over when a lifeline further out acts
             done(busy.pop())
         lines.append(f"  {ids[sender]}{'-)' if kind == 'event' else '->>'}{ids[receiver]}: {index} · {text(result['part'])}")
-        lines.append(f"  activate {ids[receiver]}")
-        busy.append((receiver, sender, index, kind))
+        if not lands:                                 # an event from an idle provider lands on the bar of a busy receiver; every other step opens one
+            lines.append(f"  activate {ids[receiver]}")
+            busy.append((receiver, sender, index, kind))
     while busy:
         done(busy.pop())
+    kept: list = []                                   # a command that nothing follows inside leaves no bar, only its arrow
+    for line in lines:
+        if kept and kept[-1].startswith("  activate ") and line == "  deactivate " + kept[-1][11:]:
+            kept.pop()
+            continue
+        kept.append(line)
+    lines = kept
     expect = scenario["spec"]["expect"]
     if expect and names and names[-1]:                # `wrap:` keeps a long expectation within the lifelines
         lines.append(f"  Note over {ids[names[0]]},{ids[names[-1]]}: wrap: Expect: {text(expect)}"
@@ -3032,7 +3043,8 @@ def scenario_page(project: Project, scenario: dict) -> str:
                       "its part says: a command or query goes from the caller to the target, and a dashed arrow brings "
                       "the result of a query back; an event goes from the provider that raises it to the caller that "
                       "receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends "
-                      "when a lifeline further out makes the next step, and a unit below the busy one acts for it.", "",
+                      "when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event "
+                      "from an idle lifeline lands on the bar of a busy receiver, or starts one.", "",
                       "```mermaid", *lines, "```", "", *rows, ""])
 
 
@@ -4502,7 +4514,7 @@ function story(s, chain){             // a scenario: what it is and expects, its
   el("tabs").innerHTML = `<button data-view="sequence" class="${view === "sequence" ? "on" : ""}">sequence</button>` + (mapKind ? `<button data-view="map" class="${view === "map" ? "on" : ""}">map</button>` : "");
   el("shared").innerHTML = ""; el("zoom").hidden = true; el("diagram").classList.toggle("story", view === "sequence"); el("diagram").classList.toggle("trace", view === "map");
   el("strip").hidden = view !== "map"; el("strip").innerHTML = view === "map" ? s.hops.map((x, i) => `<span class="chip" data-step="${i + 1}"><b>${i + 1}</b>${esc(x.part || x.unresolved)}</span>`).join("") : "";
-  el("hint").textContent = view === "map" ? `The ${mapKind} diagram of ${named(frame)} with the path of this scenario: the boxes and connections its steps use are lit and carry the numbers of the steps, the rest steps back. A dot runs every step in the direction of the data, in order; a hollow dot brings the result of a query back. Click a number or a lit connection to find the step in the table, a box to open its unit.` : `An arrow is one step, numbered in order, along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
+  el("hint").textContent = view === "map" ? `The ${mapKind} diagram of ${named(frame)} with the path of this scenario: the boxes and connections its steps use are lit and carry the numbers of the steps, the rest steps back. A dot runs every step in the direction of the data, in order; a hollow dot brings the result of a query back. Click a number or a lit connection to find the step in the table, a box to open its unit.` : `An arrow is one step, numbered in order, along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event from an idle lifeline lands on the bar of a busy receiver, or starts one. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
   let html = "<h2>Steps</h2><table><tr><th>#</th><th>Caller</th><th>Target</th><th>Part</th><th>Contract</th><th>Wiring</th></tr>" + s.hops.map((x, i) => x.unresolved
     ? `<tr id="step:${i + 1}"><td>${i + 1}</td><td colspan="5"><code>${esc(x.unresolved)}</code> <span class="badge planned">does not resolve</span> ${esc(x.error)}</td></tr>`
     : `<tr id="step:${i + 1}"><td>${i + 1}</td><td>${life(x.caller, x["caller-unit"], "capability")}</td><td>${life(x.target, x["target-unit"], "need")}</td><td><a href="${esc(href(x["part-file"] && x["part-file"] !== x.contract ? x["part-file"] : x.contract + "#" + x.part))}"><code>${esc(x.part)}</code></a>${x["part-kind"] ? " <span class='mute'>" + esc(x["part-kind"]) + "</span>" : ""}</td><td>${ref(x.contract)}</td><td>${x.via.map(v => `<span class="nw"><code>${esc(v.key)}</code> <span class="mute">in</span> ${pin(v.unit)}</span>`).join("<br>") || "–"}</td></tr>`).join("") + "</table>";
