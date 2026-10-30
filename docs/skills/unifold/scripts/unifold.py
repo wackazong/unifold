@@ -4543,6 +4543,7 @@ function story(s, chain){             // a scenario: what it is and expects, its
   el("info").innerHTML = html;
   if (view === "map") return trace(s, frame, byPath[frame].diagrams[mapKind]);
   return draw(d.source, () => {
+    for (const m of el("diagram").querySelectorAll('marker[id$="-filled-head"]')) m.setAttribute("markerUnits", "userSpaceOnUse");   // the head of an event: Mermaid scales it with the stroke, which is thicker here; the other heads are fixed
     for (const box of el("diagram").querySelectorAll("rect.actor[name]")) {   // a lifeline, at the top and the bottom: its unit, or its row in the tables
       const l = d.lifelines[box.getAttribute("name")], g = box.parentNode; if (!l) continue;
       g.classList.add("pick", l.side ? "side" : byPath[l.unit].status);
