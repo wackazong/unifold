@@ -10,16 +10,21 @@ Expect: the screen shows the new value within 1 second, marked "not yet sent"; u
 A unit is named by its path from `mobile`; a capability or need of `mobile` is named bare. Every hop is a call along one connection of the map.
 
 ```mermaid
+---
+config:
+  sequence:
+    height: 108
+---
 sequenceDiagram
-  participant papp_dui as app-ui
-  participant pui as ui
-  participant psync as sync
-  participant pcloud_dapi as cloud-api
+  participant papp_dui as app-ui<br/>«ui»<br/>Shows the state of each plant<br/>and tells the user when to water<br/>it
+  participant pui as ui<br/>«adapter»<br/>Screens of the phone app
+  participant psync as sync<br/>«library»<br/>Keeps plants, history and alerts<br/>on the phone and in step with<br/>the server
+  participant pcloud_dapi as cloud-api<br/>«http»<br/>Stores readings and returns<br/>plants, history and alerts
   papp_dui->>pui: 1 · edit-plant
   pui->>psync: 2 · change-plant
   pui->>psync: 3 · plant
   psync->>pcloud_dapi: 4 · put-plant
-  Note over papp_dui,pcloud_dapi: Expect: the screen shows the new value within 1 second, marked #quot;not yet sent#quot;; until the server has the new threshold, alerts follow the old one; after the next exchange the plant is `in step` and the mark is gone
+  Note over papp_dui,pcloud_dapi: wrap: Expect: the screen shows the new value within 1 second, marked #quot;not yet sent#quot;#59; until the server has the new threshold, alerts follow the old one#59; after the next exchange the plant is `in step` and the mark is gone
 ```
 
 | # | Caller | Target | Part | Contract |

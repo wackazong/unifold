@@ -10,15 +10,20 @@ Expect: one frame `1F 01 01 12` on the line; after the device's `1F 01 81 9B`, o
 A unit is named by its path from `serial-line`; a capability or need of `serial-line` is named bare. Every hop is a call along one connection of the map.
 
 ```mermaid
+---
+config:
+  sequence:
+    height: 108
+---
 sequenceDiagram
-  participant phost as host
-  participant psession as session
-  participant pclock as clock
-  participant ptransport as transport
-  participant ptransport__serial as transport/serial
-  participant pcodec as codec
-  participant puart as uart
-  participant ptransport__framing as transport/framing
+  participant phost as host<br/>Open a session, send data, close
+  participant psession as session<br/>«stateful»<br/>Runs the host side of a session<br/>through its states and timeouts
+  participant pclock as clock<br/>The current time in milliseconds
+  participant ptransport as transport<br/>«adapter»<br/>Sends and receives frames over<br/>the serial line
+  participant ptransport__serial as transport/serial<br/>«adapter»<br/>Moves frames through the serial<br/>port with deadlines
+  participant pcodec as codec<br/>«logic»<br/>Encodes a payload into the bytes<br/>of a frame and decodes a frame<br/>from bytes
+  participant puart as uart<br/>The serial port of the host<br/>computer, as a byte stream
+  participant ptransport__framing as transport/framing<br/>«logic»<br/>Cuts the byte stream from the<br/>line into frames
   phost->>psession: 1 · open
   psession->>pclock: 2 · now
   psession->>ptransport: 3 · send
@@ -28,7 +33,7 @@ sequenceDiagram
   ptransport__serial->>puart: 7 · read
   ptransport__serial->>ptransport__framing: 8 · feed
   ptransport__framing->>pcodec: 9 · decode
-  Note over phost,ptransport__framing: Expect: one frame `1F 01 01 12` on the line; after the device's `1F 01 81 9B`, open returns ok and the state is open
+  Note over phost,ptransport__framing: wrap: Expect: one frame `1F 01 01 12` on the line#59; after the device's `1F 01 81 9B`, open returns ok and the state is open
 ```
 
 | # | Caller | Target | Part | Contract |

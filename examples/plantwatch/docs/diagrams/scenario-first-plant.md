@@ -10,15 +10,20 @@ Expect: the sensor stick is bonded and listed as paired, "Monstera" exists on th
 A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every hop is a call along one connection of the map.
 
 ```mermaid
+---
+config:
+  sequence:
+    height: 108
+---
 sequenceDiagram
-  participant papp_dui as app-ui
-  participant pmobile__ui as mobile/ui
-  participant pmobile__sync as mobile/sync
-  participant pmobile__ble_dclient as mobile/ble-client
-  participant pdevice__link as device/link
-  participant pdevice__hal as device/hal
-  participant pcloud__services__gateway as cloud/services/gateway
-  participant ppush_dservice as push-service
+  participant papp_dui as app-ui<br/>«ui»<br/>Shows the state of each plant<br/>and tells the user when to water<br/>it
+  participant pmobile__ui as mobile/ui<br/>«adapter»<br/>Screens of the phone app
+  participant pmobile__sync as mobile/sync<br/>«library»<br/>Keeps plants, history and alerts<br/>on the phone and in step with<br/>the server
+  participant pmobile__ble_dclient as mobile/ble-client<br/>«library»<br/>Finds sensor sticks and fetches<br/>their readings over BLE
+  participant pdevice__link as device/link<br/>«library»<br/>Implements the BLE profile on<br/>top of the radio
+  participant pdevice__hal as device/hal<br/>«adapter»<br/>Hardware abstraction of the<br/>sensor stick board
+  participant pcloud__services__gateway as cloud/services/gateway<br/>«service»<br/>Single entry point of the server<br/>side that authenticates callers<br/>and routes requests
+  participant ppush_dservice as push-service<br/>«http»<br/>Registers phones for an owner<br/>and delivers a notification to<br/>them, for example APNs or FCM
   papp_dui->>pmobile__ui: 1 · owner
   pmobile__ui->>pmobile__sync: 2 · start
   papp_dui->>pmobile__ui: 3 · edit-plant
@@ -33,7 +38,7 @@ sequenceDiagram
   pmobile__sync->>pcloud__services__gateway: 12 · create-owner
   pmobile__sync->>pcloud__services__gateway: 13 · put-plant
   pmobile__ui->>ppush_dservice: 14 · register
-  Note over papp_dui,ppush_dservice: Expect: the sensor stick is bonded and listed as paired, #quot;Monstera#quot; exists on the phone and on the server with the sensor stick attached, and the phone is registered for the notifications of the new owner
+  Note over papp_dui,ppush_dservice: wrap: Expect: the sensor stick is bonded and listed as paired, #quot;Monstera#quot; exists on the phone and on the server with the sensor stick attached, and the phone is registered for the notifications of the new owner
 ```
 
 | # | Caller | Target | Part | Contract |

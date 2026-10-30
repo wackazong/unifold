@@ -10,16 +10,21 @@ Expect: the upload is answered with `new` before history and evaluation have see
 A unit is named by its path from `cloud`; a capability or need of `cloud` is named bare. Every hop is a call along one connection of the map.
 
 ```mermaid
+---
+config:
+  sequence:
+    height: 124
+---
 sequenceDiagram
-  participant ppublic_dapi as public-api
-  participant pgateway as gateway
-  participant pingest as ingest
-  participant pplatform as platform
-  participant pplants as plants
-  participant pservices__alerts__server as services/alerts/server
-  participant pservices__alerts__plant_dlookup as services/alerts/plant-lookup
-  participant pservices__alerts__notifier as services/alerts/notifier
-  participant ppush_dservice as push-service
+  participant ppublic_dapi as public-api<br/>«http»<br/>Upload readings and query<br/>plants, history and alerts
+  participant pgateway as gateway<br/>«service»<br/>Single entry point of the server<br/>side that authenticates callers<br/>and routes requests
+  participant pingest as ingest<br/>«service»<br/>Accepts uploaded readings and<br/>announces each accepted one as<br/>an event
+  participant pplatform as platform<br/>«adapter»<br/>Shared infrastructure of the<br/>services - message bus and<br/>database
+  participant pplants as plants<br/>«service»<br/>Registry of plants with their<br/>sensors, thresholds and reading<br/>history
+  participant pservices__alerts__server as services/alerts/server<br/>«app»<br/>Process that consumes readings,<br/>stores the alerts they lead to<br/>and answers queries about them
+  participant pservices__alerts__plant_dlookup as services/alerts/plant-lookup<br/>«adapter»<br/>Looks up the plant a sensor<br/>stick is attached to, with owner<br/>and thresholds, in the registry<br/>of plants
+  participant pservices__alerts__notifier as services/alerts/notifier<br/>«adapter»<br/>Turns an opened alert into one<br/>notification to the owner
+  participant ppush_dservice as push-service<br/>«http»<br/>Takes a notification for an<br/>owner and delivers it to the<br/>phones registered for that owner
   ppublic_dapi->>pgateway: 1 · upload-batch
   pgateway->>pingest: 2 · upload-batch
   pingest->>pplatform: 3 · publish
@@ -37,7 +42,7 @@ sequenceDiagram
   pgateway->>pservices__alerts__server: 15 · list-alerts
   ppublic_dapi->>pgateway: 16 · get-history
   pgateway->>pplants: 17 · get-history
-  Note over ppublic_dapi,ppush_dservice: Expect: the upload is answered with `new` before history and evaluation have seen the reading; within 10 seconds the reading is in the history of its plant; within 1 minute the alert is open and its notification is handed to the push service; the two branches run independently and in any order
+  Note over ppublic_dapi,ppush_dservice: wrap: Expect: the upload is answered with `new` before history and evaluation have seen the reading#59; within 10 seconds the reading is in the history of its plant#59; within 1 minute the alert is open and its notification is handed to the push service#59; the two branches run independently and in any order
 ```
 
 | # | Caller | Target | Part | Contract |

@@ -158,7 +158,7 @@ Diagrams and indexes are generated from the manifests and MUST NOT be edited by 
 | `docs/diagrams/component.md` | The children of the unit, each with its responsibility and kind, and the connections between them and with the unit's own needs. | Units that have children. |
 | `docs/diagrams/context.md` | The unit inside the frame of its parent, with the siblings it is connected to; tables of the final provider of each need and the final users of each capability. | Units that have children and a parent. |
 | `docs/diagrams/architecture.md` | The unit opened up three levels deep, or fewer where the page would exceed the line limit. | Units whose children have children. |
-| `docs/diagrams/scenario-<name>.md` | One scenario as a sequence diagram, one lifeline per unit, capability or need named, drawn end to end across levels, with the hops as a table. | Units that hold scenarios. |
+| `docs/diagrams/scenario-<name>.md` | One scenario as a sequence diagram, one lifeline per unit, capability or need named, with its kind and its responsibility or summary, drawn end to end across levels, with the hops as a table. | Units that hold scenarios. |
 | `docs/decisions/index.md` | The decisions of the unit, with status and date. | Units that have decisions. |
 | `AGENTS.md` | Where the documents and skills of the unit are, for coding agents; at the root also the unifold block with the index of units. | Every unit. |
 

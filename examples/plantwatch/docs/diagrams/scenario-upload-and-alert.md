@@ -10,13 +10,18 @@ Expect: within 1 minute after the upload response the alert is open on the serve
 A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every hop is a call along one connection of the map.
 
 ```mermaid
+---
+config:
+  sequence:
+    height: 108
+---
 sequenceDiagram
-  participant pmobile__sync as mobile/sync
-  participant pcloud__services__gateway as cloud/services/gateway
-  participant pcloud__services__alerts__notifier as cloud/services/alerts/notifier
-  participant ppush_dservice as push-service
-  participant pmobile__ui as mobile/ui
-  participant papp_dui as app-ui
+  participant pmobile__sync as mobile/sync<br/>«library»<br/>Keeps plants, history and alerts<br/>on the phone and in step with<br/>the server
+  participant pcloud__services__gateway as cloud/services/gateway<br/>«service»<br/>Single entry point of the server<br/>side that authenticates callers<br/>and routes requests
+  participant pcloud__services__alerts__notifier as cloud/services/alerts/notifier<br/>«adapter»<br/>Turns an opened alert into one<br/>notification to the owner
+  participant ppush_dservice as push-service<br/>«http»<br/>Registers phones for an owner<br/>and delivers a notification to<br/>them, for example APNs or FCM
+  participant pmobile__ui as mobile/ui<br/>«adapter»<br/>Screens of the phone app
+  participant papp_dui as app-ui<br/>«ui»<br/>Shows the state of each plant<br/>and tells the user when to water<br/>it
   pmobile__sync->>pcloud__services__gateway: 1 · upload-batch
   pcloud__services__alerts__notifier->>ppush_dservice: 2 · send
   pmobile__ui->>ppush_dservice: 3 · deliver
@@ -24,7 +29,7 @@ sequenceDiagram
   pmobile__ui->>pmobile__sync: 5 · plant
   pmobile__sync->>pcloud__services__gateway: 6 · list-alerts
   papp_dui->>pmobile__ui: 7 · plants
-  Note over pmobile__sync,papp_dui: Expect: within 1 minute after the upload response the alert is open on the server and its notification is handed to the push service; the phone shows one notification, a tap opens #quot;Monstera#quot;, and the plant is first in the list with #quot;needs water#quot;
+  Note over pmobile__sync,papp_dui: wrap: Expect: within 1 minute after the upload response the alert is open on the server and its notification is handed to the push service#59; the phone shows one notification, a tap opens #quot;Monstera#quot;, and the plant is first in the list with #quot;needs water#quot;
 ```
 
 | # | Caller | Target | Part | Contract |

@@ -10,12 +10,17 @@ Expect: the 96 readings 4711 to 4806 are stored on the phone with a UTC time eac
 A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every hop is a call along one connection of the map.
 
 ```mermaid
+---
+config:
+  sequence:
+    height: 108
+---
 sequenceDiagram
-  participant pmobile__ble_dclient as mobile/ble-client
-  participant pdevice__link as device/link
-  participant pdevice__hal as device/hal
-  participant pdevice__store as device/store
-  participant pmobile__sync as mobile/sync
+  participant pmobile__ble_dclient as mobile/ble-client<br/>«library»<br/>Finds sensor sticks and fetches<br/>their readings over BLE
+  participant pdevice__link as device/link<br/>«library»<br/>Implements the BLE profile on<br/>top of the radio
+  participant pdevice__hal as device/hal<br/>«adapter»<br/>Hardware abstraction of the<br/>sensor stick board
+  participant pdevice__store as device/store<br/>«library»<br/>Keeps readings on the sensor<br/>stick until they have been<br/>delivered
+  participant pmobile__sync as mobile/sync<br/>«library»<br/>Keeps plants, history and alerts<br/>on the phone and in step with<br/>the server
   pmobile__ble_dclient->>pdevice__link: 1 · open-session
   pdevice__link->>pdevice__hal: 2 · answer
   pmobile__ble_dclient->>pdevice__link: 3 · status
@@ -26,7 +31,7 @@ sequenceDiagram
   pmobile__sync->>pmobile__ble_dclient: 8 · acknowledge
   pmobile__ble_dclient->>pdevice__link: 9 · confirm
   pdevice__link->>pdevice__store: 10 · mark-delivered
-  Note over pmobile__ble_dclient,pmobile__sync: Expect: the 96 readings 4711 to 4806 are stored on the phone with a UTC time each and are marked delivered on the sensor stick; the phone disconnects and the readings wait for the next upload
+  Note over pmobile__ble_dclient,pmobile__sync: wrap: Expect: the 96 readings 4711 to 4806 are stored on the phone with a UTC time each and are marked delivered on the sensor stick#59; the phone disconnects and the readings wait for the next upload
 ```
 
 | # | Caller | Target | Part | Contract |

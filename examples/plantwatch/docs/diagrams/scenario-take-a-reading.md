@@ -10,13 +10,18 @@ Expect: one reading with the next sequence number and the tick count of the meas
 A unit is named by its path from `plantwatch`; a capability or need of `plantwatch` is named bare. Every hop is a call along one connection of the map.
 
 ```mermaid
+---
+config:
+  sequence:
+    height: 108
+---
 sequenceDiagram
-  participant pdevice__sampling as device/sampling
-  participant pdevice__hal as device/hal
-  participant psoil_dprobe as soil-probe
-  participant pambient_dsensor as ambient-sensor
-  participant pdevice__store as device/store
-  participant pdevice__link as device/link
+  participant pdevice__sampling as device/sampling<br/>«library»<br/>Takes a calibrated reading at<br/>every sampling interval
+  participant pdevice__hal as device/hal<br/>«adapter»<br/>Hardware abstraction of the<br/>sensor stick board
+  participant psoil_dprobe as soil-probe<br/>«hardware»<br/>Capacitive soil moisture probe<br/>with an analogue output
+  participant pambient_dsensor as ambient-sensor<br/>«hardware»<br/>Light and temperature sensor on<br/>an I2C bus
+  participant pdevice__store as device/store<br/>«library»<br/>Keeps readings on the sensor<br/>stick until they have been<br/>delivered
+  participant pdevice__link as device/link<br/>«library»<br/>Implements the BLE profile on<br/>top of the radio
   pdevice__sampling->>pdevice__hal: 1 · alarm
   pdevice__sampling->>pdevice__hal: 2 · ticks
   pdevice__sampling->>pdevice__hal: 3 · measure
@@ -27,7 +32,7 @@ sequenceDiagram
   pdevice__link->>pdevice__sampling: 8 · new-reading
   pdevice__link->>pdevice__hal: 9 · send
   pdevice__sampling->>pdevice__hal: 10 · set-alarm
-  Note over pdevice__sampling,pdevice__link: Expect: one reading with the next sequence number and the tick count of the measurement is in the log and survives power loss; a connected central is notified of it as Live reading and of the new Status; the board sleeps until the next alarm
+  Note over pdevice__sampling,pdevice__link: wrap: Expect: one reading with the next sequence number and the tick count of the measurement is in the log and survives power loss#59; a connected central is notified of it as Live reading and of the new Status#59; the board sleeps until the next alarm
 ```
 
 | # | Caller | Target | Part | Contract |

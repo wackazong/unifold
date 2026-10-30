@@ -38,6 +38,7 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 from urllib.parse import quote, unquote
 
 try:
@@ -2913,11 +2914,9 @@ def diagrams_for(project: Project, unit: Unit) -> dict:
     return out
 
 
-def scenario_page(project: Project, scenario: dict) -> str:
-    """docs/diagrams/scenario-<name>.md: a sequence diagram of the hops, end to end, and a table."""
-    unit, name, spec = scenario["unit"], scenario["name"], scenario["spec"]
-    out_dir = os.path.join(unit.path, "docs", "diagrams")
-
+def scenario_sequence(scenario: dict) -> tuple:
+    """The sequence diagram of a scenario, one lifeline per name as written, in order of first use:
+    (Mermaid lines, {name: participant id})."""
     names: list = []
     for hop, result, error in scenario["hops"]:
         for text in ((result["caller"], result["target"]) if result else
@@ -2926,23 +2925,46 @@ def scenario_page(project: Project, scenario: dict) -> str:
             if text not in names:
                 names.append(text)
     ids = {n: "p" + safe_id(n) for n in names}
-    lines = ["sequenceDiagram"]
+    text = lambda t: label(str(t).replace(";", "#59;"))  # a `;` ends a statement of a sequence diagram
+    holder, about = scenario["unit"], {}              # name -> (kind, what it does): a unit, or a capability or need
+    for hop, result, error in scenario["hops"]:
+        if not result:
+            continue
+        for name, unit, entry in ((result["caller"], result["caller-unit"], holder.capabilities.get(result["caller-capability"])),
+                                  (result["target"], result["target-unit"], holder.needs.get(result["target-need"]))):
+            about[name] = (unit.kind, unit.responsibility) if unit else (entry["kind"], entry["summary"]) if entry else ("", "")
+    boxes = {}                                        # name -> its lines: the name, «kind», the text wrapped by hand
     for n in names:
-        lines.append(f'  participant {ids[n]} as {label(n)}')
+        kind, what = about.get(n, ("", ""))
+        boxes[n] = [n] + ([f"«{kind}»"] if kind else []) + textwrap.wrap(str(what or ""), 32, break_long_words=False)
+    most = max((len(b) for b in boxes.values()), default=1)
+    lines = ["---", "config:", "  sequence:", f"    height: {max(65, 16 * most + 28)}", "---"] if most > 3 else []
+    lines.append("sequenceDiagram")                   # a box keeps the height of the config, whatever its text: room for every line
+    for n in names:
+        lines.append(f'  participant {ids[n]} as {"<br/>".join(text(line) for line in boxes[n])}')
+    for index, (hop, result, error) in enumerate(scenario["hops"], 1):
+        if result:
+            lines.append(f"  {ids[result['caller']]}->>{ids[result['target']]}: {index} · {text(result['part'])}")
+    expect = scenario["spec"]["expect"]
+    if expect and names and names[-1]:                # `wrap:` keeps a long expectation within the lifelines
+        lines.append(f"  Note over {ids[names[0]]},{ids[names[-1]]}: wrap: Expect: {text(expect)}"
+                     if len(names) > 1 else f"  Note over {ids[names[0]]}: wrap: Expect: {text(expect)}")
+    return lines, ids
+
+
+def scenario_page(project: Project, scenario: dict) -> str:
+    """docs/diagrams/scenario-<name>.md: a sequence diagram of the hops, end to end, and a table."""
+    unit, name, spec = scenario["unit"], scenario["name"], scenario["spec"]
+    out_dir = os.path.join(unit.path, "docs", "diagrams")
+    lines, _ = scenario_sequence(scenario)
     rows = ["| # | Caller | Target | Part | Contract |", "|---|---|---|---|---|"]
     for index, (hop, result, error) in enumerate(scenario["hops"], 1):
         if result:
             caller, target = result["caller"], result["target"]
-            lines.append(f"  {ids[caller]}->>{ids[target]}: {index} · {label(result['part'])}")
             contract = file_link(project, out_dir, os.path.basename(result["contract"])[:-3], result["contract"])
             rows.append(f"| {index} | `{cell(caller)}` | `{cell(target)}` | `{cell(result['part'])}` | {contract} |")
         else:
             rows.append(f"| {index} | `{cell(hop)}` | | | **does not resolve** |")
-    if spec["expect"]:
-        last = names[-1] if names else None
-        if last:
-            lines.append(f"  Note over {ids[names[0]]},{ids[last]}: Expect: {label(spec['expect'])}"
-                         if len(names) > 1 else f"  Note over {ids[last]}: Expect: {label(spec['expect'])}")
     crumbs = []
     for ancestor in reversed(unit.ancestors()):
         crumbs.append(file_link(project, out_dir, ancestor.name, best_diagram(project, ancestor)))
