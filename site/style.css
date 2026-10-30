@@ -11,7 +11,7 @@
   --accent: #0a7462; --accent-2: #5cc4ae; --accent-soft: #dcf2ec;
   --dark: #0f1416; --dark-2: #1a2226; --dark-ink: #e6ecee; --dark-muted: #9aa9b0;
   --term-err: #ff7b72; --term-wrn: #f2c56b; --term-ok: #7ee2c8;
-  --err: #c2321f; --wrn: #8f5f00;
+  --err: #c2321f; --wrn: #8f5f00; --on-accent: #fff;
   --teal: #0a7462; --teal-hl: #bfeadf; --blue: #245cc0; --blue-hl: #cfdcf8;
   --amber: #9a5b00; --amber-hl: #ffe1a3; --coral: #b93a24; --coral-hl: #ffd2c6;
   --violet: #6646b8; --violet-hl: #e1d7fa;
@@ -19,13 +19,29 @@
   --slab: "Patua One", Rockwell, "Rockwell Nova", "Roboto Slab", Georgia, serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
 }
+/* dark: chosen with the button in the header (data-theme on <html>, set by the script in the head of every
+   page), or asked for by the system when nothing is chosen. A selector and a media query cannot share a
+   rule, so both blocks hold the same tokens; build.py --check keeps them equal. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1214; --bg-2: #141a1d; --paper: #12181b; --ink: #e8eef0; --ink-2: #c3cfd3; --muted: #8e9ea5;
+  --line: #222c31; --line-2: #33414a; --code: #161d21;
+  --accent: #5fd3bb; --accent-2: #2c8f7d; --accent-soft: rgba(95, 211, 187, .12);
+  --dark: #070a0b; --dark-2: #12181b;
+  --err: #ff8f85; --wrn: #e5b657; --on-accent: #06100d;
+  --teal: #5fd3bb; --teal-hl: rgba(95, 211, 187, .28); --blue: #8db4ff; --blue-hl: rgba(110, 155, 255, .3);
+  --amber: #f2c56b; --amber-hl: rgba(242, 180, 60, .28); --coral: #ff9d88; --coral-hl: rgba(255, 120, 95, .28);
+  --violet: #b9a3ff; --violet-hl: rgba(160, 130, 255, .3);
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0e1214; --bg-2: #141a1d; --paper: #12181b; --ink: #e8eef0; --ink-2: #c3cfd3; --muted: #8e9ea5;
     --line: #222c31; --line-2: #33414a; --code: #161d21;
     --accent: #5fd3bb; --accent-2: #2c8f7d; --accent-soft: rgba(95, 211, 187, .12);
     --dark: #070a0b; --dark-2: #12181b;
-    --err: #ff8f85; --wrn: #e5b657;
+    --err: #ff8f85; --wrn: #e5b657; --on-accent: #06100d;
     --teal: #5fd3bb; --teal-hl: rgba(95, 211, 187, .28); --blue: #8db4ff; --blue-hl: rgba(110, 155, 255, .3);
     --amber: #f2c56b; --amber-hl: rgba(242, 180, 60, .28); --coral: #ff9d88; --coral-hl: rgba(255, 120, 95, .28);
     --violet: #b9a3ff; --violet-hl: rgba(160, 130, 255, .3);
@@ -76,6 +92,10 @@ pre .hl { background: var(--accent-soft); }
 .site-search input:focus { outline: none; border-color: var(--accent); }
 .site-search button { position: absolute; left: .55rem; display: flex; padding: 0; border: 0; background: none; color: var(--muted); cursor: pointer; }
 .search-page .site-search { display: none; }
+/* light or dark: the button beside the search; hidden until the script in the head shows it */
+.theme { display: flex; align-items: center; justify-content: center; flex: none; width: 2.175rem; height: 2.175rem; padding: 0; border: 2px solid var(--line-2); border-radius: 3px; background: var(--bg); color: var(--ink); cursor: pointer; }
+.theme:hover { border-color: var(--ink); }
+.theme[hidden], .theme[aria-pressed="true"] .sun, .theme:not([aria-pressed="true"]) .moon { display: none; }
 .hits { position: absolute; z-index: 10; top: calc(100% + .6rem); right: 0; width: min(32rem, calc(100vw - 2rem)); max-height: min(36rem, 75vh); overflow-y: auto; margin: 0; padding: .35rem 0; list-style: none; background: var(--paper); border: 2px solid var(--ink); border-radius: 4px; box-shadow: 6px 6px 0 var(--teal-hl); }
 .hits a { display: block; padding: .6rem 1rem; color: var(--ink); text-decoration: none; }
 .hits a:hover { background: var(--bg-2); }
@@ -165,9 +185,8 @@ td:first-child:empty, th:first-child:empty { min-width: 0; }
 /* buttons: flat, upper case */
 .button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .8rem 1.4rem; border: 2px solid var(--ink); border-radius: 3px; font: 700 .9375rem/1 var(--sans); text-transform: uppercase; letter-spacing: .06em; text-decoration: none; color: var(--ink); background: var(--bg); }
 .button:hover { background: var(--ink); color: var(--bg); }
-.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .button.primary:hover { background: var(--ink); border-color: var(--ink); color: var(--bg); }
-@media (prefers-color-scheme: dark) { .button.primary { color: #06100d; } }
 
 /* start page: the first screen */
 .home .hero { padding: 6rem 0 5rem; }
@@ -336,6 +355,7 @@ mark { background: var(--teal-hl); color: inherit; border-radius: 2px; padding: 
   .site-search button { position: static; color: var(--ink); }
   .site-search.open input { display: block; position: absolute; z-index: 11; left: 1rem; right: 1rem; top: 50%; transform: translateY(-50%); width: auto; padding: .55rem .7rem .55rem 2.2rem; border-color: var(--accent); font-size: 1rem; }
   .site-search.open button { position: absolute; z-index: 12; left: 1.7rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .theme { width: auto; height: auto; border: 0; background: none; }
   .hits { top: calc(100% - .35rem); left: 1rem; right: 1rem; width: auto; }
 }
 @media (max-width: 48rem) {
@@ -348,7 +368,8 @@ mark { background: var(--teal-hl); color: inherit; border-radius: 2px; padding: 
 }
 @media (max-width: 30rem) {
   .wrap { padding: 0 1rem; }
-  .version, .top nav a[href="/spec/"] { display: none; }
+  .version, .top nav a[href="/spec/"], .top nav .gh { display: none; }
+  .top .wrap { gap: .6rem; }
   .top nav { gap: .9rem; }
   body { font-size: 1rem; }
   .hero-actions .button { flex: 1 1 100%; }
@@ -362,10 +383,10 @@ mark { background: var(--teal-hl); color: inherit; border-radius: 2px; padding: 
 @media (max-width: 24rem) {
   .top .wrap { gap: .5rem; }
   .top nav { gap: .65rem; font-size: .875rem; }
+  .top .brand { font-size: 1.15rem; }
 }
 @media (max-width: 22rem) {
   .top .wrap { padding: 0 .75rem; }
-  .top .brand { font-size: 1.15rem; }
-  .top nav .gh { display: none; }
+  .theme { display: none; }               /* no room left: the system or an earlier choice decides */
 }
-@media print { .top nav, .site-search, .side, .anchor, .hero-actions, .bottom { display: none; } .doc { display: block; } }
+@media print { .top nav, .site-search, .theme, .side, .anchor, .hero-actions, .bottom { display: none; } .doc { display: block; } }

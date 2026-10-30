@@ -342,6 +342,28 @@ def render_md(text: str, base: Path, version: str, permalinks: bool = True) -> t
 # --------------------------------------------------------------------------
 # Page shell
 # --------------------------------------------------------------------------
+# Light or dark: a choice made with the button in the header is kept in localStorage and set as data-theme
+# on <html> before the style sheet applies, so that no page shows the other one first. Without a choice, or
+# without scripts, the system decides; a choice that matches the system again is forgotten.
+THEME_SCRIPT = """<script>
+(() => {
+  const root = document.documentElement, key = "unifold-theme", system = matchMedia("(prefers-color-scheme: dark)");
+  try { const t = localStorage.getItem(key); if (t === "light" || t === "dark") root.dataset.theme = t; } catch {}
+  const dark = () => (root.dataset.theme || (system.matches ? "dark" : "light")) === "dark";
+  const show = () => document.querySelectorAll("button.theme").forEach((b) => { b.hidden = false; b.setAttribute("aria-pressed", dark()); });
+  addEventListener("DOMContentLoaded", show);
+  system.addEventListener("change", show);
+  addEventListener("click", (ev) => {
+    if (!ev.target.closest("button.theme")) return;
+    const t = dark() ? "light" : "dark";
+    if (t === (system.matches ? "dark" : "light")) delete root.dataset.theme; else root.dataset.theme = t;
+    try { root.dataset.theme ? localStorage.setItem(key, t) : localStorage.removeItem(key); } catch {}
+    show();
+  });
+})();
+</script>"""
+
+
 def hashed(name: str) -> str:
     """The address of a file of site/ with a hash of its content, so that browsers fetch it again after a change."""
     return f"/{name}?v={hashlib.sha256((SITE / name).read_bytes()).hexdigest()[:8]}"
@@ -375,6 +397,7 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
 <link rel="preload" href="/patua-one.woff2" as="font" type="font/woff2" crossorigin>
+{THEME_SCRIPT}
 <link rel="stylesheet" href="{css_href}">
 <script src="{hashed("search.js")}" defer></script>
 </head>
@@ -385,6 +408,7 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <span class="version" title="unifold {esc(version)}">{esc(version)}</span>
 <nav aria-label="Site">{links}<a class="gh" href="{REPO_URL}" rel="noopener" aria-label="unifold on GitHub">{icon("github", "icon sm")}<span>GitHub</span></a></nav>
 <form class="site-search" action="/search/" role="search"><input type="search" name="q" placeholder="Search" aria-label="Search the documentation" autocomplete="off" spellcheck="false"><button aria-label="Search">{icon("search", "icon sm")}</button></form>
+<button class="theme" type="button" aria-label="Dark theme" aria-pressed="false" title="Light or dark" hidden>{icon("sun", "icon sm sun")}{icon("moon", "icon sm moon")}</button>
 </div></header>
 {body}
 <footer class="bottom"><div class="wrap">
@@ -506,6 +530,8 @@ ICONS = {
     "folder": '<path d="M3 6h6l2 2h10v11H3z"/>',
     "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
     "search": '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>',
+    "sun": '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+    "moon": '<path d="M20.5 13.3A8.5 8.5 0 1 1 10.7 3.5a6.6 6.6 0 0 0 9.8 9.8z"/>',
     "github": '<path fill="currentColor" stroke="none" d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.1.7-.2.7-.5v-1.7c-2.7.6-3.3-1.2-3.3-1.2-.4-1.1-1-1.4-1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.1-.2-4.4-1.1-4.4-4.8 0-1 .4-1.9 1-2.6-.1-.3-.4-1.2.1-2.6 0 0 .8-.3 2.6 1a9 9 0 0 1 4.8 0c1.8-1.3 2.6-1 2.6-1 .5 1.4.2 2.3.1 2.6.6.7 1 1.6 1 2.6 0 3.7-2.3 4.6-4.4 4.8.3.3.6.9.6 1.8v2.7c0 .3.2.6.7.5A9.5 9.5 0 0 0 12 2.5z"/>',
 }
 
@@ -1069,6 +1095,10 @@ def check() -> int:
             weight += t.stat().st_size if t else 0
     if weight > 200_000:
         problems.append(f"index.html weighs {weight} bytes with its assets (limit 200000)")
+    # the dark colours of style.css: once for the button, once for the system, the same tokens in both
+    dark = re.findall(r'^\s*:root(?:\[data-theme="dark"\]|:not\(\[data-theme="light"\]\)) \{(.*?)\}', (OUT / "style.css").read_text(encoding="utf-8"), re.S | re.M)
+    if len(dark) != 2 or dark[0].split() != dark[1].split():
+        problems.append('style.css: the dark tokens of :root[data-theme="dark"] and of the media query differ')
     for name in ("CNAME", ".nojekyll", "404.html", "llms.txt", "skill/SKILL.md", "skill/unifold-convert/SKILL.md",
                  "spec/index.html", "spec.md", "search/index.html", "search.js", "search.json", "favicon.ico", "favicon.svg",
                  "apple-touch-icon.png"):

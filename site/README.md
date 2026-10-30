@@ -26,6 +26,10 @@ uv run site/build.py --serve
 
 Every page is a folder with an `index.html`, so that any web server serves it; a link without the trailing slash, such as `https://unifold.md/spec`, is redirected by the server.
 
+## Light and dark
+
+A page follows the light or dark setting of the system until somebody presses the button beside the search. The choice is kept in `localStorage` under `unifold-theme` and set as `data-theme` on `<html>` by a small script in the head, before the style sheet applies, so that no page shows the other colours first; a choice that matches the system again is forgotten. Without scripts the button stays hidden and the system decides; on the narrowest phones there is no room for it. `style.css` holds the dark colours twice, for the choice and for the system, because a selector and a media query cannot share a rule; `--check` sees that both lists are the same. The example maps, written by `unifold site`, have the same button, key and attribute, and draw their diagram again when the colours change.
+
 ## Diagrams
 
 A Mermaid block is replaced by an inline SVG from `site/diagrams/<hash>.svg` (hash of the Mermaid source), coloured by `style.css` for light and dark. These files are committed, so continuous integration needs no browser. When a block changes, the build renders the missing file if it finds Mermaid CLI, and otherwise warns and shows the Mermaid source:
