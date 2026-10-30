@@ -4305,7 +4305,9 @@ tr.flash td{animation:flash 2.4s ease-out}#diagram text.messageText.step:hover{f
 .theme:hover{border-color:var(--fg)}.theme:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.theme[hidden],.theme[aria-pressed="true"] .sun,.theme:not([aria-pressed="true"]) .moon{display:none}
 /* a document: README.md on the page of its unit, every other Markdown file on a page of its own; set like the chapters of unifold.md */
 .prose{font-size:16px;line-height:1.65;overflow-wrap:break-word}.prose>*{max-width:46rem}.prose>:is(.table,pre,.figure){max-width:100%}.prose>:first-child{margin-top:.5em}
-.prose h2{font:400 22px/1.2 var(--slab);margin:1.9em 0 .5em}.prose h3{font:700 17px/1.3 var(--sans);margin:1.7em 0 .4em}.prose :is(h4,h5,h6){font:700 15px/1.35 var(--sans);margin:1.5em 0 .3em}
+.prose h2{font:400 22px/1.2 var(--slab);margin:1.9em 0 .5em}.prose h3{font:700 17px/1.3 var(--sans);margin:1.7em 0 .4em}
+.prose.contract h2:not(:first-child){margin-top:2.4em;padding-top:1em;border-top:1px solid var(--line)}   /* a contract: its sections ruled off, each part a bar one can find when scrolling */
+.prose.contract h3{font:600 16px/1.3 var(--mono);margin:2.4em 0 .8em;padding:.45em .8em;background:var(--code);border:1px solid var(--code-line);border-left:4px solid var(--accent);border-radius:4px}.prose :is(h4,h5,h6){font:700 15px/1.35 var(--sans);margin:1.5em 0 .3em}
 .prose :is(p,ul,ol,blockquote){margin:.85em 0}.prose :is(ul,ol){padding-left:1.6em}.prose li{margin:.3em 0}.prose li>:is(p,ul,ol){margin:.35em 0}
 .prose p.field{margin:.5em 0}.prose li.task{list-style:none}.prose li.task>input{margin:0 .45em 0 -1.4em;accent-color:var(--accent)}
 .prose pre{margin:1.1em 0;padding:12px 16px;background:var(--code);border-radius:4px;overflow-x:auto;font:13px/1.55 var(--mono);tab-size:2}.prose pre code{background:none;border:0;padding:0;font-size:inherit}
@@ -4342,7 +4344,7 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;
 const file = p => model.base ? model.base + "/" + p.split("/").map(encodeURIComponent).join("/") : model.up + p.split("/").map(encodeURIComponent).join("/");
 const badge = s => s && s !== "active" && s !== "accepted" ? ` <span class="badge ${esc(s.split(" ")[0])}">${esc(s)}</span>` : "";
 const pick = (p, t) => `<a class="go" data-path="${esc(p)}">${esc(t ?? (p === "." ? model.name : p))}</a>` + badge(byPath[p] && byPath[p].status);
-const docs = model.docs || {}, KINDS = {readme: "README", tutorials: "Tutorials", references: "Reference", explanation: "Explanation", decisions: "Decisions", skills: "Skills", other: "Other"};
+const docs = model.docs || {}, KINDS = {readme: "README", tutorials: "Tutorials", contracts: "Contracts", references: "Reference", explanation: "Explanation", decisions: "Decisions", skills: "Skills", other: "Other"};
 const enc = s => encodeURIComponent(s).replace(/%(2F|40|3A)/g, m => decodeURIComponent(m));   // a route stays readable: unit@doc:docs/references/x.md
 const hashOf = (route, anchor) => "#" + enc(route) + (anchor ? "#" + encodeURIComponent(anchor) : "");
 const pageOf = p => { const d = docs[p]; return d && d.unit + "@doc:" + (d.unit === "." ? p : p.slice(d.unit.length + 1)); };   // the page of a document
@@ -4363,7 +4365,8 @@ const plain = h => { const t = document.createElement("template"); t.innerHTML =
 const docLink = (p, on) => on ? `<li class="on">${title(p)}</li>` : `<li><a href="${esc(href(p))}">${title(p)}</a>` + (docs[p].kind === "decisions" ? badge(docs[p].status || "no status") : "")
   + (docs[p].kind === "skills" && docs[p].summary ? ": " + esc(docs[p].summary) : "") + "</li>";
 function groups(u){                  // the documents of a unit by kind, in the order of AGENTS.md: learn, look up, understand, decide, do
-  const of = {tutorials: u.documents.tutorials, references: u.documents.references, explanation: u.documents.explanation, decisions: u.decisions.map(d => d.path),
+  const of = {tutorials: u.documents.tutorials, contracts: u.documents.references.filter(p => partsOf[p]), references: u.documents.references.filter(p => !partsOf[p]),   // a reference that a manifest names is a contract
+    explanation: u.documents.explanation, decisions: u.decisions.map(d => d.path),
     skills: u.skills.map(s => s.path), other: Object.keys(docs).filter(p => docs[p].unit === u.path && docs[p].kind === "other")};
   return Object.entries(KINDS).map(([k, label]) => [k, label, (of[k] || []).filter(p => docs[p])]).filter(g => g[2].length);}
 function anchors(box, route){        // the link beside a heading; the ids come with the document
@@ -4611,19 +4614,22 @@ function trace(s, f, m){              // the map of `f` with the path of the sce
   });
 }
 function reading(p, chain){           // a document: where it belongs, its front matter, its text, and the documents beside it
-  const d = docs[p], u = byPath[d.unit], label = KINDS[d.kind] || "Documents", whole = d.contract && docs[d.contract];
+  const d = docs[p], u = byPath[d.unit], whole = d.contract && docs[d.contract], agreed = partsOf[p] || (whole && partsOf[d.contract]);   // a contract, or a part of one
+  const kind = agreed ? "contracts" : d.kind, label = KINDS[kind] || "Documents";
   document.title = plain(title(p)) + " · " + model.name;
   el("crumbs").innerHTML = chain.concat(d.unit).map(c => `<a class="go" data-path="${esc(c)}">${esc(byPath[c].name)}</a>`)
-    .concat(`<a class="go" data-path="${esc(d.unit)}" data-row="docs:${esc(d.kind)}">${label}</a>`, whole ? [`<a href="${esc(href(d.contract))}">${title(d.contract)}</a>`] : [], title(p)).join(" / ");
+    .concat(`<a class="go" data-path="${esc(d.unit)}" data-row="docs:${esc(kind)}">${label}</a>`, whole ? [`<a href="${esc(href(d.contract))}">${title(d.contract)}</a>`] : [], title(p)).join(" / ");
   el("title").innerHTML = title(p) + badge(d.status); el("summary").textContent = d.summary || "";
   el("meta").innerHTML = [(whole ? "Part of a contract" : label) + " of " + pin(d.unit), `<a href="${esc(file(p))}">Markdown</a>`].join(" · ");
   const mine = whole && partsOf[d.contract] && partsOf[d.contract].find(x => d.contract.slice(0, -8) + x.name + ".md" === p);   // a part of a folder contract: which stories use it
   el("facts").innerHTML = (d.facts || []).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("") + (mine ? `<dt>Used in</dt><dd>${usedIn(d.contract, mine.name)}</dd>` : "");
   el("facts").hidden = !d.facts && !mine;
-  const parts = partsOf[p], table = parts ? "<h2>Parts in the scenarios</h2><table><tr><th>Part</th><th>Kind</th><th>Used in</th></tr>" + parts.map(x =>
-    `<tr><td>${part(p, x.name)}</td><td>${esc(x.kind || "")}</td><td>${x.kind === "type" ? "" : usedIn(p, x.name)}</td></tr>`).join("") + "</table>" : "";   // a contract: its parts and the stories that use them, above the text
-  map(false); el("doc").className = "prose"; el("doc").hidden = false; el("doc").innerHTML = table + d.html; anchors(el("doc"), pageOf(p));
-  const g = groups(u).find(x => x[0] === d.kind), near = whole ? whole.parts : g ? g[2] : [];
+  const parts = partsOf[p], table = parts ? "<h2>Parts in the scenarios</h2><div class='table'><table><tr><th>Part</th><th>Kind</th><th>Used in</th></tr>" + parts.map(x =>
+    `<tr><td>${part(p, x.name)}</td><td>${esc(x.kind || "")}</td><td>${x.kind === "type" ? "" : usedIn(p, x.name)}</td></tr>`).join("") + "</table></div>" : "";   // a contract: its parts and the stories that use them
+  map(false); el("doc").className = "prose" + (agreed ? " contract" : ""); el("doc").hidden = false; el("doc").innerHTML = d.html;
+  if (table) { const at = el("doc").querySelector("#md-parts"); if (at) at.insertAdjacentHTML("beforebegin", table); else el("doc").insertAdjacentHTML("beforeend", table); }   // after the description, before the parts
+  anchors(el("doc"), pageOf(p));
+  const g = groups(u).find(x => x[0] === kind), near = whole ? whole.parts : g ? g[2] : [];
   el("info").innerHTML = near.length > 1 ? `<h2>${whole ? "Parts of " + title(d.contract) : label + " of " + esc(u.name)}</h2><ul>` + near.map(o => docLink(o, o === p)).join("") + "</ul>" : "";
   return figures(el("doc"));
 }
