@@ -383,14 +383,18 @@ function trace(s, f, m){              // the map of `f` with the path of the sce
       const r = document.getElementById("step:" + st.n); if (r) r.classList.add("now"); for (const e of st.edges.concat(st.ends)) e.classList.add("now");
       const strip = el("strip"), c = strip.querySelector(`.chip[data-step="${st.n}"]`); if (!c) return; c.classList.add("now");
       if (strip.scrollWidth > strip.clientWidth) strip.scrollTo({left: c.offsetLeft - strip.clientWidth / 2 + c.offsetWidth / 2, behavior: "smooth"}); };
-    const place = (leg, e) => {       // the dot at a point of the leg, from 0 to 1: the point of the path, mapped into the box
+    let map = null;                   // how the drawing maps into the box, with its scale: found once per leg and after a resize, not every frame
+    addEventListener("resize", () => map = null);
+    const place = (leg, e) => {       // the dot at a point of the leg, from 0 to 1, as big as the drawing is
       if (!leg.p) { dot.hidden = true; return; }
-      const at = leg.p.getPointAtLength(leg.p.getTotalLength() * (leg.back ? 1 - e : e)), m = leg.p.getScreenCTM(), r = box.getBoundingClientRect();
-      const x = m.a * at.x + m.c * at.y + m.e - r.left - box.clientLeft + box.scrollLeft, y = m.b * at.x + m.d * at.y + m.f - r.top - box.clientTop + box.scrollTop;
-      dot.style.transform = `translate(${x}px, ${y}px)`; dot.classList.toggle("hollow", !!leg.hollow); dot.hidden = false; };
+      if (!map || map.p !== leg.p) { const m = leg.p.getScreenCTM(), r = box.getBoundingClientRect();
+        map = {p: leg.p, m, l: leg.p.getTotalLength(), s: Math.hypot(m.a, m.b), x: m.e - r.left - box.clientLeft + box.scrollLeft, y: m.f - r.top - box.clientTop + box.scrollTop}; }
+      const q = leg.p.getPointAtLength(map.l * (leg.back ? 1 - e : e)), m = map.m;
+      dot.style.transform = `translate3d(${m.a * q.x + m.c * q.y + map.x}px, ${m.b * q.x + m.d * q.y + map.y}px, 0) scale(${map.s})`;
+      dot.classList.toggle("hollow", !!leg.hollow); dot.hidden = false; };
     function tick(now){
       if (mine !== run || !box.isConnected || !playing) return;
-      const leg = legs[k], D = leg.p ? 1100 : 500, R = k + 1 === legs.length ? 1600 : 250;   // the time of a leg and the rest after it, longer at the end of the story
+      const leg = legs[k], D = leg.p ? 1375 : 600, R = k + 1 === legs.length ? 1600 : 250;   // the time of a leg and the rest after it, longer at the end of the story
       if (since === null) { since = now; mark(leg.st); }
       const f = Math.min(1, (now - since) / D), e = f < .5 ? 2 * f * f : 1 - (2 - 2 * f) ** 2 / 2;
       place(leg, e);
@@ -443,7 +447,7 @@ document.addEventListener("click", ev => {
     return; }
   const b = ev.target.closest("button[data-kind]"); if (b) go(state.path, b.dataset.kind);
   const v = ev.target.closest("button[data-view]"); if (v && state.scenario) go(state.path, "scenario:" + state.scenario.name + (v.dataset.view === "map" ? ":map" : ""));
-  if (ev.target.id === "zoom") { fit = !fitted; zoom(); }
+  if (ev.target.id === "zoom") { fit = !fitted; zoom(); dispatchEvent(new Event("resize")); }   // a running story maps its dot anew
 });
 addEventListener("hashchange", () => { const was = state, top = !row; fromHash(); render();
   const main = document.querySelector("main");   // another page: from its top, unless a row or a heading is to be shown
