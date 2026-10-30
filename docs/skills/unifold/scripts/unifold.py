@@ -2938,8 +2938,9 @@ def diagrams_for(project: Project, unit: Unit) -> dict:
 
 
 def scenario_sequence(scenario: dict) -> tuple:
-    """The sequence diagram of a scenario, one lifeline per name as written, in order of first use:
-    (Mermaid lines, {name: participant id}).
+    """The sequence diagram of a scenario, one lifeline per name as written: (Mermaid lines,
+    {name: participant id}). A lifeline stands right after the ones introduced through the same
+    partner: the lifelines form a tree by the first step that names each, walked depth first.
 
     A step is drawn as the kind of its part says: a command or query from the caller to the target,
     an event from the target that raises it to the caller that receives it, with an open arrowhead.
@@ -2948,13 +2949,29 @@ def scenario_sequence(scenario: dict) -> tuple:
     capability. An event from an idle provider lands on the activation of a busy receiver, or
     starts one. A query answers with a dashed arrow when its receiver's activation ends. A
     command that nothing follows inside leaves no bar, only its arrow."""
-    names: list = []
+    within = lambda a, b: a == b or a.startswith(b + "/") or b.startswith(a + "/")   # the same lifeline, or one below the other
+    kids: dict = {}                                   # name -> the lifelines its steps introduced, in order
+    roots: list = []                                  # the lifelines no earlier one introduced
     for hop, result, error in scenario["hops"]:
-        for text in ((result["caller"], result["target"]) if result else
-                     [s.strip() for s in hop.split("->", 1)] if "->" in hop else [hop]):
-            text = text.rsplit(".", 1)[0] if text is not hop and "." in text and result is None else text
-            if text not in names:
-                names.append(text)
+        ends = list((result["caller"], result["target"]) if result else
+                    [s.strip() for s in hop.split("->", 1)] if "->" in hop else [hop])
+        ends = [e.rsplit(".", 1)[0] if e is not hop and "." in e and result is None else e for e in ends]
+        for i, name in enumerate(ends):
+            if name in kids:
+                continue
+            kids[name] = []
+            other = ends[1 - i] if len(ends) == 2 else None
+            parent = other if other in kids and other != name else next((k for k in kids if k != name and within(name, k)), None)
+            (kids[parent] if parent else roots).append(name)
+    names: list = []
+
+    def walk(name: str):
+        names.append(name)
+        for kid in kids[name]:
+            walk(kid)
+
+    for root in roots:
+        walk(root)
     ids = {n: "p" + safe_id(n) for n in names}
     text = lambda t: label(str(t).replace(";", "#59;"))  # a `;` ends a statement of a sequence diagram
     holder, about = scenario["unit"], {}              # name -> (kind, what it does): a unit, or a capability or need
@@ -2974,7 +2991,6 @@ def scenario_sequence(scenario: dict) -> tuple:
     for n in names:
         lines.append(f'  participant {ids[n]} as {"<br/>".join(text(line) for line in boxes[n])}')
     busy: list = []                                   # (receiver, sender, step, kind) of the steps still running, innermost last
-    within = lambda a, b: a == b or a.startswith(b + "/") or b.startswith(a + "/")   # the same lifeline, or one below the other
 
     def done(step: tuple):
         receiver, sender, index, kind = step

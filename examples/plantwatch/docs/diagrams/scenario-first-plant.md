@@ -19,10 +19,10 @@ sequenceDiagram
   participant papp_dui as app-ui<br/>«ui»<br/>Shows the state of each plant<br/>and tells the user when to water<br/>it
   participant pmobile__ui as mobile/ui<br/>«adapter»<br/>Screens of the phone app
   participant pmobile__sync as mobile/sync<br/>«library»<br/>Keeps plants, history and alerts<br/>on the phone and in step with<br/>the server
+  participant pcloud__services__gateway as cloud/services/gateway<br/>«service»<br/>Single entry point of the server<br/>side that authenticates callers<br/>and routes requests
   participant pmobile__ble_dclient as mobile/ble-client<br/>«library»<br/>Finds sensor sticks and fetches<br/>their readings over BLE
   participant pdevice__link as device/link<br/>«library»<br/>Implements the BLE profile on<br/>top of the radio
   participant pdevice__hal as device/hal<br/>«adapter»<br/>Hardware abstraction of the<br/>sensor stick board
-  participant pcloud__services__gateway as cloud/services/gateway<br/>«service»<br/>Single entry point of the server<br/>side that authenticates callers<br/>and routes requests
   participant ppush_dservice as push-service<br/>«http»<br/>Registers phones for an owner<br/>and delivers a notification to<br/>them, for example APNs or FCM
   papp_dui->>pmobile__ui: 1 · owner
   activate pmobile__ui

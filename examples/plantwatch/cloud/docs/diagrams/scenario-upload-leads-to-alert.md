@@ -21,8 +21,8 @@ sequenceDiagram
   participant pingest as ingest<br/>«service»<br/>Accepts uploaded readings and<br/>announces each accepted one as<br/>an event
   participant pplatform as platform<br/>«adapter»<br/>Shared infrastructure of the<br/>services - message bus and<br/>database
   participant pplants as plants<br/>«service»<br/>Registry of plants with their<br/>sensors, thresholds and reading<br/>history
-  participant pservices__alerts__server as services/alerts/server<br/>«app»<br/>Process that consumes readings,<br/>stores the alerts they lead to<br/>and answers queries about them
   participant pservices__alerts__plant_dlookup as services/alerts/plant-lookup<br/>«adapter»<br/>Looks up the plant a sensor<br/>stick is attached to, with owner<br/>and thresholds, in the registry<br/>of plants
+  participant pservices__alerts__server as services/alerts/server<br/>«app»<br/>Process that consumes readings,<br/>stores the alerts they lead to<br/>and answers queries about them
   participant pservices__alerts__notifier as services/alerts/notifier<br/>«adapter»<br/>Turns an opened alert into one<br/>notification to the owner
   participant ppush_dservice as push-service<br/>«http»<br/>Takes a notification for an<br/>owner and delivers it to the<br/>phones registered for that owner
   ppublic_dapi->>pgateway: 1 · upload-batch

@@ -1305,6 +1305,19 @@ def scenario_site_documents(runner: Runner, tmp: str):
     check("docs" not in shown and "html" not in json.dumps(shown), "`show --json` has no rendered documents")
 
 
+def scenario_lifeline_order(runner: Runner, tmp: str):
+    """A lifeline stands right after the ones introduced through the same partner: d, introduced by b, comes before c."""
+    root = ("capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n  a.y: c.y\n  b.z: d.z\n"
+            "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a -> b.do\n      - a -> c.go\n      - b -> d.run\n    expect: e\n")
+    units = {"a": "needs:\n  x: {summary: s, contract: ref:x}\n  y: {summary: s, contract: ref:y}\ncapabilities:\n  api: {summary: s, contract: ref:api}\n",
+             "b": "needs:\n  z: {summary: s, contract: ref:z}\ncapabilities:\n  x: {summary: s, contract: ref:x}\n",
+             "c": "capabilities:\n  y: {summary: s, contract: ref:y}\n", "d": "capabilities:\n  z: {summary: s, contract: ref:z}\n"}
+    folder = new_project(tmp, project(root, units, contracts={"api": ["serve"], "x": ["do"], "y": ["go"], "z": ["run"]}))
+    runner.run("generate", str(folder))
+    order = re.findall(r"^  participant (\S+)", (folder / "docs/diagrams/scenario-s1.md").read_text(), re.M)
+    check(order == ["papi", "pa", "pb", "pd", "pc"], f"lifelines by first partner, depth first: {order}")
+
+
 def scenario_robustness(runner: Runner, tmp: str):
     files = project("wiring:\n" + "".join(f"  u{i}.x: u{(i + 1) % 1200}.x\n" for i in range(1200)),
                     {f"u{i}": NEEDS_X + CAPABILITY_X for i in range(1200)})
@@ -1426,6 +1439,7 @@ def scenario_model(runner: Runner, tmp: str):
 
 SCENARIOS = [
     ("scenario-model", scenario_model),
+    ("scenario-lifeline-order", scenario_lifeline_order),
     ("scenario-gitignore", scenario_gitignore),
     ("scenario-json-on-failure", scenario_json_on_failure),
     ("scenario-finding-shape-text-github-strict", scenario_finding_shape),
