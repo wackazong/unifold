@@ -71,6 +71,7 @@ A finding about wiring names the manifest that holds the line: the parent's for 
 | <a id="n1"></a>`N1` | error | Every hop resolves to one connection, its part is in that connection's contract, and no name is ambiguous: a name that is both a descendant and a capability or need of the holding unit, or two connections between the same units whose contracts both have the part. | Wire the connection the hop needs, add the part to the contract, or rename what is ambiguous. |
 | <a id="n2"></a>`N2` | error | A scenario has `summary`, `hops` (a list of `caller -> target.part`) and `expect`; its name follows the rule for names. | Complete the scenario. |
 | <a id="n3"></a>`N3` | warn | Every wiring line of a unit is used by a hop of a scenario that passes through the unit. Silent where no scenario passes through the unit. | Write the scenario that needs the line, or remove the connection. |
+| <a id="n4"></a>`N4` | info | Every command, query and event of a contract is used by a hop of a scenario. Silent where the project has no scenario, or a hop does not resolve. | Write the scenario that uses the part, or remove the part from the contract. |
 
 ## C: contracts
 

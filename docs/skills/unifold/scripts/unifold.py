@@ -190,6 +190,8 @@ RULES = {
            "Complete the scenario."),
     "N3": ("warn", "Every wiring line of a unit is used by a hop of a scenario that passes through the unit. Silent where no scenario passes through the unit.",
            "Write the scenario that needs the line, or remove the connection."),
+    "N4": ("info", "Every command, query and event of a contract is used by a hop of a scenario. Silent where the project has no scenario, or a hop does not resolve.",
+           "Write the scenario that uses the part, or remove the part from the contract."),
     "C1": ("warn", "A contract has `## Parts` with at least one part, each with `Kind:` command, query, event or type.",
            "Write the parts as [writing.md](writing.md#contracts) says."),
     "C2": ("warn", "A command or query has `Pre:`, `Result:`, `Errors:` and an `Examples:` table with at least one row.",
@@ -2405,7 +2407,7 @@ def scenarios_through(project: Project, unit: Unit) -> list:
 
 
 def check_scenarios(project: Project):
-    """N1, N2 and N3."""
+    """N1, N2, N3 and N4."""
     used: dict = {}                                   # unit -> set of wiring keys used by hops
     for unit in project.units:
         if unit.broken:
@@ -2458,6 +2460,14 @@ def check_scenarios(project: Project):
             if str(key).strip() not in keys:
                 project.add("N3", unit.manifest_path, f"wiring line '{key}' is used by no hop of the scenarios "
                                                       "that pass through this unit", unit.lines.get(("wiring", str(key))))
+    if not resolved_scenarios(project) or unresolved:     # N4 says nothing without stories, and N1 comes first
+        return
+    used_parts = {(result["contract"], result["part"]) for scenario in resolved_scenarios(project)
+                  for _, result, _ in scenario["hops"] if result}
+    for path in sorted(contracts_of_project(project)):
+        for name, part in contract_of_path(project, path)["parts"].items():
+            if part["kind"] in ("command", "query", "event") and (path, name) not in used_parts:
+                project.add("N4", part["file"], f"part '{name}' is used by no hop of a scenario", part["line"])
 
 
 # ----- generated files
@@ -4342,6 +4352,13 @@ const ref = v => v ? (/^[a-z][a-z0-9+.-]*:/i.test(v) ? `<a href="${esc(v)}">${es
 const part = (contract, name) => { const dir = contract.endsWith("/index.md") && contract.slice(0, -8) + name + ".md";   // a part: its file in a folder contract, its heading in a file
   return `<a href="${esc(href(dir && docs[dir] ? dir : contract + "#" + name))}">${esc(name)}</a>`; };
 const title = p => docs[p].title || esc(p.split("/").pop().replace(/\.md$/, ""));
+const uses = {};                      // contract path -> part -> [[scenario, step]]: the steps of the stories that use the part
+for (const s of (model.scenarios || [])) s.hops.forEach((x, i) => { if (x.contract) ((uses[x.contract] ||= {})[x.part] ||= []).push([s, i + 1]); });
+const partsOf = {};                   // contract path -> its parts with their kinds, from the manifests that name it
+for (const u of units) for (const e of Object.values(u.capabilities).concat(Object.values(u.needs))) if (e.contract && e["contract-parts"]) partsOf[e.contract] = e["contract-parts"];
+const usedIn = (contract, name) => {  // the stories that use a part, with their steps; or the word that none does
+  const by = new Map(); for (const [s, n] of (uses[contract] || {})[name] || []) by.set(s, (by.get(s) || []).concat(n));
+  return by.size ? [...by].map(([s, ns]) => sceneLink(s) + ` <span class="mute">step ${ns.join(", ")}</span>`).join("<br>") : `<span class="mute">no scenario uses this part</span>`; };
 const plain = h => { const t = document.createElement("template"); t.innerHTML = h; return t.content.textContent; };
 const docLink = (p, on) => on ? `<li class="on">${title(p)}</li>` : `<li><a href="${esc(href(p))}">${title(p)}</a>` + (docs[p].kind === "decisions" ? badge(docs[p].status || "no status") : "")
   + (docs[p].kind === "skills" && docs[p].summary ? ": " + esc(docs[p].summary) : "") + "</li>";
@@ -4600,8 +4617,12 @@ function reading(p, chain){           // a document: where it belongs, its front
     .concat(`<a class="go" data-path="${esc(d.unit)}" data-row="docs:${esc(d.kind)}">${label}</a>`, whole ? [`<a href="${esc(href(d.contract))}">${title(d.contract)}</a>`] : [], title(p)).join(" / ");
   el("title").innerHTML = title(p) + badge(d.status); el("summary").textContent = d.summary || "";
   el("meta").innerHTML = [(whole ? "Part of a contract" : label) + " of " + pin(d.unit), `<a href="${esc(file(p))}">Markdown</a>`].join(" · ");
-  el("facts").innerHTML = (d.facts || []).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join(""); el("facts").hidden = !d.facts;
-  map(false); el("doc").className = "prose"; el("doc").hidden = false; el("doc").innerHTML = d.html; anchors(el("doc"), pageOf(p));
+  const mine = whole && partsOf[d.contract] && partsOf[d.contract].find(x => d.contract.slice(0, -8) + x.name + ".md" === p);   // a part of a folder contract: which stories use it
+  el("facts").innerHTML = (d.facts || []).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("") + (mine ? `<dt>Used in</dt><dd>${usedIn(d.contract, mine.name)}</dd>` : "");
+  el("facts").hidden = !d.facts && !mine;
+  const parts = partsOf[p], table = parts ? "<h2>Parts in the scenarios</h2><table><tr><th>Part</th><th>Kind</th><th>Used in</th></tr>" + parts.map(x =>
+    `<tr><td>${part(p, x.name)}</td><td>${esc(x.kind || "")}</td><td>${x.kind === "type" ? "" : usedIn(p, x.name)}</td></tr>`).join("") + "</table>" : "";   // a contract: its parts and the stories that use them, above the text
+  map(false); el("doc").className = "prose"; el("doc").hidden = false; el("doc").innerHTML = table + d.html; anchors(el("doc"), pageOf(p));
   const g = groups(u).find(x => x[0] === d.kind), near = whole ? whole.parts : g ? g[2] : [];
   el("info").innerHTML = near.length > 1 ? `<h2>${whole ? "Parts of " + title(d.contract) : label + " of " + esc(u.name)}</h2><ul>` + near.map(o => docLink(o, o === p)).join("") + "</ul>" : "";
   return figures(el("doc"));
@@ -4689,6 +4710,11 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
         info = describe(project, unit)
         if unit is project.root_unit:            # the skills `init --agents` installs are the tool's
             info["skills"] = [s for s in info["skills"] if s["name"] not in SKILLS]
+        for side in ("capabilities", "needs"):   # the parts of each contract, with their kinds: the page of a contract lists them with the stories that use them
+            for name, entry in info[side].items():
+                target = contract_target(project, unit, (unit.capabilities if side == "capabilities" else unit.needs)[name].get("contract"))[1]
+                entry["contract-parts"] = [{"name": n, "kind": part["kind"]} for n, part in contract_of_path(project, target)["parts"].items()] \
+                    if target and project.kind_of(target) == "file" else None
         for name, key in (("README.md", "readme"), ("AGENTS.md", "agents")):
             path = os.path.join(unit.path, name)
             info[key] = project.rel(path) if project.kind_of(path) == "file" else None

@@ -193,7 +193,7 @@ CASES = [
     ("clean-scenario-in-a-leaf", project("", {"a": NEEDS_X.replace("library", "library, optional: true")
                                                   + "capabilities:\n  api: {summary: s, contract: ref:api}\n"
                                                   "scenarios:\n  s1:\n    summary: s\n    hops: ['api -> x.do']\n    expect: e\n"},
-                                         contracts=SCENARIO_CONTRACTS), ["warn W3 unifold.yaml"]),
+                                         contracts=SCENARIO_CONTRACTS), ["info N4 docs/references/api.md", "warn W3 unifold.yaml"]),
     ("clean-derived-decision", project("", {"a": ""}, {**{"docs/decisions/0001-x.md": DERIVED},
                                                      CONTEXT: ITEM.format(stamp=stamp(DERIVED))}), []),
     ("clean-constants", project(files={"docs/references/constants.md": CONSTANTS,
@@ -473,7 +473,10 @@ CASES = [
      ["error N2 unifold.yaml"]),
     ("N2-scenario-as-text", project("scenarios:\n  s1: a story\n"), ["error N2 unifold.yaml"]),
     ("N3-wiring-line-without-a-hop", project(SCENARIO_ROOT.replace("      - a -> b.do\n", ""), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
-     ["warn N3 unifold.yaml"]),
+     ["info N4 docs/references/x.md", "warn N3 unifold.yaml"]),
+    ("N4-part-without-a-hop", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts={"api": ["serve"], "x": ["do", "undo", ("thing", "type")]}),
+     ["info N4 docs/references/x.md"]),
+    ("N4-silent-without-a-scenario", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, contracts={"x": ["do", "undo"]}), []),
     # ------------------------------------------------ C: contracts
     ("C1-contract-without-parts", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
                                           {"docs/references/x.md": "# x\n\n## Fake\n\nReplays.\n"}), ["warn C1 docs/references/x.md"]),
