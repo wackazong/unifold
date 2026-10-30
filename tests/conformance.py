@@ -1207,18 +1207,25 @@ def scenario_site(runner: Runner, tmp: str):
 
 
 def scenario_site_scenarios(runner: Runner, tmp: str):
-    folder = new_project(tmp, project(SCENARIO_ROOT.replace("expect: e", "expect: one; two"), SCENARIO_UNITS,
-                                      contracts=SCENARIO_CONTRACTS))
+    # a calls b.do (command); b raises done (event) into a; a asks b.ask (query), answered when the scenario ends
+    hops = "      - a -> b.do\n      - a -> b.done\n      - a -> b.ask\n"
+    folder = new_project(tmp, project(SCENARIO_ROOT.replace("expect: e", "expect: one; two").replace("      - a -> b.do\n", hops),
+                                      SCENARIO_UNITS, contracts={"api": ["serve"], "x": [("do", "command"), ("done", "event"), "ask"]}))
     runner.run("generate", str(folder))
     page = (folder / "docs" / "diagrams" / "scenario-s1.md").read_text()
     check("Expect: one#59; two" in page and "wrap:" in page, "a `;` in a sequence diagram is written #59;")
+    check("  pa->>pb: 2 · do\n  activate pb\n  pb-)pa: 3 · done\n  activate pa\n  pa->>pb: 4 · ask\n  activate pb\n"
+          "  pb-->>pa: ↩ 4\n  deactivate pb\n  deactivate pa\n  deactivate pb\n  pa-->>papi: ↩ 1\n  deactivate pa\n  Note over" in page,
+          f"an event is drawn from the provider, a query answers, a receiver is active until a lifeline further out acts:\n{page}")
+    check("| # | Caller | Target | Part | Kind | Contract |" in page and "| 3 | `a` | `b` | `done` | event |" in page,
+          "the table has the kind of the part")
     out = Path(tmp) / "map.html"
     done = runner.run("site", str(folder), "-o", str(out))
     check(done.returncode == 0, f"site: {done.stderr}")
     model = json.loads(re.search(r"const model = (.*?);\nconst MERMAID", out.read_text(), re.S).group(1))
     scenario = (model.get("scenarios") or [{}])[0]
     lifelines = scenario.get("diagram", {}).get("lifelines", {})
-    check(scenario.get("unit") == "." and scenario.get("name") == "s1" and len(scenario.get("hops", [])) == 2
+    check(scenario.get("unit") == "." and scenario.get("name") == "s1" and len(scenario.get("hops", [])) == 4
           and scenario.get("page") == "docs/diagrams/scenario-s1.md"
           and "\nsequenceDiagram\n" in "\n" + scenario["diagram"]["source"], "the page holds every scenario")
     check(re.search(r"participant \S+ as a<br/>", scenario["diagram"]["source"]) is not None,
@@ -1394,8 +1401,9 @@ def scenario_model(runner: Runner, tmp: str):
     check(forms == ["connection", "implemented-by", "passed-up"], f"wiring forms: {forms}")
     scenario = root["scenarios"][0]
     check(scenario["name"] == "s1" and scenario["hops"][0]["via"] == [{"unit": ".", "key": "api"}]
-          and scenario["hops"][1] == {"caller": "a", "target": "b", "part": "do", "contract": "docs/references/x.md",
-                                      "caller-unit": "a", "target-unit": "b", "via": [{"unit": ".", "key": "a.x"}]}
+          and scenario["hops"][1] == {"caller": "a", "target": "b", "part": "do", "part-kind": "query",
+                                      "contract": "docs/references/x.md", "caller-unit": "a", "target-unit": "b",
+                                      "via": [{"unit": ".", "key": "a.x"}]}
           and scenario["hops"][2]["via"] == [{"unit": ".", "key": "a.clock"}], f"hops: {scenario['hops']}")
     check(data["root-needs"] == [{"name": "clock", "platform": True, "reached-by": ["a"]}], f"root needs: {data['root-needs']}")
     question = root["decisions"][0]

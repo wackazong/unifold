@@ -2279,9 +2279,9 @@ def find_descendant(project: Project, holder: Unit, path: str):
 def resolve_hop(project: Project, holder: Unit, hop: str):
     """Resolve one hop of a scenario of `holder`.
 
-    Returns (result, error). result: {"caller", "target", "part", "contract": abs path, "via":
-    [(unit, key)], "caller-unit", "target-unit"}; the unit fields are None for a bare capability
-    or need of the holder.
+    Returns (result, error). result: {"caller", "target", "part", "kind": the part's kind, "contract":
+    abs path, "via": [(unit, key)], "caller-unit", "target-unit"}; the unit fields are None for a
+    bare capability or need of the holder.
     """
     match = HOP.match(hop)
     if not match:
@@ -2354,6 +2354,7 @@ def resolve_hop(project: Project, holder: Unit, hop: str):
                       f"both have the part '{part}' (needs {', '.join(f[2] for f in with_part)}); rename one part")
     contract, via, _ = with_part[0]
     return {"caller": caller_text, "target": target_path, "part": part, "contract": contract, "via": via,
+            "kind": contract_of_path(project, contract)["parts"][part].get("kind"),
             "caller-unit": caller, "target-unit": target, "caller-capability": caller_cap,
             "target-need": target_need}, None
 
@@ -2928,7 +2929,13 @@ def diagrams_for(project: Project, unit: Unit) -> dict:
 
 def scenario_sequence(scenario: dict) -> tuple:
     """The sequence diagram of a scenario, one lifeline per name as written, in order of first use:
-    (Mermaid lines, {name: participant id})."""
+    (Mermaid lines, {name: participant id}).
+
+    A step is drawn as the kind of its part says: a command or query from the caller to the target,
+    an event from the target that raises it to the caller that receives it, with an open arrowhead.
+    The receiver of a step is active until a lifeline further out makes the next step, or the
+    scenario ends; a unit below the receiver acts for it, as it implements the receiver's
+    capability. A query answers with a dashed arrow when its receiver's activation ends."""
     names: list = []
     for hop, result, error in scenario["hops"]:
         for text in ((result["caller"], result["target"]) if result else
@@ -2954,9 +2961,27 @@ def scenario_sequence(scenario: dict) -> tuple:
     lines.append("sequenceDiagram")                   # a box keeps the height of the config, whatever its text: room for every line
     for n in names:
         lines.append(f'  participant {ids[n]} as {"<br/>".join(text(line) for line in boxes[n])}')
+    busy: list = []                                   # (receiver, sender, step, kind) of the steps still running, innermost last
+    within = lambda a, b: a == b or a.startswith(b + "/") or b.startswith(a + "/")   # the same lifeline, or one below the other
+
+    def done(step: tuple):
+        receiver, sender, index, kind = step
+        if kind == "query":
+            lines.append(f"  {ids[receiver]}-->>{ids[sender]}: ↩ {index}")
+        lines.append(f"  deactivate {ids[receiver]}")
+
     for index, (hop, result, error) in enumerate(scenario["hops"], 1):
-        if result:
-            lines.append(f"  {ids[result['caller']]}->>{ids[result['target']]}: {index} · {text(result['part'])}")
+        if not result:
+            continue
+        kind = result.get("kind")
+        sender, receiver = (result["target"], result["caller"]) if kind == "event" else (result["caller"], result["target"])
+        while busy and not within(sender, busy[-1][0]):   # the steps inside the last one are over when a lifeline further out acts
+            done(busy.pop())
+        lines.append(f"  {ids[sender]}{'-)' if kind == 'event' else '->>'}{ids[receiver]}: {index} · {text(result['part'])}")
+        lines.append(f"  activate {ids[receiver]}")
+        busy.append((receiver, sender, index, kind))
+    while busy:
+        done(busy.pop())
     expect = scenario["spec"]["expect"]
     if expect and names and names[-1]:                # `wrap:` keeps a long expectation within the lifelines
         lines.append(f"  Note over {ids[names[0]]},{ids[names[-1]]}: wrap: Expect: {text(expect)}"
@@ -2969,14 +2994,15 @@ def scenario_page(project: Project, scenario: dict) -> str:
     unit, name, spec = scenario["unit"], scenario["name"], scenario["spec"]
     out_dir = os.path.join(unit.path, "docs", "diagrams")
     lines, _ = scenario_sequence(scenario)
-    rows = ["| # | Caller | Target | Part | Contract |", "|---|---|---|---|---|"]
+    rows = ["| # | Caller | Target | Part | Kind | Contract |", "|---|---|---|---|---|---|"]
     for index, (hop, result, error) in enumerate(scenario["hops"], 1):
         if result:
             caller, target = result["caller"], result["target"]
             contract = file_link(project, out_dir, os.path.basename(result["contract"])[:-3], result["contract"])
-            rows.append(f"| {index} | `{cell(caller)}` | `{cell(target)}` | `{cell(result['part'])}` | {contract} |")
+            rows.append(f"| {index} | `{cell(caller)}` | `{cell(target)}` | `{cell(result['part'])}` | "
+                        f"{cell(result.get('kind') or '')} | {contract} |")
         else:
-            rows.append(f"| {index} | `{cell(hop)}` | | | **does not resolve** |")
+            rows.append(f"| {index} | `{cell(hop)}` | | | | **does not resolve** |")
     crumbs = []
     for ancestor in reversed(unit.ancestors()):
         crumbs.append(file_link(project, out_dir, ancestor.name, best_diagram(project, ancestor)))
@@ -2992,7 +3018,11 @@ def scenario_page(project: Project, scenario: dict) -> str:
     return "\n".join([MARK, f"# Scenario: {name}", "", " / ".join(crumbs) + "".join(" · " + n for n in nav), "",
                       *[line for line in intro if line], "",
                       "A unit is named by its path from `" + unit.name + "`; a capability or need of `" + unit.name
-                      + "` is named bare. Every hop is a call along one connection of the map.", "",
+                      + "` is named bare. Every step is one hop along one connection of the map, drawn as the kind of "
+                      "its part says: a command or query goes from the caller to the target, and a dashed arrow brings "
+                      "the result of a query back; an event goes from the provider that raises it to the caller that "
+                      "receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends "
+                      "when a lifeline further out makes the next step, and a unit below the busy one acts for it.", "",
                       "```mermaid", *lines, "```", "", *rows, ""])
 
 
@@ -4231,7 +4261,8 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 :is(#diagram,.figure) :is(text.actor.kind,text.actor.kind tspan){font-size:13px!important;font-weight:400!important;font-style:italic;fill:var(--mute)!important}
 :is(#diagram,.figure) :is(text.actor.what,text.actor.what tspan){font-size:13px!important;font-weight:400!important;fill:var(--fg-2)!important}
 :is(#diagram,.figure) .actor-line{stroke:var(--frame)!important;stroke-width:1.5px!important;stroke-dasharray:6 4}
-:is(#diagram,.figure) :is(.messageLine0,.messageLine1){stroke:var(--accent)!important;stroke-width:2px!important}
+:is(#diagram,.figure) .messageLine0{stroke:var(--accent)!important;stroke-width:2px!important}:is(#diagram,.figure) .messageLine1{stroke:var(--fg-2)!important;stroke-width:1.5px!important;stroke-dasharray:5 4!important}
+:is(#diagram,.figure) :is(.activation0,.activation1,.activation2){fill:var(--unit)!important;stroke:var(--ink)!important;stroke-width:1.5px!important}
 :is(#diagram,.figure) .messageText{font-family:var(--sans)!important;font-weight:500!important;fill:var(--ink)!important;stroke:var(--paper)!important;stroke-width:4px!important;stroke-linejoin:round;paint-order:stroke}
 :is(#diagram,.figure) rect.note{fill:var(--amber-hl)!important;stroke:var(--amber)!important;stroke-width:1.5px!important;rx:6px;ry:6px}:is(#diagram,.figure) rect.under{fill:var(--paper)!important;stroke:none!important;rx:6px;ry:6px}
 :is(#diagram,.figure) :is(.noteText,.noteText tspan){font-family:var(--sans)!important;fill:var(--ink)!important;stroke:none!important}
@@ -4432,7 +4463,7 @@ function story(s, chain){             // a scenario: what it is and expects, its
   el("doc").hidden = true;
   el("facts").innerHTML = (s.source ? `<dt>Source</dt><dd>${code(s.source)}</dd>` : "") + `<dt>Expect</dt><dd>${code(s.expect)}</dd>`; el("facts").hidden = false;
   el("tabs").innerHTML = `<button class="on">sequence</button>`; el("shared").innerHTML = ""; el("zoom").hidden = true;
-  el("hint").textContent = `An arrow is one step, numbered in order: the caller uses a part of the contract of one connection of the map. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
+  el("hint").textContent = `An arrow is one step, numbered in order, along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
   let html = "<h2>Steps</h2><table><tr><th>#</th><th>Caller</th><th>Target</th><th>Part</th><th>Contract</th><th>Wiring</th></tr>" + s.hops.map((x, i) => x.unresolved
     ? `<tr id="step:${i + 1}"><td>${i + 1}</td><td colspan="5"><code>${esc(x.unresolved)}</code> <span class="badge planned">does not resolve</span> ${esc(x.error)}</td></tr>`
     : `<tr id="step:${i + 1}"><td>${i + 1}</td><td>${life(x.caller, x["caller-unit"], "capability")}</td><td>${life(x.target, x["target-unit"], "need")}</td><td><a href="${esc(href(x["part-file"] && x["part-file"] !== x.contract ? x["part-file"] : x.contract + "#" + x.part))}"><code>${esc(x.part)}</code></a>${x["part-kind"] ? " <span class='mute'>" + esc(x["part-kind"]) + "</span>" : ""}</td><td>${ref(x.contract)}</td><td>${x.via.map(v => `<span class="nw"><code>${esc(v.key)}</code> <span class="mute">in</span> ${pin(v.unit)}</span>`).join("<br>") || "–"}</td></tr>`).join("") + "</table>";
@@ -4451,9 +4482,9 @@ function story(s, chain){             // a scenario: what it is and expects, its
       g.addEventListener("click", ev => {ev.stopPropagation(); row = l.side ? l.side + ":" + l.entry : null; go(l.unit);});
     }
     for (const label of el("diagram").querySelectorAll("text.messageText")) {   // a step, by the number of its label: its row in the table
-      const n = /^\s*(\d+)\s*·/.exec(label.textContent), line = label.nextElementSibling; if (!n) continue;
+      const n = /^\s*(?:(\d+)\s*·|↩\s*(\d+))/.exec(label.textContent), line = label.nextElementSibling; if (!n) continue;   // `3 · part`, or `↩ 3` for the result of step 3
       for (const part of line && /messageLine/.test(line.getAttribute("class")) ? [label, line] : [label]) {
-        part.classList.add("pick", "step"); part.addEventListener("click", ev => {ev.stopPropagation(); flash("step:" + n[1]);});
+        part.classList.add("pick", "step"); part.addEventListener("click", ev => {ev.stopPropagation(); flash("step:" + (n[1] || n[2]));});
       }
     }
     for (const note of el("diagram").querySelectorAll("rect.note")) { const under = note.cloneNode(); under.setAttribute("class", "under"); note.before(under); }   // paper under the note: no lifeline shows through
@@ -4583,7 +4614,7 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
             if not result:
                 continue
             part = contract_of_path(project, result["contract"])["parts"].get(result["part"]) or {}
-            hop["part-kind"], hop["part-file"] = part.get("kind"), project.rel(part["file"]) if part.get("file") else None
+            hop["part-file"] = project.rel(part["file"]) if part.get("file") else None
             for name, unit, side, entry in ((result["caller"], result["caller-unit"], "capability", result["caller-capability"]),
                                             (result["target"], result["target-unit"], "need", result["target-need"])):
                 lifelines[ids[name]] = {"name": name, "unit": unit.rel} if unit else \
@@ -4702,7 +4733,7 @@ def scenario_data(project: Project, scenario: dict) -> dict:
     for hop, result, error in scenario["hops"]:
         if result:
             hops.append({"caller": result["caller"], "target": result["target"], "part": result["part"],
-                         "contract": rel(result["contract"]),
+                         "part-kind": result.get("kind"), "contract": rel(result["contract"]),
                          "caller-unit": result["caller-unit"].rel if result["caller-unit"] else None,
                          "target-unit": result["target-unit"].rel if result["target-unit"] else None,
                          "via": [{"unit": holder.rel, "key": key} for holder, key in result["via"]]})

@@ -115,7 +115,7 @@ scenarios:
     expect: one frame 1F 00 on the line
 ```
 
-A scenario has `summary`, `hops` and `expect`; `source` is free text. A hop is `caller -> target.part`. A unit is named by its path from the holding unit, segments separated by `/`; a capability or need of the holding unit is named bare. A name is looked up as a descendant first, then as a capability or need of the holding unit; a name that is both is an error.
+A scenario has `summary`, `hops` and `expect`; `source` is free text. A hop is `caller -> target.part`. A unit is named by its path from the holding unit, segments separated by `/`; a capability or need of the holding unit is named bare. A name is looked up as a descendant first, then as a capability or need of the holding unit; a name that is both is an error. A hop follows the dependency, as a wiring line does (section 3, rule 6): the caller of an event is the unit that receives it.
 
 1. A hop MUST resolve, by rule 7 of section 3, to one connection: from a need of the caller to a capability of the target, from a capability of the holding unit down to the target, or from a need of the caller up to a need of the holding unit. In a unit without children, a hop from a capability to a need of the unit says that the capability's implementation uses the need.
 2. The part MUST be a part of that connection's contract, which is one document at every level. Two connections between the same two units whose contracts both have the part are an error.
@@ -158,7 +158,7 @@ Diagrams and indexes are generated from the manifests and MUST NOT be edited by 
 | `docs/diagrams/component.md` | The children of the unit, each with its responsibility and kind, and the connections between them and with the unit's own needs. | Units that have children. |
 | `docs/diagrams/context.md` | The unit inside the frame of its parent, with the siblings it is connected to; tables of the final provider of each need and the final users of each capability. | Units that have children and a parent. |
 | `docs/diagrams/architecture.md` | The unit opened up three levels deep, or fewer where the page would exceed the line limit. | Units whose children have children. |
-| `docs/diagrams/scenario-<name>.md` | One scenario as a sequence diagram, one lifeline per unit, capability or need named, with its kind and its responsibility or summary, drawn end to end across levels, with the hops as a table. | Units that hold scenarios. |
+| `docs/diagrams/scenario-<name>.md` | One scenario as a sequence diagram, one lifeline per unit, capability or need named, with its kind and its responsibility or summary, drawn end to end across levels, with the hops as a table. A step is drawn as the kind of its part says: a command or query from the caller to the target, a query with its result back, an event from the provider that raises it to the caller that receives it. The receiver of a step is active until a lifeline further out makes the next step; a unit below the receiver acts for it. | Units that hold scenarios. |
 | `docs/decisions/index.md` | The decisions of the unit, with status and date. | Units that have decisions. |
 | `AGENTS.md` | Where the documents and skills of the unit are, for coding agents; at the root also the unifold block with the index of units. | Every unit. |
 

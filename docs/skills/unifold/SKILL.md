@@ -83,7 +83,7 @@ Do not weaken a manifest to make the check pass. Mark a need `optional`, delete 
 ### Write a scenario
 
 1. Choose the lowest unit that contains every unit the story names; a hop to a need of the root belongs to the root.
-2. Under `scenarios` in its manifest, from the template: `summary`, `source`, `hops`, `expect`. A hop is `caller -> target.part`: units by their path from the holding unit, a capability or need of the holding unit bare. Every part must be in the contract of the connection the hop uses.
+2. Under `scenarios` in its manifest, from the template: `summary`, `source`, `hops`, `expect`. A hop is `caller -> target.part`: units by their path from the holding unit, a capability or need of the holding unit bare. Every part must be in the contract of the connection the hop uses. A hop follows the dependency: the caller of an event is the unit that receives it, and the diagram turns the arrow around.
 3. Run `check`. A hop that does not resolve means a missing connection, a missing part or a wrong cut: fix the manifests or the contract, never the story. Then `check --fix` writes `docs/diagrams/scenario-<name>.md`.
 
 ### Record a decision
