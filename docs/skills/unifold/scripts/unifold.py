@@ -4266,7 +4266,15 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 :is(#diagram,.figure) .messageText{font-family:var(--sans)!important;font-weight:500!important;fill:var(--ink)!important;stroke:var(--paper)!important;stroke-width:4px!important;stroke-linejoin:round;paint-order:stroke}
 :is(#diagram,.figure) rect.note{fill:var(--amber-hl)!important;stroke:var(--amber)!important;stroke-width:1.5px!important;rx:6px;ry:6px}:is(#diagram,.figure) rect.under{fill:var(--paper)!important;stroke:none!important;rx:6px;ry:6px}
 :is(#diagram,.figure) :is(.noteText,.noteText tspan){font-family:var(--sans)!important;fill:var(--ink)!important;stroke:none!important}
-#zoom{float:right;font:600 13px/1.2 var(--sans);padding:5px 12px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}#zoom:hover{border-color:var(--fg)}
+#zoom,#play{float:right;font:600 13px/1.2 var(--sans);padding:5px 12px;margin-left:8px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}#zoom:hover,#play:hover{border-color:var(--fg)}
+/* the path of a scenario on the map: what the story uses is lit and numbered, the rest steps back; a dot runs the current step, its row and its connection in amber */
+#diagram.trace :is(.node,.edgeLabel):not(.lit),#diagram.trace .edgePaths path:not(.lit){opacity:.3}
+#diagram.trace .edgePaths path.lit{stroke:var(--accent)!important;stroke-width:2.5px!important}#diagram.trace .edgePaths path.now{stroke:var(--amber)!important;stroke-width:4px!important}
+#diagram.trace .node.lit :is(rect,polygon,path){stroke-width:3px!important}#diagram.trace .node.now :is(rect,polygon,path){stroke:var(--amber)!important;filter:drop-shadow(4px 4px 0 var(--amber-hl))}
+#diagram.trace .cluster.now>rect{stroke:var(--amber)!important;stroke-width:3px!important}
+#diagram text.steps{font:600 12px var(--sans);fill:var(--ink);stroke:var(--paper);stroke-width:4px;paint-order:stroke;stroke-linejoin:round}
+#diagram .runner{fill:var(--amber);stroke:var(--ink);stroke-width:1.5px}#diagram .runner.hollow{fill:var(--paper);stroke:var(--amber);stroke-width:2.5px}
+tr.now td{background:var(--amber-hl)}
 .st{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:baseline;border:1.5px dashed currentColor;opacity:.75}
 .st.deprecated{border-style:solid;background:linear-gradient(to top right,transparent 44%,currentColor 44% 56%,transparent 56%)}
 nav .legend{margin:14px 6px 0;font-size:12px;color:var(--mute)}nav .legend .st{margin:0 4px 0 0}
@@ -4302,7 +4310,7 @@ tr.flash td{animation:flash 2.4s ease-out}#diagram text.messageText.step:hover{f
 <div class="crumbs mute" id="crumbs"></div>
 <h1 id="title"></h1><p id="summary"></p><p class="mute" id="meta"></p><dl id="facts" hidden></dl>
 <article class="prose" id="doc" hidden></article>
-<div class="tabs" id="bar"><button id="zoom" hidden></button><span id="tabs"></span></div>
+<div class="tabs" id="bar"><button id="zoom" hidden></button><button id="play" hidden></button><span id="tabs"></span></div>
 <div id="diagram">Loading the diagram renderer…</div>
 <div id="shared"></div>
 <p class="mute" id="hint"></p>
@@ -4366,8 +4374,8 @@ const scenes = model.scenarios || [], scene = (p, n) => scenes.find(s => s.unit 
 const decode = s => { try { return decodeURIComponent(s); } catch { return s; } };
 function fromHash(){const raw = location.hash.slice(1), cut = raw.indexOf("#");   // unit@kind, holder@scenario:name or unit@doc:path, then #anchor
   const h = decode(cut < 0 ? raw : raw.slice(0, cut)), at = h.indexOf("@"), p = at < 0 ? h : h.slice(0, at), k = at < 0 ? "" : h.slice(at + 1);
-  const s = k.startsWith("scenario:") ? scene(p, k.slice(9)) : null, d = k.startsWith("doc:") ? (p === "." ? "" : p + "/") + k.slice(4) : null;
-  state = {path: byPath[p] ? p : ".", kind: s || d || !k ? null : k, scenario: s, doc: d && docs[d] ? d : null, anchor: cut < 0 ? "" : decode(raw.slice(cut + 1))};}
+  const sv = k.startsWith("scenario:") ? k.slice(9).split(":") : [], s = sv.length ? scene(p, sv[0]) : null, d = k.startsWith("doc:") ? (p === "." ? "" : p + "/") + k.slice(4) : null;
+  state = {path: byPath[p] ? p : ".", kind: s || d || !k ? null : k, scenario: s, view: sv[1] || null, doc: d && docs[d] ? d : null, anchor: cut < 0 ? "" : decode(raw.slice(cut + 1))};}
 function go(path, kind){location.hash = enc(path + (kind ? "@" + kind : ""));}
 function tree(path){const u = byPath[path]; const kids = u.children.map(c => tree(c.path)).join("");
   return `<li><a data-path="${esc(path)}" class="go${path === state.path && !state.scenario ? " on" : ""}">${esc(u.name)}${u.status !== "active" ? `<span class="st ${esc(u.status)}" title="${esc(u.status)}"></span>` : ""}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
@@ -4391,6 +4399,7 @@ function who(list, key){return list.map(i => i.outside ? "outside the project" +
 function code(text){return esc(text).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/^- /, "");}
 async function render(){
   const u = byPath[state.path]; const kinds = Object.keys(u.diagrams);
+  run++; el("play").hidden = true;
   const kind = kinds.includes(state.kind) ? state.kind : (kinds.includes("component") ? "component" : kinds[0]);
   el("tree").innerHTML = "<ul>" + tree(".") + "</ul>" + docTree(u) + sceneTree() + (legend ? `<p class="legend">${legend}</p>` : "");
   const chain = []; for (let p = u.parent; p; p = byPath[p.path].parent) chain.unshift(p.path);
@@ -4452,8 +4461,9 @@ async function render(){
     }
   });
 }
-function story(s, chain){             // a scenario: what it is and expects, its sequence diagram, its steps and its lifelines
+function story(s, chain){             // a scenario: what it is and expects, its sequence diagram or its path on the map, its steps and its lifelines
   const h = byPath[s.unit], d = s.diagram, lives = Object.values(d.lifelines);
+  const frame = frameOf(s), mapKind = frame && ["architecture", "component"].find(k => byPath[frame].diagrams[k]), view = state.view === "map" && mapKind ? "map" : "sequence";
   const life = (text, unit, side) => unit ? pin(unit, text) : `<a class="go" data-path="${esc(s.unit)}" data-row="${side}:${esc(text)}"><code>${esc(text)}</code></a>`;
   document.title = s.name + " · " + model.name;
   el("crumbs").innerHTML = chain.concat(s.unit).map(p => `<a class="go" data-path="${esc(p)}">${esc(byPath[p].name)}</a>`).concat(esc(s.name)).join(" / ");
@@ -4462,8 +4472,9 @@ function story(s, chain){             // a scenario: what it is and expects, its
     .concat(s.page ? [`<a href="${esc(file(s.page))}">Markdown</a>`] : [], [`<a href="${esc(file(h.manifest))}">manifest</a>`]).join(" · ");
   el("doc").hidden = true;
   el("facts").innerHTML = (s.source ? `<dt>Source</dt><dd>${code(s.source)}</dd>` : "") + `<dt>Expect</dt><dd>${code(s.expect)}</dd>`; el("facts").hidden = false;
-  el("tabs").innerHTML = `<button class="on">sequence</button>`; el("shared").innerHTML = ""; el("zoom").hidden = true; el("diagram").classList.add("story");
-  el("hint").textContent = `An arrow is one step, numbered in order, along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
+  el("tabs").innerHTML = `<button data-view="sequence" class="${view === "sequence" ? "on" : ""}">sequence</button>` + (mapKind ? `<button data-view="map" class="${view === "map" ? "on" : ""}">map</button>` : "");
+  el("shared").innerHTML = ""; el("zoom").hidden = true; el("diagram").classList.toggle("story", view === "sequence"); el("diagram").classList.toggle("trace", view === "map");
+  el("hint").textContent = view === "map" ? `The ${mapKind} diagram of ${named(frame)} with the path of this scenario: the boxes and connections its steps use are lit and carry the numbers of the steps, the rest steps back. A dot runs every step in the direction of the data, in order; a hollow dot brings the result of a query back. Click a number or a lit connection to find the step in the table, a box to open its unit.` : `An arrow is one step, numbered in order, along one connection of the map, drawn as the kind of its part says: a command or query goes from the caller to the target, and a dashed arrow brings the result of a query back; an event goes from the provider that raises it to the caller that receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends when a lifeline further out makes the next step, and a unit below the busy one acts for it. The note at the end is what the scenario expects. Click a step to find it in the table, a lifeline to open its unit, or a capability or need of ${named(s.unit)} to find it in its tables. A dashed border marks a unit that is planned.`;
   let html = "<h2>Steps</h2><table><tr><th>#</th><th>Caller</th><th>Target</th><th>Part</th><th>Contract</th><th>Wiring</th></tr>" + s.hops.map((x, i) => x.unresolved
     ? `<tr id="step:${i + 1}"><td>${i + 1}</td><td colspan="5"><code>${esc(x.unresolved)}</code> <span class="badge planned">does not resolve</span> ${esc(x.error)}</td></tr>`
     : `<tr id="step:${i + 1}"><td>${i + 1}</td><td>${life(x.caller, x["caller-unit"], "capability")}</td><td>${life(x.target, x["target-unit"], "need")}</td><td><a href="${esc(href(x["part-file"] && x["part-file"] !== x.contract ? x["part-file"] : x.contract + "#" + x.part))}"><code>${esc(x.part)}</code></a>${x["part-kind"] ? " <span class='mute'>" + esc(x["part-kind"]) + "</span>" : ""}</td><td>${ref(x.contract)}</td><td>${x.via.map(v => `<span class="nw"><code>${esc(v.key)}</code> <span class="mute">in</span> ${pin(v.unit)}</span>`).join("<br>") || "–"}</td></tr>`).join("") + "</table>";
@@ -4474,6 +4485,7 @@ function story(s, chain){             // a scenario: what it is and expects, its
   const more = scenes.filter(o => o.unit === s.unit && o !== s);
   if (more.length) html += `<h2>More scenarios of ${esc(named(s.unit))}</h2><ul>` + more.map(o => `<li>${sceneLink(o)}: ${esc(o.summary)}</li>`).join("") + "</ul>";
   el("info").innerHTML = html;
+  if (view === "map") return trace(s, frame, byPath[frame].diagrams[mapKind]);
   return draw(d.source, () => {
     for (const box of el("diagram").querySelectorAll("rect.actor[name]")) {   // a lifeline, at the top and the bottom: its unit, or its row in the tables
       const l = d.lifelines[box.getAttribute("name")], g = box.parentNode; if (!l) continue;
@@ -4489,6 +4501,75 @@ function story(s, chain){             // a scenario: what it is and expects, its
     }
     for (const note of el("diagram").querySelectorAll("rect.note")) { const under = note.cloneNode(); under.setAttribute("class", "under"); note.before(under); }   // paper under the note: no lifeline shows through
     zoom();
+  });
+}
+const NS = "http://www.w3.org/2000/svg";
+let run = 0;                          // the run of a story on the map; a newer page or view ends the older run
+function frameOf(s){                  // the deepest unit whose map holds every unit of a scenario: the common ancestor of the units its hops name, with a diagram of its children
+  const paths = s.hops.flatMap(x => [x["caller-unit"], x["target-unit"]].filter(Boolean));
+  let f = paths.length ? paths.reduce((a, b) => { const A = a.split("/"), B = b.split("/"); let i = 0; while (i < A.length && A[i] === B[i]) i++; return i && a !== "." ? A.slice(0, i).join("/") : "."; }) : s.unit;
+  while (byPath[f] && !byPath[f].diagrams.component && byPath[f].parent) f = byPath[f].parent.path;
+  return byPath[f] && byPath[f].diagrams.component ? f : null;
+}
+function trace(s, f, m){              // the map of `f` with the path of the scenario on it: lit, numbered, and run by a dot
+  const drawnAs = r => {              // the boxes a unit is drawn as: itself or the units inside it, else the nearest box it lies in
+    const inside = Object.keys(m.nodes).filter(id => m.nodes[id] === r || m.nodes[id].startsWith(r + "/"));
+    for (let p = inside.length ? null : byPath[r] && byPath[r].parent; p; p = byPath[p.path].parent) {
+      const up = Object.keys(m.nodes).filter(id => m.nodes[id] === p.path); if (up.length) return up; }
+    return inside; };
+  const sideIds = (unit, kind, name) => Object.keys(m.sides).filter(id => m.sides[id][0] === unit && m.sides[id][1] === kind && m.sides[id][2] === name);
+  const within = r => r === f || r.startsWith(f === "." ? "" : f + "/");
+  const fName = byPath[f].name, fParent = byPath[f].parent && byPath[f].parent.path;
+  const endOf = (x, role) => {        // the boxes an end of a step is drawn as: a unit inside the frame, a capability or need of the frame, or the side of the frame the step crosses
+    const r = x[role + "-unit"];
+    if (r && within(r)) return drawnAs(r);
+    if (!r && f === s.unit) return sideIds(f, role === "caller" ? "capability" : "need", x[role]);
+    if (role === "target") { const v = x.via.find(v => v.unit === fParent && v.key.startsWith(fName + ".")); return v ? sideIds(f, "need", v.key.slice(fName.length + 1)) : []; }
+    const v = x.via.find(v => v.unit === f && !v.key.includes(".") && byPath[f].capabilities[v.key]); return v ? sideIds(f, "capability", v.key) : []; };
+  return draw(m.source, () => {
+    shade(); zoom(true);
+    const box = el("diagram"), paths = [...box.querySelectorAll("g.edgePaths path")], parts = [...box.querySelectorAll(".node, .cluster")];
+    const between = (a, b) => paths.filter(p => new RegExp(`-L_${a}_${b}_\\d+$`).test(p.id));
+    const steps = s.hops.map((x, i) => {   // every step: the connections it runs along, the boxes at its ends, and whether its data runs against the arrow
+      const from = x.unresolved ? [] : endOf(x, "caller"), to = x.unresolved ? [] : endOf(x, "target");
+      let edges = from.flatMap(a => to.flatMap(b => between(a, b))), back = false;
+      if (!edges.length) { edges = from.flatMap(a => to.flatMap(b => between(b, a))); back = true; }
+      const ends = from.concat(to).flatMap(id => parts.filter(n => new RegExp(`-flowchart-${id}-\\d+$|-${id}$`).test(n.id)));
+      return {n: i + 1, edges, ends, reverse: (x["part-kind"] === "event") !== back, query: x["part-kind"] === "query"};
+    });
+    const numbers = new Map();        // a lit connection -> the numbers of the steps on it
+    for (const st of steps) {
+      for (const n of st.ends) n.classList.add("lit");
+      for (const p of st.edges) { numbers.set(p, (numbers.get(p) || []).concat(st.n));
+        const l = box.querySelector(`.edgeLabels .label[data-id="${p.id.slice(p.id.indexOf("-L_") + 1)}"]`); if (l) l.closest(".edgeLabel").classList.add("lit"); }
+    }
+    for (const [p, ns] of numbers) {   // the numbers above the middle of the connection, clear of its label
+      const at = p.getPointAtLength(p.getTotalLength() / 2), t = document.createElementNS(NS, "text");
+      t.setAttribute("class", "steps pick"); t.setAttribute("x", at.x); t.setAttribute("y", at.y - 16); t.setAttribute("text-anchor", "middle"); t.textContent = ns.join(" · ");
+      p.classList.add("lit", "pick"); p.parentNode.appendChild(t);
+      for (const e of [p, t]) e.addEventListener("click", ev => {ev.stopPropagation(); flash("step:" + ns[0]);});
+    }
+    const legs = steps.flatMap(st => st.edges.length   // a step runs each of its connections; a query comes back hollow; a step not on the map is only marked
+      ? st.edges.flatMap(p => st.query ? [{st, p, back: st.reverse}, {st, p, back: !st.reverse, hollow: true}] : [{st, p, back: st.reverse}]) : [{st}]);
+    if (!legs.length || !paths.length) return;
+    const dot = document.createElementNS(NS, "circle"); dot.setAttribute("r", 7); dot.setAttribute("class", "runner"); paths[0].parentNode.parentNode.appendChild(dot);
+    const mine = ++run, button = el("play"); let k = 0, since = null, playing = true;
+    const mark = st => { for (const e of document.querySelectorAll(".now")) e.classList.remove("now");
+      const r = document.getElementById("step:" + st.n); if (r) r.classList.add("now"); for (const e of st.edges.concat(st.ends)) e.classList.add("now"); };
+    function tick(now){
+      if (mine !== run || !box.isConnected || !playing) return;
+      const leg = legs[k], D = leg.p ? 1100 : 500, R = k + 1 === legs.length ? 1600 : 250;   // the time of a leg and the rest after it, longer at the end of the story
+      if (since === null) { since = now; mark(leg.st); }
+      const f = Math.min(1, (now - since) / D), e = f < .5 ? 2 * f * f : 1 - (2 - 2 * f) ** 2 / 2;
+      if (leg.p) { const at = leg.p.getPointAtLength(leg.p.getTotalLength() * (leg.back ? 1 - e : e));
+        dot.setAttribute("cx", at.x); dot.setAttribute("cy", at.y); dot.classList.toggle("hollow", !!leg.hollow); dot.style.display = ""; }
+      else dot.style.display = "none";
+      if (now - since >= D + R) { k = (k + 1) % legs.length; since = null; }
+      requestAnimationFrame(tick);
+    }
+    button.hidden = false; button.textContent = "Pause";
+    button.onclick = () => { playing = !playing; button.textContent = playing ? "Pause" : "Play"; if (playing) { since = null; requestAnimationFrame(tick); } };
+    requestAnimationFrame(tick);
   });
 }
 function reading(p, chain){           // a document: where it belongs, its front matter, its text, and the documents beside it
@@ -4508,7 +4589,7 @@ function flash(id){const target = document.getElementById(id); if (!target) retu
   target.scrollIntoView({behavior: "smooth", block: "center"}); target.classList.remove("flash"); void target.offsetWidth; target.classList.add("flash");}
 let drawn = 0;
 async function draw(source, wire){   // Mermaid source into the diagram box; `wire` makes its boxes clickable
-  el("zoom").hidden = true;
+  el("zoom").hidden = true; el("play").hidden = true;
   if (!mermaid) {
     if (mermaidError) el("diagram").innerHTML = "<p>The diagram renderer (Mermaid) could not be loaded" + (MERMAID.url ? " from " + esc(MERMAID.url) : "")
       + ". The tables below are complete without it. To embed the renderer in this page: <code>unifold site --mermaid path/to/mermaid.min.js</code>.</p><details><summary>Diagram source</summary><pre>" + esc(source) + "</pre></details>";
@@ -4528,6 +4609,7 @@ document.addEventListener("click", ev => {
     else if (row && a.dataset.path === state.path && !state.scenario && !state.doc) render(); else go(a.dataset.path);
     return; }
   const b = ev.target.closest("button[data-kind]"); if (b) go(state.path, b.dataset.kind);
+  const v = ev.target.closest("button[data-view]"); if (v && state.scenario) go(state.path, "scenario:" + state.scenario.name + (v.dataset.view === "map" ? ":map" : ""));
   if (ev.target.id === "zoom") { fit = !fitted; zoom(); }
 });
 addEventListener("hashchange", () => { const was = state, top = !row; fromHash(); render();
