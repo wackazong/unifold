@@ -74,7 +74,7 @@ The root `AGENTS.md` always carries the unifold block: about 15 lines, plus one 
 
 `generate` writes the files of [spec.md](spec.md), section 7: the diagrams, one sequence diagram per scenario, and the index `docs/decisions/index.md` of every unit that has decisions. It removes generated files it no longer writes, and it never overwrites a file that lacks the generated marker: a hand-written `AGENTS.md` is reported until its content has moved to `README.md` and `docs/` and the file is deleted. Links to files that do not exist are left out.
 
-`unifold site` writes one HTML file with the tree, all diagrams and tables. The page loads Mermaid from a CDN and says so if it cannot; the tables work without it. `--mermaid FILE` embeds a local `mermaid.min.js` (the page then works offline and grows by about 5 MB); `--mermaid URL` loads it elsewhere.
+`unifold site` writes one HTML file with the tree, all diagrams and tables; it leaves out the skills `unifold` and `unifold-convert` that `init --agents` installs at the root. The page loads Mermaid from a CDN and says so if it cannot; the tables work without it. `--mermaid FILE` embeds a local `mermaid.min.js` (the page then works offline and grows by about 5 MB); `--mermaid URL` loads it elsewhere.
 
 ## Hooks and continuous integration
 

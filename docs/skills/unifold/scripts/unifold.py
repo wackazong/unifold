@@ -3966,6 +3966,8 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
     sides.update({side_id(u, "n", n): [u.rel, "need", n] for u in project.units for n in u.needs})
     for unit in project.units:
         info = describe(project, unit)
+        if unit is project.root_unit:            # the skills `init --agents` installs are the tool's
+            info["skills"] = [s for s in info["skills"] if s["name"] not in SKILLS]
         for name, key in (("README.md", "readme"), ("AGENTS.md", "agents")):
             path = os.path.join(unit.path, name)
             info[key] = project.rel(path) if project.kind_of(path) == "file" else None
