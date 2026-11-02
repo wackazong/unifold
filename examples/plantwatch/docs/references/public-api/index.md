@@ -1,7 +1,7 @@
 # Public API
 
 Contract of `cloud.public-api`: the HTTP API through which a client acts for one owner. `mobile.cloud-api` and `test-rig.cloud-api` use it. Project terms and conventions that this contract uses are in the [glossary](../glossary.md) and the [conventions](../conventions.md). Notation: HTTP with JSON bodies, as the conventions define them.
-Sources: the requirements, the product parameters and the reading schema of plantwatch; decision 0006 of plantwatch.
+Sources: the requirements, the product parameters and the reading schema of plantwatch; decision [0006](../../decisions/0006-the-server-side-alone-decides-what-needs-attention.md) of plantwatch.
 
 A reading inside an upload or a history has the form of the [reading schema](../reading-schema.md).
 

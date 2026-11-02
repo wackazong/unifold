@@ -1,7 +1,7 @@
 # readings
 
 Contract of `sampling.readings`, which `store` names `readings` and `link` names `live-readings`: every new reading at the moment it is taken, as the provider hands it to each subscriber. Notation: wit.
-Sources: the reading schema and decision 0005 of plantwatch, decision 0003 of `device`.
+Sources: the reading schema and decision [plantwatch/0005](../explanation/context.md#plantwatch0005-the-sensor-stick-counts-ticks-and-the-phone-assigns-utc-time); sequence numbers are derived from the tick count ([0003](../decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md)).
 
 ## Parts
 

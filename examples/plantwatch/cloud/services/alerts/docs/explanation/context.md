@@ -52,7 +52,7 @@ Says, as the contract that this unit implements:
 Here: the contract of `alerts-api` and the behaviour that this unit implements.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=81a51124 -->
+<!-- unifold:cites sha=c375b9de -->
 
 Says: an alert and its notification follow the upload response within 1 minute. A changed threshold applies to readings evaluated more than 60 seconds later.
 

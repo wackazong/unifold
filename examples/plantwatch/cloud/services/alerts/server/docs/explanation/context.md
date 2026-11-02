@@ -42,7 +42,7 @@ Says, as far as this unit implements it: an alert has the fields `id`, `plant_id
 Here: the rows that `server` stores and the answers it gives. Expiry and retention are jobs of `server`.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=81a51124 -->
+<!-- unifold:cites sha=c375b9de -->
 
 Says: a list has at most 1 000 items per page. The error response and its codes are the part `error` of the same contract.
 

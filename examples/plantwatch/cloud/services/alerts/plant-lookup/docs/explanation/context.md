@@ -28,7 +28,7 @@ Says: an internal operation lies below `/internal/v1/` and carries no owner. A c
 Here: how `plant-lookup` calls whoever provides `plants-api`, and why `lookup` takes at most 17 seconds.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=81a51124 -->
+<!-- unifold:cites sha=c375b9de -->
 
 Says: a changed threshold applies to readings that are evaluated more than 60 seconds after the change.
 

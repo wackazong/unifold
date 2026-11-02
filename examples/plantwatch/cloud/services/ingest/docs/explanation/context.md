@@ -32,7 +32,7 @@ Says, as the contract that this unit implements:
 Here: the contract of `ingest-api`. `ingest` serves this operation exactly as defined; [ingest API](../../../../docs/references/ingest-api.md) adds the order of the checks and the failures.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=81a51124 -->
+<!-- unifold:cites sha=c375b9de -->
 
 Says: a batch has at most 500 readings, a request body at most 1 MB.
 

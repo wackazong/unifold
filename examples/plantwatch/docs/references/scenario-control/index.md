@@ -1,7 +1,7 @@
 # scenario-control
 
 Contract of `emulator.scenario-control`: the HTTP API with which a client drives the simulated sensor stick. The scenario document itself is defined in the [scenario format](../scenario-format.md). Notation: HTTP with JSON bodies, member names lower-case with underscores.
-Sources: the scenario format of plantwatch, the BLE profile of plantwatch, decision 0002 of `emulator`.
+Sources: the scenario format of plantwatch, the BLE profile of plantwatch, decision `emulator`/0002.
 
 ## General
 

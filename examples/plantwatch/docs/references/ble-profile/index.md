@@ -1,7 +1,7 @@
 # BLE profile of the sensor stick
 
 Contract of the radio link: `device.ble-link` and `emulator.ble-link` serve it, `mobile.sensor-link` and `test-rig.device-under-test` use it. It defines how a sensor stick serves its readings to a central over Bluetooth Low Energy: what it advertises, which GATT attributes it has, and which procedures a central runs. Both sides of the radio link are built from this text. Version 1.0. Notation: byte layouts in tables and bytes in hexadecimal; the steps of a procedure as text.
-Sources: Bluetooth Core Specification 4.2; decisions 0005, 0008, 0009 and 0010 of plantwatch.
+Sources: Bluetooth Core Specification 4.2; decisions [0005](../../decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md), [0008](../../decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md), [0009](../../decisions/0009-the-record-has-a-fixed-layout-with-a-length-and-a-presence-mask.md) and [0010](../../decisions/0010-the-central-confirms-with-one-cumulative-sequence-number.md) of plantwatch.
 
 A reading travels over the radio link as a record. The record is the binary form of the [reading schema](../reading-schema.md) and is part of this profile. The terms are defined in the [glossary](../glossary.md).
 

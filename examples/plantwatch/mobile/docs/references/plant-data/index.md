@@ -1,7 +1,7 @@
 # plant-data
 
 Contract of `sync.plant-data`: the queries, commands and guarantees of the capability through which the data on the phone is read and changed. The description is independent of a programming language. Reading, plant, thresholds, change state, alert, session and the ages of data are the things cited in [context.md](../../explanation/context.md). Notation: wit.
-Sources: the public API and the reading schema of plantwatch, decisions 0001 and 0003 of `mobile`, decisions 0001 and 0002 of `sync`.
+Sources: the public API and the reading schema of plantwatch, decisions [0001](../../decisions/0001-the-local-store-is-the-only-source-for-the-screens.md) and [0003](../../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md) of `mobile`, decisions `sync`/0001 and `sync`/0002.
 
 ## Parts
 

@@ -12,7 +12,7 @@ Says: one service is reachable from outside. It authenticates and routes and doe
 Here: this unit is that service. It never passes on a request without a verified token, and never an owner id that came from outside.
 
 ### [cloud: public API](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=81a51124 -->
+<!-- unifold:cites sha=c375b9de -->
 
 Says, as far as this unit implements it:
 

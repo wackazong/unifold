@@ -1,7 +1,7 @@
 # event-bus
 
-Contract of `platform.event-bus`: what a service that publishes or subscribes can rely on. The product behind it is chosen in decision 0001 of `platform`. The bus does not look into a value. Notation: the operations of a Kafka client, written as text.
-Sources: decision 0001 of `platform`, the event conventions of `cloud`.
+Contract of `platform.event-bus`: what a service that publishes or subscribes can rely on. The product behind it is chosen in decision `platform`/0001. The bus does not look into a value. Notation: the operations of a Kafka client, written as text.
+Sources: decision `platform`/0001, the event conventions of `cloud`.
 
 ## Access
 

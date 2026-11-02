@@ -71,7 +71,7 @@ Says: `GET /v1/plants/{plant_id}/history` returns items in ascending order of ti
 Here: what `plants` stores and how long; [data model](../references/data-model.md) says how.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=81a51124 -->
+<!-- unifold:cites sha=c375b9de -->
 
 Says, as part of the same contract: a change to a plant is visible to the next request. An owner has at most 50 plants; a page has at most 1 000 items.
 

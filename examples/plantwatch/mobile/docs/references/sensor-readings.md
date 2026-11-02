@@ -1,7 +1,7 @@
 # sensor-readings
 
 Contract of `ble-client.sensor-readings`: the operations, data and guarantees of the capability through which the client hands fetched readings to its consumer. The description is independent of a programming language. The fields of a reading and of a paired sensor stick are those cited in [context.md](../explanation/context.md). The consumer is the one receiver attached to the capability; it acknowledges a batch once it has stored it. An anchor is a time reference that the client keeps for one boot of a sensor stick. Notation: wit.
-Sources: the BLE profile and the reading schema of plantwatch, decisions 0001 and 0002 of `ble-client`.
+Sources: the BLE profile and the reading schema of plantwatch, decisions `ble-client`/0001 and `ble-client`/0002.
 
 ## What the consumer must do
 

@@ -1,7 +1,7 @@
 # plants-api
 
 Contract of `plants.plants-api`. The operations for a caller that acts for an owner, with their bodies and errors, are defined by the public API of plantwatch and cited in [context](../explanation/context.md); this contract states how `plants` serves them and defines the lookup that only this unit has. Notation: HTTP, with JSON bodies as the project conventions define them.
-Sources: the public API of plantwatch, the calls between services of `cloud`, decisions 0001 and 0002 of `plants`.
+Sources: the public API of plantwatch, the calls between services of `cloud`, decisions `plants`/0001 and `plants`/0002.
 
 ## Rules for the operations of an owner
 

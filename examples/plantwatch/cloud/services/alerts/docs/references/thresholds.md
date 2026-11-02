@@ -1,7 +1,7 @@
 # thresholds
 
 Contract of `plant-lookup.thresholds`: the function `lookup`, how `plant-lookup` turns the answers of whoever provides `plants-api` into its three answers, and how long it keeps them. The rules for calls that it follows are cited in [context](../explanation/context.md). Notation: wit.
-Sources: the lookup by sensor id of `plants-api`; decision 0001 of `plant-lookup`.
+Sources: the lookup by sensor id of `plants-api`; decision `plant-lookup`/0001.
 
 ## Parts
 

@@ -1,7 +1,7 @@
 # evaluation
 
-Contract of `rules.evaluation`: the function `evaluate` and the rules by which `rules` judges a reading. What a client of the product sees of these rules is cited in [context](../explanation/context.md); this contract adds the exact procedure, the margins and the state. Why closing has a margin and opening has none is recorded in decision 0001 of `rules`. Notation: wit.
-Sources: the alert as the public API of plantwatch defines it; decision 0001 of `rules`.
+Contract of `rules.evaluation`: the function `evaluate` and the rules by which `rules` judges a reading. What a client of the product sees of these rules is cited in [context](../explanation/context.md); this contract adds the exact procedure, the margins and the state. Why closing has a margin and opening has none is recorded in decision `rules`/0001. Notation: wit.
+Sources: the alert as the public API of plantwatch defines it; decision `rules`/0001.
 
 ## Parts
 

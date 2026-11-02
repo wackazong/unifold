@@ -35,7 +35,7 @@ Here: used unchanged. "Stored" here and in the profile mean the same.
 ## From plantwatch
 
 ### [plantwatch/0008 Define the BLE profile and the reading format as references of plantwatch](../../../../docs/decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md)
-<!-- unifold:cites sha=eb9de36f -->
+<!-- unifold:cites sha=503438ac -->
 
 Says: the BLE profile and the reading schema are references of plantwatch. Every connection that carries the profile names it as its contract; a reading travels inside the profile and the public API, and whoever reads or writes readings cites the schema. Both keep a version; a change within a major version keeps older counterparts working.
 

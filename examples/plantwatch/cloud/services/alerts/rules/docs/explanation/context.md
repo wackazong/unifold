@@ -41,7 +41,7 @@ Says, as the behaviour that this unit implements:
 Here: `rules` implements exactly this and chooses the margins within the bound. Closing with `expired` is not its business.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=81a51124 -->
+<!-- unifold:cites sha=c375b9de -->
 
 Says: a changed threshold applies to readings that are evaluated more than 60 seconds after the change.
 

@@ -1,7 +1,7 @@
 # notification
 
 Contract of `notifier.notification`: the function `notify`, what it sends to whoever provides `push`, and the texts. What a notification is for a client of the product is cited in [context](../explanation/context.md). Notation: wit.
-Sources: the push service contract of plantwatch; decision 0001 of `notifier`.
+Sources: the push service contract of plantwatch; decision `notifier`/0001.
 
 ## Parts
 

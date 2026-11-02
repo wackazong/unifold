@@ -1,7 +1,7 @@
 # reading-log
 
 Contract of `store.reading-log`: the stored readings of the sensor stick and the mark that releases them. "Stored" means: received by the provider, and neither marked as delivered nor discarded. A reading that was accepted survives power loss and restart. At least 2 880 readings are kept; when there is no room, the oldest readings are discarded, up to 204 at once, and the summary says so. A reading is never refused for lack of room. Notation: wit.
-Sources: the product parameters of plantwatch and decision 0010 of plantwatch.
+Sources: the product parameters of plantwatch and decision plantwatch/0010.
 
 ## Parts
 

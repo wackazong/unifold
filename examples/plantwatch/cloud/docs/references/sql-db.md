@@ -1,7 +1,7 @@
 # sql-db
 
-Contract of `platform.sql-db`: what a service that stores data can rely on. The product behind it is chosen in decision 0001 of `platform`. Notation: SQL and the connection parameters, written as text.
-Sources: decision 0001 of `platform`, decision 0002 of `cloud`.
+Contract of `platform.sql-db`: what a service that stores data can rely on. The product behind it is chosen in decision `platform`/0001. Notation: SQL and the connection parameters, written as text.
+Sources: decision `platform`/0001; each service owns its data ([0002](../decisions/0002-each-service-owns-its-data.md)).
 
 ## Access
 
