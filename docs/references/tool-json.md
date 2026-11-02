@@ -165,7 +165,7 @@ The first end is the capability or need asked for; the others are every final us
 
 ## Commands that write
 
-`init`: `{"ok": true, "root", "written": [paths], "notes": [text], "units": 1}`; `written` holds the root manifest, if `init` wrote it, and the generated files. `generate` and `skills sync`: `{"ok", "written", "removed", "refused"}`. `site`: `{"ok": true, "written": "/abs/unifold.html"}`. `stamp` names every stamp it wrote; `action` is `added` or `refreshed`:
+`init`: `{"ok": true, "root", "written": [paths], "notes": [text], "units": 1}`; `written` holds the root manifest, if `init` wrote it, and the generated files. `generate` and `skills sync`: `{"ok", "written", "removed", "refused"}`. `explore`: `{"ok": true, "written": "/abs/explorer.html", "opened": true}`; `opened` is false with `--no-open` or when no browser could be started. `stamp` names every stamp it wrote; `action` is `added` or `refreshed`:
 
 ```json
 {"ok": true, "stamped": 1, "items": [

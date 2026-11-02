@@ -63,7 +63,7 @@ error W2 unifold.yaml: need 'billing.clock' has no provider
 
 ## How people use it
 
-A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, `docs/skills/` says how to do a task, `docs/references/` holds the facts, `docs/explanation/` the reasoning, the invariants, the runtime, the deployment and the risks, and `docs/decisions/` the choices. A reviewer runs `unifold check` and works through the [review checklist](https://unifold.md/writing#review-checklist).
+A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, `docs/skills/` says how to do a task, `docs/references/` holds the facts, `docs/explanation/` the reasoning, the invariants, the runtime, the deployment and the risks, and `docs/decisions/` the choices. Anyone who wants the whole picture runs `unifold explore`, which opens the map in the browser with every document beside it. A reviewer runs `unifold check` and works through the [review checklist](https://unifold.md/writing#review-checklist).
 
 ## How agents use it
 
@@ -81,7 +81,7 @@ Two skills in the [Agent Skills](https://agentskills.io/specification) format. [
 
 ### The tool
 
-The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, wiring, contracts, scenarios and documents, generates the diagrams and the `AGENTS.md` files, and prints the resolved model as JSON for tools that build on the map. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
+The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, wiring, contracts, scenarios and documents, generates the diagrams and the `AGENTS.md` files, and prints the resolved model as JSON for tools that build on the map. `unifold explore` opens the explorer: the whole map as one page in the browser, every box clickable, every README, contract and decision beside it; the [examples](https://unifold.md/examples/plantwatch/) show one. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
 
 ## Questions
 
@@ -106,6 +106,8 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 uv run tests/conformance.py
 # check an example
 uv run docs/skills/unifold/scripts/unifold.py check examples/plantwatch
+# open the explorer of an example in the browser
+uv run docs/skills/unifold/scripts/unifold.py explore examples/plantwatch
 # build the site and check its links
 uv run site/build.py --check
 ```

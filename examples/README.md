@@ -33,7 +33,7 @@ It needs [uv](https://docs.astral.sh/uv/), which installs Python and PyYAML.
 (cd plantwatch && unifold check --strict)
 ```
 
-Each example has an explorer page, `unifold.html`, written by `unifold site`: the map with every README, contract, decision and other document of the example rendered beside it. `unifold show PATH` and `unifold tree` work in every example.
+`unifold explore` in an example opens its explorer in the browser: the map with every README, contract, decision and other document of the example rendered beside it. The site publishes the same pages at `https://unifold.md/examples/<name>/`. `unifold show PATH` and `unifold tree` work in every example.
 
 ## Read next
 

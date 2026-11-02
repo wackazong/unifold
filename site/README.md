@@ -20,7 +20,7 @@ uv run site/build.py --serve
 | `/spec.md`, ... | the same chapters as plain Markdown | |
 | `/0.3/unifold.schema.json` | | the schema, at the current version; the build stops if it is missing |
 | `/skill/SKILL.md`, `/skill/assets/...`, `/skill/scripts/unifold.py`, `/skill/<name>/...`, `/llms.txt` | | `docs/skills/` copied as it is, templates and scripts included: the unifold skill at `/skill/`, every skill folder at `/skill/<name>/` (`/skill/unifold-convert/SKILL.md` among them), so that the relative links of a skill resolve; `--check` checks those links. `llms.txt` is an index for agents |
-| `/examples/<name>/` | `index.html` | every `examples/**/unifold.html` that exists |
+| `/examples/<name>/` | `index.html` | the explorer of every example, written at build time by `unifold explore` of the tool in the skill; nothing is committed |
 | `/search/` | `search/index.html` | the search: `search.js` searches `search.json` in the browser as you type, in the field in the header of every page and here, where all sections found are listed. The build writes that index with one entry per section of every chapter (down to `###`) and per band of the start page; `--check` checks its addresses. Without JavaScript the field in the header leads here. |
 | `/favicon.svg`, `/favicon.ico`, `/apple-touch-icon.png` | | the mark, drawn by the build from the corners in `MARK`: an SVG with light and dark colours, an ICO with 16, 32 and 48 pixels for browsers without SVG icons, a PNG for home screens |
 
@@ -28,7 +28,7 @@ Every page is a folder with an `index.html`, so that any web server serves it; a
 
 ## Light and dark
 
-A page follows the light or dark setting of the system until somebody presses the button beside the search. The choice is kept in `localStorage` under `unifold-theme` and set as `data-theme` on `<html>` by a small script in the head, before the style sheet applies, so that no page shows the other colours first; a choice that matches the system again is forgotten. Without scripts the button stays hidden and the system decides; on the narrowest phones there is no room for it. `style.css` holds the dark colours twice, for the choice and for the system, because a selector and a media query cannot share a rule; `--check` sees that both lists are the same. The example maps, written by `unifold site`, have the same button, key and attribute, and draw their diagram again when the colours change.
+A page follows the light or dark setting of the system until somebody presses the button beside the search. The choice is kept in `localStorage` under `unifold-theme` and set as `data-theme` on `<html>` by a small script in the head, before the style sheet applies, so that no page shows the other colours first; a choice that matches the system again is forgotten. Without scripts the button stays hidden and the system decides; on the narrowest phones there is no room for it. `style.css` holds the dark colours twice, for the choice and for the system, because a selector and a media query cannot share a rule; `--check` sees that both lists are the same. The explorers of the examples, written by `unifold explore`, have the same button, key and attribute, and draw their diagram again when the colours change.
 
 ## Diagrams
 

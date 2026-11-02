@@ -22,7 +22,7 @@ documents where they belong, the generated files current.
   stamp [PATH]                confirm context items: write and refresh their stamps
   cited-by FILE               context items and links that cite FILE
   skills [sync] [PATH]        list skills, or write stubs where agents look for them
-  site [PATH]                 write the HTML explorer
+  explore [PATH]              write the explorer and open it in a browser
   rules [ID]                  the rules that `check` applies
 
 Documentation: https://unifold.md
@@ -38,7 +38,9 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
+import webbrowser
 from urllib.parse import quote, unquote
 
 try:
@@ -3829,7 +3831,7 @@ def init_project(target: str, agents=False, interactive=False) -> dict:
     return result
 
 
-# ------------------------------------------------------------------- site
+# --------------------------------------------------------------- explorer
 
 MD_ITEM = re.compile(r"^( {0,3})([-*+]|(\d{1,9})[.)])(?:( +)(.*))?$")
 MD_HR = re.compile(r"^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$")
@@ -4109,7 +4111,7 @@ class Markdown:
             at = look = stop
 
 
-def site_documents(project: Project, charts: dict, scenes: set, base: str, up: str) -> dict:
+def explorer_documents(project: Project, charts: dict, scenes: set, base: str, up: str) -> dict:
     """The Markdown files of every unit as pages of the explorer: {path: page}. A page has its
     unit, its kind (a folder of docs/, `readme` or `other`), its title and its HTML; a page with
     front matter its `summary` (the description) and `facts`, a decision its `status`, a part of a
@@ -4220,7 +4222,7 @@ def site_documents(project: Project, charts: dict, scenes: set, base: str, up: s
     return pages
 
 
-SITE = r"""<!doctype html>
+EXPLORER = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__ · unifold</title>
@@ -4669,7 +4671,7 @@ async function draw(source, wire){   // Mermaid source into the diagram box; `wi
   el("zoom").hidden = true; el("play").hidden = true;
   if (!mermaid) {
     if (mermaidError) el("diagram").innerHTML = "<p>The diagram renderer (Mermaid) could not be loaded" + (MERMAID.url ? " from " + esc(MERMAID.url) : "")
-      + ". The tables below are complete without it. To embed the renderer in this page: <code>unifold site --mermaid path/to/mermaid.min.js</code>.</p><details><summary>Diagram source</summary><pre>" + esc(source) + "</pre></details>";
+      + ". The tables below are complete without it. To embed the renderer in this page: <code>unifold explore --mermaid path/to/mermaid.min.js</code>.</p><details><summary>Diagram source</summary><pre>" + esc(source) + "</pre></details>";
     return;
   }
   const mine = ++drawn;
@@ -4721,10 +4723,25 @@ addEventListener("themechange", () => { if (mermaid) { setup(); render(); } }); 
 """
 
 
-def build_site(project: Project, out: str, mermaid: str) -> str:
-    """Write the HTML explorer. `mermaid` is a URL, or a local single-file build to embed."""
+def open_in_browser(path: str) -> bool:
+    """Open a local file in the browser of the system. False when no browser could be started."""
+    try:
+        return bool(webbrowser.open("file://" + quote(os.path.abspath(path))))
+    except Exception:                                 # pragma: no cover
+        return False
+
+
+def explorer_default(project: Project) -> str:
+    """Where `explore` writes without `-o`: outside the repository, in the temporary folder of the
+    system, one file per project name. The explorer is a view of the map, not a file of it."""
+    name = re.sub(r"[^\w.-]+", "-", project.root_unit.name) or "project"
+    return os.path.join(tempfile.gettempdir(), "unifold", name, "explorer.html")
+
+
+def build_explorer(project: Project, out: str, mermaid: str) -> str:
+    """Write the explorer: one HTML page. `mermaid` is a URL, or a local single-file build to embed."""
     if os.path.isdir(out):
-        out = os.path.join(out, "unifold.html")
+        out = os.path.join(out, "explorer.html")
     inline, source = "", {"url": mermaid}
     if not re.match(r"^https?://", mermaid):
         if not os.path.isfile(mermaid):
@@ -4791,14 +4808,14 @@ def build_site(project: Project, out: str, mermaid: str) -> str:
     base = saved.rstrip("/") if saved not in ("none", "relative") else ""
     up = os.path.relpath(project.root, out_dir).replace(os.sep, "/")
     up = "" if up == "." else up + "/"
-    docs = site_documents(project, {u["path"]: u["diagrams"] for u in units},
+    docs = explorer_documents(project, {u["path"]: u["diagrams"] for u in units},
                           {(s["unit"], s["name"]) for s in scenarios}, base, up)
     model = {"name": project.root_unit.name, "units": units, "scenarios": scenarios, "docs": docs,
              "base": base, "up": up}
     parts = {"__TITLE__": cell(project.root_unit.name).replace("<", "&lt;"),
              "__MODEL__": json.dumps(model, ensure_ascii=False).replace("</", "<\\/"),
              "__MERMAID__": json.dumps(source), "__INLINE__": inline}
-    html = re.sub(r"__(?:TITLE|MODEL|MERMAID|INLINE)__", lambda m: parts[m.group()], SITE)
+    html = re.sub(r"__(?:TITLE|MODEL|MERMAID|INLINE)__", lambda m: parts[m.group()], EXPLORER)
     write_text(out, html)
     return out
 
@@ -5032,7 +5049,8 @@ COMMANDS = {
              "each one with the source it cites",
     "cited-by": "list the context items and links that cite FILE",
     "skills": "list every skill; `skills sync` writes stubs into .agents/skills and .claude/skills",
-    "site": "write the HTML explorer",
+    "explore": "write the explorer, one HTML page with the map and every document, and open it "
+               "in a browser",
     "rules": "print the rules that `check` applies, or one rule",
 }
 
@@ -5088,8 +5106,11 @@ def build_parser() -> argparse.ArgumentParser:
     cmd.add_argument("file", help="the cited file; it need not exist any more")
     cmd = command("skills", path=False)
     cmd.add_argument("args", nargs="*", metavar="[sync] [PATH]")
-    cmd = command("site")
-    cmd.add_argument("-o", "--output", help="file to write (default: unifold.html in the root)")
+    cmd = command("explore")
+    cmd.add_argument("-o", "--output", metavar="FILE|DIR",
+                     help="file to write, or a folder for explorer.html (default: explorer.html "
+                          "under the temporary folder of the system, outside the repository)")
+    cmd.add_argument("--no-open", action="store_true", help="write the page without opening a browser")
     cmd.add_argument("--mermaid", default=MERMAID_URL, metavar="URL|FILE",
                      help="where the page gets Mermaid: a URL (default: a CDN), or a local "
                           "mermaid.min.js, which is embedded so that the page works offline")
@@ -5218,10 +5239,12 @@ def run(args) -> int:
     if name == "model":
         print(json.dumps(build_model(project), indent=1, ensure_ascii=False))
         return 0
-    if name == "site":
-        out = build_site(project, os.path.abspath(args.output) if args.output
-                         else os.path.join(project.root, "unifold.html"), args.mermaid)
-        emit(args, {"ok": True, "written": out}, lambda: print(f"wrote {out}"))
+    if name == "explore":
+        out = build_explorer(project, os.path.abspath(args.output) if args.output
+                             else explorer_default(project), args.mermaid)
+        opened = False if args.no_open else open_in_browser(out)
+        emit(args, {"ok": True, "written": out, "opened": opened},
+             lambda: print(f"wrote {out}" + ("" if opened or args.no_open else "; no browser found, open it yourself")))
         return 0
     unit = unit_for(project, args.path)
     if name == "show":

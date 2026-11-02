@@ -132,7 +132,17 @@ needs:
 
 Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s), 0 info`. The component diagram now shows two boxes and an arrow from `billing` to `platform`, labelled `clock`. The check does not read your code: keeping the code and the map in step is part of every change, and of its review.
 
-## 6. Ask the map a question
+## 6. See the map in the browser
+
+Run:
+
+```sh
+unifold explore
+```
+
+It writes the explorer, one HTML page, outside your repository and opens it in the browser: the component diagram with `billing` and `platform`, each box clickable, and beside the map the two `README.md` files and the contract `clock.md`. Nothing is committed; run the command again after a change.
+
+## 7. Ask the map a question
 
 Run:
 
@@ -142,7 +152,7 @@ unifold show billing
 
 It prints the unit, its need with the contract, and who provides it: `provided by platform capability 'clock'`. From any file inside `billing/` the same command finds the unit. This is what a coding agent runs first.
 
-## 7. Let agents in
+## 8. Let agents in
 
 Run:
 

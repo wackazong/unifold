@@ -19,5 +19,5 @@ unifold check
 
 1. [Three commands](docs/tutorials/three-commands.md): what `check`, `show` and `capability` print for this project.
 2. [Break the map](docs/tutorials/break-the-map.md): what `check` says when a wiring line is missing or the two sides of a connection name different contracts.
-3. The generated [component diagram](docs/diagrams/component.md), or `unifold.html` in a browser.
+3. The generated [component diagram](docs/diagrams/component.md), or `unifold explore` for the explorer in a browser.
 4. [core](core/README.md), the child with a decision, invariants and a context item.

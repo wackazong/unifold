@@ -33,10 +33,10 @@ the tool (`CMD rules --json`) and demands a failing case for every rule.
 from __future__ import annotations
 
 import json
-import shutil
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -1188,12 +1188,12 @@ def scenario_stub_names(runner: Runner, tmp: str):
     check(runner.findings(folder) == [], f"clean after skills sync: {runner.findings(folder)}")
 
 
-def scenario_site(runner: Runner, tmp: str):
+def scenario_explore(runner: Runner, tmp: str):
     folder = new_project(tmp, project("wiring:\n  a.x: b.x\n",
                                    {"a": NEEDS_X, "b": CAPABILITY_X + "status: planned\n"}))
     out = Path(tmp) / "site" / "map.html"
-    done = runner.run("site", str(folder), "-o", str(out))
-    check(done.returncode == 0 and out.is_file(), f"site: {done.stderr}")
+    done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
+    check(done.returncode == 0 and out.is_file(), f"explore: {done.stderr}")
     html = out.read_text()
     check('"status": "planned"' in html and '"x"' in html and "cdn.jsdelivr.net" in html,
           "the page holds the model, its connections and status")
@@ -1201,15 +1201,25 @@ def scenario_site(runner: Runner, tmp: str):
     check(len(dark) == 2 and dark[0] == dark[1], "the dark colours are the same for the button and for the system")
     fake = Path(tmp) / "mermaid.min.js"
     fake.write_text("window.mermaid = {initialize(){}, render: async () => ({svg: '<svg></svg>'})};\n")
-    done = runner.run("site", str(folder), "-o", str(out.parent), "--mermaid", str(fake))
-    html = (out.parent / "unifold.html").read_text()
+    done = runner.run("explore", "--no-open", str(folder), "-o", str(out.parent), "--mermaid", str(fake))
+    html = (out.parent / "explorer.html").read_text()
     check(done.returncode == 0 and "window.mermaid = {initialize" in html
           and "cdn.jsdelivr.net" not in html, "--mermaid FILE embeds the renderer; -o takes a folder")
-    done = runner.run("site", str(folder), "--mermaid", str(Path(tmp) / "missing.js"))
+    done = runner.run("explore", "--no-open", str(folder), "--mermaid", str(Path(tmp) / "missing.js"))
     check(done.returncode == 2, "--mermaid with a missing file")
+    temp = Path(tmp) / "temp"
+    temp.mkdir()
+    done = runner.run("explore", "--no-open", "--json", str(folder), env={"TMPDIR": str(temp), "TEMP": str(temp), "TMP": str(temp)})
+    data = json.loads(done.stdout)
+    written = Path(data["written"])
+    check(done.returncode == 0 and written.is_file() and data["opened"] is False
+          and written.name == "explorer.html" and temp in written.parents and folder not in written.parents,
+          f"without -o the explorer is written outside the project, under the temporary folder: {done.stdout}")
+    check(not (folder / "unifold.html").exists() and not (folder / "explorer.html").exists(),
+          "explore writes nothing into the project")
 
 
-def scenario_site_scenarios(runner: Runner, tmp: str):
+def scenario_explore_scenarios(runner: Runner, tmp: str):
     # b, idle, raises done into a, which is busy with serve; a calls b.do (command, nothing inside: no bar); a asks b.ask (query);
     # b raises done from inside ask; ask and serve are answered when the scenario ends
     hops = "      - a -> b.done\n      - a -> b.do\n      - a -> b.ask\n      - a -> b.done\n"
@@ -1224,8 +1234,8 @@ def scenario_site_scenarios(runner: Runner, tmp: str):
     check("| # | Caller | Target | Part | Kind | Contract |" in page and "| 2 | `a` | `b` | `done` | event |" in page,
           "the table has the kind of the part")
     out = Path(tmp) / "map.html"
-    done = runner.run("site", str(folder), "-o", str(out))
-    check(done.returncode == 0, f"site: {done.stderr}")
+    done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
+    check(done.returncode == 0, f"explore: {done.stderr}")
     model = json.loads(re.search(r"const model = (.*?);\nconst MERMAID", out.read_text(), re.S).group(1))
     scenario = (model.get("scenarios") or [{}])[0]
     lifelines = scenario.get("diagram", {}).get("lifelines", {})
@@ -1238,7 +1248,7 @@ def scenario_site_scenarios(runner: Runner, tmp: str):
           and {"name": "b", "unit": "b"} in lifelines.values(), "a lifeline names its unit, or the side of the holder")
 
 
-def scenario_site_documents(runner: Runner, tmp: str):
+def scenario_explore_documents(runner: Runner, tmp: str):
     notes = "\n".join([
         "# Notes", "", "Text with *em*, **strong**, `a <b> code` and <script>alert(1)</script> <img src=x onerror=alert(1)>.",
         "A [bad](javascript:alert(1)) link, [x](../../b/README.md#why), [up](#table), [file](../../logo.png), "
@@ -1257,8 +1267,8 @@ def scenario_site_documents(runner: Runner, tmp: str):
         **with_decision("proposed", "decision-makers: [Ann]\n")}))
     runner.run("generate", str(folder))
     out = Path(tmp) / "map.html"
-    done = runner.run("site", str(folder), "-o", str(out))
-    check(done.returncode == 0, f"site: {done.stderr}")
+    done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
+    check(done.returncode == 0, f"explore: {done.stderr}")
     model = json.loads(re.search(r"const model = (.*?);\nconst MERMAID", out.read_text(), re.S).group(1))
     docs = model.get("docs") or {}
     root, b, page = docs.get("README.md", {}), docs.get("b/README.md", {}), docs.get("docs/references/notes.md", {})
@@ -1454,9 +1464,9 @@ SCENARIOS = [
     ("scenario-own-needs", scenario_own_needs),
     ("scenario-init-agents-and-skill-stubs", scenario_agents),
     ("scenario-skill-stub-names", scenario_stub_names),
-    ("scenario-site", scenario_site),
-    ("scenario-site-scenarios", scenario_site_scenarios),
-    ("scenario-site-documents", scenario_site_documents),
+    ("scenario-explore", scenario_explore),
+    ("scenario-explore-scenarios", scenario_explore_scenarios),
+    ("scenario-explore-documents", scenario_explore_documents),
     ("scenario-robustness", scenario_robustness),
 ]
 

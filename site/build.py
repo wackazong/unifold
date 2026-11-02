@@ -38,6 +38,7 @@ DOMAIN = "unifold.md"
 SITE = Path(__file__).resolve().parent
 ROOT = SITE.parent
 REF = ROOT / "docs" / "references"
+TOOL = ROOT / "docs" / "skills" / "unifold" / "scripts" / "unifold.py"
 SKILL = ROOT / "docs" / "skills" / "unifold" / "SKILL.md"
 CONVERT_SKILL = ROOT / "docs" / "skills" / "unifold-convert" / "SKILL.md"
 OUT = SITE / "_out"
@@ -854,18 +855,23 @@ def build() -> None:
     css_href = f"/style.css?v={hashlib.sha256(css.encode()).hexdigest()[:8]}"
     (OUT / "style.css").write_text(css, encoding="utf-8")
 
-    # explorers: every unifold.html below examples/
+    # explorers: `unifold explore` of every example, written by the tool at build time, never committed
     explorers = []
-    for f in sorted((ROOT / "examples").rglob("unifold.html")) if (ROOT / "examples").exists() else []:
-        name = f.parent.name
+    for manifest in sorted((ROOT / "examples").glob("*/unifold.yaml")) if (ROOT / "examples").exists() else []:
+        name = manifest.parent.name
         dest = OUT / "examples" / name
         dest.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(f, dest / "index.html")
-        t = re.search(r"<title>(.*?)</title>", f.read_text(encoding="utf-8", errors="replace"), re.S)
+        written = dest / "index.html"
+        r = subprocess.run([sys.executable, str(TOOL), "explore", str(manifest.parent), "-o", str(written), "--no-open"],
+                           capture_output=True, text=True)
+        if r.returncode != 0 or not written.exists():
+            warn(f"unifold explore failed for {name}: {(r.stderr or r.stdout).strip()[:300]}")
+            continue
+        t = re.search(r"<title>(.*?)</title>", written.read_text(encoding="utf-8", errors="replace"), re.S)
         title = re.sub(r"\s*[·|-]\s*unifold\s*$", "", html.unescape(t.group(1)).strip()) if t else name
         explorers.append((name, title))
     if not explorers:
-        warn("no examples/**/unifold.html found: the site has no explorer pages")
+        warn("no example with a unifold.yaml under examples/: the site has no explorer pages")
 
     # chapters, as HTML at /slug/ (file slug/index.html, which every web server serves) and as Markdown at /slug.md
     for slug, src, _, _, _ in CHAPTERS:
@@ -926,7 +932,7 @@ def build() -> None:
              f"- [The unifold-convert skill]({SITE_URL}/skill/unifold-convert/SKILL.md): {str(convert_meta.get('description', 'Convert a repository to unifold.')).split('. ')[0]}.",
              "", "## Optional", "",
              f"- [Repository]({REPO_URL}): The standard, the skill, the reference tool and the examples."]
-    llms += [f"- [Example: {n}]({SITE_URL}/examples/{n}/): HTML explorer of the example's map." for n, _ in explorers]
+    llms += [f"- [Example: {n}]({SITE_URL}/examples/{n}/): the explorer of the example, its map with every document." for n, _ in explorers]
     (OUT / "llms.txt").write_text("\n".join(llms) + "\n", encoding="utf-8")
 
     # hosting files

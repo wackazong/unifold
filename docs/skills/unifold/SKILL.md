@@ -21,6 +21,7 @@ unifold show [PATH]      # PATH: the file or folder of your task; default: here
 - `unifold capability PATH NAME` prints both sides of every connection of one capability or need: the texts and the contracts.
 - `unifold impact PATH [CAPABILITY]` lists everything that depends on the unit or capability, through all levels, and the context items that cite its files.
 - `unifold tree` prints all units.
+- `unifold explore` writes the explorer, the whole map as one HTML page with every document beside it, and opens it in a browser; `--no-open` only writes it. The page is written outside the repository, nothing to commit.
 
 Without the tool: your unit is the nearest folder at or above your file that has a `unifold.yaml`. Its parent is the next such folder above. The parent's `wiring` has the lines `your-unit.need: provider`; the provider is a capability of a sibling, or a need of the parent to which the need is passed up. A need without a line is not connected.
 
