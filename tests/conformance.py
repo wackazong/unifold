@@ -1248,6 +1248,61 @@ def scenario_explore_scenarios(runner: Runner, tmp: str):
           and {"name": "b", "unit": "b"} in lifelines.values(), "a lifeline names its unit, or the side of the holder")
 
 
+FRAMES_JS = r"""// the frame frameOf() of the page picks for every scenario of the model, and for the scenarios argv[3] adds: `name<TAB>frame`
+const fs = require("node:fs"), html = fs.readFileSync(process.argv[2], "utf8");
+const model = JSON.parse(html.match(/\nconst model = (.*?);\nconst MERMAID/s)[1]);
+const units = model.units, byPath = Object.fromEntries(units.map(u => [u.path, u]));
+const frameOf = new Function("byPath", html.match(/\nfunction frameOf\(s\)\{.*?\n\}\n/s)[0] + "\nreturn frameOf;")(byPath);
+for (const s of model.scenarios.concat(JSON.parse(process.argv[3] || "[]"))) console.log(s.name + "\t" + frameOf(s));
+"""
+
+
+def frames_of(tmp: str, page: Path, extra: list | None = None) -> dict:
+    """What the explorer picks as the map of each scenario: {name: frame or None}, computed by the page's own frameOf()."""
+    node = shutil.which("node")
+    check(node is not None, "node is needed: the frame of a scenario is chosen by the script of the page")
+    script = Path(tmp) / "frames.js"
+    script.write_text(FRAMES_JS)
+    done = subprocess.run([node, str(script), str(page), json.dumps(extra or [])], capture_output=True, text=True)
+    check(done.returncode == 0, f"frameOf() in the page: {done.stderr}")
+    return {name: None if frame == "null" else frame for name, frame in (line.split("\t") for line in done.stdout.splitlines())}
+
+
+def scenario_explore_frames(runner: Runner, tmp: str):
+    """The map tab of a scenario shows the deepest unit whose component diagram holds every unit of its hops, also when the
+    folder the units share is plain (`src`, `lib`): a plain folder belongs to the nearest unit above it."""
+    contract = lambda name: f"{{summary: s, contract: ref:{name}}}"
+    root = ("capabilities:\n  api: " + contract("api") + "\nwiring:\n  api: src/session.api\n  src/session.x: src/runtime.x\n  src/runtime.y: src/serial.y\n"
+            "scenarios:\n"
+            "  plain:\n    summary: s\n    hops:\n      - api -> src/session.serve\n      - src/session -> src/runtime.do\n      - src/runtime -> src/serial.go\n    expect: e\n"
+            "  nested:\n    summary: s\n    hops:\n      - lib/platform/a -> lib/platform/b.run\n    expect: e\n"
+            "  root:\n    summary: s\n    hops:\n      - api -> src/session.serve\n    expect: e\n")
+    units = {"src/session": "needs:\n  x: " + contract("x") + "\ncapabilities:\n  api: " + contract("api") + "\n",
+             "src/runtime": "needs:\n  y: " + contract("y") + "\ncapabilities:\n  x: " + contract("x") + "\n",
+             "src/serial": "capabilities:\n  y: " + contract("y") + "\n",
+             "lib/platform": "kind: stateful\nwiring:\n  a.z: b.z\nscenarios:\n  inside:\n    summary: s\n    hops:\n      - a -> b.run\n    expect: e\n",
+             "lib/platform/a": "needs:\n  z: " + contract("z") + "\n", "lib/platform/b": "capabilities:\n  z: " + contract("z") + "\n"}
+    folder = new_project(tmp, project(root, units, contracts={"api": ["serve"], "x": ["do"], "y": ["go"], "z": ["run"]}))
+    runner.run("generate", str(folder))
+    check(runner.findings(folder) == [], f"the fixture is clean: {runner.findings(folder)}")
+    out = Path(tmp) / "map.html"
+    done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
+    check(done.returncode == 0, f"explore: {done.stderr}")
+    model = json.loads(re.search(r"const model = (.*?);\nconst MERMAID", out.read_text(), re.S).group(1))
+    paths = {u["path"]: u for u in model["units"]}
+    check("src" not in paths and "lib" not in paths and paths["src/serial"]["parent"]["path"] == "."
+          and paths["lib/platform/a"]["parent"]["path"] == "lib/platform" and "component" in paths["lib/platform"]["diagrams"],
+          f"src and lib are plain folders; the parent is the nearest unit above: {sorted(paths)}")
+    frames = frames_of(tmp, out, [{"name": "none", "unit": "src/serial", "hops": []}])
+    check(frames == {"plain": ".", "nested": "lib/platform", "root": ".", "inside": "lib/platform", "none": "."},
+          f"the frame of a scenario is the deepest unit with a map of every unit in it, plain folders skipped: {frames}")
+    lone = new_project(str(Path(tmp) / "lone"), project(""))
+    done = runner.run("explore", "--no-open", str(lone), "-o", str(Path(tmp) / "lone.html"))
+    check(done.returncode == 0, f"explore: {done.stderr}")
+    frames = frames_of(tmp, Path(tmp) / "lone.html", [{"name": "alone", "unit": ".", "hops": []}])
+    check(frames == {"alone": None}, f"without a map of children there is no frame, and the sequence view stays: {frames}")
+
+
 def scenario_explore_documents(runner: Runner, tmp: str):
     notes = "\n".join([
         "# Notes", "", "Text with *em*, **strong**, `a <b> code` and <script>alert(1)</script> <img src=x onerror=alert(1)>.",
@@ -1466,6 +1521,7 @@ SCENARIOS = [
     ("scenario-skill-stub-names", scenario_stub_names),
     ("scenario-explore", scenario_explore),
     ("scenario-explore-scenarios", scenario_explore_scenarios),
+    ("scenario-explore-frames", scenario_explore_frames),
     ("scenario-explore-documents", scenario_explore_documents),
     ("scenario-robustness", scenario_robustness),
 ]

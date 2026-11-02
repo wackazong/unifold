@@ -4567,6 +4567,7 @@ let run = 0;                          // the run of a story on the map; a newer 
 function frameOf(s){                  // the deepest unit whose map holds every unit of a scenario: the common ancestor of the units its hops name, with a diagram of its children
   const paths = s.hops.flatMap(x => [x["caller-unit"], x["target-unit"]].filter(Boolean));
   let f = paths.length ? paths.reduce((a, b) => { const A = a.split("/"), B = b.split("/"); let i = 0; while (i < A.length && A[i] === B[i]) i++; return i && a !== "." ? A.slice(0, i).join("/") : "."; }) : s.unit;
+  while (!byPath[f] && f !== ".") f = f.includes("/") ? f.slice(0, f.lastIndexOf("/")) : ".";   // the common folder may be plain: it belongs to the nearest unit above it
   while (byPath[f] && !byPath[f].diagrams.component && byPath[f].parent) f = byPath[f].parent.path;
   return byPath[f] && byPath[f].diagrams.component ? f : null;
 }
