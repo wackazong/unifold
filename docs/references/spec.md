@@ -123,7 +123,7 @@ A scenario has `summary`, `hops` and `expect`; `source` is free text. A hop is `
 
 ## 5. Documents
 
-Every unit MUST have a `README.md`: what it is for, and why it is built this way. What can be relied on is in the contracts that its manifest names; their body is defined in [writing.md](writing.md) and explained in [contracts.md](contracts.md). Everything else written about a unit lives in its `docs/`, sorted by kind, as [documents.md](documents.md) and [writing.md](writing.md) say. A checker reads links, headings, front matter, length, whether a fenced block exists under a part heading and the names in code spans; it judges no sentence.
+Every unit MUST have a `README.md`: what it is for, and why it is built this way. What can be relied on is in the contracts that its manifest names; their body is defined in [writing.md](writing.md) and explained in [contracts.md](contracts.md). Everything else written about a unit lives in its `docs/`, sorted by kind, as [documents.md](documents.md) and [writing.md](writing.md) say. A checker reads links, headings, front matter, length, whether a fenced block exists under a part heading, the names in code spans and the numbers of decisions; it judges no sentence.
 
 ## 6. What a checker guarantees
 

@@ -4,7 +4,7 @@
 
 ## Why
 
-<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them.>
+<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess, in whole sentences. Where a decision gives a reason, state the reason and link the decision. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them. No list of decisions either: the decisions are their own record.>
 
 ## Capabilities
 

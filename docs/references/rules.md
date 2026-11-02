@@ -106,6 +106,7 @@ These rules read the hand-written documents of a unit ([documents.md](documents.
 | <a id="t4"></a>`T4` | warn | The `## Why` section of `README.md` has at most 20 lines that are not blank. | Move the long form to `docs/explanation/reasoning.md`. |
 | <a id="t5"></a>`T5` | warn | A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest. | Rename or remove the section; the manifest is the list of capabilities and needs. |
 | <a id="t6"></a>`T6` | warn | Where the unit or an ancestor has `docs/references/constants.md`, every name in a code span of the unit's hand-written documents that matches the table's name pattern is a row of the nearest such table or of one above it. The table has the columns `Name` and `Value` first; the pattern is `name-pattern` in its front matter, by default capitals in at least two words. Fenced blocks are not read. Silent where no table exists. | Add the row to the constants table, or correct the name. |
+| <a id="t7"></a>`T7` | warn | In a hand-written document, a four-digit number that is the number of a decision of the unit or of an ancestor is part of a link, or follows the name or path of a unit and a slash, as in `transport/0002`. Code spans, fenced blocks and comments are not read. | Say in the sentence what the decision decides, and link the number to it; a decision of an ancestor through its item in `docs/explanation/context.md`. Where no link may go, such as to a decision of a child, write its unit before the number: `transport/0002`. |
 
 ## G: generated files
 
@@ -127,4 +128,4 @@ A project MAY add checks of its own in its build. It SHOULD NOT silence a rule o
 
 ## Changes to this table
 
-Rule ids are never reused. The gaps in the numbering are rules that were merged or removed before version 0.1, and `D1` to `D3`, which compared the wiring with dependencies in code until version 0.2. Version 0.3 added `M11`, `T6` and the families `K`, `N` and `C`, and dropped nothing.
+Rule ids are never reused. The gaps in the numbering are rules that were merged or removed before version 0.1, and `D1` to `D3`, which compared the wiring with dependencies in code until version 0.2. Version 0.3 added `M11`, `T6` and the families `K`, `N` and `C`, and dropped nothing; `T7` followed within 0.3.

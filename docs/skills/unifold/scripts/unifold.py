@@ -81,7 +81,7 @@ README_TEMPLATE = """# <folder-name>
 
 ## Why
 
-<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them.>
+<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess, in whole sentences. Where a decision gives a reason, state the reason and link the decision. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them. No list of decisions either: the decisions are their own record.>
 
 ## Capabilities
 
@@ -134,6 +134,10 @@ REF_LINK = re.compile(r"^\s{0,3}\[(?!\^)[^\]]+\]:\s*(<[^>\n]*>|\S+)")
 HTML_LINK = re.compile(r"<(?:a|img)\b[^>]*?\b(?:href|src)\s*=\s*[\"']([^\"']+)[\"']", re.I)
 HTML_ANCHOR = re.compile(r"<[a-zA-Z][^>]*?\b(?:id|name)\s*=\s*[\"']([^\"']+)[\"']")
 CODE_SPAN = re.compile(r"(`+)(.+?)\1")
+DECISION_NUMBER = re.compile(r"(?<![0-9A-Za-z_])(\d{4})(?![0-9A-Za-z_])")
+QUALIFIED_NUMBER = re.compile(r"(?<![\w.`-])(?:`?(?=[\w.-]*[A-Za-z])[\w.-]+`?/)+\d{4}(?![0-9A-Za-z_])")   # transport/0002
+LINKED = re.compile(r"!?\[(?:[^\[\]]|\[[^\[\]]*\])*\](?:\((?:[^()]|\([^()]*\))*\)|\[[^\]]*\])"
+                    r"|<a\b[^>]*>.*?</a>|<[A-Za-z][A-Za-z0-9+.-]*:[^>\s]*>|<!--.*?-->|\bhttps?://\S+", re.I)
 FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 TABLE_RULE = re.compile(r"^\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?$")
 ATX = re.compile(r"^ {0,3}(#{1,6})(?:\s+(.*?))?\s*#*\s*$")
@@ -224,6 +228,8 @@ RULES = {
            "Rename or remove the section; the manifest is the list of capabilities and needs."),
     "T6": ("warn", "Where the unit or an ancestor has `docs/references/constants.md`, every name in a code span of the unit's hand-written documents that matches the table's name pattern is a row of the nearest such table or of one above it. The table has the columns `Name` and `Value` first; the pattern is `name-pattern` in its front matter, by default capitals in at least two words. Fenced blocks are not read. Silent where no table exists.",
            "Add the row to the constants table, or correct the name."),
+    "T7": ("warn", "In a hand-written document, a four-digit number that is the number of a decision of the unit or of an ancestor is part of a link, or follows the name or path of a unit and a slash, as in `transport/0002`. Code spans, fenced blocks and comments are not read.",
+           "Say in the sentence what the decision decides, and link the number to it; a decision of an ancestor through its item in `docs/explanation/context.md`. Where no link may go, such as to a decision of a child, write its unit before the number: `transport/0002`."),
     "G1": ("error", "Every generated file exists, is not ignored by git, and equals what the generator writes now, the scenario diagrams included; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
            "Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command."),
 }
@@ -1787,6 +1793,7 @@ def check_documents(project: Project, unit: Unit):
     if project.kind_of(context) == "file":
         check_context(project, unit, context)
     check_constants(project, unit)
+    check_decision_numbers(project, unit)
 
 
 def constants_table(project: Project, unit: Unit):
@@ -1846,6 +1853,33 @@ def check_constants(project: Project, unit: Unit):
                     name = name if isinstance(name, str) else name[0]
                     if name and name not in names:
                         project.add("T6", path, f"`{name}` is not a row of {project.rel(nearest)}", number)
+
+
+def check_decision_numbers(project: Project, unit: Unit):
+    """T7: a number of a decision of the unit or an ancestor is part of a link."""
+    decisions: dict = {}
+    for owner in [unit] + unit.ancestors():
+        for info in decisions_of(project, owner):
+            match = DECISION_FILE.match(info["name"])
+            if match:
+                decisions.setdefault(match.group(1), info["path"])
+    if not decisions:
+        return
+    for path in managed_files(project, unit):
+        if generated_location(unit, path):
+            continue
+        doc = project.doc(path)
+        for number, line in doc.prose:
+            if REF_LINK.match(line):
+                continue
+            bare = LINKED.sub(" ", CODE_SPAN.sub(" ", QUALIFIED_NUMBER.sub(" ", line)))
+            seen = set()
+            for match in DECISION_NUMBER.finditer(bare):
+                found = match.group(1)
+                if found in decisions and found not in seen:
+                    seen.add(found)
+                    project.add("T7", path, f"'{found}' is not part of a link; it is the number of "
+                                            f"{project.rel(decisions[found])}", number)
 
 
 def check_decisions(project: Project, unit: Unit):

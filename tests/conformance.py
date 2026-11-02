@@ -584,6 +584,18 @@ CASES = [
     ("T6-own-pattern", project(files={"docs/references/constants.md": "---\nname-pattern: \"\\\\bK_[a-z]+\\\\b\"\n---\n" + CONSTANTS.replace("MAX_SIZE", "K_size"),
                                       "README.md": "# demo\n\n`K_size` is a row, `K_other` is not, `MAX_SIZE` does not match.\n"}),
      ["warn T6 README.md"]),
+    ("T7-bare-decision-number", project(files={**with_decision(), "README.md": "# demo\n\nAs 0001 says, and 0001 again.\n"}),
+     ["warn T7 README.md"]),
+    ("T7-number-of-an-ancestor", project("", {"a": ""}, {**with_decision(), "a/README.md": "# a\n\nThe root chose this in 0001.\n"}),
+     ["warn T7 a/README.md"]),
+    ("T7-number-in-a-link-code-or-comment", project(files={**with_decision(), "README.md": (
+        "# demo\n\nEach service keeps its own data ([0001](docs/decisions/0001-x.md)). Port 9092, `0001`, "
+        "<!-- 0001 -->, https://example.com/0001 and x0001 pass.\n\n```text\n0001\n```\n")}), []),
+    ("T7-number-of-a-child-decision", project("", {"a": ""}, {"a/docs/decisions/0001-x.md": DECISION.format(
+        status="proposed", date="2026-10-07", more=""), "README.md": "# demo\n\nThe child chose 0001.\n"}), []),
+    ("T7-number-after-a-unit-path", project("", {"a": ""}, {**with_decision(), **{"a/docs/decisions/0001-x.md": DECISION.format(
+        status="proposed", date="2026-10-07", more="")}, "README.md": "# demo\n\nSources: a/0001, `a`/0001; 0001/0001 is not a path.\n"}),
+     ["warn T7 README.md"]),
     # ------------------------------------------------------ G: generated files
     ("G1-generated-file-missing", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md"],
