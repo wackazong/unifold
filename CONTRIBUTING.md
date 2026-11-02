@@ -26,6 +26,14 @@ A change that alters no rule, such as a typing mistake, a clearer sentence or a 
 
 A maintainer accepts the decision by setting `status: accepted` and naming the decision-makers.
 
+## Releasing
+
+A maintainer releases the tool:
+
+1. Set the new version in `pyproject.toml`, in `TOOL_VERSION` of `docs/skills/unifold/scripts/unifold.py` and in the two outputs of [tool-json.md](docs/references/tool-json.md) that print it, and commit the three files as `chore(release): unifold X.Y.Z`.
+2. Tag the commit `vX.Y.Z` and push the branch and the tag.
+3. The workflow `publish` checks that the tag names the version, runs the conformance tests, builds the package, runs the built wheel and uploads it to PyPI through a trusted publisher, once a maintainer approves the environment `pypi`. The workflow `deploy` rebuilds the site.
+
 ## Rules for the text
 
 - Write in the [Markdown style](docs/references/writing.md#markdown-style) of the standard: at most 200 lines per file, one line per paragraph, short sentences, one term for one thing, one home for every fact.

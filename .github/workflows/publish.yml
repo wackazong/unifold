@@ -1,0 +1,72 @@
+# Builds the package and uploads it to PyPI when a version tag is pushed.
+# Runs for a tag `vX.Y.Z`, and by hand from the Actions tab when run on such a tag, for example
+# after a failed upload. The workflow `check` does not run for a tag, so the conformance tests
+# run here before anything is built.
+#
+# Settings, once; no token is stored anywhere:
+#   PyPI, project unifold, Publishing: a trusted publisher for GitHub with the owner wackazong,
+#     the repository unifold, the workflow publish.yml and the environment pypi
+#   GitHub, Settings, Environments: an environment `pypi`; a required reviewer on it holds every
+#     upload until a maintainer approves it
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: test and build the package
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Check that the tag names the version of the package and the tool
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          package=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml)
+          tool=$(sed -n 's/^TOOL_VERSION = "\(.*\)"$/\1/p' docs/skills/unifold/scripts/unifold.py)
+          echo "tag $GITHUB_REF_NAME, pyproject.toml $package, TOOL_VERSION $tool"
+          if [ "$tag" != "$package" ] || [ "$tag" != "$tool" ]; then
+            echo "::error::run this workflow on a tag vX.Y.Z that names the version in pyproject.toml and TOOL_VERSION"; exit 1
+          fi
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+      - name: Conformance tests
+        run: uv run tests/conformance.py
+      - name: Build the wheel and the sdist
+        run: uv build
+      - name: Run the built wheel
+        run: |
+          uvx --from dist/unifold-*.whl unifold --version
+          uvx --from dist/unifold-*.whl unifold check --strict examples/serial-line
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: upload to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/unifold/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write   # the trusted publisher: PyPI trusts a token GitHub signs for this workflow
+    steps:
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Upload the wheel and the sdist
+        run: uv publish --trusted-publishing always dist/*
