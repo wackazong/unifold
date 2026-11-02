@@ -1,9 +1,10 @@
 # Glossary
 
-The terms of the protocol as the code uses them. One row per term, so that a unit can cite one.
+The terms of the protocol as the code and the documents use them. One row per term, so that a unit can cite one.
 
 | Term | Meaning |
 |---|---|
+| proto | The specification of the protocol between host and device. The contracts, the constants, the scenarios and the derived decisions take their facts from it. `proto §4.3` cites its section 4.3. |
 | host | The side that opens the session: this program. |
 | device | The side that answers over the line. It never opens a session. |
 | session | The state between a successful open and a close. Data travels only inside a session. |
