@@ -83,4 +83,4 @@ Only accepted and derived decisions bind.
 | 0075 | [Write YAML in block style](0075-write-yaml-in-block-style.md) | accepted | 2026-10-27 |
 | 0076 | [Call the standard 0.3 and read 0.3 only](0076-call-the-standard-0-3-and-read-0-3-only.md) | accepted | 2026-10-27 |
 | 0077 | [Call the page the explorer, open it with `unifold explore`, and keep it out of the repository](0077-call-the-page-the-explorer-and-keep-it-out-of-the-repository.md) | accepted | 2026-11-02 |
-| 0078 | [Write for a reader who has not read the sources, and warn about a decision number without a link](0078-write-for-a-reader-who-has-not-read-the-sources.md) | proposed | 2026-11-02 |
+| 0078 | [Write for a reader who has not read the sources, and warn about a decision number without a link](0078-write-for-a-reader-who-has-not-read-the-sources.md) | accepted | 2026-11-02 |
