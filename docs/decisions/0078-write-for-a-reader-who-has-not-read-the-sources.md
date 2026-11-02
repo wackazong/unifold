@@ -1,6 +1,7 @@
 ---
 status: proposed
 date: 2026-11-02
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Write for a reader who has not read the sources, and warn about a decision number without a link
