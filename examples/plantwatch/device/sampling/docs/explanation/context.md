@@ -26,7 +26,7 @@ Says: the firmware has no loop that waits. Work happens in short events, then th
 Here: `sampling` does all work for a reading inside one alarm, sets the next alarm and returns.
 
 ### [device: energy budget](../../../docs/references/energy-budget.md)
-<!-- unifold:cites sha=6acc06b8 -->
+<!-- unifold:cites sha=89e1aafb -->
 
 Says: one reading may cost 600 µC, most of it for powering the soil probe once.
 
@@ -70,7 +70,7 @@ Says: a reading is one set of measurements taken at the same moment by one senso
 Here: the three quantities of one reading come from one request for raw values.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: the sampling interval is 15 minutes by default and adjustable from 5 to 60 minutes.
 

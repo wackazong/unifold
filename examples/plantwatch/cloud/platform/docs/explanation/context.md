@@ -49,8 +49,8 @@ Says: outside the sensor stick, every time is UTC.
 Here: the database server runs in UTC.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: upload to notification takes under 1 minute. The server keeps 2 years of history per plant. A sensor stick takes a reading every 5 to 60 minutes.
 
-Here: the bus delivers a message to a connected subscriber within 1 second. The 2 years set the planned size of the database volume and its backups. A sensor stick causes at most 288 messages per day, so one instance of each product suffices.
+Here: the bus delivers a message to a connected subscriber within 1 second. The 2 years set the size of the database volume and its backups. A sensor stick causes at most 288 messages per day, so one instance of each product suffices.

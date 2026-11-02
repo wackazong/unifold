@@ -55,7 +55,7 @@ A plant has, per measured quantity, a lower limit, an upper limit, both or none.
 | Light | Needs more light | Too much light |
 | Temperature | Needs a warmer place | Too warm |
 
-Version 1 of the app lets the owner set the three lower limits. An upper limit that was set elsewhere stays with the plant untouched, and an alert about it is shown like any other.
+The app lets the owner set the three lower limits. An upper limit that was set elsewhere stays with the plant untouched, and an alert about it is shown like any other.
 
 ### Change state
 

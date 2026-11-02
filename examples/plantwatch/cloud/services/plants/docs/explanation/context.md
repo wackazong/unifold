@@ -94,7 +94,7 @@ Says: soil moisture 0 to 100 percent in steps of 0.1, light 0 to 100 000 lux in 
 Here: the ranges allowed for thresholds, the rounding of `mean`, and the rule that an aggregate omits a quantity without values.
 
 ### [plantwatch: product parameters](../../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: the server keeps 2 years of history per plant. A sensor stick takes a reading every 5 to 60 minutes.
 

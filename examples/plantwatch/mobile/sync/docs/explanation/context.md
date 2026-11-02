@@ -26,7 +26,7 @@ Says: a reading arrives with a UTC time and an estimated flag; both never change
 Here: sync stores, uploads and returns time, flag and tick count as received. Of a reading that arrives twice it keeps the one stored first.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=3bb1e1f6 -->
+<!-- unifold:cites sha=c006a7d8 -->
 
 Says, as far as sync implements it:
 
@@ -83,7 +83,7 @@ Says: soil moisture 0 to 100 percent, light 0 to 100 000 lux, temperature -20 to
 Here: a command with a limit outside the range of its quantity fails.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: 90 days of history on the phone, up to 50 plants per owner and 20 sensor sticks per phone, sampling interval from 5 to 60 minutes.
 

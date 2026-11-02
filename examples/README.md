@@ -14,7 +14,7 @@ A standard is understood from an example faster than from its text, and every ru
 
 ## Why not more
 
-- A map of an existing open-source repository. Two such maps are planned for when the standard is stable, as overlays of manifests without the code: a Rust workspace such as ripgrep, and a set of services in several languages such as Online Boutique, whose calls between services are needs. The skill `unifold-convert` writes both.
+- A map of an existing open-source repository, such as the Rust workspace ripgrep, or Online Boutique, whose services in several languages call each other through needs. The map would lie beside code that this repository does not hold, and each release of that code could make it wrong. The skill `unifold-convert` writes such a map for a repository at hand.
 - Running code for plantwatch. It is a design; its units are `planned`.
 
 ## Commands

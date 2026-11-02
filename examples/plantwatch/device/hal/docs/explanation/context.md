@@ -26,9 +26,9 @@ Says: a sequence number is computed from the boot counter and a count within tha
 Here: `hal` counts a start before `timer` reports a tick count, and does not start the board when it could not count the start.
 
 ### [device: energy budget](../../../docs/references/energy-budget.md)
-<!-- unifold:cites sha=6acc06b8 -->
+<!-- unifold:cites sha=89e1aafb -->
 
-Says: the firmware may draw 19.4 µA on average. The plan gives 2.0 µA to sleep, 600 µC to one reading and 12 µC to one advertising event.
+Says: the firmware may draw 19.4 µA on average. The budget gives 2.0 µA to sleep, 600 µC to one reading and 12 µC to one advertising event.
 
 Here: these three figures are `hal`'s to keep. A change of clock source, sensor supply or transmit power is checked against them.
 
@@ -63,7 +63,7 @@ Says: a sensor id has 8 bytes.
 Here: the length of the identifier that `radio` reports.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: a sensor stick runs at least 12 months on one CR2032 cell and keeps at least 2 880 readings.
 

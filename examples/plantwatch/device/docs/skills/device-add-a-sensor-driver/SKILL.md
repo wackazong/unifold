@@ -19,7 +19,7 @@ The result is a firmware in which a new or replaced sensor part delivers its qua
 5. **Write the conversion** in [sampling](../../../sampling/README.md): from the raw value to the quantity, with range and rounding. Work inside that unit by its own documents and skills. Then read both ends of the wiring line that joins the two: scale, range, timing and "unavailable" of the raw value must agree.
 6. **Test without a board.** Run the conversion against a table of raw values, including "unavailable", the lowest and the highest raw value.
 7. **Test on a board.** Take 100 readings. Disconnect the sensor during the run: the quantity must become absent and readings must go on.
-8. **Measure the energy** and replace the planned values, as the skill of step 3 describes.
+8. **Measure the energy** and replace the estimates, as the skill of step 3 describes.
 9. **Update the documents**: the limits in [README.md](../../../README.md) if a guarantee changed, and [runtime.md](../../explanation/runtime.md) if a duration in its table changed. Run the unifold generator and checker.
 
 ## Checks

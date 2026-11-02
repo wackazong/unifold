@@ -18,13 +18,13 @@ The decision that shapes everything else is that the sensor stick talks only to 
 
 **This is a design written before any code.** It is the example of [unifold](https://unifold.md) that shows every document convention of the standard, in all 22 units. That is much more than a unit should cost. Start with the small example, slugline, which is a folder beside this one in the unifold repository, and come back here to see how READMEs, contracts with their parts and fakes, explanation files, decisions, context items, scenarios and skills look when a team chooses to write them.
 
-Every unit has `status: planned`, and every decision in force is accepted: the documents are the design, and no product code exists yet. The [architecture diagram](docs/diagrams/architecture.md) shows all units and how they depend on each other; `unifold explore` opens the same map as the explorer, a page in which every box can be clicked. Nine scenarios in the manifests of plantwatch, `cloud`, `cloud/services/alerts` and `mobile` tell the stories that cross units, from a reading in the pot to the notification on the phone; the generator draws each as a sequence diagram, listed in [runtime.md](docs/explanation/runtime.md).
+Every unit has `status: planned`, and every decision in force is accepted: the documents are the design. The [architecture diagram](docs/diagrams/architecture.md) shows all units and how they depend on each other; `unifold explore` opens the same map as the explorer, a page in which every box can be clicked. Nine scenarios in the manifests of plantwatch, `cloud`, `cloud/services/alerts` and `mobile` tell the stories that cross units, from a reading in the pot to the notification on the phone; the generator draws each as a sequence diagram, listed in [runtime.md](docs/explanation/runtime.md).
 
 ## Capabilities
 
 ### `app-ui`
 
-The end-to-end catalogue of `test-rig` checks the path from a sensor value to an alert and to the notification being handed on. It cannot observe a phone. What the screens show, and use without a network, are checked by the part that builds the app, once its checks exist.
+The end-to-end catalogue of `test-rig` checks the path from a sensor value to an alert and to the notification being handed on. It cannot observe a phone. What the screens show, and use without a network, are checked by the part that builds the app.
 
 ## Read next
 
@@ -34,7 +34,7 @@ The end-to-end catalogue of `test-rig` checks the path from a sensor value to an
 4. [docs/references/glossary.md](docs/references/glossary.md): terms
 5. [docs/references/conventions.md](docs/references/conventions.md): units of measure, identifiers, time, delivery
 6. [docs/references/ble-profile/index.md](docs/references/ble-profile/index.md) and [docs/references/reading-schema.md](docs/references/reading-schema.md): the radio protocol and the reading format, which several parts implement
-7. [docs/references/product-parameters.md](docs/references/product-parameters.md): the numbers version 1 is designed for
+7. [docs/references/product-parameters.md](docs/references/product-parameters.md): the numbers the product is designed for
 8. [Component diagram](docs/diagrams/component.md), [architecture diagram](docs/diagrams/architecture.md), [decisions](docs/decisions/index.md), [risks](docs/explanation/risks.md)
 
 ## Contributing

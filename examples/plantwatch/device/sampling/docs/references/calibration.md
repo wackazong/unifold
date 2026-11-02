@@ -1,6 +1,6 @@
 # Calibration
 
-How `sampling` converts raw sensor values into the quantities of a reading. The constants are planned values. They are replaced by measured ones before the first boards are used. The example tables are the first test cases of the conversion.
+How `sampling` converts raw sensor values into the quantities of a reading. The column Source says where each constant comes from. The example tables are the first test cases of the conversion.
 
 ## Raw values
 
@@ -10,14 +10,14 @@ The scales of the three raw values are part of what `sampling` expects of `senso
 
 | Constant | Value | Meaning | Source |
 |---|---|---|---|
-| `SOIL_DRY` | 3400 | Soil raw value with the probe in dry air | Planned, from the probe's data sheet |
-| `SOIL_WET` | 1640 | Soil raw value with the probe in water up to the mark | Planned, from the probe's data sheet |
-| `SOIL_MIN_PLAUSIBLE` | 800 | Below this the probe is shorted or missing | Planned |
-| `SOIL_MAX_PLAUSIBLE` | 3900 | Above this the probe is disconnected | Planned |
+| `SOIL_DRY` | 3400 | Soil raw value with the probe in dry air | Estimate from the probe's data sheet |
+| `SOIL_WET` | 1640 | Soil raw value with the probe in water up to the mark | Estimate from the probe's data sheet |
+| `SOIL_MIN_PLAUSIBLE` | 800 | Below this the probe is shorted or missing | Estimate |
+| `SOIL_MAX_PLAUSIBLE` | 3900 | Above this the probe is disconnected | Estimate |
 | `LIGHT_LUX_PER_COUNT` | 0.01 | Scale of the light raw value | Definition of the raw value |
-| `LIGHT_WINDOW_FACTOR` | 1.6 | Compensates the light the housing window absorbs | Planned, to be measured with the housing |
+| `LIGHT_WINDOW_FACTOR` | 1.6 | Compensates the light the housing window absorbs | Estimate; it depends on the housing |
 | `TEMP_C_PER_COUNT` | 0.0625 | Scale of the temperature raw value | Definition of the raw value |
-| `TEMP_OFFSET_C` | −0.4 | Compensates the warmth of the board | Planned, to be measured |
+| `TEMP_OFFSET_C` | −0.4 | Compensates the warmth of the board | Estimate |
 
 ## Soil moisture
 

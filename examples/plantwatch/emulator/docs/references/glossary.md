@@ -14,5 +14,5 @@ The terms that have one fixed meaning inside this unit. Terms of the whole proje
 | Control face | The HTTP API that dictates values, time and faults. A sensor stick has no such thing. |
 | Track | The course of one quantity over simulated time, as points in a scenario |
 | Point | A time and a value in a track |
-| Event | Something a scenario lets happen at a given time. Version 1 knows the restart. |
+| Event | Something a scenario lets happen at a given time. The only event is a restart. |
 | Start | The moment a scenario is loaded, and every restart in it. The seconds since boot begin at 0. |

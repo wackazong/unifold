@@ -26,14 +26,14 @@ Says: the app is written once. Code per platform is allowed in the radio part on
 Here: this unit is that radio part. It holds an iOS and an Android implementation of one internal interface.
 
 ### [mobile: platform limits](../../../docs/references/platform-limits.md)
-<!-- unifold:cites sha=d3346c98 -->
+<!-- unifold:cites sha=754248f3 -->
 
 Says: iOS wakes the app through a pending connection, Android through a companion device association. Design budget: 10 seconds per wake-up.
 
 Here: the sizes, timeouts and triggers in [fetch-session.md](../references/fetch-session.md). The values are unverified design assumptions, as their source says.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=3bb1e1f6 -->
+<!-- unifold:cites sha=c006a7d8 -->
 
 Says: a reading has sensor id, sequence number, tick count, soil moisture, light, temperature, a UTC time and an estimated flag. A paired sensor stick has sensor id, time of pairing, time of the last complete fetch and the protocol version it states.
 
@@ -70,7 +70,7 @@ Says: the first receiver rejects a value outside 0 to 100 percent, 0 to 100 000 
 Here: the client is the first receiver; it drops such a reading. It confirms to a sensor stick only after its consumer's acknowledgement.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: up to 20 sensor sticks per phone. A sensor stick keeps at least 2 880 readings and overwrites the oldest when full. Radio protocol version 1.
 

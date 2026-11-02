@@ -15,10 +15,10 @@ The result is an updated energy budget and a clear answer: the change fits, or i
 4. **Compare.** Add the result to the sum in the budget.
    - The change adds less than 1 µA and the sum stays below the allowed average: go on.
    - The change adds more than 1 µA, or the reserve falls below 3 µA: stop and write a decision in [decisions](../../decisions/index.md) with status `proposed`, stating what the change costs in months of cell life.
-5. **Enter the planned figures** in the budget table: a new row for a new activity, a changed row otherwise. Mark them as planned.
-6. **Measure, when a board exists.** Supply the board with 3.0 V through a current analyser. Record at least one hour that contains the new event at its normal rate, with no central connected, then one connection with a fetch.
+5. **Enter the estimates** in the budget table: a new row for a new activity, a changed row otherwise.
+6. **Measure on a board.** Supply the board with 3.0 V through a current analyser. Record at least one hour that contains the new event at its normal rate, with no central connected, then one connection with a fetch.
 7. **Take three numbers from the recording**: the current while asleep, the charge of one event of each kind, the average over the hour.
-8. **Replace the planned figures** by the measured ones and state the date and the board revision in the table. If measurement and plan differ by more than a quarter, find out why before going on.
+8. **Replace the estimates** by the measured figures, and state the date and the board revision in the table. If a measurement and its estimate differ by more than a quarter, find out why before going on.
 9. **Repeat at 2.2 V.** Parts draw differently from a weak cell, and the board must still start and write memory.
 
 ## Checks

@@ -26,7 +26,7 @@ Says: work happens in short events; between them the board sleeps. Nothing runs 
 Here: `store` does all its work inside the call that needs it: an erase happens while a reading is accepted. There is no clean-up task.
 
 ### [device: energy budget](../../../docs/references/energy-budget.md)
-<!-- unifold:cites sha=6acc06b8 -->
+<!-- unifold:cites sha=89e1aafb -->
 
 Says: one reading may cost 600 µC. Of that, 15 µC are for writing it to memory, the share of a block erase included.
 
@@ -49,7 +49,7 @@ Says: a reading is never changed after it has been taken. A place may delete a r
 Here: a slot is written once. A reading leaves the log only through a mark from outside, or through overflow.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: a sensor stick keeps at least 2 880 readings, 30 days at the default sampling interval. When it is full, the oldest undelivered reading is overwritten.
 

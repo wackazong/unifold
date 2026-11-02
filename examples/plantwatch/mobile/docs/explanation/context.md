@@ -75,7 +75,7 @@ Says: a transfer may deliver an item more than once and the receiver reports suc
 Here: the order "store, then confirm, then delete" at both ends of the app ([invariants](invariants.md)).
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: up to 20 sensor sticks per phone, 50 plants per owner, 90 days of history on the phone; a sensor stick keeps 2 880 readings; radio protocol version 1.
 

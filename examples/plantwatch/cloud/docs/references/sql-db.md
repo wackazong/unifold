@@ -20,7 +20,7 @@ Sources: decision `platform`/0001; each service owns its data ([0002](../decisio
 | connections per role | 20 |
 | duration of one statement | 30 seconds, then the database cancels it |
 | idle time inside an open transaction | 60 seconds, then the database ends the connection |
-| planned size of all schemas together | 50 GB; the operator is warned at 80 percent |
+| size of all schemas together | 50 GB; the operator is warned at 80 percent |
 
 - The database is backed up in full once a day. Its transaction log is copied to the backup volume continuously. Backups are kept for 14 days.
 - After a loss of the database volume, the state of at most 5 minutes before the loss is restored. The restore is done by hand and takes up to 1 hour. A restore brings back all schemas to the same moment; a single schema cannot be restored alone.
@@ -29,7 +29,7 @@ Sources: decision `platform`/0001; each service owns its data ([0002](../decisio
 |---|---|
 | restart of the database, up to 1 minute | connections break and new ones are refused; the service reconnects and repeats the open transaction |
 | loss of the volume | up to 1 hour without database, then data as of at most 5 minutes before the loss; changes of these minutes are gone |
-| the planned size is exceeded | nothing at once |
+| the size limit is exceeded | nothing at once |
 
 ## Parts
 

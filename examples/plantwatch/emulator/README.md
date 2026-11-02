@@ -4,7 +4,7 @@
 
 ## Why
 
-A sensor stick is slow to work with: one reading in 15 minutes, a full memory after a month, and a board on the desk. The emulator exists to remove the board and the waiting and to keep everything else, so that what is developed against it also works with a sensor stick. It changes when the definition it implements changes, or when a situation has to be reproduced that no scenario can express yet.
+A sensor stick is slow to work with: one reading in 15 minutes, a full memory after a month, and a board on the desk. The emulator exists to remove the board and the waiting and to keep everything else, so that what is developed against it also works with a sensor stick. It changes when the definition it implements changes, or when a situation has to be reproduced that no scenario can express.
 
 That gives the program two faces. The radio face must be indistinguishable from a sensor stick, so it speaks real BLE and has nothing of its own. The control face is what a sensor stick does not have: a way to dictate values and time. It is kept off the radio, on a local HTTP port.
 

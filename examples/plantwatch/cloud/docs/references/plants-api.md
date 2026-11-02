@@ -8,7 +8,7 @@ Sources: the public API of plantwatch, the calls between services of `cloud`, de
 - Every request to `/v1/plants` carries `X-Owner-Id`. Without it `plants` answers `400` with `invalid_request`.
 - `plants` does not verify who the caller is. It limits every read and every change to the plants of the owner in the header.
 - `latest_reading` is the stored reading with the latest time, not the one that arrived last. For a plant whose raw readings are all older than 90 days it is absent.
-- While the database cannot be reached, every operation answers `503` with `unavailable`. Operations on plants are answered within 200 ms and a page of history within 2 seconds while the database is healthy and within its planned size.
+- While the database cannot be reached, every operation answers `503` with `unavailable`. Operations on plants are answered within 200 ms and a page of history within 2 seconds while the database is healthy and below its size limit.
 
 ## History and events
 

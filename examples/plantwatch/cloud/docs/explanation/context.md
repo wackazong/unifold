@@ -68,7 +68,7 @@ Says: a transfer may deliver an item twice, and the receiver reports success. HT
 Here: holds for the public API, for the calls between services and for the events between them.
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: upload to notification takes under 1 minute. History is kept 2 years on the server and 90 days on the phone. An owner has up to 50 plants.
 

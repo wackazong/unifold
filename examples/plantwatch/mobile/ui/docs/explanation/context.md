@@ -34,12 +34,12 @@ Says, as far as the screens deliver it:
 Here: the screens in [screens](../references/screens.md) deliver these promises. A new screen starts with a promise there.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=3bb1e1f6 -->
+<!-- unifold:cites sha=c006a7d8 -->
 
 Says, as far as the screens show it:
 
 - Reading: three quantities, each a value or absent; UTC time; a flag for an estimated time.
-- Plant: name of 1 to 60 characters, a lower and an upper limit per quantity, at most one sensor stick, change state `in step`, `waiting` or `refused`. Version 1 lets the owner set the three lower limits.
+- Plant: name of 1 to 60 characters, a lower and an upper limit per quantity, at most one sensor stick, change state `in step`, `waiting` or `refused`. The app lets the owner set the three lower limits.
 - Reasons shown below a lower limit: "needs water", "needs more light", "needs a warmer place"; above an upper limit: "too wet", "too much light", "too warm".
 - Alert: reason, limit and value, opened, closed. The phone learns of an alert only from the server.
 - Two ages: of a plant's readings and of server data.
@@ -47,7 +47,7 @@ Says, as far as the screens show it:
 Here: the screens show these things under these names. The plant form edits the lower limits. No screen derives "needs water" from a reading.
 
 ### [mobile: platform limits](../../../docs/references/platform-limits.md)
-<!-- unifold:cites sha=d3346c98 -->
+<!-- unifold:cites sha=754248f3 -->
 
 Says: Bluetooth, notification and camera permissions are asked at run time. Pairing on Android shows a system dialog per sensor stick.
 

@@ -63,7 +63,7 @@ Says: a central is the BLE role of the side that connects to a sensor stick. The
 Here: `link` says "a central" and never names what it is. The identifier it gets through `radio` is the sensor id.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: radio protocol version 1.
 

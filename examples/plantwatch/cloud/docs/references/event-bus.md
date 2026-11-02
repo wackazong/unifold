@@ -21,7 +21,7 @@ Sources: decision `platform`/0001, the event conventions of `cloud`.
 | a subscriber is down for more than 7 days | messages older than 7 days are gone for it |
 | loss of the volume | all messages and positions are lost; the bus has no backup; topics are declared again, empty |
 
-The bus is planned for 200 messages per second over all topics, averaged over a minute, and for 10 GB of stored messages.
+The bus is sized for 200 messages per second over all topics, averaged over a minute, and for 10 GB of stored messages.
 
 ## Parts
 

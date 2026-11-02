@@ -19,6 +19,6 @@ The long form of the why in [README.md](../../README.md). Which services exist a
 | Chosen | Given up | Decision |
 |---|---|---|
 | Readings travel as events; an upload is answered before history and evaluation have seen the reading | A query does not see a reading at the moment the upload returns. The public API states this limit. | [0001](../decisions/0001-services-learn-about-readings-through-events.md) |
-| Evaluation asks for thresholds with a synchronous call | A call stands between an event and its alert. The alternative, a copy of the thresholds kept current through events, is rejected for version 1. | [0001](../decisions/0001-services-learn-about-readings-through-events.md) |
+| Evaluation asks for thresholds with a synchronous call | A call stands between an event and its alert. The alternative, a copy of the thresholds kept current through events, is rejected. | [0001](../decisions/0001-services-learn-about-readings-through-events.md) |
 | Every event consumer tolerates repeats | Each consumer carries its own safeguard against handling an event twice | [0004](../decisions/0004-every-event-consumer-is-idempotent.md) |
 | Five deployable parts for a small product | More operation than one program. The gain is that the upload path stays up while the rest changes. | none; see the forces above |

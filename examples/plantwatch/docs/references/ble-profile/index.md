@@ -54,7 +54,7 @@ A sensor stick has exactly one instance of the Reading service, as a primary ser
 | `0005` | Transfer control | Write, Indicate | required | 1 to 20 bytes |
 | `0006` | Transfer data | Notify | required | one or more records |
 
-Every characteristic with Notify or Indicate has a Client Characteristic Configuration descriptor. A sensor stick resets these descriptors to 0 at every new connection, also for a bonded central. The base and the company identifier in the advertising data are placeholders; final values replace them before version 1.0 is released. Values `0007` to `00ff` are reserved for characteristics of later minor versions.
+Every characteristic with Notify or Indicate has a Client Characteristic Configuration descriptor. A sensor stick resets these descriptors to 0 at every new connection, also for a bonded central. The base and the company identifier in the advertising data are placeholders. Values `0007` to `00ff` are reserved for characteristics of later minor versions.
 
 When a sensor stick restarts, it loses the connection and all descriptor settings, keeps stored readings and delivered marks, and starts a new boot counter; the central takes a new time reference after reconnecting.
 

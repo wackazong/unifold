@@ -61,7 +61,7 @@ Says: a scenario is a scripted course of sensor values over simulated time, used
 Here: used unchanged, as are sensor stick, reading and tick count. The unit's own terms are in its [glossary](../references/glossary.md).
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: sampling interval 15 minutes by default, 5 to 60 minutes. A sensor stick keeps at least 2 880 readings and overwrites the oldest when full. Radio protocol version 1.
 

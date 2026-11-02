@@ -10,7 +10,7 @@ History is kept in the same service because the registry decides where a reading
 
 History is a projection of the reading events, not a second truth. It is built so that handling an event twice changes nothing and that the order of events does not matter. Raw readings are kept only as long as a client can still ask for them; beyond that, hourly aggregates carry the two years ([0001](docs/decisions/0001-raw-readings-for-90-days-hourly-aggregates-for-2-years.md)).
 
-The trade-off: queries and event handling share one service and one database. A heavy history query can slow down the intake of events. That is accepted for version 1.
+The trade-off: queries and event handling share one service and one database. A heavy history query can slow down the intake of events. That is accepted.
 
 ## Needs
 

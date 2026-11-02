@@ -75,7 +75,7 @@ Says: a transfer may deliver an item more than once; the receiver accepts it and
 Here: the promises of the groups `link` and `relay`.
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: sampling interval 5 to 60 minutes, default 15; a sensor stick keeps at least 2 880 readings; upload to notification under 1 minute; protocol version 1.
 

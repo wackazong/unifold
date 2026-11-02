@@ -129,6 +129,6 @@ The catalogue tests the promise of the product's `app-ui` ([context.md](../expla
 | Anything on a phone: screens, offline use, the arrival of a notification | The rig observes the public API, not a phone |
 | Courses of values in `real` | Without `scenario-control` the rig cannot set values or move time |
 | Limits for soil moisture in `real` | ALERT-03 uses temperature because a real reading is below 60 °C with certainty |
-| Alerts about light | They depend on the light of a whole day; left out of version 1 of the catalogue |
-| Upper limits | Version 1 of the catalogue tests lower limits |
+| Alerts about light | They depend on the light of a whole day |
+| Upper limits | The catalogue tests the lower limits, which the app lets the owner set |
 | More than 31 simulated days, more than one device under test | Run time; one BLE adapter |

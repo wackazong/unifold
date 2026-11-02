@@ -33,14 +33,14 @@ Says: a reading carries a boot counter and the seconds since that boot. The sens
 Here: the firmware has no clock setting and no date. The boot counter rises at every start and never repeats.
 
 ### [plantwatch: product parameters, sampling interval and battery life](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: the sampling interval is 15 minutes by default, adjustable from 5 to 60 minutes. A sensor stick runs at least 12 months on one CR2032 cell.
 
 Here: 900 s by default, a build setting between 300 s and 3600 s. The [energy budget](../references/energy-budget.md) keeps the average current at 19.4 µA.
 
 ### [plantwatch: product parameters, readings kept](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=b11fccd4 -->
+<!-- unifold:cites sha=274dcc48 -->
 
 Says: a sensor stick keeps at least 2 880 readings, 30 days at the default interval, and overwrites the oldest undelivered one when it is full. Radio protocol version 1.
 

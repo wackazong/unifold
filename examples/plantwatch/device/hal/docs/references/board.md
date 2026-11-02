@@ -1,6 +1,6 @@
 # Board
 
-The pins, peripherals and memory regions of the sensor stick board that `hal` uses. All values are planned values for board revision A; no board exists yet.
+The pins, peripherals and memory regions of the sensor stick board that `hal` uses. All values are for board revision A. The times and currents are estimates, unless a row names the measurement they come from.
 
 ## Microcontroller
 
@@ -55,7 +55,7 @@ The processor sleeps during both waits.
 
 ## Ambient sensor
 
-The part is not selected yet. `hal` assumes: one I2C device at address `0x44`, a single-shot command that measures light and temperature, light as a mantissa and an exponent that `hal` combines into counts of 0.01 lux, temperature as a signed number in steps of 1/16 °C.
+`hal` works with an ambient sensor that is one I2C device at address `0x44` and measures light and temperature with one single-shot command. The sensor gives light as a mantissa and an exponent, which `hal` combines into counts of 0.01 lux. It gives temperature as a signed number in steps of 1/16 °C.
 
 ## Memory map
 
