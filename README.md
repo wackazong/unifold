@@ -10,6 +10,10 @@ One large architecture document, one root file for agents and a wiki beside the 
 
 The standard is explainable in one minute and adoptable in five. That is why the normative text is one page, and why everything else is reference, explanation or a tutorial.
 
+## Install
+
+The tool is on PyPI as [unifold](https://pypi.org/project/unifold/) and needs Python 3.9 or newer. `uvx unifold check` runs it without installing; `uv tool install unifold` or `pipx install unifold` installs the `unifold` command. `unifold init` starts a project, and `unifold init --agents` also installs the skills for coding agents ([tool](https://unifold.md/tool)).
+
 ## How it works
 
 ```yaml
@@ -94,12 +98,6 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 **What ends up in my repository?** The `unifold.yaml` files, the generated diagrams and the generated `AGENTS.md` of every unit. The standard is not copied; the root manifest names its version. With `--agents`, also the skills, the tool and the stubs.
 
 **What about my `docs/` folder, docs site and ADR tool?** `docs/` is where unifold keeps the documents, sorted by kind, and a software artifact can be built from it. Existing decision records move to `docs/decisions/` ([documents](https://unifold.md/documents)).
-
-## Needs
-
-### uv
-
-[uv](https://docs.astral.sh/uv/), for the tool, the tests and the site. `uv run` installs Python 3.9 or newer and the packages that the header of each script names: PyYAML, and Markdown for the site. The standard itself needs nothing.
 
 ## Commands
 
