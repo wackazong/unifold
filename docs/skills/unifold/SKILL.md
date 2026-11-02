@@ -141,7 +141,7 @@ Write every document for a person who knows the domain but has read neither the 
 - Spell out an abbreviation at its first use, or add it to the glossary.
 - Put at most three nouns in a row. Turn a noun made from a verb into the verb.
 - Cite a decision for what it decides, and link its number: `each service keeps its own data ([0002](docs/decisions/0002-each-service-owns-its-data.md))`. A decision of a child that no link may reach is written `child/0002`. `check` warns about any other decision number.
-- Write the state of the work once: an open question is a proposed decision, and a unit without code has `status: planned`. Do not add "pending" or "not yet implemented" to sentences about the product.
+- Describe what the unit does and needs, not how far it is built or what comes in which version. Do not write "planned", "pending", "not yet implemented", "for now", "in version 2.0" or "the alpha version" about the product. Write the state of the work once: an open question is a proposed decision, and a unit without code has `status: planned`. A version of a format or a contract is a fact and stays.
 - In `## Why`, give reasons. Do not list decisions.
 
 ## What not to trust blindly

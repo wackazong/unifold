@@ -93,7 +93,7 @@ The checker compares files with each other. Whoever reviews a change, a person o
 6. Is each `Says` still true to its source, and each `Here` still true? Does the passage a `derived` decision cites say what `## Source says` claims?
 7. Is a changed value or limit stated elsewhere? Search for the old value.
 8. Did anything set a decision to `accepted` without a person asking for it?
-9. Does `status` match reality, and does `contract` point at what really defines the capability? Does the `responsibility` join unrelated things with "and"?
+9. Does `status` match reality, and is it the only place that says how far the work is? Does `contract` point at what really defines the capability? Does the `responsibility` join unrelated things with "and"?
 10. Does each guarantee and each goal name something a test could observe?
 11. Is every file of its kind: does a reference give reasons, a tutorial define, an explanation instruct? Move the passage to its home.
 12. Can the reader that [Plain language](#plain-language) names follow each paragraph without opening a link? Is every abbreviation spelled out or in the glossary, and is every decision cited for what it decides?
@@ -110,7 +110,7 @@ The documents follow [ISO 24495-1](https://www.iso.org/standard/78907.html), the
 - Use a parenthesis for an example, an abbreviation or a citation, never for a second statement.
 - Cite a decision for what it decides: say what it decides, and link its number as the source. `Each service keeps its own data ([0002](docs/decisions/0002-each-service-owns-its-data.md)).` Not: "Accepted 0002 applies."
 - Link a decision of an ancestor through its item in `docs/explanation/context.md`. Where no link may go, such as to a decision of a child, write the unit before the number: `transport/0002`. The checker warns about a decision number that is neither linked nor written this way.
-- Write the state of the work once, in its place. An open question is a proposed decision, and a unit without code has `status: planned`. A statement about the product does not carry "pending", "unresolved" or "not yet implemented".
+- Describe what a unit does and what it needs, not how far its implementation is or what comes in which version. A statement about the product does not carry "planned", "pending", "unresolved", "not yet implemented", "for now", "in version 2.0" or "the alpha version". The state of the work is written once, outside the prose. An open question is a proposed decision, and a unit without code has `status: planned`. A version of a format or a contract, such as "records of version 1.0 have 19 bytes", states a fact and stays.
 - Say what a thing is. Say what it is not only where a reader would otherwise assume it.
 - Give reasons where reasons are asked for. A `## Why` that lists decisions in the order they were taken is history.
 
