@@ -50,7 +50,7 @@ except ImportError:                                   # pragma: no cover
                      "`uv run unifold.py`, or install PyYAML (python3 -m pip install pyyaml).\n")
     sys.exit(2)
 
-TOOL_VERSION = "0.3.3"
+TOOL_VERSION = "0.3.4"
 SPEC_VERSIONS = ("0.3",)
 MODEL_VERSION = "0.3"
 SITE_URL = "https://unifold.md"

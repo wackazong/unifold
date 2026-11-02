@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "unifold"
-version = "0.3.3"
+version = "0.3.4"
 description = "Check, draw and query the unifold architecture map of a repository"
 readme = "README.md"
 requires-python = ">=3.9"
