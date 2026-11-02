@@ -366,6 +366,10 @@ mark { background: var(--teal-hl); color: inherit; border-radius: 2px; padding: 
   .top nav { gap: 1rem; font-size: .9375rem; }
   .top nav a[href="/tool/"], .top nav .gh span { display: none; }
 }
+/* below 34.5rem the header holds the version only without the link to the standard */
+@media (max-width: 34.5rem) {
+  .top nav a[href="/spec/"] { display: none; }
+}
 @media (max-width: 30rem) {
   .wrap { padding: 0 1rem; }
   .version, .top nav a[href="/spec/"], .top nav .gh { display: none; }

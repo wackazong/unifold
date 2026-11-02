@@ -39,6 +39,8 @@ SITE = Path(__file__).resolve().parent
 ROOT = SITE.parent
 REF = ROOT / "docs" / "references"
 TOOL = ROOT / "docs" / "skills" / "unifold" / "scripts" / "unifold.py"
+# the release, shown in the header; the version of the standard, `version` below, names the schema
+RELEASE = re.search(r'^TOOL_VERSION = "(.+)"$', TOOL.read_text(encoding="utf-8"), re.M).group(1)
 SKILL = ROOT / "docs" / "skills" / "unifold" / "SKILL.md"
 CONVERT_SKILL = ROOT / "docs" / "skills" / "unifold-convert" / "SKILL.md"
 OUT = SITE / "_out"
@@ -406,7 +408,7 @@ def page(*, title: str, description: str, path: str, body: str, css_href: str, v
 <a class="skip" href="#main">Skip to content</a>
 <header class="top"><div class="wrap">
 <a class="brand" href="/">{LOGO.format(s=24)}<span>unifold</span></a>
-<span class="version" title="unifold {esc(version)}">{esc(version)}</span>
+<span class="version" title="unifold {esc(RELEASE)}">{esc(RELEASE)}</span>
 <nav aria-label="Site">{links}<a class="gh" href="{REPO_URL}" rel="noopener" aria-label="unifold on GitHub">{icon("github", "icon sm")}<span>GitHub</span></a></nav>
 <form class="site-search" action="/search/" role="search"><input type="search" name="q" placeholder="Search" aria-label="Search the documentation" autocomplete="off" spellcheck="false"><button aria-label="Search">{icon("search", "icon sm")}</button></form>
 <button class="theme" type="button" aria-label="Dark theme" aria-pressed="false" title="Light or dark" hidden>{icon("sun", "icon sm sun")}{icon("moon", "icon sm moon")}</button>
