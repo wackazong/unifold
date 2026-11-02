@@ -7,7 +7,7 @@ unifold unit; run `unifold show` here. Read [README.md](README.md) first: it say
 
 | Kind | Files |
 |---|---|
-| Look up | [clock](docs/references/clock.md), [constants](docs/references/constants.md), [conventions](docs/references/conventions.md), [frames](docs/references/frames.md), [glossary](docs/references/glossary.md), [host](docs/references/host.md), [test-kit](docs/references/test-kit.md), [transport](docs/references/transport.md), [uart](docs/references/uart.md) |
+| Look up | [clock](docs/references/clock.md), [constants](docs/references/constants.md), [conventions](docs/references/conventions.md), [frames](docs/references/frames.md), [glossary](docs/references/glossary.md), [host](docs/references/host.md), [transport](docs/references/transport.md), [uart](docs/references/uart.md) |
 | Understand | [decisions](docs/decisions/index.md) |
 
 <!-- unifold:begin - generated block; run `unifold generate` to refresh -->
