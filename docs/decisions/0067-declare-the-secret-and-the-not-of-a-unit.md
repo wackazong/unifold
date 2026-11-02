@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-27
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Declare the secret and the not of a unit

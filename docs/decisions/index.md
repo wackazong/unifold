@@ -70,15 +70,15 @@ Only accepted and derived decisions bind.
 | 0062 | [Try the standard on repositories that are not ours, with a measure agreed beforehand](0062-try-the-standard-on-repositories-that-are-not-ours.md) | rejected | 2026-10-24 |
 | 0063 | [Publish a change policy and the conditions for 1.0](0063-publish-a-change-policy-and-the-conditions-for-1-0.md) | rejected | 2026-10-24 |
 | 0064 | [Make a contract a reference of the unit that wires the connection](0064-make-a-contract-a-reference-of-the-unit-that-wires-the-connection.md) | accepted | 2026-10-24 |
-| 0065 | [Replace summary on a unit with responsibility](0065-replace-summary-on-a-unit-with-responsibility.md) | proposed | 2026-10-27 |
-| 0066 | [Three well-known kinds with rules, and a kind on every composite](0066-three-well-known-kinds-with-rules.md) | proposed | 2026-10-27 |
-| 0067 | [Declare the secret and the not of a unit](0067-declare-the-secret-and-the-not-of-a-unit.md) | proposed | 2026-10-27 |
-| 0068 | [Give a contract a body with parts and a fake](0068-give-a-contract-a-body-with-parts-and-a-fake.md) | proposed | 2026-10-27 |
-| 0069 | [Declare scenarios with hops across levels, and generate their diagrams](0069-declare-scenarios-with-hops-across-levels.md) | proposed | 2026-10-27 |
-| 0070 | [Add the decision status derived](0070-add-the-decision-status-derived.md) | proposed | 2026-10-27 |
-| 0071 | [Remove verified-by](0071-remove-verified-by.md) | proposed | 2026-10-27 |
-| 0072 | [Define runtime.md as the behaviour of one unit over time](0072-define-runtime-md-as-the-behaviour-of-one-unit-over-time.md) | proposed | 2026-10-27 |
-| 0073 | [Add a model command with a stable schema](0073-add-model-json-with-a-stable-schema.md) | proposed | 2026-10-27 |
-| 0074 | [About forty rules, because contracts and scenarios are checked](0074-about-forty-rules-because-contracts-and-scenarios-are-checked.md) | proposed | 2026-10-27 |
-| 0075 | [Write YAML in block style](0075-write-yaml-in-block-style.md) | proposed | 2026-10-27 |
-| 0076 | [Call the standard 0.3 and read 0.3 only](0076-call-the-standard-0-3-and-read-0-3-only.md) | proposed | 2026-10-27 |
+| 0065 | [Replace summary on a unit with responsibility](0065-replace-summary-on-a-unit-with-responsibility.md) | accepted | 2026-10-27 |
+| 0066 | [Three well-known kinds with rules, and a kind on every composite](0066-three-well-known-kinds-with-rules.md) | accepted | 2026-10-27 |
+| 0067 | [Declare the secret and the not of a unit](0067-declare-the-secret-and-the-not-of-a-unit.md) | accepted | 2026-10-27 |
+| 0068 | [Give a contract a body with parts and a fake](0068-give-a-contract-a-body-with-parts-and-a-fake.md) | accepted | 2026-10-27 |
+| 0069 | [Declare scenarios with hops across levels, and generate their diagrams](0069-declare-scenarios-with-hops-across-levels.md) | accepted | 2026-10-27 |
+| 0070 | [Add the decision status derived](0070-add-the-decision-status-derived.md) | accepted | 2026-10-27 |
+| 0071 | [Remove verified-by](0071-remove-verified-by.md) | accepted | 2026-10-27 |
+| 0072 | [Define runtime.md as the behaviour of one unit over time](0072-define-runtime-md-as-the-behaviour-of-one-unit-over-time.md) | accepted | 2026-10-27 |
+| 0073 | [Add a model command with a stable schema](0073-add-model-json-with-a-stable-schema.md) | accepted | 2026-10-27 |
+| 0074 | [About forty rules, because contracts and scenarios are checked](0074-about-forty-rules-because-contracts-and-scenarios-are-checked.md) | accepted | 2026-10-27 |
+| 0075 | [Write YAML in block style](0075-write-yaml-in-block-style.md) | accepted | 2026-10-27 |
+| 0076 | [Call the standard 0.3 and read 0.3 only](0076-call-the-standard-0-3-and-read-0-3-only.md) | accepted | 2026-10-27 |

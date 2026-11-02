@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-27
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Declare scenarios with hops across levels, and generate their diagrams
