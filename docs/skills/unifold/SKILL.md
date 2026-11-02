@@ -92,7 +92,7 @@ Do not weaken a manifest to make the check pass. Mark a need `optional`, delete 
 1. Choose the lowest unit whose insides the decision fully covers. A decision about how two siblings talk belongs to their parent.
 2. Write `docs/decisions/NNNN-short-title.md` with the next free number, from [decision.template.md](assets/decision.template.md).
 3. Keep `status: proposed`. Never set `accepted` and never fill in `decision-makers`; a person does both. Where a source settles the matter, write the decision from [decision-derived.template.md](assets/decision-derived.template.md) instead: `status: derived`, `derived-from` and `## Source says` complete enough to stand without the source. It binds until a person accepts or supersedes it.
-4. Never edit an accepted decision. To replace it, write a new one and set the old one to `superseded by NNNN`. To change a part, write a new one that says "This amends NNNN:".
+4. Never edit an accepted decision. To replace it, write a new one and set the old one to `superseded by NNNN`. To change a part, write a new one that says "This amends" and links the old one.
 5. In a unit below that depends on it, add an item to `docs/explanation/context.md` from [context.template.md](assets/explanation/context.template.md). Do not type a stamp; run `unifold stamp`, which adds it. Finish.
 
 ### Add a skill
@@ -131,6 +131,18 @@ Report to the human:
 - **Never sideways by guessing.** Do not open a sibling to learn what a need means; the need's text in your unit says what is expected. `show` tells you who provides it.
 - In hand-written files of a unit, link freely inside the unit. Link down only to a child's `README.md`, up only from `docs/explanation/context.md`, and never to a sibling. Do not name siblings or users.
 - Files have at most 200 lines. Split a file before it grows beyond that.
+
+## Rules for writing
+
+Write every document for a person who knows the domain but has read neither the sources nor the other units. The full rules: <https://unifold.md/writing#plain-language>.
+
+- Write whole sentences: a subject, a verb and articles. At most 25 words, one statement each.
+- Write "and" or "or", never a slash between two words: "the bond and the key", not "bond/key".
+- Spell out an abbreviation at its first use, or add it to the glossary.
+- Put at most three nouns in a row. Turn a noun made from a verb into the verb.
+- Cite a decision for what it decides, and link its number: `each service keeps its own data ([0002](docs/decisions/0002-each-service-owns-its-data.md))`. A decision of a child that no link may reach is written `child/0002`. `check` warns about any other decision number.
+- Write the state of the work once: an open question is a proposed decision, and a unit without code has `status: planned`. Do not add "pending" or "not yet implemented" to sentences about the product.
+- In `## Why`, give reasons. Do not list decisions.
 
 ## What not to trust blindly
 
