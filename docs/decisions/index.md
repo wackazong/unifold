@@ -88,4 +88,4 @@ Only accepted and derived decisions bind.
 | 0080 | [Describe the current state in every document but a decision, and name no decision in a reference](0080-describe-the-current-state-and-name-no-decision-in-a-reference.md) | accepted | 2026-11-03 |
 | 0081 | [Let an accepted decision gain links to the documents it changes](0081-let-an-accepted-decision-gain-links-to-the-documents-it-changes.md) | accepted | 2026-11-03 |
 | 0082 | [Describe how a contract is used and which states it has, give every hop a result, and call the standard 0.4](0082-describe-the-use-and-the-states-of-a-contract-and-the-result-of-every-hop.md) | accepted | 2026-11-03 |
-| 0083 | [Remove commands, settings, rules and keys that carry little](0083-remove-commands-settings-and-keys-that-carry-little.md) | proposed | 2026-11-03 |
+| 0083 | [Remove commands, settings, rules and keys that carry little](0083-remove-commands-settings-and-keys-that-carry-little.md) | accepted | 2026-11-03 |

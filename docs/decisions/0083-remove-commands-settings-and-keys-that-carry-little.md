@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: accepted
 date: 2026-11-03
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Remove commands, settings, rules and keys that carry little
