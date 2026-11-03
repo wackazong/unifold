@@ -33,5 +33,4 @@ Limits: a board gives readings for 16 383 starts and for 262 143 readings per st
 1. [docs/references/calibration.md](docs/references/calibration.md): formulas, constants and test cases
 2. What `sampling` expects of its needs: [sensor-io](../docs/references/sensor-io.md), [timer](../docs/references/timer.md)
 3. [docs/explanation/context.md](docs/explanation/context.md): what `sampling` inherits from above
-4. [Context diagram](docs/diagrams/context.md)
-5. [Decisions](docs/decisions/index.md)
+4. [Decisions](docs/decisions/index.md)

@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: mobile
 
 [plantwatch](../../../docs/diagrams/component.md) / **mobile** · [README](../../README.md) · [context](context.md)
@@ -30,11 +30,11 @@ flowchart LR
   class u_mobile__ble_dclient,u_mobile__sync,u_mobile__ui planned
 ```
 
-| Unit | Kind | Responsibility | Status | Diagram |
-|---|---|---|---|---|
-| [ble-client](../../ble-client/README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** | [context](../../ble-client/docs/diagrams/context.md) |
-| [sync](../../sync/README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** | [context](../../sync/docs/diagrams/context.md) |
-| [ui](../../ui/README.md) | adapter | Screens of the phone app | **planned** | [context](../../ui/docs/diagrams/context.md) |
+| Unit | Kind | Responsibility | Status |
+|---|---|---|---|
+| [ble-client](../../ble-client/README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** |
+| [sync](../../sync/README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** |
+| [ui](../../ui/README.md) | adapter | Screens of the phone app | **planned** |
 
 ### Connections
 

@@ -25,4 +25,4 @@ The trade-off: recognition of duplicates is exact in normal operation and only b
 2. [reading events](../../docs/references/reading-events.md): topic and content of the events
 3. [docs/references/accepted-ranges.md](docs/references/accepted-ranges.md): the state with which duplicates are recognised
 4. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-5. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
+5. [Decisions](docs/decisions/index.md)

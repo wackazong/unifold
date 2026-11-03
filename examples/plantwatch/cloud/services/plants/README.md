@@ -24,4 +24,4 @@ The trade-off: queries and event handling share one service and one database. A 
 2. [reading events](../../docs/references/reading-events.md): what the unit requires of the stream of readings
 3. [docs/references/data-model.md](docs/references/data-model.md): what is stored and for how long
 4. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-5. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
+5. [Decisions](docs/decisions/index.md)

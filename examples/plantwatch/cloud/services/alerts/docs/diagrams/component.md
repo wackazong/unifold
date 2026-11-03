@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: alerts
 
 [plantwatch](../../../../../docs/diagrams/component.md) / [cloud](../../../../docs/diagrams/component.md) / **alerts** · [README](../../README.md) · [context](context.md)
@@ -35,12 +35,12 @@ flowchart LR
   class u_cloud__services__alerts__notifier,u_cloud__services__alerts__plant_dlookup,u_cloud__services__alerts__rules,u_cloud__services__alerts__server planned
 ```
 
-| Unit | Kind | Responsibility | Status | Diagram |
-|---|---|---|---|---|
-| [notifier](../../notifier/README.md) | adapter | Turns an opened alert into one notification to the owner | **planned** | [context](../../notifier/docs/diagrams/context.md) |
-| [plant-lookup](../../plant-lookup/README.md) | adapter | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** | [context](../../plant-lookup/docs/diagrams/context.md) |
-| [rules](../../rules/README.md) | library | Evaluates readings against the thresholds of a plant | **planned** | [context](../../rules/docs/diagrams/context.md) |
-| [server](../../server/README.md) | app | Process that consumes readings, stores the alerts they lead to and answers queries about them | **planned** | [context](../../server/docs/diagrams/context.md) |
+| Unit | Kind | Responsibility | Status |
+|---|---|---|---|
+| [notifier](../../notifier/README.md) | adapter | Turns an opened alert into one notification to the owner | **planned** |
+| [plant-lookup](../../plant-lookup/README.md) | adapter | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** |
+| [rules](../../rules/README.md) | library | Evaluates readings against the thresholds of a plant | **planned** |
+| [server](../../server/README.md) | app | Process that consumes readings, stores the alerts they lead to and answers queries about them | **planned** |
 
 ### Connections
 

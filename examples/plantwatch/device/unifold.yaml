@@ -1,7 +1,6 @@
 responsibility: Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE
 kind: firmware
 status: planned
-owner: firmware team
 not:
   - wall-clock time; the firmware counts ticks and never knows the date
   - judging a reading; the firmware knows no plant and no threshold
@@ -9,16 +8,13 @@ not:
   - updating itself
 capabilities:
   ble-link:
-    kind: protocol
     summary: Serves live and stored readings to a nearby central over BLE
     contract: ../docs/references/ble-profile/index.md
 needs:
   soil-probe:
-    kind: hardware
     summary: Capacitive soil moisture probe with an analogue output
     contract: ../docs/references/soil-probe.md
   ambient-sensor:
-    kind: hardware
     summary: Light and temperature sensor on an I2C bus
     contract: ../docs/references/ambient-sensor.md
 wiring:

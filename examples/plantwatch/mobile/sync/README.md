@@ -33,6 +33,5 @@ What must stay true: `sync` acknowledges a batch only after it is stored durably
 2. [docs/references/exchange.md](docs/references/exchange.md): the exchange with the server
 3. [plant data](../docs/references/plant-data/index.md): the contract of the provided capability
 4. [docs/references/glossary.md](docs/references/glossary.md): query and command, upload state, waiting change, pause
-5. [Context diagram](docs/diagrams/context.md)
-6. [docs/explanation/context.md](docs/explanation/context.md): what `sync` inherits from above
-7. [Decisions](docs/decisions/index.md)
+5. [docs/explanation/context.md](docs/explanation/context.md): what `sync` inherits from above
+6. [Decisions](docs/decisions/index.md)

@@ -12,7 +12,7 @@ Says: the app leaves a standing request per paired sensor stick with the system 
 Here: the client owns the standing requests. It sets one at pairing, holds it back after a fetch so that a sensor stick in range is not connected again at once, and removes it at unpairing.
 
 ### [mobile/0003 A reading gets its UTC time before it is stored](../../../docs/decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)
-<!-- unifold:cites sha=935abb64 -->
+<!-- unifold:cites sha=0fe372be -->
 
 Says: the part that fetches converts tick counts to UTC. Every reading that leaves it has a time and an estimated flag; the tick count stays in it.
 
@@ -33,7 +33,7 @@ Says: iOS wakes the app through a pending connection, Android through a companio
 Here: the sizes, timeouts and triggers in [fetch-session.md](../references/fetch-session.md). The values are unverified design assumptions, as their source says.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=c006a7d8 -->
+<!-- unifold:cites sha=b00f48e2 -->
 
 Says: a reading has sensor id, sequence number, tick count, soil moisture, light, temperature, a UTC time and an estimated flag. A paired sensor stick has sensor id, time of pairing, time of the last complete fetch and the protocol version it states.
 
@@ -56,7 +56,7 @@ Says: sensor id and sequence number identify a reading. Every hop may deliver it
 Here: the client may deliver a reading twice and says so in its contract. It never alters a value.
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: a reading carries a boot counter and the seconds since that boot. A time of an earlier boot that cannot be computed is estimated and marked.
 
@@ -70,7 +70,7 @@ Says: the first receiver rejects a value outside 0 to 100 percent, 0 to 100 000 
 Here: the client is the first receiver; it drops such a reading. It confirms to a sensor stick only after its consumer's acknowledgement.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: up to 20 sensor sticks per phone. A sensor stick keeps at least 2 880 readings and overwrites the oldest when full. Radio protocol version 1.
 

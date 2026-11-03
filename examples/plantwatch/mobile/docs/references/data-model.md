@@ -29,7 +29,7 @@ Terms, units, ranges and identifier forms are inherited; see [context.md](../exp
 
 Sensor id and sequence number together identify a reading. Two readings with the same pair are the same reading; the one stored first stays.
 
-The tick count is carried along because the reading schema contains it. Only the part that fetches computes with it ([0003](../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)).
+The tick count is carried along because the reading schema contains it. Only the part that fetches computes with it.
 
 The field names in stored documents and uploads are those of the reading schema. This table names what the app relies on.
 

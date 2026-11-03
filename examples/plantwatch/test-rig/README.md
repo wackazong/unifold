@@ -36,6 +36,5 @@ The rig uses a token of an owner that exists for testing only. It removes every 
 2. [docs/references/configurations.md](docs/references/configurations.md): `real` and `simulated`, settings, waiting times
 3. [test-report.md of plantwatch](../docs/references/test-report.md): the contract of the report
 4. [docs/references/glossary.md](docs/references/glossary.md): promise, stimulus, configuration, group
-5. [Context diagram](docs/diagrams/context.md)
-6. [docs/explanation/context.md](docs/explanation/context.md): what the rig inherits from above
-7. [Decisions](docs/decisions/index.md)
+5. [docs/explanation/context.md](docs/explanation/context.md): what the rig inherits from above
+6. [Decisions](docs/decisions/index.md)

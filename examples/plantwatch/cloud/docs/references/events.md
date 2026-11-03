@@ -1,6 +1,6 @@
 # Events between services
 
-The envelope, the topic names and the rules that every service of `cloud` follows when it publishes or consumes events. The terms are in the [glossary](glossary.md), the reasons in [0001](../decisions/0001-services-learn-about-readings-through-events.md) and [0004](../decisions/0004-every-event-consumer-is-idempotent.md).
+The envelope, the topic names and the rules that every service of `cloud` follows when it publishes or consumes events. The terms are in the [glossary](glossary.md).
 
 ## Envelope
 
@@ -61,7 +61,7 @@ A service that subscribes states what it relies on in a contract of its need: th
 
 ## Rules for a consumer
 
-- Its result is the same when an event arrives again ([0004](../decisions/0004-every-event-consumer-is-idempotent.md)).
+- Its result is the same when an event arrives again.
 - It confirms an event only after its own change is durable.
 - It handles the events of one `key` in the order of delivery. It may handle events of different keys at the same time.
 - It leaves an event unconfirmed when it cannot handle it for a reason that passes, such as a database that is down. The event bus delivers it again.

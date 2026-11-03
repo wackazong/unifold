@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Context diagram: cloud
 
 [plantwatch](../../../docs/diagrams/component.md) / **cloud** · [README](../../README.md) · [component](component.md) · [architecture](architecture.md)
@@ -30,18 +30,18 @@ flowchart LR
 |---|---|---|---|---|
 | [cloud](../../README.md) | system | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](component.md) |
 | [mobile](../../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../../mobile/docs/diagrams/component.md) |
-| [test-rig](../../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** | [context](../../../test-rig/docs/diagrams/context.md) |
+| [test-rig](../../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** |  |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability |
-|---|---|---|---|---|
-| push-service | http | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
-| container-host | infrastructure | [contract](../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root | |
+| Need | Contract | Provided by | Capability |
+|---|---|---|---|
+| push-service | [contract](../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
+| container-host | [contract](../../../docs/references/container-host.md) | outside the project, as need `container-host` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Used by | As need |
-|---|---|---|---|---|
-| public-api | http | [contract](../../../docs/references/public-api/index.md) | [mobile/sync](../../../mobile/sync/README.md) (planned) | cloud-api |
-| public-api | http | [contract](../../../docs/references/public-api/index.md) | [test-rig](../../../test-rig/README.md) (planned) | cloud-api |
+| Capability | Contract | Used by | As need |
+|---|---|---|---|
+| public-api | [contract](../../../docs/references/public-api/index.md) | [mobile/sync](../../../mobile/sync/README.md) (planned) | cloud-api |
+| public-api | [contract](../../../docs/references/public-api/index.md) | [test-rig](../../../test-rig/README.md) (planned) | cloud-api |

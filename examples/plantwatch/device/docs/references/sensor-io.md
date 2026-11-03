@@ -3,6 +3,10 @@
 Contract of `hal.sensor-io`: what a caller gets when it asks for raw sensor values. The provider returns what the sensors deliver; it does not calibrate, average, clamp or judge. Between two measurements both sensors are without supply. Notation: wit.
 Sources: the contracts of the needs `soil-probe` and `ambient-sensor` of plantwatch, and the board.
 
+## Use
+
+The caller asks for one measurement at a time with `measure` and gets three raw values. The connection has no state between two measurements: `measure` may be called at any time while no other measurement runs.
+
 ## Parts
 
 ### measure

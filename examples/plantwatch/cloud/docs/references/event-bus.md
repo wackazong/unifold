@@ -1,7 +1,11 @@
 # event-bus
 
-Contract of `platform.event-bus`: what a service that publishes or subscribes can rely on. The product behind it is chosen in decision `platform`/0001. The bus does not look into a value. Notation: the operations of a Kafka client, written as text.
-Sources: decision `platform`/0001, the event conventions of `cloud`.
+Contract of `platform.event-bus`: what a service that publishes or subscribes can rely on. The bus does not look into a value. Notation: the operations of a Kafka client, written as text.
+Sources: the event conventions of `cloud`.
+
+## Use
+
+A publisher publishes messages to a declared topic. When the order of its messages with one key matters, it waits for each acknowledgement or uses the idempotent mode of its client. A subscriber subscribes once per topic and subscription name and then receives the messages as `deliver`. It confirms a message by committing the position behind it, for a partition that it holds. After a lost connection the instance subscribes again. `read-from-beginning` needs no subscription and may be called at any time.
 
 ## Access
 

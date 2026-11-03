@@ -59,3 +59,7 @@ The ports keep their neutral names `event-bus` and `sql-db`. The contracts name 
 
 - Good: lightest broker; durable consumers and replay are built in.
 - Bad: order per key with several consumer instances needs subjects that are partitioned by hand and one consumer per partition. Nothing assigns the partitions to the instances of a service.
+
+## More Information
+
+The contracts [`sql-db`](../../../docs/references/sql-db.md) and [`event-bus`](../../../docs/references/event-bus.md) state the result.

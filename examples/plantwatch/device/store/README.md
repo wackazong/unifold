@@ -39,5 +39,4 @@ Limits: Read returns within 2 ms. A mark takes up to 2 ms, and up to 110 ms once
 1. [docs/references/flash-layout.md](docs/references/flash-layout.md): blocks, slots, recovery, test cases
 2. [flash](../docs/references/flash.md): what `store` expects of the memory
 3. [docs/explanation/context.md](docs/explanation/context.md): what `store` inherits from above
-4. [Context diagram](docs/diagrams/context.md)
-5. [Decisions](docs/decisions/index.md)
+4. [Decisions](docs/decisions/index.md)

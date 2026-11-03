@@ -23,4 +23,4 @@ What must stay true: a service relies on the two contracts without knowing the p
 1. [event bus](../docs/references/event-bus.md): contract of `event-bus`
 2. [SQL database](../docs/references/sql-db.md): contract of `sql-db`
 3. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-4. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
+4. [Decisions](docs/decisions/index.md)

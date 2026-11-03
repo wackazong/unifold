@@ -47,3 +47,7 @@ sequence number = boot counter × 262 144 + n
 
 - Good: consecutive numbers.
 - Bad: a second user of durable memory, with its own wear and its own behaviour on power loss, for one number.
+
+## More Information
+
+The contracts [`readings`](../references/readings.md) and [`timer`](../references/timer.md) state the result.

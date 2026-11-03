@@ -16,7 +16,7 @@ The result is a new version of a contract that parts built for the previous vers
 5. **Update the procedures**, the failure tables and the examples in [fetch.md](../../references/ble-profile/fetch.md) and [confirm.md](../../references/ble-profile/confirm.md) if behaviour changes. Write the example of a new case before anything else: it is the first test of every implementation.
 6. **Raise the version** in the first paragraph and the section "Version" of each changed contract, and in the [Info layout](../../references/ble-profile/info.md) if the profile changed.
 7. **Recompute every byte example**: in the [schema](../../references/reading-schema.md#examples), the [Info](../../references/ble-profile/info.md) and [Status](../../references/ble-profile/status.md) values, the [advertising](../../references/ble-profile/advertising.md#examples), the [fetch](../../references/ble-profile/fetch.md) and the [confirm](../../references/ble-profile/confirm.md).
-8. **Check the shared ranges.** If a unit, range or identifier form changes, it must first change at its source, the [conventions](../../references/conventions.md). Then correct each `Says` that cites it (`unifold cited-by`).
+8. **Check the shared ranges.** If a unit, range or identifier form changes, it must first change at its source, the [conventions](../../references/conventions.md). Then correct each `Says` that cites it (`unifold impact` on the file lists them).
 9. Run the unifold generator and checker and fix what they report.
 
 ## Checks

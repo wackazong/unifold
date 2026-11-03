@@ -54,3 +54,7 @@ A pause ends early when the program comes onto the screen, when a network connec
 
 - Good: fewest requests.
 - Bad: a large request is the most likely to be cut off, and then nothing is confirmed.
+
+## More Information
+
+The contract [`plant-data`](../../../docs/references/plant-data/index.md) states the result.

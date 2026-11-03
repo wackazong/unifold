@@ -27,3 +27,7 @@ Chosen option: "the current attachment at handling time", because it needs one l
 - Bad: readings that were taken before a sensor stick was moved and are uploaded after it land in the history of the new plant. A client avoids this by uploading what it holds before it changes the attachment.
 - Bad: readings that arrive while a sensor stick is attached to no plant are dropped. A client attaches first, then uploads.
 - Bad: handling the same events again after a change of attachment gives a different history. A replay is therefore no exact rebuild.
+
+## More Information
+
+The contract [`plants-api`](../../../../docs/references/plants-api.md) states the result.

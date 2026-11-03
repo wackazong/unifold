@@ -14,7 +14,7 @@ What `gateway` does with a request to its capability `public-api`. The operation
 | 4 | For every other operation: the `Authorization` header holds a valid token ([tokens](tokens.md)) | `401` `unauthenticated` |
 | 5 | Fewer than 120 requests with this token were handled within the last minute | `429` `rate_limited` |
 
-Steps 3 and 5 count per instance ([0002](../decisions/0002-rate-limits-are-counted-per-instance.md)). A `429` response carries the header `Retry-After` with the seconds until the next request is accepted.
+Steps 3 and 5 count per instance. A `429` response carries the header `Retry-After` with the seconds until the next request is accepted.
 
 ## Routes
 

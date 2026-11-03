@@ -3,6 +3,10 @@
 Contract of the need `push-service` of plantwatch: a service such as APNs or FCM that the phone app and the server side both use, each from its own side. Nothing in plantwatch implements it. Delivery may be delayed and is not guaranteed; the sender does not learn whether a phone showed the notification. Notation: the operations of the service as text.
 Sources: the documentation of the push services of the two phone platforms, reduced to what plantwatch relies on.
 
+## Use
+
+A phone registers for its owner once the owner has allowed notifications. It registers again whenever the service reports a new address, and ends the registration when it leaves the owner. From its registration to its end, the phone receives the notifications of that owner. The server side sends a notification to an owner at any time. The service delivers it to every phone registered for that owner, as long as its time to live lasts. A send for an owner without a registered phone is refused for good.
+
 ## Parts
 
 ### register

@@ -26,3 +26,7 @@ Chosen option: "counters in memory", because the limits exist to stop a client t
 - Bad: with n instances a client can reach n times the stated rate.
 - Bad: counters are lost at a restart.
 - Bad: the limit on new owners per client address is weak against a caller with many addresses. It bounds accidents, not attacks.
+
+## More Information
+
+[Routing](../references/routing.md) states the result.

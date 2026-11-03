@@ -19,7 +19,7 @@ Says: an alert is stored with `notification` set to `pending`. A separate delive
 Here: `server` implements both steps and never notifies from the handling of an event. Delivery can repeat.
 
 ### [alerts: alerts API](../../../../../docs/references/alerts-api.md)
-<!-- unifold:cites sha=976cf787 -->
+<!-- unifold:cites sha=80556d97 -->
 
 Says, as the contract that this unit implements: every request to `/v1/alerts` requires `X-Owner-Id`, and answers are limited to that owner. An alert belongs to the owner named when it opened. An alert is stored within 30 seconds after its event arrives. `id`, `plant_id`, `quantity`, `bound`, `threshold`, `opened_at` and `opened_value` never change; the closing fields and `notification` change once.
 
@@ -42,7 +42,7 @@ Says, as far as this unit implements it: an alert has the fields `id`, `plant_id
 Here: the rows that `server` stores and the answers it gives. Expiry and retention are jobs of `server`.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=c375b9de -->
+<!-- unifold:cites sha=ce89a259 -->
 
 Says: a list has at most 1 000 items per page. The error response and its codes are the part `error` of the same contract.
 
@@ -63,14 +63,14 @@ Says: an event can arrive again. The consumer's change and its record of the han
 Here: the evaluation state is that record. It is stored in the same transaction as the alerts.
 
 ### [cloud: events between services](../../../../../docs/references/events.md)
-<!-- unifold:cites sha=0f4bf135 -->
+<!-- unifold:cites sha=d89e0abc -->
 
 Says: a subscription is named after its service. A consumer confirms an event it can never handle and leaves one unconfirmed that fails for a passing reason.
 
 Here: the subscription is named `alerts`. Events of an unknown type are confirmed and counted.
 
 ### [cloud: calls between services](../../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=f87b1f71 -->
+<!-- unifold:cites sha=1dcb0c4d -->
 
 Says: a public operation is served under its public path and requires `X-Owner-Id`. Every service answers `GET /healthz` and listens on port 8080.
 

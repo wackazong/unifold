@@ -1,7 +1,11 @@
 # sql-db
 
-Contract of `platform.sql-db`: what a service that stores data can rely on. The product behind it is chosen in decision `platform`/0001. Notation: SQL and the connection parameters, written as text.
-Sources: decision `platform`/0001; each service owns its data ([0002](../decisions/0002-each-service-owns-its-data.md)).
+Contract of `platform.sql-db`: what a service that stores data can rely on. Notation: SQL and the connection parameters, written as text.
+Sources: none.
+
+## Use
+
+A service connects with its role and runs its statements inside transactions on that connection. A transaction covers the schema of the role and nothing else. When the connection breaks or is refused, the service connects again and repeats the open transaction. A role has at most 20 connections at a time.
 
 ## Access
 

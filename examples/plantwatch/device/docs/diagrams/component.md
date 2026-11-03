@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: device
 
 [plantwatch](../../../docs/diagrams/component.md) / **device** · [README](../../README.md) · [context](context.md)
@@ -32,12 +32,12 @@ flowchart LR
   class u_device__hal,u_device__link,u_device__sampling,u_device__store planned
 ```
 
-| Unit | Kind | Responsibility | Status | Diagram |
-|---|---|---|---|---|
-| [hal](../../hal/README.md) | adapter | Hardware abstraction of the sensor stick board | **planned** | [context](../../hal/docs/diagrams/context.md) |
-| [link](../../link/README.md) | library | Implements the BLE profile on top of the radio | **planned** | [context](../../link/docs/diagrams/context.md) |
-| [sampling](../../sampling/README.md) | library | Takes a calibrated reading at every sampling interval | **planned** | [context](../../sampling/docs/diagrams/context.md) |
-| [store](../../store/README.md) | library | Keeps readings on the sensor stick until they have been delivered | **planned** | [context](../../store/docs/diagrams/context.md) |
+| Unit | Kind | Responsibility | Status |
+|---|---|---|---|
+| [hal](../../hal/README.md) | adapter | Hardware abstraction of the sensor stick board | **planned** |
+| [link](../../link/README.md) | library | Implements the BLE profile on top of the radio | **planned** |
+| [sampling](../../sampling/README.md) | library | Takes a calibrated reading at every sampling interval | **planned** |
+| [store](../../store/README.md) | library | Keeps readings on the sensor stick until they have been delivered | **planned** |
 
 ### Connections
 

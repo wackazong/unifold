@@ -39,6 +39,5 @@ Notifications that are not allowed or not delivered cost nothing else: `ui` show
 2. [plant data](../docs/references/plant-data/index.md): the contract of `plant-data`, with the examples the screens are tested with
 3. [docs/references/presets.md](docs/references/presets.md): threshold presets
 4. [docs/references/glossary.md](docs/references/glossary.md): screen, state, mark, bar, span
-5. [Context diagram](docs/diagrams/context.md)
-6. [docs/explanation/context.md](docs/explanation/context.md): what `ui` inherits from above
-7. [Decisions](docs/decisions/index.md)
+5. [docs/explanation/context.md](docs/explanation/context.md): what `ui` inherits from above
+6. [Decisions](docs/decisions/index.md)

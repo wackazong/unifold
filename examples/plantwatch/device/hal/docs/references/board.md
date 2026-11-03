@@ -64,7 +64,7 @@ The processor sleeps during both waits.
 | Radio stack | `0x00000` to `0x18FFF` | 100 kB | Vendor binary |
 | Firmware | `0x19000` to `0x67FFF` | 316 kB | The firmware image |
 | Blocks of `flash` | `0x68000` to `0x7BFFF` | 20 blocks, 80 kB | Block n starts at `0x68000` + n × `0x1000` |
-| Boot counter | `0x7C000` to `0x7CFFF` | 1 block | See [decision 0002](../decisions/0002-count-boots-as-cleared-bits-in-a-block-of-its-own.md) |
+| Boot counter | `0x7C000` to `0x7CFFF` | 1 block | A 4-byte base value, then a bit field of 4092 bytes. Every start clears one more bit; the boot counter is the base value plus the number of cleared bits |
 | Bonds | `0x7D000` to `0x7EFFF` | 2 blocks | Keys of bonded centrals, managed by the radio stack |
 | Reserved | `0x7F000` to `0x7FFFF` | 1 block | Empty, except while the boot counter block is erased |
 

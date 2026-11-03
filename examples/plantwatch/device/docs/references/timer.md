@@ -1,7 +1,11 @@
 # timer
 
 Contract of `hal.timer`: the tick count and the alarms of the board. The provider does not start the board while the supply is below 2.1 V, so a start always has the energy to be counted. Notation: wit.
-Sources: the board of the sensor stick as `hal` abstracts it; the decision that sequence numbers are derived from the tick count ([0003](../decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md)).
+Sources: the board of the sensor stick as `hal` abstracts it.
+
+## Use
+
+The caller reads the tick count, sets an alarm for a second of this start, and receives `alarm` when that second has come. Setting an alarm again replaces its time, and an alarm may be set from inside an alarm call. No call depends on an earlier one: any part may be called at any time.
 
 ## Parts
 

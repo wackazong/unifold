@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # AGENTS.md: plantwatch
 
 unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
@@ -17,7 +17,7 @@ unifold unit; run `unifold show` here. Read [README.md](README.md) first: it say
 | [add-a-measured-quantity](docs/skills/add-a-measured-quantity/SKILL.md) | Add a new measured quantity, such as air humidity, to plantwatch from the sensor to the alert. Use it when the sensor stick shall measure something it does not measure yet. |
 | [change-a-shared-definition](docs/skills/change-a-shared-definition/SKILL.md) | Change the BLE profile or the reading schema so that parts built for the previous version keep working. Use it when a field, a quantity, a characteristic, an op code or a rule of one of the two contracts shall be added or changed. |
 
-<!-- unifold:begin - generated block; run `unifold generate` to refresh -->
+<!-- unifold:begin - generated block; run `unifold check --fix` to refresh -->
 ## unifold
 
 This repository has a [unifold](https://unifold.md) map. A folder with a `unifold.yaml` is a unit: the file says what the unit provides and needs, and the unit above connects needs to providers. Read the map before you change an interface; keep it true after.

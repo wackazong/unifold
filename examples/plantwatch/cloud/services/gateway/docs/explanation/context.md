@@ -12,7 +12,7 @@ Says: one service is reachable from outside. It authenticates and routes and doe
 Here: this unit is that service. It never passes on a request without a verified token, and never an owner id that came from outside.
 
 ### [cloud: public API](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=c375b9de -->
+<!-- unifold:cites sha=ce89a259 -->
 
 Says, as far as this unit implements it:
 
@@ -45,7 +45,7 @@ Says: errors have the body `{"code", "message"}`: `401` `unauthenticated`, `404`
 Here: `gateway` answers `401`, `413` and `429` itself and passes on the errors of its providers unchanged.
 
 ### [cloud: calls between services](../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=f87b1f71 -->
+<!-- unifold:cites sha=1dcb0c4d -->
 
 Says, as the rules that this unit implements: the service that verified the token sets `X-Owner-Id`; the first service sets `X-Request-Id`. A caller waits at most 5 seconds and repeats a failed call at most twice, after 0.2 and 1 second. Paths below `/internal/` are never served to a client. Every service answers `GET /healthz`.
 

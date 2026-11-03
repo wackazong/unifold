@@ -1,13 +1,30 @@
 # sensor-readings
 
 Contract of `ble-client.sensor-readings`: the operations, data and guarantees of the capability through which the client hands fetched readings to its consumer. The description is independent of a programming language. The fields of a reading and of a paired sensor stick are those cited in [context.md](../explanation/context.md). The consumer is the one receiver attached to the capability; it acknowledges a batch once it has stored it. An anchor is a time reference that the client keeps for one boot of a sensor stick. Notation: wit.
-Sources: the BLE profile and the reading schema of plantwatch, decisions `ble-client`/0001 and `ble-client`/0002.
+Sources: the BLE profile and the reading schema of plantwatch.
 
-## What the consumer must do
+## Use
 
-- Recognise a reading by sensor id and sequence number and keep the one it stored first.
-- Acknowledge a batch only after storing it durably.
-- Acknowledge within 5 seconds. A later acknowledgement is ignored and the batch is delivered again at the next fetch.
+The consumer attaches when the program starts. From then on the client fetches from every paired sensor stick in range by itself and delivers the readings as batches. The consumer stores each batch durably and then acknowledges it, within 5 seconds. The client confirms the readings to the sensor stick only after that acknowledgement. The consumer recognises a reading by sensor id and sequence number and keeps the one it stored first. After `detach-consumer` the client stops fetching and connects to no sensor stick until a consumer attaches again.
+
+1. `attach-consumer`, then for each `batch`: store it, then `acknowledge` it.
+2. `fetch-now` asks for a fetch from one sensor stick at once. Its readings arrive as batches; every batch but the last has `more-to-come` set.
+
+## States
+
+Start: detached.
+
+| State | Part | Result | Next |
+|---|---|---|---|
+| detached | `attach-consumer` | | attached |
+| detached | `detach-consumer` | | detached |
+| detached | `observe-status` | | detached |
+| attached | `attach-consumer` | | attached |
+| attached | `detach-consumer` | | detached |
+| attached | `fetch-now` | | attached |
+| attached | `batch` | | attached |
+| attached | `acknowledge` | | attached |
+| attached | `observe-status` | | attached |
 
 ## Parts
 

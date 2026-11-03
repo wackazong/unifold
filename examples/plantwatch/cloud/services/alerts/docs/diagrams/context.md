@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Context diagram: alerts
 
 [plantwatch](../../../../../docs/diagrams/component.md) / [cloud](../../../../docs/diagrams/component.md) / **alerts** · [README](../../README.md) · [component](component.md)
@@ -30,24 +30,24 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [platform](../../../../platform/README.md) | adapter | Shared infrastructure of the services - message bus and database | **planned** | [context](../../../../platform/docs/diagrams/context.md) |
+| [platform](../../../../platform/README.md) | adapter | Shared infrastructure of the services - message bus and database | **planned** |  |
 | [alerts](../../README.md) | service | Decides when a plant needs attention and notifies its owner once | **planned** | [component](component.md) |
-| [gateway](../../../gateway/README.md) | service | Single entry point of the server side that authenticates callers and routes requests | **planned** | [context](../../../gateway/docs/diagrams/context.md) |
-| [ingest](../../../ingest/README.md) | service | Accepts uploaded readings and announces each accepted one as an event | **planned** | [context](../../../ingest/docs/diagrams/context.md) |
-| [plants](../../../plants/README.md) | service | Registry of plants with their sensors, thresholds and reading history | **planned** | [context](../../../plants/docs/diagrams/context.md) |
+| [gateway](../../../gateway/README.md) | service | Single entry point of the server side that authenticates callers and routes requests | **planned** |  |
+| [ingest](../../../ingest/README.md) | service | Accepts uploaded readings and announces each accepted one as an event | **planned** |  |
+| [plants](../../../plants/README.md) | service | Registry of plants with their sensors, thresholds and reading history | **planned** |  |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability |
-|---|---|---|---|---|
-| reading-events | events | [contract](../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events |
-| plants-api | http | [contract](../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api |
-| push | http | [contract](../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
-| sql-db | db | [contract](../../../../docs/references/sql-db.md) | [cloud/platform](../../../../platform/README.md) (planned) | sql-db |
-| event-bus | queue | [contract](../../../../docs/references/event-bus.md) | [cloud/platform](../../../../platform/README.md) (planned) | event-bus |
+| Need | Contract | Provided by | Capability |
+|---|---|---|---|
+| reading-events | [contract](../../../../docs/references/reading-events.md) | [cloud/services/ingest](../../../ingest/README.md) (planned) | reading-events |
+| plants-api | [contract](../../../../docs/references/plants-api.md) | [cloud/services/plants](../../../plants/README.md) (planned) | plants-api |
+| push | [contract](../../../../../docs/references/push-service.md) | outside the project, as need `push-service` of the root | |
+| sql-db | [contract](../../../../docs/references/sql-db.md) | [cloud/platform](../../../../platform/README.md) (planned) | sql-db |
+| event-bus | [contract](../../../../docs/references/event-bus.md) | [cloud/platform](../../../../platform/README.md) (planned) | event-bus |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Used by | As need |
-|---|---|---|---|---|
-| alerts-api | http | [contract](../../../../docs/references/alerts-api.md) | [cloud/services/gateway](../../../gateway/README.md) (planned) | alerts-api |
+| Capability | Contract | Used by | As need |
+|---|---|---|---|
+| alerts-api | [contract](../../../../docs/references/alerts-api.md) | [cloud/services/gateway](../../../gateway/README.md) (planned) | alerts-api |

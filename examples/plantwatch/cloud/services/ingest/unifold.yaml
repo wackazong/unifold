@@ -12,15 +12,12 @@ not:
   - correcting a reading, or replacing an accepted one
 capabilities:
   ingest-api:
-    kind: http
     summary: Accepts a batch of readings of one sensor and says which ones were new
     contract: ../../docs/references/ingest-api.md
   reading-events:
-    kind: events
     summary: One event per accepted reading, keyed by sensor id, in order of acceptance, at least once
     contract: ../../docs/references/reading-events.md
 needs:
   event-bus:
-    kind: queue
     summary: Stores each event durably before it acknowledges it and keeps it for later subscribers
     contract: ../../docs/references/event-bus.md

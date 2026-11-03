@@ -3,6 +3,10 @@
 Contract of `app-ui`, the promises the app makes to its owner, independent of how a screen looks. The screens and the way between them, and the data model behind them, are up to [mobile](../../mobile/README.md). Notation: what the owner does and sees, as text.
 Sources: the requirements and the product parameters of plantwatch.
 
+## Use
+
+The owner starts the app without an account, adds plants, and puts a sensor stick to each plant. From then on the app fetches, uploads and registers for notifications without being asked, and the owner sees the plants, their history and their alerts. The app has no state that limits what the owner may do: every part may be used at any time, also without a network connection. Pairing and fetching need Bluetooth.
+
 ## What the app does not promise
 
 - A time by which a reading reaches the phone or the server. It depends on the phone coming near the sensor stick.

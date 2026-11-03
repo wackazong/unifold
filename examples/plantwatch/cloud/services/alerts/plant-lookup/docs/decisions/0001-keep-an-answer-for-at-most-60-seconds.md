@@ -49,3 +49,7 @@ Chosen option: "keep for at most 60 seconds, then `unavailable`", because a batc
 - Good: no request per reading at all.
 - Bad: needs a stream of plant changes, which is ruled out above this unit
   ([context](../explanation/context.md)).
+
+## More Information
+
+The contract [`thresholds`](../../../docs/references/thresholds.md) states the result.

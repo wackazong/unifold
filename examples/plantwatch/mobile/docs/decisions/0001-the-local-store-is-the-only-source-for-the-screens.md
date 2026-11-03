@@ -32,3 +32,7 @@ A notification does not break this rule. It names a plant and an alert; the scre
 - Bad: the phone holds a copy of server data that can be days old. Every screen must show the age of its data.
 - Bad: a change made offline can collide with a change made elsewhere. The part that talks to the server needs a rule for that.
 - Bad: the store has a layout that must be migrated when it changes.
+
+## More Information
+
+The contract [`plant-data`](../references/plant-data/index.md) states the result.

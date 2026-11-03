@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From mobile
 
 ### [mobile/0001 The local store is the only source for the screens](../../../docs/decisions/0001-the-local-store-is-the-only-source-for-the-screens.md)
-<!-- unifold:cites sha=3670810d -->
+<!-- unifold:cites sha=fa27f791 -->
 
 Says: screens read only from a store on the phone. Fetched readings and server data flow into it; the owner's changes go there first, then to the server.
 
@@ -19,14 +19,14 @@ Says: a background slot can be as short as about 10 seconds. It does fetch, stor
 Here: storing a batch comes first and is fast. An upload may be cut off at any moment and is repeatable ([exchange.md](../references/exchange.md)).
 
 ### [mobile/0003 A reading gets its UTC time before it is stored](../../../docs/decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)
-<!-- unifold:cites sha=935abb64 -->
+<!-- unifold:cites sha=0fe372be -->
 
 Says: a reading arrives with a UTC time and an estimated flag; both never change. The tick count stays in it; nothing behind the fetch computes with it.
 
 Here: sync stores, uploads and returns time, flag and tick count as received. Of a reading that arrives twice it keeps the one stored first.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=c006a7d8 -->
+<!-- unifold:cites sha=b00f48e2 -->
 
 Says, as far as sync implements it:
 
@@ -83,7 +83,7 @@ Says: soil moisture 0 to 100 percent, light 0 to 100 000 lux, temperature -20 to
 Here: a command with a limit outside the range of its quantity fails.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: 90 days of history on the phone, up to 50 plants per owner and 20 sensor sticks per phone, sampling interval from 5 to 60 minutes.
 

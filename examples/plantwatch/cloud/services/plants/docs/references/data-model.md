@@ -1,6 +1,6 @@
 # Data model of plants
 
-What `plants` stores in its database schema and how long. It is internal: only `plants` reads these tables ([context](../explanation/context.md)). The reasons are in the [decisions](../decisions/index.md).
+What `plants` stores in its database schema and how long. It is internal: only `plants` reads these tables ([context](../explanation/context.md)).
 
 ## Tables
 

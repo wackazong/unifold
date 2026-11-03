@@ -19,4 +19,4 @@ What must stay true: the function is deterministic, and it never asks to open wh
 1. [evaluation](../docs/references/evaluation.md): the function, the rules, the margins, the state
 2. [thresholds lookup](../docs/references/thresholds.md): the lookup that the unit expects to be given
 3. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-4. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
+4. [Decisions](docs/decisions/index.md)

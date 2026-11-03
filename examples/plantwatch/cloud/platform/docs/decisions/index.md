@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Decisions of platform
 
 [README.md](../../README.md) · [AGENTS.md](../../AGENTS.md)

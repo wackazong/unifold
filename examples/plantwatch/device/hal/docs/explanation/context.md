@@ -19,7 +19,7 @@ Says: the firmware has no loop that waits. It sleeps unless an alarm or the radi
 Here: `hal` owns the sleep state and enters it whenever no event is being handled. 1285 ms lies inside the range that `radio` allows.
 
 ### [device/0003 Sequence numbers are derived from the tick count](../../../docs/decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md)
-<!-- unifold:cites sha=f6e3de04 -->
+<!-- unifold:cites sha=1ea9ccca -->
 
 Says: a sequence number is computed from the boot counter and a count within that start. A boot counter that repeated would repeat numbers.
 
@@ -42,7 +42,7 @@ Here: the words of the four contracts, used unchanged.
 ## From plantwatch
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: a sensor stick has no wall clock. Its time is a boot counter and the seconds since that boot.
 
@@ -63,7 +63,7 @@ Says: a sensor id has 8 bytes.
 Here: the length of the identifier that `radio` reports.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: a sensor stick runs at least 12 months on one CR2032 cell and keeps at least 2 880 readings.
 

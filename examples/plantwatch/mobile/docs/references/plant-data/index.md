@@ -1,7 +1,60 @@
 # plant-data
 
 Contract of `sync.plant-data`: the queries, commands and guarantees of the capability through which the data on the phone is read and changed. The description is independent of a programming language. Reading, plant, thresholds, change state, alert, session and the ages of data are the things cited in [context.md](../../explanation/context.md). Notation: wit.
-Sources: the public API and the reading schema of plantwatch, decisions [0001](../../decisions/0001-the-local-store-is-the-only-source-for-the-screens.md) and [0003](../../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md) of `mobile`, decisions `sync`/0001 and `sync`/0002.
+Sources: the public API and the reading schema of plantwatch.
+
+## Use
+
+The caller lets the phone act for an owner: for a new one with `start`, or for an existing one with `join`. While the session is `active`, it reads and observes plants, history, alerts and the exchange state, changes plants and asks for a refresh. A query never uses the network. A command works without a network connection, except where its part asks for one. `leave` ends the session and removes the owner's data from the phone. When the server refuses the token at an exchange, the provider raises `session-lost`; the data then stays readable, no command changes it, and the phone either joins the owner again with `join` or leaves it with `leave`.
+
+1. `start` or `join`, then queries and commands, then `leave`.
+2. When `leave` fails with `network needed`, the session stays `active`, and `start` fails with `session exists`. The caller calls `leave` again once the phone has a network connection.
+3. After `session-lost`, the queries still answer. `join` with a new token of the same owner makes the session `active` again; `leave` ends it, also without a network connection.
+
+## States
+
+Start: none.
+
+| State | Part | Result | Next |
+|---|---|---|---|
+| none | `start` | ok | active |
+| none | `join` | ok | active |
+| none | `exchange-state` | | none |
+| none | `plants` | `no session` | none |
+| none | `plant` | `no session` | none |
+| none | `history` | `no session` | none |
+| none | `alerts` | `no session` | none |
+| none | `create-plant` | `no session` | none |
+| none | `change-plant` | `no session` | none |
+| none | `remove-plant` | `no session` | none |
+| none | `dismiss-refusal` | `no session` | none |
+| none | `token-for-another-phone` | `no session` | none |
+| none | `leave` | `no session` | none |
+| active | `plants` | | active |
+| active | `plant` | | active |
+| active | `history` | | active |
+| active | `alerts` | | active |
+| active | `exchange-state` | | active |
+| active | `token-for-another-phone` | | active |
+| active | `create-plant` | | active |
+| active | `change-plant` | | active |
+| active | `remove-plant` | | active |
+| active | `dismiss-refusal` | | active |
+| active | `refresh` | | active |
+| active | `leave` | ok | none |
+| active | `leave` | `network needed` | active |
+| active | `start` | `session exists` | active |
+| active | `join` | `session exists` | active |
+| active | `session-lost` | | lost |
+| lost | `plants` | | lost |
+| lost | `plant` | | lost |
+| lost | `history` | | lost |
+| lost | `alerts` | | lost |
+| lost | `exchange-state` | | lost |
+| lost | `refresh` | | lost |
+| lost | `start` | `session exists` | lost |
+| lost | `join` | ok | active |
+| lost | `leave` | ok | none |
 
 ## Parts
 
@@ -18,6 +71,7 @@ Every query has two forms: "get" returns the answer once; "observe" returns it a
 | [join](join.md) | the phone acts for an existing owner |
 | [token-for-another-phone](token-for-another-phone.md) | a further token for the same owner |
 | [leave](leave.md) | the phone leaves its owner |
+| [session-lost](session-lost.md) | the server no longer accepts the token |
 | [create-plant](create-plant.md), [change-plant](change-plant.md), [remove-plant](remove-plant.md) | the plants of the owner |
 | [dismiss-refusal](dismiss-refusal.md) | a refused change is dismissed |
 | [refresh](refresh.md) | a fetch from sensor sticks in range and an exchange now |
@@ -48,4 +102,4 @@ Each case of a part starts with an `active` session and one plant, "Monstera", t
 
 ## Fake
 
-A store in memory that a test loads with plants, readings and alerts; commands change it as the parts say and mark the plant `waiting`; "observe" delivers the new answer at once. Faults it can inject: a refusal by the server with any reason of `refusal-reason`, a session `lost`, `store unusable`.
+A store in memory that a test loads with plants, readings and alerts; commands change it as the parts say and mark the plant `waiting`; "observe" delivers the new answer at once. Faults it can inject: a refusal by the server with any reason of `refusal-reason`, `session-lost`, `store unusable`.

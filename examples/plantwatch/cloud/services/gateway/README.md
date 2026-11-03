@@ -36,4 +36,4 @@ Limit: rate limits are counted per instance. With several instances a client can
 1. [routing](docs/references/routing.md): how a request is handled and where it goes
 2. [docs/references/tokens.md](docs/references/tokens.md): form, signing and verification of tokens
 3. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-4. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
+4. [Decisions](docs/decisions/index.md)

@@ -24,7 +24,7 @@ Inside each part, start with its `AGENTS.md` and use the skills listed there.
 
 ## What else changes
 
-The measured quantities are restated in the context files of most units. After step 2, list them with the `cited-by` command of the tool on [conventions.md](../../references/conventions.md) and correct each restatement that names the quantities.
+The measured quantities are restated in the context files of most units. After step 2, list them with the `impact` command of the tool on [conventions.md](../../references/conventions.md) and correct each restatement that names the quantities.
 
 ## Checks
 

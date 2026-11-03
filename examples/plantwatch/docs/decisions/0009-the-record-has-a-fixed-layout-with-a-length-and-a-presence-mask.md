@@ -64,3 +64,5 @@ A new quantity gets the next mask bit and bytes after the last field. An old rec
 
 The layout is defined in the
 [reading schema](../references/reading-schema.md).
+
+[BLE profile of the sensor stick](../references/ble-profile/index.md) states the result.

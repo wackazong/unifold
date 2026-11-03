@@ -19,7 +19,7 @@ Says: one part owns all access to the hardware and the radio stack. The other pa
 Here: `link` uses the radio only through `radio` and is tested against a substitute.
 
 ### [device/0003 Sequence numbers are derived from the tick count](../../../docs/decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md)
-<!-- unifold:cites sha=f6e3de04 -->
+<!-- unifold:cites sha=1ea9ccca -->
 
 Says: sequence numbers rise strictly but jump at every start of the board.
 
@@ -35,7 +35,7 @@ Here: used unchanged. "Stored" here and in the profile mean the same.
 ## From plantwatch
 
 ### [plantwatch/0008 Define the BLE profile and the reading format as references of plantwatch](../../../../docs/decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md)
-<!-- unifold:cites sha=503438ac -->
+<!-- unifold:cites sha=97ecb8cf -->
 
 Says: the BLE profile and the reading schema are references of plantwatch. Every connection that carries the profile names it as its contract; a reading travels inside the profile and the public API, and whoever reads or writes readings cites the schema. Both keep a version; a change within a major version keeps older counterparts working.
 
@@ -49,7 +49,7 @@ Says: transfers are at-least-once. A reading never changes, and a place may dele
 Here: a fetch changes nothing; only a confirm releases readings. `link` sends a reading unchanged.
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: at fetch time the phone reads the sensor stick's current tick count and computes the UTC time of each reading from it.
 
@@ -63,7 +63,7 @@ Says: a central is the BLE role of the side that connects to a sensor stick. The
 Here: `link` says "a central" and never names what it is. The identifier it gets through `radio` is the sensor id.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: radio protocol version 1.
 

@@ -1,7 +1,11 @@
 # plants-api
 
 Contract of `plants.plants-api`. The operations for a caller that acts for an owner, with their bodies and errors, are defined by the public API of plantwatch and cited in [context](../explanation/context.md); this contract states how `plants` serves them and defines the lookup that only this unit has. Notation: HTTP, with JSON bodies as the project conventions define them.
-Sources: the public API of plantwatch, the calls between services of `cloud`, decisions `plants`/0001 and `plants`/0002.
+Sources: the public API of plantwatch and the calls between services of `cloud`.
+
+## Use
+
+A caller that acts for an owner reads and changes the owner's plants and reads their history, with `X-Owner-Id` in every request. A caller that acts for itself looks up the plant of a sensor stick with `lookup-by-sensor`, without `X-Owner-Id`. The container host and other services ask `healthz`. The connection has no state: any part may be called at any time.
 
 ## Rules for the operations of an owner
 

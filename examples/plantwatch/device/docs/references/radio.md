@@ -3,6 +3,10 @@
 Contract of `hal.radio`: a BLE peripheral with a GATT server for one central at a time, Bluetooth 4.2 on the LE 1M PHY. Transmit power is 0 dBm. The provider knows nothing about the meaning of an attribute. Notation: wit.
 Sources: the radio stack of the board as `hal` absorbs it; the BLE profile of plantwatch for what the caller needs.
 
+## Use
+
+The caller configures the radio once at start, before advertising, then sets the advertising data and opens bonding when it needs to. While a central is connected, the caller answers every `read` and `write` event with `answer`. It sends notifications and indications only where the central has switched them on. `send` and `disconnect` need a connected central. Events arrive in the order in which they happened.
+
 ## Parts
 
 ### configure

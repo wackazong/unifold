@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From plantwatch
 
 ### [plantwatch/0008 Define the BLE profile and the reading format as references of plantwatch](../../../docs/decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md)
-<!-- unifold:cites sha=503438ac -->
+<!-- unifold:cites sha=97ecb8cf -->
 
 Says: the BLE profile and the reading schema are references of plantwatch. Every connection that carries the profile names it as its contract; a reading travels inside the profile and the public API, and whoever reads or writes readings cites the schema. Both keep a version; a change within a major version keeps older counterparts working.
 
@@ -26,7 +26,7 @@ Says: a sensor stick numbers its readings in strictly increasing order and never
 Here: within a scenario, sequence numbers only rise, also across a simulated restart. A reading stays stored until a central confirms it.
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: a reading carries a boot counter and the seconds since that boot, never a wall-clock time.
 
@@ -61,7 +61,7 @@ Says: a scenario is a scripted course of sensor values over simulated time, used
 Here: used unchanged, as are sensor stick, reading and tick count. The unit's own terms are in its [glossary](../references/glossary.md).
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: sampling interval 15 minutes by default, 5 to 60 minutes. A sensor stick keeps at least 2 880 readings and overwrites the oldest when full. Radio protocol version 1.
 

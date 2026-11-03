@@ -16,4 +16,4 @@ What must stay true: no answer is older than 60 seconds, and no failure reaches 
 
 1. [thresholds lookup](../docs/references/thresholds.md): the function, how answers of the registry are mapped, the kept answers
 2. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-3. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
+3. [Decisions](docs/decisions/index.md)

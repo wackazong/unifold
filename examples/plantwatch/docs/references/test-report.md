@@ -3,6 +3,10 @@
 Contract of `test-rig.test-report`: the file a run of the rig produces, and the exit status that goes with it. Readers are developers and the tools of a CI system that understand JUnit XML. The tests and the configurations are listed by [test-rig](../../test-rig/README.md). Notation: JUnit XML and the exit status of the run, as text.
 Sources: the JUnit XML format as CI tools read it; the test catalogue of `test-rig`.
 
+## Use
+
+A developer or a build server starts a run with its settings, waits for the exit status, and then reads the report file. Every run writes its own report, so one run does not depend on another: `run` may be called at any time.
+
 ## Stability
 
 - The id at the start of a `testcase` name never changes and is never reused. Tools that track a test over time match on the id.

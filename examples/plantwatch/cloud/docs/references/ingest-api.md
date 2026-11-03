@@ -3,6 +3,10 @@
 Contract of `ingest.ingest-api`. The operation, its bodies, the status values and the rejection codes are defined by the public API of plantwatch and cited in [context](../explanation/context.md); this contract states how `ingest` applies them. Notation: HTTP, with JSON bodies as the project conventions define them.
 Sources: the public API of plantwatch, the reading schema, the calls between services of `cloud`.
 
+## Use
+
+A caller that acts for an owner uploads a batch of readings of one sensor stick, with `X-Owner-Id`. The container host and other services ask `healthz`. The connection has no state: any part may be called at any time. A batch may be sent again after `503` or a lost response.
+
 ## Parts
 
 ### upload-batch

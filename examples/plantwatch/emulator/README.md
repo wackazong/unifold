@@ -45,6 +45,5 @@ Limits:
 1. [scenario control](../docs/references/scenario-control/index.md): the HTTP API and, linked from it, the scenario document
 2. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
 3. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above
-4. [Context diagram](docs/diagrams/context.md)
-5. [Decisions](docs/decisions/index.md)
-6. [Writing a scenario](docs/skills/emulator-write-a-scenario/SKILL.md)
+4. [Decisions](docs/decisions/index.md)
+5. [Writing a scenario](docs/skills/emulator-write-a-scenario/SKILL.md)

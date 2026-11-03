@@ -50,3 +50,7 @@ The aggregate of an hour is always recomputed from the raw readings of that hour
 
 - Good: aggregation and retention are built in.
 - Bad: needs an extension that the database this unit is given does not offer, for a data volume that plain tables carry easily.
+
+## More Information
+
+The contract [`plants-api`](../../../../docs/references/plants-api.md) states the result.

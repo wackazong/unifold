@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From plantwatch
 
 ### [plantwatch/0008 Define the BLE profile and the reading format as references of plantwatch](../../../docs/decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md)
-<!-- unifold:cites sha=503438ac -->
+<!-- unifold:cites sha=97ecb8cf -->
 
 Says: the BLE profile and the reading schema are references of plantwatch. Every connection that carries the profile names it as its contract; a reading travels inside the profile and the public API, and whoever reads or writes readings cites the schema. Both keep a version; a change within a major version keeps older counterparts working.
 
@@ -19,7 +19,7 @@ Says: a reading has a sensor id, a sequence number, a tick count, a time with a 
 Here: the app stores and uploads readings in the JSON form and gives a reading its `taken_at` from the tick count before it is stored.
 
 ### [plantwatch: app UI](../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=b379dec2 -->
+<!-- unifold:cites sha=1955dc7d -->
 
 Says: per plant the app shows the latest reading and 90 days of history, plants with an open alert first with the reason; it works offline; a tap on a notification opens the plant it is about.
 
@@ -40,14 +40,14 @@ Says: sensor id and sequence number identify a reading; it never changes. Every 
 Here: the app stores a reading under this pair, keeps the copy it stored first, and repeats a transfer after any failure.
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: a reading carries a tick count. The phone converts it to UTC when it fetches; a time it cannot compute is estimated and marked.
 
 Here: the app assigns the time of every reading ([0003](../decisions/0003-a-reading-gets-its-time-before-it-is-stored.md)). The phone's clock is the time source of all history.
 
 ### [plantwatch/0006 The server side alone decides whether a plant needs attention](../../../docs/decisions/0006-the-server-side-alone-decides-what-needs-attention.md)
-<!-- unifold:cites sha=1298b1e1 -->
+<!-- unifold:cites sha=d370602b -->
 
 Says: only the server side compares readings with thresholds. Every other part shows or carries what it decided.
 
@@ -75,7 +75,7 @@ Says: a transfer may deliver an item more than once and the receiver reports suc
 Here: the order "store, then confirm, then delete" at both ends of the app ([invariants](invariants.md)).
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: up to 20 sensor sticks per phone, 50 plants per owner, 90 days of history on the phone; a sensor stick keeps 2 880 readings; radio protocol version 1.
 

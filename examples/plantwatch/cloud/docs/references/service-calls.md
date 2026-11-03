@@ -1,6 +1,6 @@
 # Calls between services
 
-Rules for HTTP calls from one service of `cloud` to another inside the private network. The reason for trusting the caller is in [0003](../decisions/0003-one-gateway-is-the-only-public-entry.md).
+Rules for HTTP calls from one service of `cloud` to another inside the private network.
 
 ## Headers
 

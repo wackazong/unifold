@@ -3,6 +3,10 @@
 Contract of the need `ambient-sensor` of plantwatch: the light and temperature sensor of the sensor stick, one device on an I2C bus at 100 kHz, placed where it sees the light the plant sees. Notation: the bus transaction as text.
 Sources: the data sheet of the sensor, reduced to what the firmware relies on.
 
+## Use
+
+The firmware sends a request and waits up to 150 ms for both values. The sensor has no state that the firmware must respect. A request may be sent at any time while the supply is 2.0 V to 3.3 V.
+
 ## Parts
 
 ### read

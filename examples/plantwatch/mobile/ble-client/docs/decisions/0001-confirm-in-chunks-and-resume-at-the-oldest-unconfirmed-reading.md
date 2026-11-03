@@ -50,3 +50,7 @@ The size of a chunk and the timeouts are in
 
 - Good: the consumer may be slow or absent.
 - Bad: a second store of readings on the phone, with its own rules for loss and duplicates, in a unit whose point is to have none.
+
+## More Information
+
+The contract [`sensor-readings`](../../../docs/references/sensor-readings.md) states the result.

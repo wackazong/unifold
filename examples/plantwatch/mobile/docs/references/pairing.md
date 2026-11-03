@@ -3,6 +3,10 @@
 Contract of `ble-client.pairing`: the operations, data and guarantees of the capability through which a sensor stick is found and bound to this phone. The description is independent of a programming language. The fields of a paired sensor stick are those cited in [context.md](../explanation/context.md). The capability does not know plants; binding the sensor stick to a plant is up to the caller. It does not identify a sensor stick to the owner other than by signal strength: the nearest one is first in the list. Notation: wit.
 Sources: the BLE profile of plantwatch, the product parameters, the platform limits of `mobile`.
 
+## Use
+
+While the program is on the screen, the caller starts a search and shows the list to the owner. It pairs the sensor stick that the owner picks. The search ends when the caller cancels it or after 60 seconds. `pair` needs a sensor stick from the list of a search. `list-paired` and `unpair` may be called at any time.
+
 ## Parts
 
 ### search

@@ -36,3 +36,7 @@ The request returns when all readings up to that time exist. For work by hand, a
 - Bad: a client has to keep track of the time it has reached, or ask for the state first.
 - Bad: time cannot go back. A client that wants an earlier state loads the scenario again.
 - Bad: nothing happens between two requests, so behaviour "while a transfer runs" needs its own switch in the API.
+
+## More Information
+
+The contract [`scenario-control`](../../../docs/references/scenario-control/index.md) states the result.

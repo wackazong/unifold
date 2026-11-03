@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From plantwatch
 
 ### [plantwatch/0008 Define the BLE profile and the reading format as references of plantwatch](../../../docs/decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md)
-<!-- unifold:cites sha=503438ac -->
+<!-- unifold:cites sha=97ecb8cf -->
 
 Says: the BLE profile and the reading schema are references of plantwatch. Every connection that carries the profile names it as its contract; a reading travels inside the profile and the public API, and whoever reads or writes readings cites the schema. Both keep a version; a change within a major version keeps older counterparts working.
 
@@ -33,14 +33,14 @@ Says: every hop delivers at least once. Sensor id and sequence number identify a
 Here: an upload reports a duplicate as success and no operation changes a reading. The same rule holds between the services, see [0004](../decisions/0004-every-event-consumer-is-idempotent.md).
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: the phone computes the UTC time of each reading. A time that could only be estimated is flagged.
 
 Here: `cloud` trusts the time a reading carries and keeps the flag. A reading with an estimated time enters history and changes no alert.
 
 ### [plantwatch/0006 The server side alone decides whether a plant needs attention](../../../docs/decisions/0006-the-server-side-alone-decides-what-needs-attention.md)
-<!-- unifold:cites sha=1298b1e1 -->
+<!-- unifold:cites sha=d370602b -->
 
 Says: the server side judges every reading. Every other part shows or carries what the server side decided.
 
@@ -68,7 +68,7 @@ Says: a transfer may deliver an item twice, and the receiver reports success. HT
 Here: holds for the public API, for the calls between services and for the events between them.
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: upload to notification takes under 1 minute. History is kept 2 years on the server and 90 days on the phone. An owner has up to 50 plants.
 

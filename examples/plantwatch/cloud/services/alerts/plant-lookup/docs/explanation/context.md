@@ -21,14 +21,14 @@ Says: a service that needs state that changes rarely, such as the thresholds of 
 Here: `plant-lookup` asks when it is called. A copy of all thresholds is not an option inside this unit.
 
 ### [cloud: calls between services](../../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=f87b1f71 -->
+<!-- unifold:cites sha=1dcb0c4d -->
 
 Says: an internal operation lies below `/internal/v1/` and carries no owner. A caller waits 5 seconds and repeats a failure at most twice, after 0.2 and 1 s.
 
 Here: how `plant-lookup` calls whoever provides `plants-api`, and why `lookup` takes at most 17 seconds.
 
 ### [cloud: public API, general rules](../../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=c375b9de -->
+<!-- unifold:cites sha=ce89a259 -->
 
 Says: a changed threshold applies to readings that are evaluated more than 60 seconds after the change.
 

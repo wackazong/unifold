@@ -11,12 +11,10 @@ not:
   - telling its caller that a plant has changed; it answers when asked
 capabilities:
   thresholds:
-    kind: library
     summary: The plant a sensor stick is attached to, with its owner and thresholds, at most 60 seconds old
     contract: ../docs/references/thresholds.md
 needs:
   plants-api:
-    kind: http
     summary: An HTTP lookup that returns the plant a sensor stick is attached to, with owner and thresholds
     contract:
       path: ../../../docs/references/plants-api.md

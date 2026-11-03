@@ -33,4 +33,3 @@ The trade-off: `server` treats the evaluation state as a value it cannot read. I
 1. [docs/references/processing.md](docs/references/processing.md): what is stored, the handling of an event, delivery of notifications, expiry
 2. [evaluation](../docs/references/evaluation.md), [notification](../docs/references/notification.md), [reading events](../../../docs/references/reading-events.md): the contracts of its needs
 3. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-4. [Context diagram](docs/diagrams/context.md)

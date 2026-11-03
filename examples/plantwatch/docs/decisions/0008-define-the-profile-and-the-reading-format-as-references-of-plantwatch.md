@@ -31,3 +31,7 @@ Chosen option: "references of plantwatch", because the parts that implement the 
 - Good: the component diagram shows the data paths and nothing else.
 - Bad: the definition that the firmware implements lives above the firmware. A reader of `device` reaches it through the manifest.
 - Bad: the reading format has no connection that names it, so drift between a writer and a reader of readings is found by the stamps in the context files, not by the checker.
+
+## More Information
+
+[BLE profile of the sensor stick](../references/ble-profile/index.md) states the result.

@@ -1,7 +1,11 @@
 # evaluation
 
-Contract of `rules.evaluation`: the function `evaluate` and the rules by which `rules` judges a reading. What a client of the product sees of these rules is cited in [context](../explanation/context.md); this contract adds the exact procedure, the margins and the state. Why closing has a margin and opening has none is recorded in decision `rules`/0001. Notation: wit.
-Sources: the alert as the public API of plantwatch defines it; decision `rules`/0001.
+Contract of `rules.evaluation`: the function `evaluate` and the rules by which `rules` judges a reading. What a client of the product sees of these rules is cited in [context](../explanation/context.md); this contract adds the exact procedure, the margins and the state. Notation: wit.
+Sources: the alert as the public API of plantwatch defines it.
+
+## Use
+
+The caller passes the readings of one sensor stick to `evaluate` one after the other. With each reading it passes the state that the call before returned. After `cannot-decide` it keeps its state and passes the same reading again later. The state lives with the caller, so the connection has none: `evaluate` may be called at any time, also for several sensor sticks at once.
 
 ## Parts
 

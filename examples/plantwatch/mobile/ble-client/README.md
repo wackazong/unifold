@@ -23,6 +23,5 @@ The client fetches by itself: when the operating system reports a paired sensor 
 1. [docs/references/fetch-session.md](docs/references/fetch-session.md): a fetch as a state machine, with sizes and timeouts
 2. [sensor readings](../docs/references/sensor-readings.md) and [pairing](../docs/references/pairing.md): the contracts
 3. [docs/references/glossary.md](docs/references/glossary.md): acknowledge and confirm, chunk, session, anchor
-4. [Context diagram](docs/diagrams/context.md)
-5. [docs/explanation/context.md](docs/explanation/context.md): what the client inherits from above
-6. [Decisions](docs/decisions/index.md)
+4. [docs/explanation/context.md](docs/explanation/context.md): what the client inherits from above
+5. [Decisions](docs/decisions/index.md)

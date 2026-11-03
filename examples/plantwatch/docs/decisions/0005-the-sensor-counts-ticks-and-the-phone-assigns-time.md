@@ -26,3 +26,7 @@ A reading carries a boot counter and the number of seconds since that boot. At f
 - Good: no time setting protocol and no drift correction on the stick.
 - Bad: after a restart of the stick, older unfetched readings have only an estimated time.
 - Bad: the phone's clock becomes the time source for all history.
+
+## More Information
+
+[BLE profile of the sensor stick](../references/ble-profile/index.md) states the result.

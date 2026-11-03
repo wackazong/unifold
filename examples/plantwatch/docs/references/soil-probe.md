@@ -3,6 +3,10 @@
 Contract of the need `soil-probe` of plantwatch: the capacitive probe in the pot. The firmware is calibrated for one type of probe, not for the single probe. Notation: the electrical properties as text.
 Sources: the data sheet of the probe type, reduced to what the firmware relies on.
 
+## Use
+
+The firmware switches the supply on, waits at least 100 ms, measures the output as a share of the supply and switches the supply off. The probe has no state beyond its supply: a measurement may start whenever the supply has been on for 100 ms.
+
 ## Parts
 
 ### output

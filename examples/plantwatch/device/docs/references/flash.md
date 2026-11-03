@@ -3,6 +3,10 @@
 Contract of `hal.flash`: 20 blocks of durable memory of 4096 bytes each, numbered 0 to 19. Where the blocks lie on the chip is in the board reference of the provider; a caller does not need it. The provider itself never writes to these blocks, and it fits a write or an erase between radio events; the times below include that wait. Notation: wit.
 Sources: the board of the sensor stick as `hal` abstracts it; the product parameters of plantwatch for the capacity.
 
+## Use
+
+A write only changes bits from 1 to 0, so a caller that writes a word again erases its block first. A write and an erase need a supply of at least 2.1 V, and their effect survives power loss once they have returned with success. The connection has no state beyond the content of the blocks: any part may be called at any time.
+
 ## Parts
 
 ### read

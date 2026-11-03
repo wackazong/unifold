@@ -3,6 +3,10 @@
 Contract of `alerts.alerts-api`. The alert, its life and the operations with their parameters are defined by the public API of plantwatch and cited in [context](../explanation/context.md); this contract states how `alerts` serves them. Notation: HTTP, with JSON bodies as the project conventions define them.
 Sources: the public API of plantwatch, the calls between services of `cloud`.
 
+## Use
+
+A caller that acts for an owner lists the owner's alerts and reads single alerts, with `X-Owner-Id` in every request. The container host and other services ask `healthz`. The connection has no state: any part may be called at any time, and every request may be repeated.
+
 ## Rules
 
 - Every request to `/v1/alerts` carries `X-Owner-Id`. Without it `alerts` answers `400` with `invalid_request`.

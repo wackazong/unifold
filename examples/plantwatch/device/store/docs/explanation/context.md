@@ -12,7 +12,7 @@ Says: one part owns all hardware access. The other parts are hardware-independen
 Here: `store` reaches memory only through `flash` and is tested with a substitute that can cut power at any word.
 
 ### [device/0003 Sequence numbers are derived from the tick count](../../../docs/decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md)
-<!-- unifold:cites sha=f6e3de04 -->
+<!-- unifold:cites sha=1ea9ccca -->
 
 Says: sequence numbers rise strictly but jump at every start of the board.
 
@@ -49,7 +49,7 @@ Says: a reading is never changed after it has been taken. A place may delete a r
 Here: a slot is written once. A reading leaves the log only through a mark from outside, or through overflow.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: a sensor stick keeps at least 2 880 readings, 30 days at the default sampling interval. When it is full, the oldest undelivered reading is overwritten.
 

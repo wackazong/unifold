@@ -39,5 +39,4 @@ Limits: at the default ATT MTU, `link` sends one reading per notification. To a 
 
 1. [radio](../docs/references/radio.md): what `link` expects of the radio
 2. [docs/explanation/context.md](docs/explanation/context.md): what `link` inherits from above
-3. [Context diagram](docs/diagrams/context.md)
-4. [Decisions](docs/decisions/index.md)
+3. [Decisions](docs/decisions/index.md)

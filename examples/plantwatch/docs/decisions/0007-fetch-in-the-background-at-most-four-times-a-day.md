@@ -26,3 +26,7 @@ Chosen option: "at most 4 background fetches a day, and on opening the app", bec
 - Good: a reading is never more than about 6 hours old on the server while the phone is in range, and fresh whenever the owner looks.
 - Bad: an alert can be up to 6 hours late even when the phone is near.
 - To do when this is accepted: [mobile](../../mobile/README.md) changes what it expects of `sensor-link` and when it fetches in the background; [emulator](../../emulator/README.md) and [device](../../device/README.md) need no change. Until then the documents of the app still say "as often as once per sampling interval".
+
+## More Information
+
+[Product parameters](../references/product-parameters.md) states the result.

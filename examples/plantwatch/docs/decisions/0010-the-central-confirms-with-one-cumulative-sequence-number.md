@@ -60,3 +60,5 @@ Chosen option: "confirm explicitly with one number", because it separates readin
 
 The procedure is defined in
 [confirm.md](../references/ble-profile/confirm.md).
+
+[BLE profile of the sensor stick](../references/ble-profile/index.md) states the result.

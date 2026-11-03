@@ -1,6 +1,6 @@
 # Fetch session
 
-The course of one fetch from one sensor stick: its states, sizes and timeouts, what starts it, and how the client fills in what the BLE profile leaves open. The reasons are in the [decisions](../decisions/index.md), the terms in the [glossary](glossary.md). The procedures on the radio are those of the BLE profile; this file names them without repeating them.
+The course of one fetch from one sensor stick: its states, sizes and timeouts, what starts it, and how the client fills in what the BLE profile leaves open. The terms are in the [glossary](glossary.md). The procedures on the radio are those of the BLE profile; this file names them without repeating them.
 
 ## States
 

@@ -11,20 +11,16 @@ not:
   - starting or deploying what it tests; device and API exist before a run
 capabilities:
   test-report:
-    kind: file
     summary: JUnit XML report of an end-to-end test run
     contract: ../docs/references/test-report.md
 needs:
   device-under-test:
-    kind: protocol
     summary: Something that speaks the sensor stick's BLE protocol, real or simulated
     contract: ../docs/references/ble-profile/index.md
   scenario-control:
-    kind: http
     summary: Lets a test set sensor values and advance time; exists only with a simulated device
     contract: ../docs/references/scenario-control/index.md
     optional: true
   cloud-api:
-    kind: http
     summary: The public API, to check that readings arrive and alerts are raised
     contract: ../docs/references/public-api/index.md

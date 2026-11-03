@@ -30,3 +30,7 @@ Each service connects with a role that has rights on its own schema only. A serv
 - Bad: no joins across services. An answer that combines data of two services is assembled by the caller.
 - Bad: no transaction spans two services. Consistency between them is eventual.
 - Bad: all services still share the load and the availability of one server.
+
+## More Information
+
+The contract [`sql-db`](../references/sql-db.md) states the result.

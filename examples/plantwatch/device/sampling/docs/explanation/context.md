@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From device
 
 ### [device/0003 Sequence numbers are derived from the tick count](../../../docs/decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md)
-<!-- unifold:cites sha=f6e3de04 -->
+<!-- unifold:cites sha=1ea9ccca -->
 
 Says: the sequence number of a reading is the boot counter times 262 144 plus the count of readings since that start, beginning with 1. Nothing is stored for it.
 
@@ -49,7 +49,7 @@ Says: a sensor stick numbers its readings in strictly increasing order and never
 Here: the guarantees "sequence numbers rise strictly" and "a reading does not change" of `readings`.
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: a reading carries a boot counter and the seconds since that boot instead of a time.
 
@@ -70,7 +70,7 @@ Says: a reading is one set of measurements taken at the same moment by one senso
 Here: the three quantities of one reading come from one request for raw values.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: the sampling interval is 15 minutes by default and adjustable from 5 to 60 minutes.
 

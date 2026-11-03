@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Context diagram: device
 
 [plantwatch](../../../docs/diagrams/component.md) / **device** · [README](../../README.md) · [component](component.md)
@@ -30,18 +30,18 @@ flowchart LR
 |---|---|---|---|---|
 | [device](../../README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](component.md) |
 | [mobile](../../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../../mobile/docs/diagrams/component.md) |
-| [test-rig](../../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** | [context](../../../test-rig/docs/diagrams/context.md) |
+| [test-rig](../../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** |  |
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability |
-|---|---|---|---|---|
-| soil-probe | hardware | [contract](../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root | |
-| ambient-sensor | hardware | [contract](../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root | |
+| Need | Contract | Provided by | Capability |
+|---|---|---|---|
+| soil-probe | [contract](../../../docs/references/soil-probe.md) | outside the project, as need `soil-probe` of the root | |
+| ambient-sensor | [contract](../../../docs/references/ambient-sensor.md) | outside the project, as need `ambient-sensor` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Used by | As need |
-|---|---|---|---|---|
-| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [mobile/ble-client](../../../mobile/ble-client/README.md) (planned) (real) | sensor-link |
-| ble-link | protocol | [contract](../../../docs/references/ble-profile/index.md) | [test-rig](../../../test-rig/README.md) (planned) (real) | device-under-test |
+| Capability | Contract | Used by | As need |
+|---|---|---|---|
+| ble-link | [contract](../../../docs/references/ble-profile/index.md) | [mobile/ble-client](../../../mobile/ble-client/README.md) (planned) (real) | sensor-link |
+| ble-link | [contract](../../../docs/references/ble-profile/index.md) | [test-rig](../../../test-rig/README.md) (planned) (real) | device-under-test |

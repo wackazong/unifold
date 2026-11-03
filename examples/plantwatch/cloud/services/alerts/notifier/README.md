@@ -26,4 +26,4 @@ A repeat that reaches a phone after the owner has dismissed the first notificati
 
 1. [notification](../docs/references/notification.md): the function, the outcomes, the request to the push service, the texts
 2. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-3. [Context diagram](docs/diagrams/context.md), [decisions](docs/decisions/index.md)
+3. [Decisions](docs/decisions/index.md)

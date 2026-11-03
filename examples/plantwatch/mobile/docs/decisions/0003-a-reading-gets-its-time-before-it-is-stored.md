@@ -31,3 +31,7 @@ A time that cannot be computed is estimated and flagged. The flag stays with the
 - Bad: an estimate is never improved, even if a later fetch would allow a better one.
 - Bad: a wrong phone clock at the moment of the fetch gives wrong times that stay wrong.
 - Bad: the same reading, fetched twice after an interruption, can get two times that differ by a second or two. The store keeps the first.
+
+## More Information
+
+The contract [`plant-data`](../references/plant-data/index.md) states the result.

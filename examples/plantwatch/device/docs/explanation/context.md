@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From plantwatch
 
 ### [plantwatch/0008 Define the BLE profile and the reading format as references of plantwatch](../../../docs/decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md)
-<!-- unifold:cites sha=503438ac -->
+<!-- unifold:cites sha=97ecb8cf -->
 
 Says: the BLE profile and the reading schema are references of plantwatch. Every connection that carries the profile names it as its contract; a reading travels inside the profile and the public API, and whoever reads or writes readings cites the schema. Both keep a version; a change within a major version keeps older counterparts working.
 
@@ -26,21 +26,21 @@ Says: a sensor stick numbers readings in strictly increasing order and never reu
 Here: the [invariants](invariants.md) state the rules on identity and release. Numbers must survive power loss, which leads to [0003](../decisions/0003-sequence-numbers-are-derived-from-the-tick-count.md).
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: a reading carries a boot counter and the seconds since that boot. The sensor stick never holds a wall-clock time.
 
 Here: the firmware has no clock setting and no date. The boot counter rises at every start and never repeats.
 
 ### [plantwatch: product parameters, sampling interval and battery life](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: the sampling interval is 15 minutes by default, adjustable from 5 to 60 minutes. A sensor stick runs at least 12 months on one CR2032 cell.
 
 Here: 900 s by default, a build setting between 300 s and 3600 s. The [energy budget](../references/energy-budget.md) keeps the average current at 19.4 µA.
 
 ### [plantwatch: product parameters, readings kept](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: a sensor stick keeps at least 2 880 readings, 30 days at the default interval, and overwrites the oldest undelivered one when it is full. Radio protocol version 1.
 

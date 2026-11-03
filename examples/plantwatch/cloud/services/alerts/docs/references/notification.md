@@ -1,7 +1,11 @@
 # notification
 
 Contract of `notifier.notification`: the function `notify`, what it sends to whoever provides `push`, and the texts. What a notification is for a client of the product is cited in [context](../explanation/context.md). Notation: wit.
-Sources: the push service contract of plantwatch; decision `notifier`/0001.
+Sources: the push service contract of plantwatch.
+
+## Use
+
+The caller calls `notify` for an opened alert and reads the outcome. Two calls with the same alert produce equal requests, so the caller may call again after `retry`. The connection has no state: `notify` may be called at any time.
 
 ## Parts
 

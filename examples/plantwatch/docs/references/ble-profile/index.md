@@ -1,9 +1,39 @@
 # BLE profile of the sensor stick
 
 Contract of the radio link: `device.ble-link` and `emulator.ble-link` serve it, `mobile.sensor-link` and `test-rig.device-under-test` use it. It defines how a sensor stick serves its readings to a central over Bluetooth Low Energy: what it advertises, which GATT attributes it has, and which procedures a central runs. Both sides of the radio link are built from this text. Version 1.0. Notation: byte layouts in tables and bytes in hexadecimal; the steps of a procedure as text.
-Sources: Bluetooth Core Specification 4.2; decisions [0005](../../decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md), [0008](../../decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md), [0009](../../decisions/0009-the-record-has-a-fixed-layout-with-a-length-and-a-presence-mask.md) and [0010](../../decisions/0010-the-central-confirms-with-one-cumulative-sequence-number.md) of plantwatch.
+Sources: Bluetooth Core Specification 4.2.
 
 A reading travels over the radio link as a record. The record is the binary form of the [reading schema](../reading-schema.md) and is part of this profile. The terms are defined in the [glossary](../glossary.md).
+
+## Use
+
+A central finds a sensor stick by its advertising, opens a session and reads Info and Status. To get the stored readings, it writes `fetch` and stores the records so that they survive its own failure. Then it writes `confirm` up to `last` of the fetch result, and while `more` is 1, it fetches again. It disconnects as soon as it has what it came for.
+
+A sensor stick has one connection at a time, and it advertises only while no central is connected to it. A central learns that its connection has ended from `disconnected`. Every request on Transfer control gets one result, and while a fetch runs, the sensor stick accepts only `abort` there.
+
+1. `advertising`, then `open-session`, then `info` and `status`.
+2. `fetch`, then the central stores the records, then `confirm` up to `last` of the fetch result. While `more` is 1, `fetch` again. Then the central disconnects, and the sensor stick raises `disconnected` and advertises again.
+3. To end a fetch early, the central writes `abort`. The fetch result arrives before the result of `abort`, and the central confirms what it has received.
+4. When the connection is lost after the central has stored the records and before it has confirmed them, the central confirms them in the next connection without fetching again.
+5. When `open-session` fails with `Pairing Not Supported`, the connection stays unencrypted. Info and Status are readable on it, and `fetch` is refused with ATT error `0x05`.
+
+## States
+
+Start: disconnected.
+
+| State | Part | Result | Next |
+|---|---|---|---|
+| disconnected | `advertising` | | disconnected |
+| disconnected | `open-session` | ok | connected |
+| disconnected | `open-session` | `Pairing Not Supported` | connected |
+| connected | `info` | | connected |
+| connected | `status` | | connected |
+| connected | `time-reference` | | connected |
+| connected | `live-reading` | | connected |
+| connected | `fetch` | | connected |
+| connected | `confirm` | | connected |
+| connected | `abort` | | connected |
+| connected | `disconnected` | | disconnected |
 
 ## Parts
 
@@ -18,6 +48,7 @@ A reading travels over the radio link as a record. The record is the binary form
 | [fetch](fetch.md) | stored readings as records on Transfer data |
 | [confirm](confirm.md) | the cumulative mark that releases readings |
 | [abort](abort.md) | ends a running fetch |
+| [disconnected](disconnected.md) | the end of a connection, by either side or by the radio link |
 | [transfer-result](transfer-result.md) | the result of a request on Transfer control, its codes and the ATT errors |
 
 ## Roles
@@ -96,4 +127,4 @@ A sensor stick conforms to version 1.0 when it advertises as described, has the 
 
 ## Fake
 
-A simulated sensor stick in memory that a test loads with readings: it answers Info and Status, serves `fetch`, `confirm` and `abort` by the rules of the parts, and notifies live readings when the test adds one. Faults it can inject: a lost connection after any number of records, a `storage-failure`, a restart with a new boot counter, an overflow, a closed bonding window.
+A simulated sensor stick in memory that a test loads with readings: it answers Info and Status, serves `fetch`, `confirm` and `abort` by the rules of the parts, and notifies live readings when the test adds one. Faults it can inject: a lost connection after any number of records, raised as `disconnected`, a `storage-failure`, a restart with a new boot counter, an overflow, a closed bonding window.

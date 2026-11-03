@@ -25,3 +25,7 @@ Chosen option: "the server side judges", because alerts must also open when nobo
 - Good: the rules of judgement can change without an app release.
 - Bad: a freshly fetched reading shows in the app without a verdict until the phone has had a network connection.
 - Bad: the thresholds an owner edits offline take effect only after they have reached the server.
+
+## More Information
+
+[Public API](../references/public-api/index.md) states the result.

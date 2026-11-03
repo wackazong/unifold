@@ -12,7 +12,7 @@ Says: accepted readings are announced as events. State that changes rarely, such
 Here: `alerts` subscribes to readings and asks for thresholds when it judges one. It keeps no copy of thresholds beyond 60 seconds.
 
 ### [cloud/0002 Each service owns its data and nobody else reads it](../../../../docs/decisions/0002-each-service-owns-its-data.md)
-<!-- unifold:cites sha=00e4a092 -->
+<!-- unifold:cites sha=9d4324cd -->
 
 Says: one schema per service and no shared tables.
 
@@ -26,14 +26,14 @@ Says: events arrive at least once, and a consumer's result must not change with 
 Here: a reading is judged once. The notification is the outside effect; see [0002](../decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md).
 
 ### [cloud: events between services](../../../../docs/references/events.md)
-<!-- unifold:cites sha=0f4bf135 -->
+<!-- unifold:cites sha=d89e0abc -->
 
 Says: events with the same `key` arrive in order. A subscription is named after its service. An event that fails for a passing reason stays unconfirmed.
 
 Here: the subscription is named `alerts`. An event stays unconfirmed while plant and thresholds cannot be had.
 
 ### [cloud: calls between services](../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=f87b1f71 -->
+<!-- unifold:cites sha=1dcb0c4d -->
 
 Says: a public operation keeps its path and requires `X-Owner-Id`. A caller waits at most 5 seconds and repeats a failed call at most twice.
 
@@ -52,7 +52,7 @@ Says, as the contract that this unit implements:
 Here: the contract of `alerts-api` and the behaviour that this unit implements.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=c375b9de -->
+<!-- unifold:cites sha=ce89a259 -->
 
 Says: an alert and its notification follow the upload response within 1 minute. A changed threshold applies to readings evaluated more than 60 seconds later.
 
@@ -68,7 +68,7 @@ Here: `alerts` uses these terms, and "registry" and "margin", as defined there. 
 ## From plantwatch
 
 ### [plantwatch/0006 The server side alone decides whether a plant needs attention](../../../../../docs/decisions/0006-the-server-side-alone-decides-what-needs-attention.md)
-<!-- unifold:cites sha=1298b1e1 -->
+<!-- unifold:cites sha=d370602b -->
 
 Says: the server side judges every reading. Every other part shows or carries what it decided.
 

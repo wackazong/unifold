@@ -1,7 +1,11 @@
 # thresholds
 
 Contract of `plant-lookup.thresholds`: the function `lookup`, how `plant-lookup` turns the answers of whoever provides `plants-api` into its three answers, and how long it keeps them. The rules for calls that it follows are cited in [context](../explanation/context.md). Notation: wit.
-Sources: the lookup by sensor id of `plants-api`; decision `plant-lookup`/0001.
+Sources: the lookup by sensor id of `plants-api`.
+
+## Use
+
+The caller asks `lookup` for the plant of a sensor stick and gets one of three answers. A call has no effect that the caller can observe, so the connection has no state. `lookup` may be called at any time, also twice at the same moment for one sensor id.
 
 ## Parts
 

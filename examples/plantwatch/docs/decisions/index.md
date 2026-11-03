@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Decisions of plantwatch
 
 [README.md](../../README.md) · [AGENTS.md](../../AGENTS.md)
@@ -17,3 +17,4 @@ Accepted and derived decisions bind.
 | 0008 | [Define the BLE profile and the reading format as references of plantwatch](0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md) | accepted | 2026-10-22 |
 | 0009 | [The record has a fixed layout with a length and a presence mask](0009-the-record-has-a-fixed-layout-with-a-length-and-a-presence-mask.md) | accepted | 2026-10-22 |
 | 0010 | [The central confirms with one cumulative sequence number](0010-the-central-confirms-with-one-cumulative-sequence-number.md) | accepted | 2026-10-22 |
+| 0011 | [Name the end of a connection as an event of the profile](0011-name-the-end-of-a-connection-as-an-event-of-the-profile.md) | **proposed: not accepted, does not bind** | 2026-11-03 |

@@ -43,3 +43,7 @@ The collapse identifier is the alert id. Everything else in the request is deriv
 
 - Good: the caller is free of the bookkeeping.
 - Bad: writing the log and sending are again two steps that can be torn apart. The log moves the problem and adds a store.
+
+## More Information
+
+The contract [`notification`](../../../docs/references/notification.md) states the result.

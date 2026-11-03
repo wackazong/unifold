@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From plantwatch
 
 ### [plantwatch/0008 Define the BLE profile and the reading format as references of plantwatch](../../../docs/decisions/0008-define-the-profile-and-the-reading-format-as-references-of-plantwatch.md)
-<!-- unifold:cites sha=503438ac -->
+<!-- unifold:cites sha=97ecb8cf -->
 
 Says: the BLE profile and the reading schema are references of plantwatch. Every connection that carries the profile names it as its contract; a reading travels inside the profile and the public API, and whoever reads or writes readings cites the schema. Both keep a version; a change within a major version keeps older counterparts working.
 
@@ -19,14 +19,14 @@ Says: a reading has a sensor id, a sequence number, a tick count, a time with a 
 Here: the rig builds the readings it uploads in the JSON form and compares the readings it fetched with what the API returns.
 
 ### [plantwatch: test report](../../../docs/references/test-report.md)
-<!-- unifold:cites sha=35556185 -->
+<!-- unifold:cites sha=01c63bcf -->
 
 Says: the project provides the result of the automated end-to-end tests as a JUnit XML file. A run goes against a real or a simulated sensor stick.
 
 Here: the rig's capability `test-report` is this result.
 
 ### [plantwatch: app UI](../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=b379dec2 -->
+<!-- unifold:cites sha=1955dc7d -->
 
 Says: per plant the app shows the latest reading and 90 days of history, plants with an open alert first with the reason; it works offline; a tap on a notification opens the plant it is about.
 
@@ -54,7 +54,7 @@ Says: sensor id and sequence number identify a reading; it never changes. Every 
 Here: the tests that fetch twice and upload twice, and the comparison of a fetched reading with the history by this pair.
 
 ### [plantwatch/0005 The sensor stick counts ticks and the phone assigns UTC time](../../../docs/decisions/0005-the-sensor-counts-ticks-and-the-phone-assigns-time.md)
-<!-- unifold:cites sha=ad1b9b71 -->
+<!-- unifold:cites sha=5b372005 -->
 
 Says: a reading carries a boot counter and seconds since that boot; the central converts to UTC. A time it cannot compute is estimated and marked.
 
@@ -75,7 +75,7 @@ Says: a transfer may deliver an item more than once; the receiver accepts it and
 Here: the promises of the groups `link` and `relay`.
 
 ### [plantwatch: product parameters](../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: sampling interval 5 to 60 minutes, default 15; a sensor stick keeps at least 2 880 readings; upload to notification under 1 minute; protocol version 1.
 

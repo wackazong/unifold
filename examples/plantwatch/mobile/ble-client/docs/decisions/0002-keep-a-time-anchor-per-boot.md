@@ -37,3 +37,5 @@ A reading of a boot without an anchor gets the latest time it can have and is fl
 ## More Information
 
 The sensor stick's tick counter drifts against the phone's clock. Over the 30 days a sensor stick keeps readings, a drift of 50 parts per million adds up to about two minutes. The client does not correct it.
+
+The contract [`sensor-readings`](../../../docs/references/sensor-readings.md) states the result.

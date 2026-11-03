@@ -19,5 +19,4 @@ The interface is four libraries and not one, so that a caller states only what i
 1. The contracts of the four capabilities: [sensor-io](../docs/references/sensor-io.md), [radio](../docs/references/radio.md), [flash](../docs/references/flash.md), [timer](../docs/references/timer.md)
 2. [docs/references/board.md](docs/references/board.md): pins, peripherals, memory map
 3. [docs/explanation/context.md](docs/explanation/context.md): what `hal` inherits from above
-4. [Context diagram](docs/diagrams/context.md)
-5. [Decisions](docs/decisions/index.md)
+4. [Decisions](docs/decisions/index.md)

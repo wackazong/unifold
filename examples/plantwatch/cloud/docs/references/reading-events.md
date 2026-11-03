@@ -3,6 +3,10 @@
 Contract of `ingest.reading-events`: the stream on which `ingest` announces accepted readings. The envelope and the naming rules of events are defined by `cloud` ([events](events.md)) and cited in [context](../explanation/context.md). Units, ranges and resolutions are those of the project conventions. Notation: JSON, one object per event.
 Sources: the reading schema of plantwatch, the public API of plantwatch, the event conventions of `cloud`.
 
+## Use
+
+A service subscribes to the topic on the event bus and receives one `reading-accepted` for every reading that `ingest` accepts. The stream has no state of its own: the event bus keeps the position of each subscription. A subscriber handles the events of one key in order and expects repeats, gaps and old readings after new ones, as the part says.
+
 ## Topic
 
 | Item | Value |

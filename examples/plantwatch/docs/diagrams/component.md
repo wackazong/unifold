@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: plantwatch
 
 **plantwatch** · [README](../../README.md) · [architecture](architecture.md)
@@ -45,9 +45,9 @@ flowchart LR
 |---|---|---|---|---|
 | [cloud](../../cloud/README.md) | system | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](../../cloud/docs/diagrams/component.md) |
 | [device](../../device/README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../device/docs/diagrams/component.md) |
-| [emulator](../../emulator/README.md) | tool | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | **planned** | [context](../../emulator/docs/diagrams/context.md) |
+| [emulator](../../emulator/README.md) | tool | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | **planned** |  |
 | [mobile](../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../mobile/docs/diagrams/component.md) |
-| [test-rig](../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** | [context](../../test-rig/docs/diagrams/context.md) |
+| [test-rig](../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** |  |
 
 ### Connections
 

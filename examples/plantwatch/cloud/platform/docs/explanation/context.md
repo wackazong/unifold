@@ -12,7 +12,7 @@ Says: each accepted reading is announced as an event on a durable bus. Subscribe
 Here: `event-bus` stores a message before it acknowledges it and keeps messages for subscribers that are not connected.
 
 ### [cloud/0002 Each service owns its data and nobody else reads it](../../../docs/decisions/0002-each-service-owns-its-data.md)
-<!-- unifold:cites sha=00e4a092 -->
+<!-- unifold:cites sha=9d4324cd -->
 
 Says: one schema per service on one database server, enforced by database roles.
 
@@ -26,14 +26,14 @@ Says: delivery is at least once. A consumer produces the same result when an eve
 Here: `event-bus` may deliver a message more than once. It never loses one and never reorders the messages of a key.
 
 ### [cloud: events between services](../../../docs/references/events.md)
-<!-- unifold:cites sha=0f4bf135 -->
+<!-- unifold:cites sha=d89e0abc -->
 
 Says: a topic is named `<service>.<stream>.v<major>`, a subscription `<service>`. Events of one key arrive in order. An event is at most 16 kB.
 
 Here: topic and subscription names follow this form. The bus orders by message key. Its limit for a message, 64 kB, lies above 16 kB.
 
 ### [cloud: calls between services](../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=f87b1f71 -->
+<!-- unifold:cites sha=1dcb0c4d -->
 
 Says: a service is reachable only from the private network and therefore trusts its callers.
 
@@ -49,7 +49,7 @@ Says: outside the sensor stick, every time is UTC.
 Here: the database server runs in UTC.
 
 ### [plantwatch: product parameters](../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: upload to notification takes under 1 minute. The server keeps 2 years of history per plant. A sensor stick takes a reading every 5 to 60 minutes.
 

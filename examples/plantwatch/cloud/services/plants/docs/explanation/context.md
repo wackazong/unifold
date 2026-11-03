@@ -12,7 +12,7 @@ Says: accepted readings are announced as events on a durable bus. State that cha
 Here: `plants` builds history as a subscriber. It serves thresholds by call and announces no changes of plants.
 
 ### [cloud/0002 Each service owns its data and nobody else reads it](../../../../docs/decisions/0002-each-service-owns-its-data.md)
-<!-- unifold:cites sha=00e4a092 -->
+<!-- unifold:cites sha=9d4324cd -->
 
 Says: one schema per service. What another service needs, it gets through a capability.
 
@@ -26,14 +26,14 @@ Says: events arrive at least once. A consumer's result is the same when an event
 Here: the key of a stored reading is sensor id and sequence number. Aggregates are recomputed, never added to.
 
 ### [cloud: events between services](../../../../docs/references/events.md)
-<!-- unifold:cites sha=0f4bf135 -->
+<!-- unifold:cites sha=d89e0abc -->
 
 Says: a subscription is named after its service. A consumer confirms an event it can never handle and leaves one unconfirmed that fails for a passing reason.
 
 Here: the subscription is named `plants`. Events of an unknown type are confirmed and counted.
 
 ### [cloud: calls between services](../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=f87b1f71 -->
+<!-- unifold:cites sha=1dcb0c4d -->
 
 Says: a public operation keeps its path and requires `X-Owner-Id`; an internal one lies below `/internal/v1/` without owner. Services answer `GET /healthz`.
 
@@ -71,7 +71,7 @@ Says: `GET /v1/plants/{plant_id}/history` returns items in ascending order of ti
 Here: what `plants` stores and how long; [data model](../references/data-model.md) says how.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=c375b9de -->
+<!-- unifold:cites sha=ce89a259 -->
 
 Says, as part of the same contract: a change to a plant is visible to the next request. An owner has at most 50 plants; a page has at most 1 000 items.
 
@@ -94,7 +94,7 @@ Says: soil moisture 0 to 100 percent in steps of 0.1, light 0 to 100 000 lux in 
 Here: the ranges allowed for thresholds, the rounding of `mean`, and the rule that an aggregate omits a quantity without values.
 
 ### [plantwatch: product parameters](../../../../../docs/references/product-parameters.md)
-<!-- unifold:cites sha=274dcc48 -->
+<!-- unifold:cites sha=ed0d4c87 -->
 
 Says: the server keeps 2 years of history per plant. A sensor stick takes a reading every 5 to 60 minutes.
 

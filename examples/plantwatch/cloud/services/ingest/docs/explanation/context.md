@@ -32,7 +32,7 @@ Says, as the contract that this unit implements:
 Here: the contract of `ingest-api`. `ingest` serves this operation exactly as defined; [ingest API](../../../../docs/references/ingest-api.md) adds the order of the checks and the failures.
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
-<!-- unifold:cites sha=c375b9de -->
+<!-- unifold:cites sha=ce89a259 -->
 
 Says: a batch has at most 500 readings, a request body at most 1 MB.
 
@@ -46,14 +46,14 @@ Says: errors are `{"code", "message"}`: `invalid_request` (400), `payload_too_la
 Here: the errors of `ingest-api`.
 
 ### [cloud: events between services](../../../../docs/references/events.md)
-<!-- unifold:cites sha=0f4bf135 -->
+<!-- unifold:cites sha=d89e0abc -->
 
 Says, as the definition that this unit implements: an event is a JSON object with `id`, `type`, `source`, `time`, `key` and `data`, at most 16 kB long. A topic is named `<service>.<stream>.v<major>`. A publisher answers a request only after the bus has stored the event. The contract of a stream states key, order and delivery.
 
 Here: the envelope of `reading.accepted`, the names of the two topics of `ingest`, and the reason why an upload is answered last.
 
 ### [cloud: calls between services](../../../../docs/references/service-calls.md)
-<!-- unifold:cites sha=f87b1f71 -->
+<!-- unifold:cites sha=1dcb0c4d -->
 
 Says: a service that serves a public operation requires `X-Owner-Id` and verifies no token. It answers `GET /healthz`. A caller waits 5 seconds.
 

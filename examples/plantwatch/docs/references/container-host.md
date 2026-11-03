@@ -3,6 +3,10 @@
 Contract of the need `container-host` of plantwatch: what runs the containers of the server side. Nothing in plantwatch implements it. The clock of every container stays within 10 seconds of UTC. Notation: the requests to the host as text.
 Sources: the deployment of `cloud`; no product is named.
 
+## Use
+
+The server side asks the host for its volumes, runs each container with its name and its volumes, and publishes at most one port. Apart from that one port, the host has no state that limits the calls: `run` and `volume` may be called at any time.
+
 ## Parts
 
 ### run

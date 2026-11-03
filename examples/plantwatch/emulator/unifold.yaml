@@ -11,10 +11,8 @@ not:
   - deciding whether a plant needs attention; the program produces readings and knows no thresholds
 capabilities:
   ble-link:
-    kind: protocol
     summary: Serves live and stored readings to a nearby central over BLE, like a sensor stick
     contract: ../docs/references/ble-profile/index.md
   scenario-control:
-    kind: http
     summary: Loads a scenario of sensor values and moves simulated time forward
     contract: ../docs/references/scenario-control/index.md

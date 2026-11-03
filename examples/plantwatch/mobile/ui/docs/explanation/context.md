@@ -5,7 +5,7 @@ What this unit inherits from the units above. This is the only file of the unit 
 ## From mobile
 
 ### [mobile/0001 The local store is the only source for the screens](../../../docs/decisions/0001-the-local-store-is-the-only-source-for-the-screens.md)
-<!-- unifold:cites sha=3670810d -->
+<!-- unifold:cites sha=fa27f791 -->
 
 Says: screens read only from a store on the phone and write the owner's changes to it. A notification names a plant; it is not a source of data.
 
@@ -19,7 +19,7 @@ Says: the app is written once, in Flutter. Code per platform is allowed in the r
 Here: the screens exist once. ui holds no code that is specific to iOS or Android.
 
 ### [plantwatch: what the owner can rely on](../../../../docs/references/app-ui.md)
-<!-- unifold:cites sha=b379dec2 -->
+<!-- unifold:cites sha=1955dc7d -->
 
 Says, as far as the screens deliver it:
 
@@ -34,7 +34,7 @@ Says, as far as the screens deliver it:
 Here: the screens in [screens](../references/screens.md) deliver these promises. A new screen starts with a promise there.
 
 ### [mobile: data model](../../../docs/references/data-model.md)
-<!-- unifold:cites sha=c006a7d8 -->
+<!-- unifold:cites sha=b00f48e2 -->
 
 Says, as far as the screens show it:
 

@@ -1,7 +1,11 @@
 # scenario-control
 
 Contract of `emulator.scenario-control`: the HTTP API with which a client drives the simulated sensor stick. The scenario document itself is defined in the [scenario format](../scenario-format.md). Notation: HTTP with JSON bodies, member names lower-case with underscores.
-Sources: the scenario format of plantwatch, the BLE profile of plantwatch, decision `emulator`/0002.
+Sources: the scenario format and the BLE profile of plantwatch.
+
+## Use
+
+A client loads a scenario with `put-scenario`, which resets the simulated sensor stick. Then it moves simulated time forward with `put-time`, sets radio range and transfer faults with `put-link`, and reads the state and the readings. Every request states a target state, so it may be repeated. The only order the API enforces is that simulated time never goes back: a `put-time` below the current time fails.
 
 ## General
 
