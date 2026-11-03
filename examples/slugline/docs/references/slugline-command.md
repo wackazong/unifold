@@ -3,6 +3,10 @@
 Contract of `cli.slugline-command`: the command `slugline`. Notation: usage text.
 Sources: the tests of `cli`
 
+## Use
+
+A person or a script runs `slugline` with words as arguments, or with lines on standard input, and reads one slug per line from standard output. Every run stands alone.
+
 ## Parts
 
 ### slugline

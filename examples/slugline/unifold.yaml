@@ -1,5 +1,5 @@
-# yaml-language-server: $schema=https://unifold.md/0.3/unifold.schema.json
-unifold: "0.3"
+# yaml-language-server: $schema=https://unifold.md/0.4/unifold.schema.json
+unifold: "0.4"
 name: slugline
 responsibility: Turns text into URL slugs, as a Rust library and as a command
 not:
@@ -8,15 +8,12 @@ not:
   - a configuration file or locale for the command
 capabilities:
   slugify:
-    kind: library
     summary: Turn a string into a slug
     contract: docs/references/slugify.md
   plugin-api:
-    kind: library
     summary: The trait through which a caller supplies transliteration
     contract: docs/references/plugin-api.md
   slugline-command:
-    kind: cli
     summary: Slugs from arguments or from the lines of standard input
     contract: docs/references/slugline-command.md
 wiring:
@@ -31,15 +28,15 @@ scenarios:
     summary: The command turns its arguments into one slug with the plug-in
     source: the README of the command
     hops:
-      - slugline-command -> cli.slugline
-      - cli -> core.slugify-with
-      - cli -> plugins/unicode.transliterate
-      - plugins/unicode -> core.transliterate
+      - slugline-command -> cli.slugline(Crème brûlée): creme-brulee, exit 0
+      - cli -> core.slugify-with("Crème brûlée", default, unicode): creme-brulee
+      - cli -> plugins/unicode.transliterate('è'): e
+      - plugins/unicode -> core.transliterate: ok
     expect: "`slugline Crème brûlée` prints `creme-brulee` and exits with 0"
   library-call:
     summary: A program calls the library with a plug-in of its own
     source: the tests of core
     hops:
-      - slugify -> core.slugify-with
-      - plugin-api -> core.transliterate
+      - slugify -> core.slugify-with("Straße", default, plugin): strasse
+      - plugin-api -> core.transliterate('ß'): ss
     expect: "`slugify_with(\"Straße\", &Options::default(), &plugin)` returns `strasse` when the plug-in answers `ss` for `ß`"

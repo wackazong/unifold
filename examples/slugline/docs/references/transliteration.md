@@ -3,6 +3,10 @@
 Contract of `unicode.transliteration`: a plug-in that replaces Latin letters with diacritics, and ligatures, by ASCII letters. It implements the trait of [plugin-api](plugin-api.md). Notation: wit.
 Sources: the Unicode blocks Latin-1 Supplement and Latin Extended-A
 
+## Use
+
+A consumer asks the plug-in about one character at a time. The plug-in has no state: `transliterate` may be called at any time, also at the same time.
+
 ## Parts
 
 ### transliterate

@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # AGENTS.md: slugline
 
 unifold unit; run `unifold show` here. Read [README.md](README.md) first: it says what the unit is for and why it is built this way. Everything else is in `docs/`.
@@ -10,7 +10,7 @@ unifold unit; run `unifold show` here. Read [README.md](README.md) first: it say
 | Learn | [break-the-map](docs/tutorials/break-the-map.md), [three-commands](docs/tutorials/three-commands.md) |
 | Look up | [plugin-api](docs/references/plugin-api.md), [slug](docs/references/slug.md), [slugify](docs/references/slugify.md), [slugline-command](docs/references/slugline-command.md), [transliteration](docs/references/transliteration.md) |
 
-<!-- unifold:begin - generated block; run `unifold generate` to refresh -->
+<!-- unifold:begin - generated block; run `unifold check --fix` to refresh -->
 ## unifold
 
 This repository has a [unifold](https://unifold.md) map. A folder with a `unifold.yaml` is a unit: the file says what the unit provides and needs, and the unit above connects needs to providers. Read the map before you change an interface; keep it true after.

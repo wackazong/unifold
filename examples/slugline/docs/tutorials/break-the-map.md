@@ -9,9 +9,9 @@ This lesson is for a developer who has done [three commands](three-commands.md).
    ```console
    $ unifold check
    error G1 docs/diagrams/component.md: generated file is out of date
-       fix: Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command.
+       fix: Run `unifold check --fix`. A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command.
    error G1 docs/diagrams/scenario-slug-from-arguments.md: generated file is out of date
-       fix: Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command.
+       fix: Run `unifold check --fix`. A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command.
    error W2 unifold.yaml:22: need 'cli.transliteration' has no provider
        fix: Add `cli.transliteration: unicode.transliteration` to the wiring.
    warn W3 unifold.yaml:22: 'unicode.transliteration' is provided but nothing uses it
@@ -32,7 +32,7 @@ This lesson is for a developer who has done [three commands](three-commands.md).
    ```console
    $ unifold check
    error G1 docs/diagrams/scenario-slug-from-arguments.md: generated file is out of date
-       fix: Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command.
+       fix: Run `unifold check --fix`. A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command.
    warn C1 docs/references/slug.md: no `## Parts` section; a contract lists its parts, one `###` heading each
        fix: Write the parts as [writing.md](writing.md#contracts) says.
    warn C5 docs/references/slug.md: no `## Fake` section: say what stands in for this contract in the tests of its consumers

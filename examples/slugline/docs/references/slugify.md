@@ -3,6 +3,10 @@
 Contract of `core.slugify`: a function that turns one string into one slug, with or without a plug-in. What a slug is, is in [slug.md](slug.md). Notation: wit.
 Sources: the tests of `core`
 
+## Use
+
+A program turns a string into a slug with `slugify`, or with `slugify-with` and a plug-in that replaces letters outside ASCII. Both parts are pure functions: they may be called at any time, also at the same time.
+
 ## Parts
 
 ### slugify

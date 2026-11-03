@@ -3,6 +3,10 @@
 Contract of `core.plugin-api`: the trait a transliteration plug-in implements. The call that uses a plug-in, `slugify-with`, is a part of [slugify](slugify.md). Notation: wit.
 Sources: the tests of `core`
 
+## Use
+
+A plug-in implements the trait once, and `slugify-with` asks it about each character outside ASCII. The trait has no state: an implementation answers every question alone, in any order.
+
 ## Parts
 
 ### transliterate

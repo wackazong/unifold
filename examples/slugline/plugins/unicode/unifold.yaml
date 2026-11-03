@@ -4,11 +4,9 @@ not:
   - the rules of a slug; it answers one character at a time
 capabilities:
   transliteration:
-    kind: library
     summary: Replaces Latin letters that have diacritics, and ligatures, by ASCII letters
     contract: ../../docs/references/transliteration.md
 needs:
   plugin-api:
-    kind: library
     summary: The trait a transliteration plug-in implements
     contract: ../../docs/references/plugin-api.md
