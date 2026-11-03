@@ -3,6 +3,10 @@
 Contract of `framing.framing`, cutting the byte stream of the line into frames. Notation: wit.
 Sources: proto §4.3
 
+## Use
+
+The consumer keeps the bytes that `feed` returns as `rest` and passes them back with the next bytes from the line. The connection has no state of its own: the buffer belongs to the consumer, and `feed` may be called at any time.
+
 ## Parts
 
 ### feed

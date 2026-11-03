@@ -3,6 +3,10 @@
 Contract of the need `clock` of `serial-line`: the current time, a service of the host platform. Notation: wit.
 Sources: none; the protocol says only how long a wait may take
 
+## Use
+
+A consumer reads the time whenever it needs it, to measure how long it has waited. The clock has no state: `now` may be called at any time.
+
 ## Parts
 
 ### now

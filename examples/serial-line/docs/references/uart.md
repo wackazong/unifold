@@ -3,6 +3,10 @@
 Contract of the need `uart` of `serial-line`: the serial port of the host computer, opened at 115200 baud, 8 data bits, no parity, one stop bit. Notation: wit.
 Sources: proto §3
 
+## Use
+
+The consumer writes bytes to the port and reads the bytes that arrived. The port is open for the whole run of the program, so the connection has no state of its own: `write` and `read` may be called at any time, by one caller at a time.
+
 ## Parts
 
 ### write

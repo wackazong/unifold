@@ -3,6 +3,10 @@
 Contract of `codec.frames`, the layout of a frame. Notation: wit.
 Sources: proto §4
 
+## Use
+
+A consumer encodes a payload into the bytes of a frame, and decodes the frame at the start of a byte sequence. The connection has no state: any part may be called at any time, also at the same time.
+
 ## Parts
 
 ### encode

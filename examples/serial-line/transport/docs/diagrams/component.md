@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: transport
 
 [serial-line](../../../docs/diagrams/component.md) / **transport** · [README](../../README.md) · [context](context.md)

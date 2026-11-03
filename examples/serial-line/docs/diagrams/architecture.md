@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Architecture diagram: serial-line
 
 **serial-line** · [README](../../README.md) · [component](component.md)

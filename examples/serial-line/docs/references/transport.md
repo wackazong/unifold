@@ -3,6 +3,10 @@
 Contract of `transport.transport`, moving one payload at a time over the line. Notation: wit.
 Sources: proto §3, §4
 
+## Use
+
+The consumer sends a payload as one frame, and receives the payload of the next frame with a deadline. The connection has no state: `send` and `receive` may be called at any time, by one caller at a time. Bytes that arrive after a frame wait for the next `receive`.
+
 ## Parts
 
 ### send

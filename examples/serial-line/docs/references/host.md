@@ -3,6 +3,28 @@
 Contract of `serial-line.host`, the calls a program makes to run a session. Notation: wit.
 Sources: proto §5
 
+## Use
+
+A host program opens a session, sends data while it is open, and closes it. One call at a time: the program waits for each call to return before it makes the next. A failed line closes the session.
+
+1. `open`, then `send` for each piece of data, then `close`.
+2. When `open` fails with `timeout`, the device has not answered and the session stays closed. The host calls `open` again.
+3. When `send` fails with `line-error`, the session is closed, and every further `send` fails with `not-open`. The host calls `open` before it sends again.
+
+## States
+
+Start: closed.
+
+| State | Part | Result | Next |
+|---|---|---|---|
+| closed | `open` | ok | open |
+| closed | `send` | `not-open` | closed |
+| closed | `close` | `not-open` | closed |
+| open | `open` | `already-open` | open |
+| open | `send` | ok | open |
+| open | `send` | `line-error` | closed |
+| open | `close` | | closed |
+
 ## Parts
 
 ### open

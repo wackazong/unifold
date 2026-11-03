@@ -36,6 +36,6 @@ scenarios:
     summary: Two frames arrive in one read
     source: proto §4.3
     hops:
-      - transport -> serial.receive
-      - serial -> framing.feed
+      - transport -> serial.receive(OPEN_TIMEOUT_MS): "[81]"
+      - serial -> framing.feed([], [1F, 01, 81, 9B, 1F, 00, 00]): frames [[81], []], rest [], dropped 0
     expect: receive returns the first payload; the second frame waits in the buffer for the next call

@@ -1,6 +1,3 @@
----
-name-pattern: "\\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\\b"
----
 # Constants
 
 Every fixed value the code needs, under the name the code uses. Everywhere else a value is named, never written out.
@@ -18,5 +15,5 @@ Every fixed value the code needs, under the name the code uses. Everywhere else 
 | `OP_CLOSE` | `0x02` | | proto §5.2 |
 | `OP_DATA` | `0x03` | | proto §5.3 |
 | `ACK_BIT` | `0x80` | | proto §2 |
-| `READ_POLL_MS` | 50 | ms | transport/0002 |
-| `MAX_BUFFER_BYTES` | 1024 | bytes | transport/framing/0001 |
+| `READ_POLL_MS` | 50 | ms | |
+| `MAX_BUFFER_BYTES` | 1024 | bytes | |

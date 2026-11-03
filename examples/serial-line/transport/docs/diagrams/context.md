@@ -1,4 +1,4 @@
-<!-- unifold:generated - do not edit; run `unifold generate` -->
+<!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Context diagram: transport
 
 [serial-line](../../../docs/diagrams/component.md) / **transport** · [README](../../README.md) · [component](component.md)
@@ -32,13 +32,13 @@ flowchart LR
 
 ### Who provides what this unit needs
 
-| Need | Kind | Contract | Provided by | Capability |
-|---|---|---|---|---|
-| frames |  | [contract](../../../docs/references/frames.md) | [codec](../../../codec/README.md) (planned) | frames |
-| uart |  | [contract](../../../docs/references/uart.md) | outside the project, as need `uart` of the root | |
+| Need | Contract | Provided by | Capability |
+|---|---|---|---|
+| frames | [contract](../../../docs/references/frames.md) | [codec](../../../codec/README.md) (planned) | frames |
+| uart | [contract](../../../docs/references/uart.md) | outside the project, as need `uart` of the root | |
 
 ### Who uses what this unit provides
 
-| Capability | Kind | Contract | Used by | As need |
-|---|---|---|---|---|
-| transport |  | [contract](../../../docs/references/transport.md) | [session](../../../session/README.md) (planned) | transport |
+| Capability | Contract | Used by | As need |
+|---|---|---|---|
+| transport | [contract](../../../docs/references/transport.md) | [session](../../../session/README.md) (planned) | transport |
