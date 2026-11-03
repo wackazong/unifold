@@ -22,7 +22,7 @@ implementation can be tested with `--tool`:
     uv run tests/conformance.py --list           names of all tests
 
 How a case runs: the files are written to an empty folder named `demo`; then
-`CMD generate demo` (unless the case says generate=False: the cases for rule
+`CMD check --fix demo` (unless the case says fix=False: the cases for rule
 G1, where the test is what `check` says about files nobody generated); then
 `CMD check --json [args] demo`. With `--tool`, the generator under test runs,
 never the reference generator.
@@ -46,15 +46,15 @@ REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "docs/skills/unifold/scripts/unifold.py"
 RULES_MD = REPO / "docs/references/rules.md"
 README_TEMPLATE = REPO / "docs/skills/unifold/assets/README.template.md"
-MARK = "<!-- unifold:generated - do not edit; run `unifold generate` -->"
+MARK = "<!-- unifold:generated - do not edit; run `unifold check --fix` -->"
 
-ROOT = 'unifold: "0.3"\nresponsibility: A demo\n'
+ROOT = 'unifold: "0.4"\nresponsibility: A demo\n'
 UNIT = "responsibility: A part\n"
 COMPOSITE = UNIT + "kind: stateful\n"              # a unit with children states a kind
 X = "ref:x"                                       # the contract both sides of x name
-NEEDS_X = "needs:\n  x: {kind: library, summary: Needs x, contract: %s}\n" % X
+NEEDS_X = "needs:\n  x: {summary: Needs x, contract: %s}\n" % X
 AT_ROOT_X = NEEDS_X.replace(X, "docs/references/x.md")   # NEEDS_X in a root written by hand
-CAPABILITY_X = "capabilities:\n  x: {kind: library, summary: Offers x, contract: %s}\n" % X
+CAPABILITY_X = "capabilities:\n  x: {summary: Offers x, contract: %s}\n" % X
 WIRED = "wiring:\n  a.x: b.x\n"
 README = "# {name}\n\nWhat it is for.\n"
 AGENTS = "# AGENTS.md: {name}\n\nunifold unit; run `unifold show` here.\n\n## Why\n\nBecause.\n"  # hand-written: not allowed
@@ -68,7 +68,8 @@ FENCE = "```"
 
 def contract_text(name: str, parts=None) -> str:
     """A contract with a complete body: one query per part (default: one type named after the contract)."""
-    out = [f"# {name}", "", f"Contract of `{name}`. Notation: wit.", "Sources: none", "", "## Parts", ""]
+    out = [f"# {name}", "", f"Contract of `{name}`. Notation: wit.", "Sources: none", "",
+           "## Use", "", "Call any part at any time.", "", "## Parts", ""]
     for part in (parts or [(name, "type")]):
         part, kind = part if isinstance(part, tuple) else (part, "query")
         out += [f"### {part}", "", f"Kind: {kind}", "", FENCE + "wit", f"{part}: func() -> u32;" if kind != "type"
@@ -123,12 +124,40 @@ CONTEXT_FILES = {**with_decision(), CONTEXT: ITEM.format(stamp="")}
 DERIVED = "---\nstatus: derived\ndate: 2026-10-07\nderived-from: proto §4\n---\n# A decision\n\n## Source says\n\nText.\n"
 # a root capability `api` implemented by a, which needs x from b; the contracts have the parts serve and do
 SCENARIO_ROOT = ("capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n"
-                 "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a -> b.do\n    expect: e\n")
+                 "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve: ok\n      - a -> b.do: ok\n    expect: e\n")
 SCENARIO_UNITS = {"a": NEEDS_X + "capabilities:\n  api: {summary: s, contract: ref:api}\n", "b": CAPABILITY_X}
 SCENARIO_CONTRACTS = {"api": ["serve"], "x": ["do"]}
 CONSTANTS = "# Constants\n\n| Name | Value |\n|---|---|\n| `MAX_SIZE` | 3 |\n"
+# the contract x with states: closed, then open; `open` may be refused, `send` may lose the line
+STATE_ROWS = ["| closed | `open` | ok | open |", "| closed | `open` | `refused` | closed |",
+              "| open | `send` | ok | open |", "| open | `send` | `lost` | closed |"]
 
-# name, files, expected findings, options (generate, args)
+
+def stateful_text(rows=None, start="closed", use=True) -> str:
+    out = ["# x", "", "Contract of `x`. Notation: wit.", "Sources: none", ""]
+    out += ["## Use", "", "Open, then send. When `send` fails with `lost`, open again.", ""] if use else []
+    out += ["## States", ""] + ([f"Start: {start}.", ""] if start else [])
+    out += ["| State | Part | Result | Next |", "|---|---|---|---|", *(STATE_ROWS if rows is None else rows), ""]
+    out += ["## Parts", ""]
+    for part, error in (("open", "refused"), ("send", "lost")):
+        out += [f"### {part}", "", "Kind: command", "", FENCE + "wit", f"{part}: func();", FENCE, "", "Pre: none.",
+                "Result: done.", f"Errors: `{error}` when it fails" + ("; `line gone` when the line is cut." if part == "send"
+                                                                       else "."), "Examples:", "", "| Case | Input | Expected |",
+                "|---|---|---|", f"| one | `{part}()` | ok |", ""]
+    out += ["## Fake", "", "Follows the states.", ""]
+    return "\n".join(out)
+
+
+STATE_HOPS = ("      - api -> a.serve: ok\n      - a -> b.open(): ok\n      - a -> b.send([1]): lost\n"
+              "      - a -> b.open(): ok\n      - a -> b.send([1]): ok\n")
+
+
+def state_project(hops=STATE_HOPS, given="", **contract) -> dict:
+    root = ("capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n"
+            "scenarios:\n  s1:\n    summary: s\n" + given + "    hops:\n" + hops + "    expect: e\n")
+    return project(root, SCENARIO_UNITS, {"docs/references/x.md": stateful_text(**contract)}, contracts={"api": ["serve"]})
+
+# name, files, expected findings, options (fix, args)
 CASES = [
     # ---------------------------------------------------------------- clean
     ("clean-single-unit", project(), []),
@@ -153,18 +182,16 @@ CASES = [
     ("clean-optional-need-unconnected",
      project("", {"a": "needs:\n  x: {summary: s, optional: true}\n"}), []),
     ("clean-capability-implemented-by-child", project(
-        "capabilities:\n  p: {kind: http, summary: s, contract: docs/references/p.md}\n"
-        "needs:\n  n: {kind: http, summary: s, contract: docs/references/n.md}\n"
+        "capabilities:\n  p: {summary: s, contract: docs/references/p.md}\n"
+        "needs:\n  n: {summary: s, contract: docs/references/n.md}\n"
         "wiring:\n  p: a.p\n  a.n: n\n",
-        {"a": "capabilities:\n  p: {kind: http, summary: s, contract: ../docs/references/p.md}\n"
-              "needs:\n  n: {kind: http, summary: s, contract: ../docs/references/n.md}\n"},
+        {"a": "capabilities:\n  p: {summary: s, contract: ../docs/references/p.md}\n"
+              "needs:\n  n: {summary: s, contract: ../docs/references/n.md}\n"},
         {"docs/references/p.md": contract_text("p"), "docs/references/n.md": contract_text("n")}), []),
-    ("clean-kind-stated-on-one-side-only",
-     project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {summary: Offers x, contract: ref:x}\n"}), []),
     ("clean-ignored-folder", project("ignore: [vendor]\n", files={
         "vendor/dep/unifold.yaml": "summary: [broken\n"}), []),
     ("clean-nested-project-is-not-checked", project("", files={
-        "inner/unifold.yaml": 'unifold: "0.3"\nresponsibility: Inner\nwiring:\n  nobody.x: nothing.y\n'}), []),
+        "inner/unifold.yaml": 'unifold: "0.4"\nresponsibility: Inner\nwiring:\n  nobody.x: nothing.y\n'}), []),
     ("clean-units-below-folder-named-target", project(WIRED, {"target/a": NEEDS_X, "target/b": CAPABILITY_X}), []),
     ("clean-contract-in-ancestor", project("capabilities:\n  x: {summary: s, contract: ref:x}\n"
                                            "wiring:\n  x: a.x\n", {
@@ -173,7 +200,7 @@ CASES = [
         "a": "needs:\n  x:\n    summary: s\n    contract:\n      path: ref:x\n      parts: [do]\n", "b": CAPABILITY_X},
         contracts={"x": ["do", ("thing", "type")]}), []),
     ("clean-unit-fields", project("", {"a": "kind: logic\nsecret:\n  what: the layout\n  decision: docs/decisions/0001-x.md\n"
-                                            "not:\n  - parsing: x\n  - sending\n" + NEEDS_X.replace("library", "library, optional: true"),
+                                            "not:\n  - parsing: x\n  - sending\n" + NEEDS_X.replace("Needs x,", "Needs x, optional: true,"),
                                        }, {"a/docs/decisions/0001-x.md": DECISION.format(status="proposed", date="2026-10-07", more="")}), []),
     ("clean-secret-decision-of-an-ancestor", project("", {"a": "secret:\n  what: w\n  decision: ../docs/decisions/0001-x.md\n"},
                                                       with_decision()), []),
@@ -187,12 +214,12 @@ CASES = [
     ("clean-scenario", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), []),
     ("clean-scenario-across-levels", project(
         "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n"
-        "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a/inner -> b.do\n      - a -> b.do\n    expect: e\n",
+        "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve: ok\n      - a/inner -> b.do: ok\n      - a -> b.do: ok\n    expect: e\n",
         {"a": "kind: stateful\n" + NEEDS_X + "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  inner.x: x\n",
          "a/inner": NEEDS_X, "b": CAPABILITY_X}, contracts=SCENARIO_CONTRACTS), []),
-    ("clean-scenario-in-a-leaf", project("", {"a": NEEDS_X.replace("library", "library, optional: true")
+    ("clean-scenario-in-a-leaf", project("", {"a": NEEDS_X.replace("Needs x,", "Needs x, optional: true,")
                                                   + "capabilities:\n  api: {summary: s, contract: ref:api}\n"
-                                                  "scenarios:\n  s1:\n    summary: s\n    hops: ['api -> x.do']\n    expect: e\n"},
+                                                  "scenarios:\n  s1:\n    summary: s\n    hops: ['api -> x.do': ok]\n    expect: e\n"},
                                          contracts=SCENARIO_CONTRACTS), ["info N4 docs/references/api.md", "warn W3 unifold.yaml"]),
     ("clean-derived-decision", project("", {"a": ""}, {**{"docs/decisions/0001-x.md": DERIVED},
                                                      CONTEXT: ITEM.format(stamp=stamp(DERIVED))}), []),
@@ -200,7 +227,7 @@ CASES = [
                                        "README.md": "# demo\n\nAt most `MAX_SIZE` things; `CRC32` and `GET` are no names.\n"}), []),
     ("clean-contract-folder", project(WIRED, {"a": "needs:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n",
                                               "b": "capabilities:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n"}, {
-        "docs/references/x/index.md": "# x\n\nContract of x. Notation: wit.\n\n## Parts\n\n- [do](do.md)\n\n## Fake\n\nReplays.\n",
+        "docs/references/x/index.md": "# x\n\nContract of x. Notation: wit.\n\n## Use\n\nAny order.\n\n## Parts\n\n- [do](do.md)\n\n## Fake\n\nReplays.\n",
         "docs/references/x/do.md": "# do\n\nKind: query\n\n```wit\ndo: func() -> u32;\n```\n\nPre: none.\nResult: r.\nErrors: none.\nExamples:\n\n| Case | Input | Expected |\n|---|---|---|\n| one | `do()` | 1 |\n"}), []),
     ("clean-fragment-of-the-contract-ignored", project(WIRED, {
         "a": "needs:\n  x: {summary: s, contract: ../docs/references/x.md#part}\n",
@@ -214,8 +241,7 @@ CASES = [
         CONTEXT: "# Context of a\n\n### [demo](../../../README.md)\n"
                  + stamp("# demo\n\n[a](a/README.md) and [b](b/)\n")
                  + "\nSays: x.\n\nHere: y.\n"}), []),
-    ("clean-max-lines", project("max-lines: 400\n", files={
-        "docs/explanation/reasoning.md": "# Long\n" + "line\n" * 300}), []),
+    ("clean-composite-without-kind", project("", {"a": "", "a/deep": ""}), []),
     ("clean-all-document-kinds", project(files={
         "docs/tutorials/first.md": "# First\n", "docs/references/api/index.md": "# API\n",
         "docs/explanation/risks.md": "# Risks\n", "docs/skills/do-it/SKILL.md": SKILL,
@@ -274,8 +300,10 @@ CASES = [
      ["error M2 a/unifold.yaml", "error M2 a/unifold.yaml"]),
     ("M2-verified-by-removed", project("capabilities:\n  x: {summary: s, contract: ref:x, verified-by: tests}\n"),
      ["error M2 unifold.yaml"]),
-    ("M2-composite-without-kind", project("", {"a": "", "a/deep": ""}),
-     ["error M2 a/unifold.yaml"]),
+    ("M2-owner-is-no-key", project("owner: the team\n"), ["error M2 unifold.yaml"]),
+    ("M2-diagram-links-is-no-key", project("diagram-links: relative\n"), ["error M2 unifold.yaml"]),
+    ("M2-diagrams-all", project("diagrams: all\n"), ["error M2 unifold.yaml"]),
+    ("M2-kind-on-a-capability", project("capabilities:\n  x: {summary: s, kind: http}\n"), ["error M2 unifold.yaml"]),
     ("M2-platform-on-a-need-of-a-child", project("", {"a": "needs:\n  clock: {summary: s, optional: true, platform: true}\n"}),
      ["error M2 a/unifold.yaml"]),
     ("M2-platform-on-a-capability", project("capabilities:\n  x: {summary: s, platform: true}\n"), ["error M2 unifold.yaml"]),
@@ -283,17 +311,17 @@ CASES = [
      ["error M2 unifold.yaml"]),
     ("M2-contract-mapping-without-path", project("capabilities:\n  x:\n    summary: s\n    contract:\n      parts: [a]\n"),
      ["error M2 unifold.yaml"]),
-    ("M2-scenario-name-with-dot", project("scenarios:\n  v1.open:\n    summary: s\n    hops: ['x -> y.z']\n    expect: e\n"),
+    ("M2-scenario-name-with-dot", project("scenarios:\n  v1.open:\n    summary: s\n    hops: ['x -> y.z': ok]\n    expect: e\n"),
      ["error M2 unifold.yaml", "error N1 unifold.yaml"]),
     ("M11-part-not-in-contract", project(WIRED, {
         "a": "needs:\n  x:\n    summary: s\n    contract:\n      path: ref:x\n      parts: [do, gone]\n", "b": CAPABILITY_X},
         contracts={"x": ["do"]}), ["error M11 a/unifold.yaml"]),
     ("M2-unknown-key", project("colour: blue\n"), ["error M2 unifold.yaml"]),
     ("M2-old-key-unit", project("", {"a": "unit: a\n"}), ["error M2 a/unifold.yaml"]),
-    ("M2-no-responsibility", {"unifold.yaml": 'unifold: "0.3"\n', "README.md": README}, ["error M2 unifold.yaml"]),
-    ("M2-placeholder-responsibility", {"unifold.yaml": 'unifold: "0.3"\nresponsibility: <what the project is, in one line>\n',
+    ("M2-no-responsibility", {"unifold.yaml": 'unifold: "0.4"\n', "README.md": README}, ["error M2 unifold.yaml"]),
+    ("M2-placeholder-responsibility", {"unifold.yaml": 'unifold: "0.4"\nresponsibility: <what the project is, in one line>\n',
                                        "README.md": README}, ["error M2 unifold.yaml"]),
-    ("M2-responsibility-over-two-lines", {"unifold.yaml": 'unifold: "0.3"\nresponsibility: |\n  one\n  two\n',
+    ("M2-responsibility-over-two-lines", {"unifold.yaml": 'unifold: "0.4"\nresponsibility: |\n  one\n  two\n',
                                           "README.md": README}, ["error M2 unifold.yaml"]),
     ("M2-root-key-in-child", project("", {"a": "ignore: [x]\n"}), ["error M2 a/unifold.yaml"]),
     ("M2-status-as-boolean", project("status: yes\n"), ["error M2 unifold.yaml"]),
@@ -305,7 +333,7 @@ CASES = [
     ("M2-placeholder-summary-of-a-need", project("needs:\n  x: <what is needed>\n"),
      ["error M2 unifold.yaml"]),
     ("M2-capabilities-as-list", project("capabilities: [x]\n"), ["error M2 unifold.yaml"]),
-    ("M2-capability-without-summary", project("capabilities:\n  x: {kind: http}\n"), ["error M2 unifold.yaml"]),
+    ("M2-capability-without-summary", project("capabilities:\n  x: {x-note: n}\n"), ["error M2 unifold.yaml"]),
     ("M2-optional-is-not-a-boolean",
      project("", {"a": 'needs:\n  x: {summary: s, optional: "yes"}\n'}),
      ["error M2 a/unifold.yaml", "error W2 unifold.yaml"]),
@@ -392,11 +420,6 @@ CASES = [
     ("W3-capability-not-used", project("", {"b": CAPABILITY_X}), ["warn W3 unifold.yaml"]),
     ("W2-a-need-of-the-same-name-in-the-parent-is-no-connection", project(NEEDS_X, {"a": NEEDS_X}),
      ["error W2 unifold.yaml"]),
-    ("W4-own-need-kind-differs", project(NEEDS_X + "wiring:\n  x: b.x\n", {
-        "b": "capabilities:\n  x: {kind: http, summary: s, contract: ref:x}\n"}),
-     ["warn W4 unifold.yaml"]),
-    ("W4-kinds-differ", project(WIRED, {"a": NEEDS_X, "b": "capabilities:\n  x: {kind: http, summary: s, contract: ref:x}\n"}),
-     ["warn W4 unifold.yaml"]),
     ("W7-cycle", project("wiring:\n  a.x: b.x\n  b.y: a.y\n", {
         "a": NEEDS_X + "capabilities:\n  y: {summary: s, contract: ref:x}\n",
         "b": CAPABILITY_X + "needs:\n  y: {summary: s, contract: ref:x}\n"}),
@@ -454,7 +477,7 @@ CASES = [
     ("K6-not-names-an-unknown-need", project("", {"a": "not:\n  - parsing: codec\n"}), ["error K6 a/unifold.yaml"]),
     ("K6-not-as-text", project("", {"a": "not: parsing\n"}), ["error K6 a/unifold.yaml"]),
     # ------------------------------------------------ N: scenarios
-    ("N1-hop-without-a-connection", project(SCENARIO_ROOT.replace("      - a -> b.do\n", "      - b -> a.do\n"), SCENARIO_UNITS,
+    ("N1-hop-without-a-connection", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - b -> a.do: ok\n"), SCENARIO_UNITS,
                                             contracts=SCENARIO_CONTRACTS), ["error N1 unifold.yaml"]),
     ("N1-part-not-in-the-contract", project(SCENARIO_ROOT.replace("b.do", "b.undo"), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
      ["error N1 unifold.yaml"]),
@@ -466,20 +489,46 @@ CASES = [
     ("N1-hop-not-in-the-form", project(SCENARIO_ROOT.replace("- a -> b.do", "- a calls b"), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
      ["error N1 unifold.yaml"]),
     ("N1-two-connections-with-the-part", project(
-        "wiring:\n  a.x: b.x\n  a.y: b.y\nscenarios:\n  s1:\n    summary: s\n    hops: ['a -> b.do']\n    expect: e\n",
+        "wiring:\n  a.x: b.x\n  a.y: b.y\nscenarios:\n  s1:\n    summary: s\n    hops: ['a -> b.do': ok]\n    expect: e\n",
         {"a": NEEDS_X + "  y: {summary: s, contract: ref:y}\n", "b": CAPABILITY_X + "  y: {summary: s, contract: ref:y}\n"},
         contracts={"x": ["do"], "y": ["do"]}), ["error N1 unifold.yaml"]),
     ("N2-scenario-without-expect", project(SCENARIO_ROOT.replace("    expect: e\n", ""), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
      ["error N2 unifold.yaml"]),
     ("N2-scenario-as-text", project("scenarios:\n  s1: a story\n"), ["error N2 unifold.yaml"]),
-    ("N3-wiring-line-without-a-hop", project(SCENARIO_ROOT.replace("      - a -> b.do\n", ""), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+    ("N3-wiring-line-without-a-hop", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", ""), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
      ["info N4 docs/references/x.md", "warn N3 unifold.yaml"]),
     ("N4-part-without-a-hop", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts={"api": ["serve"], "x": ["do", "undo", ("thing", "type")]}),
      ["info N4 docs/references/x.md"]),
     ("N4-silent-without-a-scenario", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, contracts={"x": ["do", "undo"]}), []),
+    ("clean-path-through-states", state_project(), []),
+    ("clean-given-sets-the-state", state_project("      - api -> a.serve: ok\n      - a -> b.send([1]): lost\n"
+                                                 "      - a -> b.open(): ok\n",
+                                                 "    given:\n      - b.x: open\n      - the line is quiet\n"), []),
+    ("N2-hop-without-a-result", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do"), SCENARIO_UNITS,
+                                        contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
+    ("N2-result-read-as-true", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do: yes"), SCENARIO_UNITS,
+                                       contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
+    ("N5-given-names-no-state", state_project(given="    given:\n      - b.x: nowhere\n"), ["error N5 unifold.yaml"]),
+    ("N5-given-names-a-contract-without-states", project(SCENARIO_ROOT.replace("    hops:", "    given:\n      - b.x: open\n    hops:"),
+                                                         SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), ["error N5 unifold.yaml"]),
+    ("N6-path-the-states-forbid", state_project("      - api -> a.serve: ok\n      - a -> b.send([1]): ok\n"),
+     ["error N6 unifold.yaml", "info N4 docs/references/x.md"]),
+    ("N6-success-that-only-a-failure-row-allows", state_project(rows=STATE_ROWS + ["| open | `open` | `refused` | open |"],
+                                                                hops=STATE_HOPS + "      - a -> b.open(): ok\n"),
+     ["error N6 unifold.yaml"]),
     # ------------------------------------------------ C: contracts
     ("C1-contract-without-parts", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
-                                          {"docs/references/x.md": "# x\n\n## Fake\n\nReplays.\n"}), ["warn C1 docs/references/x.md"]),
+                                          {"docs/references/x.md": "# x\n\n## Use\n\nAny order.\n\n## Fake\n\nReplays.\n"}), ["warn C1 docs/references/x.md"]),
+    ("clean-error-name-with-spaces", state_project(
+        "      - api -> a.serve: ok\n      - a -> b.open(): ok\n      - a -> b.send([1]): line gone\n      - a -> b.open(): ok\n",
+        rows=STATE_ROWS + ["| open | `send` | `line gone` | closed |"]), []),
+    ("C6-contract-without-use", state_project(use=False), ["warn C6 docs/references/x.md"]),
+    ("C7-row-of-no-part", state_project(rows=STATE_ROWS + ["| open | `close` | ok | closed |"]), ["error C7 docs/references/x.md"]),
+    ("C7-result-that-is-no-error-case", state_project(rows=STATE_ROWS + ["| open | `send` | `busy` | open |"]),
+     ["error C7 docs/references/x.md"]),
+    ("C7-no-start-state", state_project(start=None), ["error C7 docs/references/x.md"]),
+    ("C7-two-rows-for-one-step", state_project(rows=STATE_ROWS + ["| open | `send` | ok | closed |"]),
+     ["error C7 docs/references/x.md"]),
     ("C1-part-with-unknown-kind", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
                                           {"docs/references/x.md": contract_text("x", [("do", "call")])}), ["warn C1 docs/references/x.md"]),
     ("C2-query-without-examples", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
@@ -574,69 +623,48 @@ CASES = [
     ("T5-readme-heading-not-in-manifest", project("capabilities:\n  x: s\n", files={
         "README.md": "# demo\n\n## Capabilities\n\n### `x`\n\nText.\n\n### `gone`\n\nText.\n"}),
      ["warn T5 README.md"]),
-    ("T6-constant-not-a-row", project(files={"docs/references/constants.md": CONSTANTS,
-                                             "README.md": "# demo\n\nAt most `MAX_SIZE` and `MAX_OTHER`.\n\n```text\n`NOT_READ`\n```\n"}),
-     ["warn T6 README.md"]),
-    ("T6-row-of-an-ancestor-counts", project("", {"a": ""}, {"docs/references/constants.md": CONSTANTS,
-                                                            "a/docs/references/constants.md": CONSTANTS.replace("MAX_SIZE", "MIN_SIZE"),
-                                                            "a/README.md": "# a\n\n`MAX_SIZE`, `MIN_SIZE`, `NO_ROW`.\n"}),
-     ["warn T6 a/README.md"]),
-    ("T6-own-pattern", project(files={"docs/references/constants.md": "---\nname-pattern: \"\\\\bK_[a-z]+\\\\b\"\n---\n" + CONSTANTS.replace("MAX_SIZE", "K_size"),
-                                      "README.md": "# demo\n\n`K_size` is a row, `K_other` is not, `MAX_SIZE` does not match.\n"}),
-     ["warn T6 README.md"]),
-    ("T7-bare-decision-number", project(files={**with_decision(), "README.md": "# demo\n\nAs 0001 says, and 0001 again.\n"}),
-     ["warn T7 README.md"]),
-    ("T7-number-of-an-ancestor", project("", {"a": ""}, {**with_decision(), "a/README.md": "# a\n\nThe root chose this in 0001.\n"}),
-     ["warn T7 a/README.md"]),
-    ("T7-number-in-a-link-code-or-comment", project(files={**with_decision(), "README.md": (
-        "# demo\n\nEach service keeps its own data ([0001](docs/decisions/0001-x.md)). Port 9092, `0001`, "
-        "<!-- 0001 -->, https://example.com/0001 and x0001 pass.\n\n```text\n0001\n```\n")}), []),
-    ("T7-number-of-a-child-decision", project("", {"a": ""}, {"a/docs/decisions/0001-x.md": DECISION.format(
-        status="proposed", date="2026-10-07", more=""), "README.md": "# demo\n\nThe child chose 0001.\n"}), []),
-    ("T7-number-after-a-unit-path", project("", {"a": ""}, {**with_decision(), **{"a/docs/decisions/0001-x.md": DECISION.format(
-        status="proposed", date="2026-10-07", more="")}, "README.md": "# demo\n\nSources: a/0001, `a`/0001; 0001/0001 is not a path.\n"}),
-     ["warn T7 README.md"]),
+    ("T8-decision-named-in-a-reference", project(files={**with_decision(), "README.md": (
+        "# demo\n\nEach service keeps its own data ([0001](docs/decisions/0001-x.md)).\n"),
+        "docs/references/x.md": "# x\n\nSources: proto §4 and [the choice](../decisions/0001-x.md).\n\n"
+                                "As 0001 says.\n"}),
+     ["warn T8 docs/references/x.md"]),
     # ------------------------------------------------------ G: generated files
     ("G1-generated-file-missing", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"generate": False}),
+     {"fix": False}),
     ("G1-generated-file-out-of-date", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
         "docs/diagrams/component.md": MARK + "\n# Old\n"}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"generate": False}),
+     {"fix": False}),
     ("G1-leftover-generated-file", project(files={"docs/diagrams/component.md": MARK + "\n# Old\n"}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"], {"generate": False}),
+     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"], {"fix": False}),
     ("G1-leftover-in-a-folder-that-is-no-longer-a-unit", project(files={
         "old/AGENTS.md": MARK + "\n# AGENTS.md: old\n", "old/docs/diagrams/context.md": MARK + "\n# Old\n",
         "old/notes/AGENTS.md": "# Hand-written\n"}),
-     ["error G1 AGENTS.md", "error G1 old/AGENTS.md", "error G1 old/docs/diagrams/context.md"], {"generate": False}),
+     ["error G1 AGENTS.md", "error G1 old/AGENTS.md", "error G1 old/docs/diagrams/context.md"], {"fix": False}),
     ("G1-hand-written-file-at-generated-path", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
         "docs/diagrams/component.md": "# Mine\n"}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"generate": False}),
+     {"fix": False}),
     ("G1-hand-written-file-among-diagrams", project(files={"docs/diagrams/mine.md": "# Mine\n"}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/mine.md"], {"generate": False}),
+     ["error G1 AGENTS.md", "error G1 docs/diagrams/mine.md"], {"fix": False}),
     ("G1-decision-index-missing", project(files=with_decision()),
-     ["error G1 AGENTS.md", "error G1 docs/decisions/index.md"], {"generate": False}),
+     ["error G1 AGENTS.md", "error G1 docs/decisions/index.md"], {"fix": False}),
     ("G1-agents-file-missing", project("", {"a": ""}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"generate": False}),
+     {"fix": False}),
     ("G1-agents-file-without-marker", project(files={"AGENTS.md": AGENTS.format(name="demo")}),
      ["error G1 AGENTS.md"]),
     ("G1-agents-file-out-of-date", project(files={"AGENTS.md": MARK + "\n# AGENTS.md: old\n"}),
-     ["error G1 AGENTS.md"], {"generate": False}),
-    ("G1-all-diagrams-for-leaves", project("diagrams: all\n", {"a": ""}),
-     ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 a/docs/diagrams/context.md",
-      "error G1 docs/diagrams/component.md"],
-     {"generate": False}),
+     ["error G1 AGENTS.md"], {"fix": False}),
     ("G1-scenario-diagram-missing", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 b/AGENTS.md", "error G1 docs/diagrams/component.md",
-      "error G1 docs/diagrams/scenario-s1.md"], {"generate": False}),
+      "error G1 docs/diagrams/scenario-s1.md"], {"fix": False}),
     ("G1-architecture-only-with-grandchildren", project("", {"a": "kind: stateful\n", "a/deep": ""}),
      ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 a/deep/AGENTS.md",
       "error G1 a/docs/diagrams/component.md", "error G1 a/docs/diagrams/context.md",
       "error G1 docs/diagrams/architecture.md", "error G1 docs/diagrams/component.md"],
-     {"generate": False}),
+     {"fix": False}),
 ]
 
 
@@ -682,8 +710,8 @@ def run_case(runner: Runner, case) -> str | None:
     options = case[3] if len(case) > 3 else {}
     with tempfile.TemporaryDirectory() as tmp:
         folder = new_project(tmp, files)
-        if options.get("generate", True):
-            runner.run("generate", str(folder))
+        if options.get("fix", True):
+            runner.run("check", "--fix", str(folder))
         args = list(options.get("args", []))
         try:
             found = runner.findings(folder, *args)
@@ -707,7 +735,7 @@ def scenario_json_on_failure(runner: Runner, tmp: str):
     data, done = runner.json("check", "--json", str(empty))
     check(done.returncode == 2 and data["ok"] is False and data["findings"] == []
           and data["error"]["code"] == "no-project", f"no project: {done.returncode} {data}")
-    for command in (["show"], ["tree"], ["capability", str(empty), "x"], ["impact"], ["cited-by"]):
+    for command in (["show"], ["tree"], ["capability", str(empty), "x"], ["impact"], ["skills"]):
         args = command if len(command) > 1 else [*command, str(empty)]
         data, done = runner.json(*args[:1], "--json", *args[1:])
         check(done.returncode == 2 and data["ok"] is False and "message" in data["error"],
@@ -725,7 +753,7 @@ def scenario_json_on_failure(runner: Runner, tmp: str):
 
 def scenario_finding_shape(runner: Runner, tmp: str):
     folder = new_project(tmp, project("wiring:\n  a.x: b.y\n", {"a": NEEDS_X, "b": CAPABILITY_X}))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     data, done = runner.json("check", "--json", str(folder))
     check(done.returncode == 1 and data["ok"] is False, "exit code 1 with errors")
     check(data["summary"]["error"] == 2 and data["summary"]["warn"] == 1
@@ -744,7 +772,7 @@ def scenario_finding_shape(runner: Runner, tmp: str):
     strict = project("", {"b": CAPABILITY_X})
     folder2 = Path(tmp) / "strict"
     write_files(folder2, strict)
-    runner.run("generate", str(folder2))
+    runner.run("check", "--fix", str(folder2))
     check(runner.run("check", str(folder2)).returncode == 0, "a warning alone: exit 0")
     check(runner.run("check", "--strict", str(folder2)).returncode == 1, "--strict: exit 1")
     only = runner.findings(folder, "--rule", "W3")
@@ -761,7 +789,7 @@ def scenario_finding_shape(runner: Runner, tmp: str):
 
 def scenario_generate_is_idempotent(runner: Runner, tmp: str):
     files = project(
-        "diagrams: all\n" + NEEDS_X + "  log: {summary: s, contract: ref:log}\n"
+        NEEDS_X + "  log: {summary: s, contract: ref:log}\n"
         "wiring:\n  a.x: {real: b.x, fake: c.x}\n  a.log: log\n  b.log: log\n  deep.log: log\n",
         {"a": NEEDS_X + "  log: {summary: Logs, contract: ref:log}\n",
          "b": CAPABILITY_X + "needs:\n  log: {summary: Logs, contract: ref:log}\n",
@@ -770,20 +798,21 @@ def scenario_generate_is_idempotent(runner: Runner, tmp: str):
          "c/inner": ""},
         with_decision())
     folder = new_project(tmp, files)
-    first = runner.run("generate", str(folder))
-    check(first.returncode == 0, f"generate: {first.stderr}")
+    first = runner.run("check", "--fix", str(folder))
+    check(first.returncode == 0, f"check --fix: {first.stdout}{first.stderr}")
 
     def snapshot():
         return {str(p.relative_to(folder)): p.read_text() for p in sorted(folder.rglob("*.md"))}
     before = snapshot()
-    data, _ = runner.json("generate", "--json", str(folder))
-    check(data["written"] == [] and data["removed"] == [], f"second generate wrote: {data}")
+    data, _ = runner.json("check", "--fix", "--json", str(folder))
+    fixed = data["summary"]["fixed"]
+    check(fixed["written"] == [] and fixed["removed"] == [], f"a second check --fix wrote: {fixed}")
     for path in list(folder.rglob("docs/diagrams/*.md")) + list(folder.rglob("AGENTS.md")) \
             + [folder / "docs/decisions/index.md"]:
         path.unlink()
-    runner.run("generate", str(folder), env={"PYTHONHASHSEED": "12345"})
+    runner.run("check", "--fix", str(folder), env={"PYTHONHASHSEED": "12345"})
     check(snapshot() == before, "regenerated from nothing: not byte-identical")
-    check(runner.findings(folder) == [], f"clean after generate: {runner.findings(folder)}")
+    check(runner.findings(folder) == [], f"clean after check --fix: {runner.findings(folder)}")
     component = before["docs/diagrams/component.md"]
     check("Shared connections, not drawn" in component
           and "- need `a.log`, `b.log`, `deep.log` → need `log` of `demo`, passed up" in component
@@ -791,8 +820,8 @@ def scenario_generate_is_idempotent(runner: Runner, tmp: str):
           f"a need that three children pass up is listed, not drawn: {component}")
     check("my%20plugins/deep" in component, "generated links are URL-encoded")
     check("-.->" in component, "an alternative is a dashed arrow")
-    context = before["a/docs/diagrams/context.md"]
-    check('u_b["b"]' in context and 'u_my' not in context,
+    context = before["c/docs/diagrams/context.md"]
+    check('u_a["a"]' in context and 'u_my' not in context,
           "a context diagram shows only connected siblings")
     check("**planned**" in component, "status is marked in the unit table")
     check("docs/diagrams/architecture.md" in before and "[architecture](architecture.md)" in component
@@ -863,7 +892,7 @@ def scenario_own_needs(runner: Runner, tmp: str):
                     "  mailer: {summary: s, contract: ref:mailer}\n",
          "platform": "capabilities:\n  clock: {summary: s, contract: ref:clock}\n"})
     folder = new_project(tmp, files)
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
     data, _ = runner.json("show", "--json", str(folder))
     clock, mailer = data["needs"]["clock"]["provided-by"], data["needs"]["mailer"]["provided-by"]
@@ -890,7 +919,7 @@ def scenario_own_needs(runner: Runner, tmp: str):
 
 def scenario_stamps(runner: Runner, tmp: str):
     folder = new_project(tmp, project("", {"a": "status: planned\n"}, CONTEXT_FILES))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     check(runner.findings(folder) == [f"warn L10 {CONTEXT}"], "an item without a stamp")
     data, _ = runner.json("stamp", "--json", str(folder))
     check(data["stamped"] == 1, f"stamp: {data}")
@@ -906,9 +935,9 @@ def scenario_stamps(runner: Runner, tmp: str):
     found, _ = runner.json("check", "--json", str(folder))
     check([f["rule"] for f in found["findings"]] == ["L10"] and found["findings"][0]["line"] == 3
           and "changed" in found["findings"][0]["message"], f"source changed: {found}")
-    rows, _ = runner.json("cited-by", "--json", str(decision))
+    rows = runner.json("impact", "--json", str(decision))[0]["citations"]
     check(len(rows) == 1 and any(r["file"] == CONTEXT and r["line"] == 3
-          and r["says"] == "x holds." and r["stamp"] == "stale" for r in rows), f"cited-by: {rows}")
+          and r["says"] == "x holds." and r["stamp"] == "stale" for r in rows), f"impact FILE: {rows}")
     before = (folder / CONTEXT).read_text()
     data, _ = runner.json("check", "--fix", "--json", str(folder))
     check("stamped" not in data["summary"]["fixed"] and [f["rule"] for f in data["findings"]] == ["L10"]
@@ -932,9 +961,9 @@ def scenario_stamps(runner: Runner, tmp: str):
     check(f"added {CONTEXT}:3:" in done.stdout and runner.findings(folder) == [],
           f"stamp prints the item it adds a stamp to: {done.stdout}")
     decision.unlink()
-    rows, done = runner.json("cited-by", "--json", str(decision))
-    check(done.returncode == 0 and any(r["file"] == CONTEXT for r in rows),
-          "cited-by works for a file that was deleted")
+    data, done = runner.json("impact", "--json", str(decision))
+    check(done.returncode == 0 and any(r["file"] == CONTEXT for r in data["citations"]),
+          f"impact works for a file that was deleted: {data}")
     data, _ = runner.json("impact", "--json", str(folder))
     check(data["citations"] == [] or all("file" in c for c in data["citations"]), "impact citations")
 
@@ -952,7 +981,7 @@ def scenario_row_citation(runner: Runner, tmp: str):
     folder = new_project(tmp, project("", {"a": "status: planned\n"}, {
         "docs/references/glossary.md": GLOSSARY.format(**words),
         CONTEXT: ROW_ITEM.format(stamp=stamp(row))}))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     check(runner.findings(folder) == [], f"the stamp of a row is the hash of the row: {runner.findings(folder)}")
     glossary = folder / "docs/references/glossary.md"
     glossary.write_text(GLOSSARY.format(**{**words, "stamp": "Another meaning", "other": "More."}))
@@ -987,9 +1016,9 @@ def scenario_check_fix(runner: Runner, tmp: str):
           and data["summary"]["fixed"]["removed"] == ["a/docs/diagrams/context.md"],
           f"--fix: {data['summary']}")
     (folder / "docs/diagrams/component.md").write_text("# Mine\n")
-    done = runner.run("generate", str(folder))
+    done = runner.run("check", "--fix", str(folder))
     check(done.returncode == 1 and (folder / "docs/diagrams/component.md").read_text() == "# Mine\n",
-          "generate does not overwrite a file without the marker")
+          "check --fix does not overwrite a file without the marker")
 
 
 EXPECTED_AGENTS_A = (MARK + """
@@ -1057,7 +1086,7 @@ def scenario_agents_generated(runner: Runner, tmp: str):
     check("tutorials" in text and "a/docs/references/events.md" in text, f"show text: {text}")
     for i in range(13):
         (folder / f"b/docs/tutorials/t{i:02}.md").write_text(f"# {i}\n")
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     check("| Learn | 15 files in docs/tutorials/ |" in (folder / "b/AGENTS.md").read_text(),
           "more than 12 files of a kind are counted")
     # a hand-written AGENTS.md is reported and never overwritten
@@ -1068,7 +1097,7 @@ def scenario_agents_generated(runner: Runner, tmp: str):
     check(done.returncode == 1 and len(g1) == 1 and g1[0]["file"] == "a/AGENTS.md"
           and g1[0]["fix"] == AGENTS_FIX and data["summary"]["fixed"]["refused"] == ["a/AGENTS.md"]
           and (folder / "a/AGENTS.md").read_text() == hand, f"hand-written AGENTS.md: {data}")
-    done = runner.run("generate", str(folder))
+    done = runner.run("check", "--fix", str(folder))
     check(done.returncode == 1 and (folder / "a/AGENTS.md").read_text() == hand, "generate refuses too")
     (folder / "a/AGENTS.md").unlink()
     data, done = runner.json("check", "--fix", "--json", str(folder))
@@ -1099,8 +1128,8 @@ def scenario_init(runner: Runner, tmp: str):
     check(not (folder / "crates/core/unifold.yaml").exists()
           and not (folder / "crates/cli/unifold.yaml").exists(), "init writes no manifest below the root")
     root = (folder / "unifold.yaml").read_text()
-    check('unifold: "0.3"' in root and "\nname: demo\n" in root and "responsibility: TODO" in root
-          and "https://unifold.md/0.3/unifold.schema.json" in root,
+    check('unifold: "0.4"' in root and "\nname: demo\n" in root and "responsibility: TODO" in root
+          and "https://unifold.md/0.4/unifold.schema.json" in root,
           f"root manifest: {root}")
     check(runner.findings(folder) == ["warn M10 unifold.yaml", "warn T5 README.md", "warn T5 README.md"],
           f"after init: only warnings, the TODO and the template placeholders: {runner.findings(folder)}")
@@ -1131,7 +1160,7 @@ def scenario_init(runner: Runner, tmp: str):
 def scenario_capability_hint(runner: Runner, tmp: str):
     """`capability` says when README.md has no section for the entry."""
     folder = new_project(tmp, project("", {"b": CAPABILITY_X}))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     done = runner.run("capability", str(folder / "b"), "x")
     check(done.returncode == 0 and "(no section for it in README.md)" in done.stdout,
           f"capability says that README.md has no section for it: {done.stdout}")
@@ -1167,10 +1196,10 @@ def scenario_agents(runner: Runner, tmp: str):
                     "error G1 .claude/skills/a-release/SKILL.md", "error G1 AGENTS.md",
                     "error G1 a/AGENTS.md", "error G1 c/AGENTS.md",
                     "error G1 docs/diagrams/component.md"], f"stale stubs and unit index: {found}")
-    data, _ = runner.json("skills", "sync", "--json", str(folder))
-    check(len(data["written"]) >= 2, f"skills sync: {data}")
-    runner.run("generate", str(folder))
-    check(runner.findings(folder) == [], "clean after generate")
+    data, _ = runner.json("check", "--fix", "--json", str(folder))
+    check(len([p for p in data["summary"]["fixed"]["written"] if "a-release" in p]) == 2,
+          f"check --fix writes the stubs: {data['summary']}")
+    check(runner.findings(folder) == [], "clean after check --fix")
     rows, _ = runner.json("skills", "--json", str(folder))
     check({r["name"] for r in rows} == {"unifold", "unifold-convert", "release"}, f"skills: {rows}")
 
@@ -1185,8 +1214,10 @@ def scenario_stub_names(runner: Runner, tmp: str):
         "x/a/docs/skills/release/SKILL.md": skill("release"),
         "b/docs/skills/b-deploy/SKILL.md": skill("b-deploy"),
         "b/docs/skills/test/SKILL.md": skill("test")}))
-    data, done = runner.json("skills", "sync", "--json", str(folder))
-    check(done.returncode == 0, f"skills sync: {data}")
+    for base in (".agents/skills", ".claude/skills"):
+        (folder / base).mkdir(parents=True)
+    data, done = runner.json("check", "--fix", "--json", str(folder))
+    check(done.returncode == 0, f"check --fix writes the stubs where their folders exist: {data}")
     for base in (".agents/skills", ".claude/skills"):
         names = sorted(p.name for p in (folder / base).iterdir())
         check(names == ["a-release", "a-release-2", "b-deploy", "b-test", "unifold", "x-a-release"],
@@ -1197,7 +1228,7 @@ def scenario_stub_names(runner: Runner, tmp: str):
         check("x/a/docs/skills/release/SKILL.md" in (folder / base / "x-a-release/SKILL.md").read_text()
               and "(../../../docs/skills/a-release/SKILL.md)" in
               (folder / base / "a-release/SKILL.md").read_text(), "stubs point at their sources")
-    check(runner.findings(folder) == [], f"clean after skills sync: {runner.findings(folder)}")
+    check(runner.findings(folder) == [], f"clean after check --fix: {runner.findings(folder)}")
 
 
 def scenario_explore(runner: Runner, tmp: str):
@@ -1234,17 +1265,17 @@ def scenario_explore(runner: Runner, tmp: str):
 def scenario_explore_scenarios(runner: Runner, tmp: str):
     # b, idle, raises done into a, which is busy with serve; a calls b.do (command, nothing inside: no bar); a asks b.ask (query);
     # b raises done from inside ask; ask and serve are answered when the scenario ends
-    hops = "      - a -> b.done\n      - a -> b.do\n      - a -> b.ask\n      - a -> b.done\n"
-    folder = new_project(tmp, project(SCENARIO_ROOT.replace("expect: e", "expect: one; two").replace("      - a -> b.do\n", hops),
+    hops = "      - a -> b.done: ok\n      - a -> b.do: ok\n      - a -> b.ask: ok\n      - a -> b.done: ok\n"
+    folder = new_project(tmp, project(SCENARIO_ROOT.replace("expect: e", "expect: one; two").replace("      - a -> b.do: ok\n", hops),
                                       SCENARIO_UNITS, contracts={"api": ["serve"], "x": [("do", "command"), ("done", "event"), "ask"]}))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     page = (folder / "docs" / "diagrams" / "scenario-s1.md").read_text()
     check("Expect: one#59; two" in page and "wrap:" in page, "a `;` in a sequence diagram is written #59;")
-    check("  papi->>pa: 1 · serve\n  activate pa\n  pb-)pa: 2 · done\n  pa->>pb: 3 · do\n  pa->>pb: 4 · ask\n  activate pb\n"
-          "  pb-)pa: 5 · done\n  pb-->>pa: ↩ 4\n  deactivate pb\n  pa-->>papi: ↩ 1\n  deactivate pa\n  Note over" in page,
+    check("  papi->>pa: 1 · serve\n  activate pa\n  pb-)pa: 2 · done → ok\n  pa->>pb: 3 · do → ok\n  pa->>pb: 4 · ask\n  activate pb\n"
+          "  pb-)pa: 5 · done → ok\n  pb-->>pa: ↩ 4 · ok\n  deactivate pb\n  pa-->>papi: ↩ 1 · ok\n  deactivate pa\n  Note over" in page,
           f"an event lands on a busy receiver or is raised from a busy provider, a query answers, a bare command leaves no bar:\n{page}")
-    check("| # | Caller | Target | Part | Kind | Contract |" in page and "| 2 | `a` | `b` | `done` | event |" in page,
-          "the table has the kind of the part")
+    check("| # | Caller | Target | Call | Kind | Result | State | Contract |" in page
+          and "| 2 | `a` | `b` | `done` | event | ok |" in page, "the table has the kind and the result of the part")
     out = Path(tmp) / "map.html"
     done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
     check(done.returncode == 0, f"explore: {done.stderr}")
@@ -1286,16 +1317,16 @@ def scenario_explore_frames(runner: Runner, tmp: str):
     contract = lambda name: f"{{summary: s, contract: ref:{name}}}"
     root = ("capabilities:\n  api: " + contract("api") + "\nwiring:\n  api: src/session.api\n  src/session.x: src/runtime.x\n  src/runtime.y: src/serial.y\n"
             "scenarios:\n"
-            "  plain:\n    summary: s\n    hops:\n      - api -> src/session.serve\n      - src/session -> src/runtime.do\n      - src/runtime -> src/serial.go\n    expect: e\n"
-            "  nested:\n    summary: s\n    hops:\n      - lib/platform/a -> lib/platform/b.run\n    expect: e\n"
-            "  root:\n    summary: s\n    hops:\n      - api -> src/session.serve\n    expect: e\n")
+            "  plain:\n    summary: s\n    hops:\n      - api -> src/session.serve: ok\n      - src/session -> src/runtime.do: ok\n      - src/runtime -> src/serial.go: ok\n    expect: e\n"
+            "  nested:\n    summary: s\n    hops:\n      - lib/platform/a -> lib/platform/b.run: ok\n    expect: e\n"
+            "  root:\n    summary: s\n    hops:\n      - api -> src/session.serve: ok\n    expect: e\n")
     units = {"src/session": "needs:\n  x: " + contract("x") + "\ncapabilities:\n  api: " + contract("api") + "\n",
              "src/runtime": "needs:\n  y: " + contract("y") + "\ncapabilities:\n  x: " + contract("x") + "\n",
              "src/serial": "capabilities:\n  y: " + contract("y") + "\n",
-             "lib/platform": "kind: stateful\nwiring:\n  a.z: b.z\nscenarios:\n  inside:\n    summary: s\n    hops:\n      - a -> b.run\n    expect: e\n",
+             "lib/platform": "kind: stateful\nwiring:\n  a.z: b.z\nscenarios:\n  inside:\n    summary: s\n    hops:\n      - a -> b.run: ok\n    expect: e\n",
              "lib/platform/a": "needs:\n  z: " + contract("z") + "\n", "lib/platform/b": "capabilities:\n  z: " + contract("z") + "\n"}
     folder = new_project(tmp, project(root, units, contracts={"api": ["serve"], "x": ["do"], "y": ["go"], "z": ["run"]}))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     check(runner.findings(folder) == [], f"the fixture is clean: {runner.findings(folder)}")
     out = Path(tmp) / "map.html"
     done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
@@ -1332,7 +1363,7 @@ def scenario_explore_documents(runner: Runner, tmp: str):
         "docs/references/api/get.md": "# get\n\nKind: query\n",
         "docs/skills/do-it/SKILL.md": SKILL + "\nSteps.\n",
         **with_decision("proposed", "decision-makers: [Ann]\n")}))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     out = Path(tmp) / "map.html"
     done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
     check(done.returncode == 0, f"explore: {done.stderr}")
@@ -1385,12 +1416,12 @@ def scenario_explore_documents(runner: Runner, tmp: str):
 def scenario_lifeline_order(runner: Runner, tmp: str):
     """A lifeline stands right after the ones introduced through the same partner: d, introduced by b, comes before c."""
     root = ("capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n  a.y: c.y\n  b.z: d.z\n"
-            "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a -> b.do\n      - a -> c.go\n      - b -> d.run\n    expect: e\n")
+            "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve: ok\n      - a -> b.do: ok\n      - a -> c.go: ok\n      - b -> d.run: ok\n    expect: e\n")
     units = {"a": "needs:\n  x: {summary: s, contract: ref:x}\n  y: {summary: s, contract: ref:y}\ncapabilities:\n  api: {summary: s, contract: ref:api}\n",
              "b": "needs:\n  z: {summary: s, contract: ref:z}\ncapabilities:\n  x: {summary: s, contract: ref:x}\n",
              "c": "capabilities:\n  y: {summary: s, contract: ref:y}\n", "d": "capabilities:\n  z: {summary: s, contract: ref:z}\n"}
     folder = new_project(tmp, project(root, units, contracts={"api": ["serve"], "x": ["do"], "y": ["go"], "z": ["run"]}))
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     order = re.findall(r"^  participant (\S+)", (folder / "docs/diagrams/scenario-s1.md").read_text(), re.M)
     check(order == ["papi", "pa", "pb", "pd", "pc"], f"lifelines by first partner, depth first: {order}")
 
@@ -1399,20 +1430,20 @@ def scenario_robustness(runner: Runner, tmp: str):
     files = project("wiring:\n" + "".join(f"  u{i}.x: u{(i + 1) % 1200}.x\n" for i in range(1200)),
                     {f"u{i}": NEEDS_X + CAPABILITY_X for i in range(1200)})
     folder = new_project(tmp, files)
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     found = runner.findings(folder)
     check(found == ["warn W7 unifold.yaml"], f"a cycle through 1200 siblings: {found[:5]}")
     deep = Path(tmp) / "deep" / "demo"
     write_files(deep, {"unifold.yaml": ROOT, "README.md": README.format(name="demo"), **{
         "/".join(["d"] * n) + "/unifold.yaml": COMPOSITE if n < 39 else UNIT for n in range(1, 40)}, **{
         "/".join(["d"] * n) + "/README.md": README.format(name="d") for n in range(1, 40)}})
-    runner.run("generate", str(deep))
+    runner.run("check", "--fix", str(deep))
     check(runner.findings(deep) == [], "39 levels deep")
     odd = Path(tmp) / "odd" / "demo"
     write_files(odd, project(files={"docs/x.md/keep.txt": "a folder named like a file\n",
                                  "docs/references/utf16.md": "x"}))
     (odd / "docs/references/utf16.md").write_bytes("# T\n".encode("utf-16"))
-    runner.run("generate", str(odd))
+    runner.run("check", "--fix", str(odd))
     done = runner.run("check", "--json", str(odd))
     check(done.returncode in (0, 1) and json.loads(done.stdout), "odd files do not crash check")
     for command in (["show", str(odd / "missing")], ["init", str(odd / "unifold.yaml")],
@@ -1423,7 +1454,7 @@ def scenario_robustness(runner: Runner, tmp: str):
     crlf = Path(tmp) / "crlf" / "demo"
     write_files(crlf, {k: v.replace("\n", "\r\n") for k, v in
                        project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}).items()})
-    runner.run("generate", str(crlf))
+    runner.run("check", "--fix", str(crlf))
     check(runner.findings(crlf) == [], "CRLF line ends")
     sub = runner.run("check", "--json", cwd=str(crlf / "a"))
     check(json.loads(sub.stdout)["summary"]["units"] == 3, "run from a folder below the root")
@@ -1441,7 +1472,7 @@ def scenario_gitignore(runner: Runner, tmp: str):
         "docs/scratch.md": "# Scratch\n"}))
     done = subprocess.run(["git", "init", "-q", str(folder)], capture_output=True, text=True)
     check(done.returncode == 0, f"git init: {done.stderr}")
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     found = runner.findings(folder)
     check(found == [], f"ignored unit and document are not seen: {found}")
     rows, _ = runner.json("tree", "--json", str(folder))
@@ -1455,16 +1486,37 @@ def scenario_gitignore(runner: Runner, tmp: str):
           and "error G1 build/x/AGENTS.md" in found and "info S12 docs/scratch.md" in found,
           f"without .gitignore everything is seen: {found}")
     (folder / ".gitignore").write_text("build/\na/docs/references/generated.md\nscratch.md\ndocs/diagrams/\n")
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     found = runner.findings(folder)
     check(found == ["error G1 docs/diagrams/component.md"], f"an ignored generated file is reported: {found}")
+
+
+def scenario_states(runner: Runner, tmp: str):
+    folder = new_project(tmp, state_project())
+    runner.run("check", "--fix", str(folder))
+    check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
+    page = (folder / "docs/diagrams/states-x.md").read_text()
+    check(page.startswith(MARK) and "stateDiagram-v2" in page and "[*] --> sclosed" in page
+          and "sopen --> sclosed: send · lost" in page,
+          f"a contract with states gets a state diagram:\n{page}")
+    scenario = (folder / "docs/diagrams/scenario-s1.md").read_text()
+    check("  Note over pb: closed\n  pa->>pb: 2 · open() → ok" in scenario and "  Note over pb: open\n" in scenario
+          and "| 3 | `a` | `b` | `send([1])` | command | lost | closed |" in scenario,
+          f"a hop shows its call and result, and a note the state:\n{scenario}")
+    data, _ = runner.json("model", "--json", str(folder))
+    hop = data["units"][0]["scenarios"][0]["hops"][2]
+    check(hop["input"] == "[1]" and hop["result"] == "lost" and hop["state-before"] == "open" and hop["state"] == "closed",
+          f"the model has input, result and states: {hop}")
+    need = next(n for u in data["units"] if u["path"] == "a" for n in u["needs"] if n["name"] == "x")
+    check(need["contract-states"]["start"] == "closed" and "contract-scenarios" not in need,
+          f"the model has the states of a contract: {need['contract-states']}")
 
 
 def scenario_model(runner: Runner, tmp: str):
     """`model --json` prints the resolved project with the schema of tool-json.md."""
     files = project("needs:\n  clock: {summary: s, contract: ref:clock, platform: true}\n"
                     + SCENARIO_ROOT.replace("  a.x: b.x\n", "  a.x: b.x\n  a.clock: clock\n")
-                                   .replace("      - a -> b.do\n", "      - a -> b.do\n      - a -> clock.now\n"),
+                                   .replace("      - a -> b.do: ok\n", "      - a -> b.do: ok\n      - a -> clock.now: ok\n"),
                     {"a": NEEDS_X + "  clock: {summary: s, contract: ref:clock}\n"
                           "capabilities:\n  api: {summary: s, contract: ref:api}\n"
                                               "secret:\n  what: w\n  decision: docs/decisions/0001-x.md\nnot:\n  - y: x\nx-maike-group: g\n",
@@ -1473,10 +1525,10 @@ def scenario_model(runner: Runner, tmp: str):
                      "docs/decisions/0001-q.md": DECISION.format(status="proposed", date="2026-10-07", more="") + "\n## Answer\n\n"},
                     contracts={**SCENARIO_CONTRACTS, "clock": ["now"]})
     folder = new_project(tmp, files)
-    runner.run("generate", str(folder))
+    runner.run("check", "--fix", str(folder))
     check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
     data, done = runner.json("model", "--json", str(folder))
-    check(done.returncode == 0 and data["unifold-model"] == "0.3" and data["project"] == "demo", f"model: {data.keys()}")
+    check(done.returncode == 0 and data["unifold-model"] == "0.4" and data["project"] == "demo", f"model: {data.keys()}")
     units = {u["path"]: u for u in data["units"]}
     check([u["path"] for u in data["units"]] == [".", "a", "b"], "units in order, the root first")
     a = units["a"]
@@ -1495,9 +1547,11 @@ def scenario_model(runner: Runner, tmp: str):
     check(forms == ["connection", "implemented-by", "passed-up"], f"wiring forms: {forms}")
     scenario = root["scenarios"][0]
     check(scenario["name"] == "s1" and scenario["hops"][0]["via"] == [{"unit": ".", "key": "api"}]
-          and scenario["hops"][1] == {"caller": "a", "target": "b", "part": "do", "part-kind": "query",
-                                      "contract": "docs/references/x.md", "caller-unit": "a", "target-unit": "b",
-                                      "via": [{"unit": ".", "key": "a.x"}]}
+          and scenario["hops"][1] == {"caller": "a", "target": "b", "part": "do", "input": None, "result": "ok",
+                                      "part-kind": "query", "contract": "docs/references/x.md", "caller-unit": "a",
+                                      "target-unit": "b", "via": [{"unit": ".", "key": "a.x"}],
+                                      "state-before": None, "state": None}
+          and scenario["given"] == []
           and scenario["hops"][2]["via"] == [{"unit": ".", "key": "a.clock"}], f"hops: {scenario['hops']}")
     check(data["root-needs"] == [{"name": "clock", "platform": True, "reached-by": ["a"]}], f"root needs: {data['root-needs']}")
     question = root["decisions"][0]
@@ -1516,13 +1570,14 @@ def scenario_model(runner: Runner, tmp: str):
 
 SCENARIOS = [
     ("scenario-model", scenario_model),
+    ("scenario-states", scenario_states),
     ("scenario-lifeline-order", scenario_lifeline_order),
     ("scenario-gitignore", scenario_gitignore),
     ("scenario-json-on-failure", scenario_json_on_failure),
     ("scenario-finding-shape-text-github-strict", scenario_finding_shape),
     ("scenario-generate-is-idempotent", scenario_generate_is_idempotent),
     ("scenario-show-capability-impact-tree", scenario_show_port_impact),
-    ("scenario-stamps-and-cited-by", scenario_stamps),
+    ("scenario-stamps-and-impact", scenario_stamps),
     ("scenario-row-citation", scenario_row_citation),
     ("scenario-check-fix", scenario_check_fix),
     ("scenario-agents-generated", scenario_agents_generated),
@@ -1588,7 +1643,7 @@ def main() -> int:
             write_files(folder / "demo", files)
             (folder / "expected.txt").write_text("".join(e + "\n" for e in sorted(expected)))
             (folder / "run.json").write_text(json.dumps(
-                {"generate": options.get("generate", True),
+                {"fix": options.get("fix", True),
                  "check": ["check", "--json", *options.get("args", []), "demo"]}) + "\n")
         print(f"wrote {len(CASES)} cases to {args[1]}")
         return 0

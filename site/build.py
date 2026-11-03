@@ -839,7 +839,7 @@ def build() -> None:
         if not need.exists():
             die(f"{need.relative_to(ROOT)} is missing.")
 
-    version = "0.3"
+    version = "0.4"
     for name in ("unifold.yaml",):
         f = ROOT / name
         if f.exists():

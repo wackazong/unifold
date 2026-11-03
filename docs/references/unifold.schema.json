@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unifold.md/0.3/unifold.schema.json",
+  "$id": "https://unifold.md/0.4/unifold.schema.json",
   "title": "unifold manifest",
   "description": "A unifold.yaml: the manifest of a unit. See https://unifold.md/spec. Keys marked 'root only' are allowed in the manifest of the project root, which is the one that has the key `unifold`.",
   "type": "object",
@@ -17,7 +17,7 @@
     "unifold": {
       "description": "Root only, and required there: the version of the standard, as a string.",
       "enum": [
-        "0.3"
+        "0.4"
       ]
     },
     "name": {
@@ -36,7 +36,7 @@
       }
     },
     "kind": {
-      "description": "Free text. logic, stateful and adapter are well known and carry rules. Required on a unit with children below the root.",
+      "description": "Free text. logic, stateful and adapter are well known and carry rules.",
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\n]*\\S[^\\n]*$"
@@ -49,12 +49,6 @@
         "deprecated"
       ],
       "default": "active"
-    },
-    "owner": {
-      "description": "Team or person responsible. Units below inherit it.",
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^[^\\n]*\\S[^\\n]*$"
     },
     "secret": {
       "description": "What the unit hides because it is hard to get right or likely to change.",
@@ -176,25 +170,12 @@
       }
     },
     "diagrams": {
-      "description": "Root only. parents: diagrams for units that have children. all: also a context diagram for every other unit. none: no diagrams.",
+      "description": "Root only. parents: diagrams for units that have children. none: no diagrams.",
       "enum": [
         "parents",
-        "all",
         "none"
       ],
       "default": "parents"
-    },
-    "diagram-links": {
-      "description": "Root only. How boxes in generated diagrams link: none, relative, or the base URL of the repository's file view.",
-      "type": "string",
-      "pattern": "^(none|relative|https?://.+)$",
-      "default": "none"
-    },
-    "max-lines": {
-      "description": "Root only. The line limit for hand-written documents.",
-      "type": "integer",
-      "minimum": 1,
-      "default": 200
     }
   },
   "$defs": {
@@ -230,12 +211,6 @@
       "properties": {
         "summary": {
           "$ref": "#/$defs/summary"
-        },
-        "kind": {
-          "description": "Free text for the technical nature, for example library, http, events, cli.",
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[^\\n]*\\S[^\\n]*$"
         },
         "contract": {
           "oneOf": [
@@ -283,12 +258,6 @@
       "properties": {
         "summary": {
           "$ref": "#/$defs/summary"
-        },
-        "kind": {
-          "description": "Free text for the technical nature.",
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[^\\n]*\\S[^\\n]*$"
         },
         "contract": {
           "oneOf": [
@@ -353,14 +322,52 @@
           "type": "string",
           "description": "Free text: where the story comes from."
         },
+        "given": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "A condition, as a sentence. No checker reads it."
+              },
+              {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 1,
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number"
+                  ],
+                  "minLength": 1
+                },
+                "description": "`unit.capability: state` or `need: state`: a connection whose contract has `## States`, and the state the path starts in."
+              }
+            ]
+          },
+          "description": "The state the path starts in."
+        },
         "hops": {
           "type": "array",
           "minItems": 1,
           "items": {
-            "type": "string",
-            "pattern": "^\\s*\\S.*\\s->\\s.*\\S\\.[A-Za-z0-9][A-Za-z0-9_-]*\\s*$"
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "propertyNames": {
+              "pattern": "^\\s*\\S.*\\s->\\s.*\\S\\.[A-Za-z0-9][A-Za-z0-9_-]*(\\(.*\\))?\\s*$"
+            },
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "minLength": 1
+            },
+            "description": "`caller -> target.part(input): result`: units by their path from this unit, a capability or need of this unit bare. The input in parentheses is optional; the result is required."
           },
-          "description": "`caller -> target.part`: units by their path from this unit, a capability or need of this unit bare."
+          "description": "The calls of the path in order, each mapped to its result."
         },
         "expect": {
           "type": "string",
