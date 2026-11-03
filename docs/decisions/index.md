@@ -85,3 +85,7 @@ Only accepted and derived decisions bind.
 | 0077 | [Call the page the explorer, open it with `unifold explore`, and keep it out of the repository](0077-call-the-page-the-explorer-and-keep-it-out-of-the-repository.md) | accepted | 2026-11-02 |
 | 0078 | [Write for a reader who has not read the sources, and warn about a decision number without a link](0078-write-for-a-reader-who-has-not-read-the-sources.md) | accepted | 2026-11-02 |
 | 0079 | [Describe what a unit does and needs, not the state of the work](0079-describe-what-a-unit-does-not-the-state-of-the-work.md) | accepted | 2026-11-02 |
+| 0080 | [Describe the current state in every document but a decision, and name no decision in a reference](0080-describe-the-current-state-and-name-no-decision-in-a-reference.md) | accepted | 2026-11-03 |
+| 0081 | [Let an accepted decision gain links to the documents it changes](0081-let-an-accepted-decision-gain-links-to-the-documents-it-changes.md) | accepted | 2026-11-03 |
+| 0082 | [Describe how a contract is used and which states it has, give every hop a result, and call the standard 0.4](0082-describe-the-use-and-the-states-of-a-contract-and-the-result-of-every-hop.md) | accepted | 2026-11-03 |
+| 0083 | [Remove commands, settings, rules and keys that carry little](0083-remove-commands-settings-and-keys-that-carry-little.md) | proposed | 2026-11-03 |
