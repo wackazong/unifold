@@ -73,11 +73,11 @@ capabilities:
 
 ## Adapters
 
-If a need and its provider state different kinds, for example `library` and `http`, the checker reports it. Usually a part is missing: an adapter, which is a unit that needs the one and provides the other. Do not change the kind of the need to make the finding go away.
+When a need is met in another form than the one the unit expects, for example over HTTP instead of as a library call, a part is usually missing: an adapter, a unit that needs the one form and provides the other. The two forms are two contracts, so the checker reports the connection whose sides name different contracts. Do not change the contract of the need to make the finding go away.
 
 ## Kinds of units
 
-`kind` on a unit is free text, and three values carry rules:
+`kind` on a unit is optional free text, and three values carry rules:
 
 | Kind | Meaning | Rule |
 |---|---|---|
@@ -85,25 +85,29 @@ If a need and its provider state different kinds, for example `library` and `htt
 | `stateful` | Keeps state, such as a session or a state machine. | May need anything. |
 | `adapter` | The one unit that talks to one external system, a need of the root. | The final provider of none of its needs is an `adapter`. |
 
-A need of the root is finally reached only by adapters, unless it is marked `platform: true`. That mark is for a service of the host such as time or randomness, which is not an external system and whose contract describes a controllable fake, such as a clock that tests move forward. A unit that states no kind is not judged by this rule. A unit with children carries a kind too; it says what the box is to its parent's wiring. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`. The root needs no kind but may state one.
+A need of the root is finally reached only by adapters, unless it is marked `platform: true`. That mark is for a service of the host such as time or randomness, which is not an external system and whose contract describes a controllable fake, such as a clock that tests move forward. A unit that states no kind is not judged by this rule. A unit with children may carry a kind too; it says what the box is to its parent's wiring. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`.
 
 What the kinds give: a logic unit can be tested without any fake, so its tests are the cheapest and its examples the most trustworthy; an adapter is the only place where an external protocol lives, so an integration harness puts fakes at the needs of the root and nowhere else; a stateful unit is where state machines live, so its `runtime.md` is where a reviewer looks for them. Any other value is allowed; the checker says so once, as information, and applies no rule.
 
 ## Scenarios
 
-A scenario tells one story as the chain of calls it causes, in the manifest of a unit under `scenarios`. Each hop is `caller -> target.part`. A unit is named by its path from the holding unit; a capability or need of the holding unit is named bare:
+A scenario is a path through the software. A scenario tells one story as the chain of calls it causes, in the manifest of a unit under `scenarios`. Each hop is `caller -> target.part(input): result`. A unit is named by its path from the holding unit; a capability or need of the holding unit is named bare:
 
 ```yaml
 scenarios:
   open:
     summary: The host opens a session
     source: proto §5
+    given:
+      - transport.transport: idle
     hops:
-      - host -> session.open
-      - session -> transport.send
-      - transport/serial -> uart.write
+      - host -> session.open(): ok
+      - session -> transport.send([00]): ok
+      - transport/serial -> uart.write([1F 00]): 2 bytes written
     expect: one frame 1F 00 on the line
 ```
+
+A path along a single connection is a scenario too, held by the unit that wires the connection. How the connection is used in general is `## Use` of its contract, in words. Every scenario follows the `## States` of the contracts it uses: `given` sets the state a connection starts in, every hop must be allowed in the current state, and the checker follows each connection from hop to hop ([contracts.md](../references/contracts.md#states)). A path that a connection does not allow is an error of the map, found before anyone writes code.
 
 | Hop | Resolves through | The part is looked up in |
 |---|---|---|
@@ -116,7 +120,7 @@ The contract of a connection is one document at every level, so the part is foun
 
 ## Contracts of a connection
 
-A connection carries information in some form: a wire format, a schema, a trait, a command line. The contract of the connection is the reference that defines that form, with examples, and both sides name it. It is not the kind: `http` says how the sides talk, the contract says what they say. And it is not a schema file such as `openapi.yaml` or a `.proto`, even where code is generated from one: such a file stays with the code that uses it. The checker reports a connection whose two sides name different documents, or none.
+A connection carries information in some form: a wire format, a schema, a trait, a command line. The contract of the connection is the reference that defines that form, with examples, and both sides name it. It is not a protocol name: `http` says how the sides talk, the contract says what they say. And it is not a schema file such as `openapi.yaml` or a `.proto`, even where code is generated from one: such a file stays with the code that uses it. The checker reports a connection whose two sides name different documents, or none.
 
 A manifest never points into a sibling, so the contract of a connection between two children lives in the references of the unit that wires them, or higher: `docs/references/clock.md` of the parent, named as `../docs/references/clock.md` by both. A protocol that several parts implement, such as a radio profile served by a device and by its emulator, is such a document, not a unit: a unit holds code. A definition from outside the project, such as the API of a vendor, gets a reference of the root as well, which links the definition by its URL.
 

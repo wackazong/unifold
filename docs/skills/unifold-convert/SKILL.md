@@ -35,10 +35,10 @@ Before you write manifests for a large repository, tell the person which folders
 
 Write each manifest from the template [unifold.template.yaml](../unifold/assets/unifold.template.yaml), from the point of view of that unit:
 
-1. `responsibility`: what the unit is responsible for, in one sentence. The README and the package description help; write `TODO` only when you cannot say it. A unit with children also gets a `kind`.
+1. `responsibility`: what the unit is responsible for, in one sentence. The README and the package description help; write `TODO` only when you cannot say it.
 2. `capabilities`: what the unit provides to others. Name each after what it provides, not after the package or the technology: `matcher`, not `grep-regex`. Declare one capability per thing that others depend on separately; a package with one public interface has one. The `contract` comes with the wiring, below.
 3. `needs`: what the unit needs from outside, in its own words, never who provides it: `clock`, `cart-store`, `api-definition`. Do not declare the language runtime, the standard library, registry packages or logging. Declare one need per thing; two packages that give the same thing are one need.
-4. `status: planned` where the code does not exist yet; `kind` where it says something (`service`, `library`, `cli`, `adapter`); `owner` where known.
+4. `status: planned` where the code does not exist yet; `kind` where it says something (`logic`, `stateful`, `adapter`, or a word of the project such as `service`).
 5. A need of the project itself is a need of the root: a database, a cloud API, a cluster. What code outside is written against or a person uses, such as an API, a command line or a UI, is a capability of the root; a project that nobody uses that way, such as a controller that reads sensors and switches a relay, has none.
 6. Every unit needs a `README.md`. Keep one that exists. Where there is none, write a short one from the template ([README.template.md](../unifold/assets/README.template.md)): the heading, one paragraph on what the unit is for, and a `## Why` of a few lines.
 
@@ -46,7 +46,7 @@ Then the wiring, in the manifest of the nearest unit above both sides: `child.ne
 
 Then the contracts. Every connection carries something in some form. Both of its sides name the document that defines it. The document lies in `docs/references/` of the unit that holds the wiring, or of a unit above it, never in a sibling or a child. A need that is passed up names the same document at every level.
 
-A contract is always a Markdown reference: never a kind such as `http` or `json`, never a schema, a `.proto` or an OpenAPI file, and never a URL. A definition from outside the project is linked from the reference. Where such a file already defines the interface, it stays with the code that uses it; the contract names it under `Sources:`, and a part's signature may quote it in its notation. Write each contract from [contract.template.md](../unifold/assets/contract/contract.template.md) as the skill `unifold` says under "Write a contract": `## Parts` with a signature and examples for every operation, event or type the sides use, then `## Fake`. Take the examples from existing tests where there are any.
+A contract is always a Markdown reference: never a protocol or format name such as `http` or `json`, never a schema, a `.proto` or an OpenAPI file, and never a URL. A definition from outside the project is linked from the reference. Where such a file already defines the interface, it stays with the code that uses it; the contract names it under `Sources:`, and a part's signature may quote it in its notation. Write each contract from [contract.template.md](../unifold/assets/contract/contract.template.md) as the skill `unifold` says under "Write a contract": `## Use` with the order of the calls, `## States` where the code keeps a state that a caller sees, `## Parts` with a signature and examples for every operation, event or type the sides use, then `## Fake`. Take the examples and the order of the calls from existing tests where there are any, and the states from the code that checks them.
 
 ## 3. Check the map, then compare it with the code
 

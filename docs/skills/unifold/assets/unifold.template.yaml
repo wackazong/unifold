@@ -1,13 +1,12 @@
-# yaml-language-server: $schema=https://unifold.md/0.3/unifold.schema.json
+# yaml-language-server: $schema=https://unifold.md/0.4/unifold.schema.json
 # Manifest of a unit. The folder name is the unit's name. Only 'responsibility' is
-# required; a unit with children also needs 'kind'. Delete what you do not need.
+# required. Delete what you do not need.
 # Standard: https://unifold.md/spec
 responsibility: <what the unit is responsible for, in one sentence>
-# unifold: "0.3"         # root only: the version of the standard
+# unifold: "0.4"         # root only: the version of the standard
 # name: <project-name>   # root only, and every root should set it; default: the folder name
 # status: planned        # planned | active (default) | deprecated
-# kind: <logic | stateful | adapter | any other word>   # required on a unit with children
-# owner: <team or person>
+# kind: <logic | stateful | adapter | any other word>   # the first three carry rules
 secret:
   what: <the one piece of knowledge this unit hides, in one line>
   decision: docs/decisions/<NNNN-title>.md   # a decision of this unit or an ancestor that says why
@@ -18,7 +17,6 @@ capabilities:
   <capability-name>: <what the capability provides, in one line>
   <other-capability>:
     summary: <what the capability provides, in one line>
-    kind: <library | http | events | cli | ...>
     contract: ../docs/references/<topic>.md   # the reference of the parent that defines the connection
 needs:
   <need-name>: <what this unit expects from whoever provides it>
@@ -41,12 +39,15 @@ wiring:                      # only in a unit that has child units; every connec
   <child>.<need>:                     # named alternatives; the first is the default
     <name>: <child>.<capability>
     <other-name>: <other-child>.<capability>
-scenarios:                   # one story as the chain of calls it causes
+scenarios:                   # a feature: one story as the chain of calls it causes
   <scenario-name>:
     summary: <what happens, in one line>
     source: <where the story comes from, free text>
-    hops:
-      - <own-capability> -> <child>.<part>        # the entry: a capability of this unit, implemented by a child
-      - <child> -> <other-child>.<part>           # a need of the caller, met by the target
-      - <child>/<grandchild> -> <own-need>.<part> # a need passed up to a need of this unit
+    given:                     # optional: the state the path starts in
+      - <child>.<capability>: <a state of its contract's ## States>
+      - <a condition, as a sentence>
+    hops:                      # caller -> target.part(input): result; the result is required
+      - <own-capability> -> <child>.<part>(<input>): <result>        # the entry: implemented by a child
+      - <child> -> <other-child>.<part>(<input>): <result>           # a need of the caller, met by the target
+      - <child>/<grandchild> -> <own-need>.<part>(<input>): <result> # a need passed up to a need of this unit
     expect: <the observable outcome, exact where the source gives it>

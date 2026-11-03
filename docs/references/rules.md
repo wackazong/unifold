@@ -23,7 +23,7 @@ The parts are: severity, rule, the file to change with the line, what is wrong, 
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
-| <a id="s1"></a>`S1` | error | The root manifest states `unifold: "0.3"`, as a string. | Write `unifold: "0.3"` in the root `unifold.yaml`. A 0.2 project is rewritten by hand: `summary` of a unit becomes `responsibility`, `verified-by` goes, a unit with children gets a `kind`. |
+| <a id="s1"></a>`S1` | error | The root manifest states `unifold: "0.4"`, as a string. | Write `unifold: "0.4"` in the root `unifold.yaml`. A 0.3 project is rewritten by hand: every hop gets a result, `caller -> target.part(input): result`. A 0.2 project also needs `responsibility` instead of `summary` on a unit, and no `verified-by`. |
 | <a id="s3"></a>`S3` | error | Every unit has a `README.md`. | Write the file (the template is in the `unifold` skill). |
 | <a id="s7"></a>`S7` | error | Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`. | Correct the front matter. |
 | <a id="s9"></a>`S9` | error | A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has an ISO `date` and a `status` that is proposed, accepted, rejected, deprecated, superseded by NNNN, or derived; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision; `derived` has `derived-from` and a section `## Source says`. | Correct the file name or the front matter; give a derived decision the passage it rests on. |
@@ -34,7 +34,7 @@ The parts are: severity, rule, the file to change with the line, what is wrong, 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
 | <a id="m1"></a>`M1` | error | A manifest is a YAML mapping without duplicate keys. | Correct the YAML. The unit and its wiring are not checked until it parses. |
-| <a id="m2"></a>`M2` | error | A manifest has a one-line `responsibility` and otherwise only the keys, types and values of the standard; a unit with children below the root states a `kind`; root-only keys are in the root; `platform` stands on a need of the root only; `contract` is a path or a mapping with `path` and `parts`; names of capabilities, needs and scenarios use letters, digits, `-` and `_` and start with a letter or digit; no text is a placeholder (`<...>`). | Correct the key or value named in the message. `summary` of a unit is `responsibility` since 0.3. Project-specific keys start with `x-`. |
+| <a id="m2"></a>`M2` | error | A manifest has a one-line `responsibility` and otherwise only the keys, types and values of the standard; root-only keys are in the root; `platform` stands on a need of the root only; `contract` is a path or a mapping with `path` and `parts`; names of capabilities, needs and scenarios use letters, digits, `-` and `_` and start with a letter or digit; no text is a placeholder (`<...>`). | Correct the key or value named in the message. A unit has `responsibility`, not `summary`. Project-specific keys start with `x-`: write `owner`, and `kind` on a capability or need, as `x-owner` and `x-kind`. `max-lines` and `diagram-links` do not exist; delete them. |
 | <a id="m7"></a>`M7` | error | `contract` is a path, relative to the manifest, to a Markdown file that exists in `docs/references/` of this unit or of an ancestor. | Write the contract as `docs/references/<topic>.md` of the unit that wires the connection, and name it from both sides. A schema file is not a contract, and a definition from outside the project is linked from the reference by its URL. Otherwise correct the path, create the file, or remove the key until there is something to point at. |
 | <a id="m10"></a>`M10` | warn | No responsibility or summary is still `TODO`. | Replace `TODO` with one line that says what the unit, capability or need is. |
 | <a id="m11"></a>`M11` | error | Every name under `parts` is a part of the named contract: a `###` heading under `## Parts`, or a file in the contract folder. | Correct the name, or add the part to the contract. |
@@ -48,7 +48,6 @@ A finding about wiring names the manifest that holds the line: the parent's for 
 | <a id="w1"></a>`W1` | error | Every wiring line has an allowed form and names an existing direct child, capability or need, on the correct side. A bare key names a capability or a need of the unit, not both. A need of a child is passed up only to a need that the unit does not meet inside, and a need that a child meets inside is not wired again. A connection joins two units; a folder is never a provider. | Correct the reference. `unifold show` lists the names; where two children share a folder name, write the path (`a/utils.matcher`). Code that is not a unit gets a folder with a `unifold.yaml`. |
 | <a id="w2"></a>`W2` | error | Every need of every child is connected by a line in the parent's wiring, unless it is `optional` or the child meets it inside. | Add `child.need: provider` to the parent's wiring, for a capability of a sibling, or declare a need in the parent and pass the need up (`child.need: need`). Do not mark a need optional to silence this. |
 | <a id="w3"></a>`W3` | warn | Every capability of a child is used: a wiring line names it as the provider of a need of a sibling or of the parent itself, or a capability of the parent is implemented by it. | Wire the unit that should use it; where code of the parent itself uses it, declare a need in the parent and wire it (`need: child.capability`); or implement a capability of the parent with it (`capability: child.capability`); or remove the capability. |
-| <a id="w4"></a>`W4` | warn | A need and its provider have the same `kind`, if both state one. | Put an adapter unit between the two, or correct the kind that is wrong. |
 | <a id="w7"></a>`W7` | warn | The children of a unit do not need each other in a cycle. | Move what both need into a third unit, or turn one direction around (the other side subscribes). |
 | <a id="w9"></a>`W9` | warn | An `active` unit does not get a mandatory need from a provider that is `planned` or `deprecated` (default alternative). | Correct the status, or wire a provider that exists. |
 | <a id="w11"></a>`W11` | error | Every side of a connection names a contract, and both sides name the same document. | Write the definition as a reference of this unit, the one that holds the wiring, or of a unit above it, and point both sides at it with `contract`. |
@@ -69,9 +68,11 @@ A finding about wiring names the manifest that holds the line: the parent's for 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
 | <a id="n1"></a>`N1` | error | Every hop resolves to one connection, its part is in that connection's contract, and no name is ambiguous: a name that is both a descendant and a capability or need of the holding unit, or two connections between the same units whose contracts both have the part. | Wire the connection the hop needs, add the part to the contract, or rename what is ambiguous. |
-| <a id="n2"></a>`N2` | error | A scenario has `summary`, `hops` (a list of `caller -> target.part`) and `expect`; its name follows the rule for names. | Complete the scenario. |
+| <a id="n2"></a>`N2` | error | A scenario has `summary`, `hops` and `expect`; its name follows the rule for names. A hop is `caller -> target.part: result`, with an optional input in parentheses after the part, and a result that is text. `given` is a list whose items are a sentence or `connection: state`. | Complete the scenario. Give every hop its result, for example `- host -> session.open(): ok`. Quote a result that YAML reads as something other than text, such as `"yes"` or `"null"`. |
 | <a id="n3"></a>`N3` | warn | Every wiring line of a unit is used by a hop of a scenario that passes through the unit. Silent where no scenario passes through the unit. | Write the scenario that needs the line, or remove the connection. |
 | <a id="n4"></a>`N4` | info | Every command, query and event of a contract is used by a hop of a scenario. Silent where the project has no scenario, or a hop does not resolve. | Write the scenario that uses the part, or remove the part from the contract. |
+| <a id="n5"></a>`N5` | error | An item `connection: state` under `given` names a connection the way a hop names its target, `unit.capability` or a need of the holding unit, whose contract has `## States`, and a state of that table. | Correct the name or the state, or write the condition as a sentence. |
+| <a id="n6"></a>`N6` | error | Every hop over a connection whose contract has `## States` is allowed in the current state of that connection, with its result. A connection starts in the state that `given` names, or else in the start state of its contract. | Correct the hop or its result, set the state the path starts from under `given`, or add the row that allows the step to the `## States` table of the contract. |
 
 ## C: contracts
 
@@ -84,6 +85,8 @@ These rules read the documents that manifests name as `contract`.
 | <a id="c3"></a>`C3` | warn | Every part has a fenced code block, its signature. | Write the signature in the notation the header names. |
 | <a id="c4"></a>`C4` | warn | A type is defined once within the subtree of the unit that holds the contract. | Keep one definition and link to it from the other contract. |
 | <a id="c5"></a>`C5` | warn | A contract has `## Fake`. | Say what stands in for the contract in the tests of its consumers. |
+| <a id="c6"></a>`C6` | warn | A contract has `## Use`. | Say how a consumer uses the connection: in which order it calls the parts, what it does when a call fails, and the rules that hold for every part. |
+| <a id="c7"></a>`C7` | error | A `## States` section has a line `Start: <state>` and a table `State | Part | Result | Next`. Every part is a command, query or event of the contract, every result is empty, `ok` or an error case of the part, every next state is a state of the table, the start state is one of them, and no two rows match the same step. | Correct the table. A deadline is an event part that the provider raises when the time is up, or the error of the next call. |
 
 ## L: links and context items
 
@@ -102,11 +105,10 @@ These rules read the hand-written documents of a unit ([documents.md](documents.
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
-| <a id="t1"></a>`T1` | warn | A hand-written document has at most `max-lines` lines (default 200). | Split the file: a reference into parts, the long why into `docs/explanation/reasoning.md`, a procedure into a skill. |
+| <a id="t1"></a>`T1` | warn | A hand-written document has at most 200 lines. | Split the file: a reference into parts, the long why into `docs/explanation/reasoning.md`, a procedure into a skill. |
 | <a id="t4"></a>`T4` | warn | The `## Why` section of `README.md` has at most 20 lines that are not blank. | Move the long form to `docs/explanation/reasoning.md`. |
 | <a id="t5"></a>`T5` | warn | A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest. | Rename or remove the section; the manifest is the list of capabilities and needs. |
-| <a id="t6"></a>`T6` | warn | Where the unit or an ancestor has `docs/references/constants.md`, every name in a code span of the unit's hand-written documents that matches the table's name pattern is a row of the nearest such table or of one above it. The table has the columns `Name` and `Value` first; the pattern is `name-pattern` in its front matter, by default capitals in at least two words. Fenced blocks are not read. Silent where no table exists. | Add the row to the constants table, or correct the name. |
-| <a id="t7"></a>`T7` | warn | In a hand-written document, a four-digit number that is the number of a decision of the unit or of an ancestor is part of a link, or follows the name or path of a unit and a slash, as in `transport/0002`. Code spans, fenced blocks and comments are not read. | Say in the sentence what the decision decides, and link the number to it; a decision of an ancestor through its item in `docs/explanation/context.md`. Where no link may go, such as to a decision of a child, write its unit before the number: `transport/0002`. |
+| <a id="t8"></a>`T8` | warn | A reference, a Markdown file in `docs/references/`, has no link into a `docs/decisions/` folder. | Delete the mention and state the fact as it is now. The reason stays in the decision, which links this reference; `unifold impact FILE` lists the decisions that link a file. Cite a source document as text, never a decision. |
 
 ## G: generated files
 
@@ -114,18 +116,18 @@ These rules read the hand-written documents of a unit ([documents.md](documents.
 
 | Rule | Severity | What must hold | How to fix |
 |---|---|---|---|
-| <a id="g1"></a>`G1` | error | Every generated file exists, is not ignored by git, and equals what the generator writes now, the scenario diagrams included; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated. | Run `unifold generate` (or `unifold check --fix`). A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command. |
+| <a id="g1"></a>`G1` | error | Every generated file exists, is not ignored by git, and equals what the generator writes now, the scenario diagrams included; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated. | Run `unifold check --fix`. A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command. |
 
 ## Order and cascades
 
 - A manifest that does not parse gives one `M1`. The unit keeps its place in the tree, its children keep their parent, and no wiring finding is reported for lines that name it.
-- A root manifest that does not parse, or states another version than 0.3, gives one `M1` or `S1` and nothing else: the project cannot be read.
+- A root manifest that does not parse, or states another version than 0.4, gives one `M1` or `S1` and nothing else: the project cannot be read.
 - `M1` and `S1` come first in the output; the rest is sorted by file and line.
 
 ## Rules of a project
 
 A project MAY add checks of its own in its build. It SHOULD NOT silence a rule of this table by weakening a manifest, for example by marking a need `optional`. Where a rule cannot be followed in one place, say so in a reference of the root unit, so that reviewers see the exception. A build process that fixes a finding at a later stage runs `check --ignore ID` for that rule until then.
 
-## Changes to this table
+## Rule ids
 
-Rule ids are never reused. The gaps in the numbering are rules that were merged or removed before version 0.1, and `D1` to `D3`, which compared the wiring with dependencies in code until version 0.2. Version 0.3 added `M11`, `T6` and the families `K`, `N` and `C`, and dropped nothing; `T7` followed within 0.3.
+A rule id is never reused. A gap in the numbering is the id of a rule that the tool does not have.

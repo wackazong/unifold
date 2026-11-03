@@ -4,7 +4,7 @@
 
 ## <Section>
 
-<Facts in the present tense. Tables for things with the same short attributes. No reasons (decisions), no work instructions (skills).>
+<Facts as they are now. Tables for things with the same short attributes. No reasons and no decision: the decision that settles a fact links this file. No work instructions (skills), no history, no notes about the work.>
 
 ## Examples
 

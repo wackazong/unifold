@@ -12,7 +12,7 @@ The [standard](spec.md) asks every unit for a manifest and a `README.md`. This c
 └── docs/
     ├── tutorials/      learn: a lesson that leads to a first result
     ├── skills/         do: a procedure for a task, for people and agents
-    ├── references/     look up: contracts, formats, glossary.md, constants.md
+    ├── references/     look up: contracts, glossary.md, constants.md
     ├── explanation/    understand: context.md, requirements.md, reasoning.md,
     │                   invariants.md, runtime.md, deployment.md, risks.md
     ├── decisions/      choices between options, with reasons; index generated
@@ -29,14 +29,16 @@ The folders follow [Diátaxis](https://diataxis.fr). Each kind serves one thing 
 |---|---|---|---|
 | Be taught, step by step, to a first result | Learn | `docs/tutorials/` | A lesson for a stated reader. It teaches; it does not define or instruct. |
 | Finish a task they already understand | Do | `docs/skills/` | A procedure in the Agent Skills format. |
-| Find a fact: a contract, a format, a term | Look up | `docs/references/`, the manifest, `README.md`, the generated diagrams | Facts in the present tense, complete, with examples. No reasons, no steps. |
+| Find a fact: a contract, a term, a value | Look up | `docs/references/`, the manifest, `README.md`, the generated diagrams | Facts as they are now, complete, with examples. No reasons, no steps. |
 | Know why it is so | Understand | `docs/explanation/`, `docs/decisions/` | Reasons, forces, trade-offs. No instructions, no facts that a reference states. |
 
 A fact has one home; other files link to it. A text that teaches, instructs, states and reasons at once is four texts.
 
+Every document but a decision describes the unit as it is now. The history is in the decisions and in version control. Plans and the progress of the work belong to the people and the process that do the work; inside the documents, the state of the work is only `status` in the manifest and the proposed decisions. A change rewrites every document it touches to the new state.
+
 ## README.md: the front page
 
-`README.md` is the first file every reader and agent opens. It says what the unit is for and why; the contracts say how to use it. A reader MUST be able to use the unit, or to provide what it needs, after reading `README.md` and the contracts that its manifest names ([0056](../decisions/0056-let-a-readme-point-at-its-contracts.md)).
+`README.md` is the first file every reader and agent opens. It says what the unit is for and why; the contracts say how to use it. A reader MUST be able to use the unit, or to provide what it needs, after reading `README.md` and the contracts that its manifest names.
 
 | Section | Content |
 |---|---|
@@ -56,7 +58,7 @@ Coding agents load this file when they work in the folder ([agents.md](agents.md
 
 ## docs/explanation: the architecture of the unit
 
-The explanation files are [arc42](https://arc42.org) cut down to what the folder tree and the manifests do not already say. Each has a fixed name, so that it is found in every unit, and exists only when it has content.
+The explanation files are [arc42](https://arc42.org) cut down to what the folder tree and the manifests do not already say. Each has the same fixed name in every unit and exists only when it has content.
 
 | File | Content | arc42 |
 |---|---|---|
@@ -71,11 +73,25 @@ The explanation files are [arc42](https://arc42.org) cut down to what the folder
 - The other sections of arc42 have homes outside this folder: context and scope (3) are `README.md` and the generated context diagram; building blocks (5) are the manifests and the generated diagrams; decisions (9) are `docs/decisions/`; the glossary (12) is `docs/references/glossary.md`.
 - A topic file beside the fixed ones, `docs/explanation/<topic>.md`, holds explanation that users of the unit need and that fits no fixed file.
 - No explanation file lists units, capabilities or connections, and none repeats a generated diagram by hand.
-- What several children must obey, such as a crosscutting concept (8), is a decision or a reference of the parent, because those are the files a child can cite in its `context.md`.
+- What several children must obey, such as a crosscutting concept (8), is a decision or a reference of the parent, which a child cites in its `context.md`.
+
+## docs/references: what a reader looks up
+
+A reference holds facts as they are now, complete, with examples. Most references of a unit are the contracts of the connections it wires, each a file or a folder of parts ([contracts.md](contracts.md)). Beside them:
+
+| File | Content |
+|---|---|
+| `glossary.md` | The terms that have one fixed meaning inside the unit, one row each. |
+| `constants.md` | The fixed values that the unit and the units below it use, one row each. |
+| `<topic>.md` | A fact that several contracts or the code of the unit share and that no contract owns, such as a convention or a format. |
+
+- A reference names no decision and gives no reasons. The decision that settles a fact links the reference.
+- A reference holds nothing about the work: no note about a step, a review or a test run, and no list of what is open or planned.
+- How a unit works inside is an explanation of that unit, in `runtime.md` or `invariants.md`, not a reference.
 
 ## Where a file may point
 
-These rules keep a parent small and a child understandable alone. They hold for links in the hand-written files of a unit. Links are relative. Who is on the other side of a capability is not written by hand; `unifold show` and the generated diagrams say it.
+These rules hold for links in the hand-written files of a unit. Links are relative. Who is on the other side of a capability is not written by hand; `unifold show` and the generated diagrams say it.
 
 | Direction | Rule |
 |---|---|
@@ -91,10 +107,15 @@ These rules keep a parent small and a child understandable alone. They hold for 
 | You want to write down | It goes to |
 |---|---|
 | What a capability guarantees | `README.md`, and its `contract` for the exact definition |
-| A wire format, a schema, a convention, a term, a fixed value | `docs/references/`; terms in `glossary.md`, values in `constants.md` |
 | What a connection between two children exchanges | `docs/references/` of this unit, named as `contract` by both sides ([contracts.md](contracts.md)) |
+| A wire format or a schema | A part of the contract of the connection that carries it; a reference of its own only where several contracts share it |
+| A term, a fixed value | `docs/references/glossary.md`, `docs/references/constants.md` |
 | Why the unit exists or is cut this way | `README.md` `## Why`, long form `docs/explanation/reasoning.md` |
 | A choice between options, and its reasons | `docs/decisions/` |
+| What changed and when | The decision that changed it, and version control |
+| What is planned, open or in progress | `status` in the manifest and the proposed decisions; the plan stays with the people and the process that do the work |
+| A note about a step of the work, a review or a test run | Not in the documents of a unit |
+| How the unit behaves while it runs | `docs/explanation/runtime.md` |
 | A rule that holds in this unit | `docs/explanation/invariants.md`; conventions in `docs/references/conventions.md` |
 | A rule that units below must follow | A decision or a reference of this unit, cited by their `context.md` |
 | A decision or term from above that matters here | `docs/explanation/context.md` |
@@ -102,13 +123,13 @@ These rules keep a parent small and a child understandable alone. They hold for 
 | How a newcomer gets to a first result | `docs/tutorials/` |
 | Which units exist and how they connect | Nowhere by hand: the manifests and `docs/diagrams/` |
 | What the unit does not do, and who does it instead | `not` in the manifest |
-| A story that walks through several units | `scenarios` in the manifest of the lowest unit that contains them; the diagram is generated |
+| How a connection is used, step by step | `## Use` and `## States` of its contract ([contracts.md](contracts.md)) |
+| How a feature runs through several units | `scenarios` in the manifest of the lowest unit that contains them, with `given` and a result per hop; the diagram is generated |
 
 ## Beside what is already there
 
 - **Published packages.** `unifold.yaml`, `AGENTS.md` and `docs/` lie inside package folders. Exclude them where the build tool packs the folder for publication, for example with `exclude` in a `Cargo.toml`.
-- **Existing decision records** in [MADR](https://adr.github.io/madr/) format move to `docs/decisions/` of the unit they concern. Whether [adr-tools](https://github.com/npryce/adr-tools) or [log4brains](https://github.com/thomvaill/log4brains) work on such a folder has not been tested.
-- **Owners files.** The `owner` key names who is responsible for a unit and is inherited downward; a CODEOWNERS file can be written from it. A change to a wiring line concerns the owners of both sides.
+- **Existing decision records** in [MADR](https://adr.github.io/madr/) format move to `docs/decisions/` of the unit they concern.
 - **Generated files in version control.** Commit them; the standard requires it, and the checker reports one that `.gitignore` ignores. Mark `docs/diagrams/*.md`, `docs/decisions/index.md` and `AGENTS.md` as generated for the code host, for example with `linguist-generated` in `.gitattributes`, so that reviews fold them, and run `unifold check --fix` before a commit.
 
 What the reference tool reports for this chapter is in [rules.md](rules.md).

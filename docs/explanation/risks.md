@@ -21,3 +21,4 @@ What can go wrong with the standard as it stands, what it knowingly does not do,
 - **A derived decision can claim what its source does not say** ([0070](../decisions/0070-add-the-decision-status-derived.md)). The form shows the passage; review reads it.
 - **Boxes are fully clickable only in the explorer.** On code hosts it depends on the host.
 - **One repository.** Relations between repositories are needs of the root; no map across repositories is produced.
+- **Tools for decision records are untried.** Whether [adr-tools](https://github.com/npryce/adr-tools) or [log4brains](https://github.com/thomvaill/log4brains) work on the `docs/decisions/` folder of a unit is not known.

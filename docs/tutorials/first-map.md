@@ -65,7 +65,7 @@ Connect the need in the unit above both folders, here the root:
 
 ```yaml
 # unifold.yaml in the root
-unifold: "0.3"
+unifold: "0.4"
 name: shop
 responsibility: Shop backend
 wiring:
@@ -90,6 +90,10 @@ Write the contract of the connection, `docs/references/clock.md` in the root: wh
 
 Contract of `platform.clock`, the current time. Notation: wit.
 Sources: none
+
+## Use
+
+A consumer asks for the time whenever it needs it. The clock has no state: `now` may be called at any time.
 
 ## Parts
 

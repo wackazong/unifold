@@ -36,7 +36,7 @@ capabilities:
 
 ```yaml
 # unifold.yaml in the repository root
-unifold: "0.3"
+unifold: "0.4"
 name: shop
 responsibility: Shop backend
 wiring:
@@ -73,7 +73,7 @@ A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, 
 
 ### The standard
 
-The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.3/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
+The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.4/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
 
 ### The skills
 
@@ -116,7 +116,7 @@ uv run site/build.py --check
 
 | Kind | Pages |
 |---|---|
-| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.3/unifold.schema.json) |
+| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.4/unifold.schema.json) |
 | Reference | [documents](https://unifold.md/documents), [writing](https://unifold.md/writing), [contracts](https://unifold.md/contracts), [agents](https://unifold.md/agents), [tool](https://unifold.md/tool), [tool JSON](https://unifold.md/tool-json), [rules](https://unifold.md/rules) |
 | Explanation | [requirements](https://unifold.md/requirements), [reasoning](https://unifold.md/reasoning), [wiring](https://unifold.md/wiring), [invariants](https://unifold.md/invariants), [risks](https://unifold.md/risks), [decisions](https://github.com/wackazong/unifold/blob/main/docs/decisions/index.md) |
 | Tutorial | [Your first map](https://unifold.md/first-map) |
