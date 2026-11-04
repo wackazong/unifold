@@ -3513,7 +3513,7 @@ def scenario_sequence(scenario: dict) -> tuple:
             elif group["kind"] == "repeat":
                 lines.append(f"  loop {text(group['label'])}")
             else:
-                lines.append("  rect rgb(245, 245, 245)")
+                lines.append("  rect rgba(128, 128, 128, 0.1)")   # translucent: a shade on a light page and on a dark one
                 lines.append(f"  Note over {ids[result['caller']]}: {text('scenario ' + group['label'])}")
             opened.append(gid)
         key = result.get("provider-key")
@@ -5076,6 +5076,8 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 :is(#diagram,.figure) .messageText{font-family:var(--sans)!important;font-weight:500!important;fill:var(--ink)!important;stroke:var(--paper)!important;stroke-width:4px!important;stroke-linejoin:round;paint-order:stroke}
 :is(#diagram,.figure) rect.note{fill:var(--amber-hl)!important;stroke:var(--amber)!important;stroke-width:1.5px!important;rx:6px;ry:6px}:is(#diagram,.figure) rect.under{fill:var(--paper)!important;stroke:none!important;rx:6px;ry:6px}
 :is(#diagram,.figure) :is(.noteText,.noteText tspan){font-family:var(--sans)!important;fill:var(--ink)!important;stroke:none!important}
+:is(#diagram,.figure) .labelBox{fill:var(--box-2)!important;stroke:var(--frame)!important}:is(#diagram,.figure) .loopLine{stroke:var(--frame)!important;fill:none!important}   /* the frame of a repeat or of parallel steps */
+:is(#diagram,.figure) :is(.labelText,.labelText tspan,.loopText,.loopText tspan){font-family:var(--sans)!important;fill:var(--ink)!important;stroke:none!important}
 #zoom,#play{float:right;font:600 13px/1.2 var(--sans);padding:5px 12px;margin-left:8px;border:2px solid var(--frame);background:var(--bg);color:var(--fg);border-radius:3px;cursor:pointer}#zoom:hover,#play:hover{border-color:var(--fg)}
 /* the path of a scenario on the map: what the story uses is lit and numbered, the rest steps back; a dot runs the current step, its row and its connection in amber */
 #diagram.trace .edgePaths path:not(.lit){opacity:.3}

@@ -1700,8 +1700,8 @@ def scenario_views(runner: Runner, tmp: str):
           f"collapsed view: an include without a caller is a note, one end per par:\n{short}")
     full = runner.run("scenario", "--expand", str(folder), "s1").stdout
     check_mermaid(full)
-    check("rect rgb" in full and "scenario a.inner" in full and "a -> b.do" not in full and "| 2 | `a` | `b` | `do` |" in full,
-          f"expanded view: the included hops as a shaded block:\n{full}")
+    check("rect rgba(" in full and "scenario a.inner" in full and "a -> b.do" not in full and "| 2 | `a` | `b` | `do` |" in full,
+          f"expanded view: the included hops as a block with a translucent shade, for light and dark pages:\n{full}")
 
 
 def scenario_include_inside_the_call(runner: Runner, tmp: str):
