@@ -7,8 +7,8 @@ This repository holds the unifold standard. Read [README.md](README.md) first: i
 | Kind | Files |
 |---|---|
 | Learn | [first-map](docs/tutorials/first-map.md) |
-| Look up | [spec](docs/references/spec.md), [documents](docs/references/documents.md), [writing](docs/references/writing.md), [contracts](docs/references/contracts.md), [rules](docs/references/rules.md), [tool](docs/references/tool.md), [tool-json](docs/references/tool-json.md), [agents](docs/references/agents.md) |
-| Understand | [requirements](docs/explanation/requirements.md), [reasoning](docs/explanation/reasoning.md), [invariants](docs/explanation/invariants.md), [risks](docs/explanation/risks.md), [wiring](docs/explanation/wiring.md), [decisions](docs/decisions/index.md) |
+| Look up | [spec](docs/references/spec.md), [spec-wiring](docs/references/spec-wiring.md), [spec-conformance](docs/references/spec-conformance.md), [documents](docs/references/documents.md), [placement](docs/references/placement.md), [writing](docs/references/writing.md), [decision-records](docs/references/decision-records.md), [contracts](docs/references/contracts.md), [qualities](docs/references/qualities.md), [contract-example](docs/references/contract-example.md), [rules](docs/references/rules.md), [tool](docs/references/tool.md), [tool-setup](docs/references/tool-setup.md), [tool-output](docs/references/tool-output.md), [tool-json](docs/references/tool-json.md), [agents](docs/references/agents.md) |
+| Understand | [requirements](docs/explanation/requirements.md), [reasoning](docs/explanation/reasoning.md), [principles](docs/explanation/principles.md), [invariants](docs/explanation/invariants.md), [risks](docs/explanation/risks.md), [wiring](docs/explanation/wiring.md), [scenarios](docs/explanation/scenarios.md), [decisions](docs/decisions/index.md) |
 
 ## Skills
 

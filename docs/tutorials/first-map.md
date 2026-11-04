@@ -13,9 +13,9 @@ unifold init
 unifold check
 ```
 
-`init` writes `unifold.yaml` with the version of the standard, the name of the folder and `responsibility: TODO`. If the repository has no `README.md`, it writes one from the template, with placeholders in angle brackets. `check` prints three warnings and no error: the `TODO`, and two example headings of the template. A project of one unit already conforms.
+`init` writes `unifold.yaml` with the version of the standard, the name of the folder and `responsibility: TODO`. If the repository has no `README.md`, it writes one from the template, with placeholders in angle brackets. It also writes the root `AGENTS.md`. `check` prints two warnings and no error: the `TODO`, and the placeholders of the `README.md`. A project of one unit already conforms.
 
-Replace the `TODO` with one line that says what the repository is. In `README.md`, write the first paragraph and the `## Why`, and delete the sections that do not apply yet. Run `unifold check --fix`. It reports no error and no warning.
+Replace the `TODO` with one line that says what the repository is. In `README.md`, write the first paragraph and the `## Why`. Run `unifold check --fix`. It reports no error and no warning.
 
 ## 2. Make one folder a unit
 
@@ -38,7 +38,7 @@ Shared runtime services for the other parts of the shop.
 Every part needs the same few services; one implementation keeps them alike.
 ```
 
-Save the second file as `platform/README.md`; every unit has one. Run `unifold check --fix`. It writes the generated files: `docs/diagrams/component.md` in the root, with one box, and `platform/AGENTS.md`. One warning remains: `'platform.clock' is provided but nothing uses it`.
+Save the second file as `platform/README.md`; every unit has one. Run `unifold check --fix`. It writes `docs/diagrams/component.md` in the root, with one box, and adds `platform` to the index of units in the root `AGENTS.md`. One warning remains: `'platform.clock' is provided but nothing uses it`.
 
 ## 3. Declare what the second folder needs
 
@@ -75,8 +75,8 @@ wiring:
 Run `unifold check --fix`. The first error is gone, and two new ones appear:
 
 ```text
-error W11 unifold.yaml:5: capability 'platform.clock' names no contract
-error W11 unifold.yaml:5: need 'billing.clock' names no contract
+error W11 unifold.yaml:6: capability 'platform.clock' names no contract
+error W11 unifold.yaml:6: need 'billing.clock' names no contract
 ```
 
 The connection exists, but nothing says what travels on it.

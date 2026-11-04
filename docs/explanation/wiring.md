@@ -1,6 +1,6 @@
 # Wiring in practice
 
-The rules of wiring are in the [standard](../references/spec.md), section 3. This chapter shows how to use them: what to declare, how to name it, and the patterns of real repositories.
+The rules of wiring are in the [standard](../references/spec-wiring.md), section 3. This chapter shows how to use them: what to declare, how to name it, and the patterns of real repositories. [scenarios.md](scenarios.md) shows how scenarios and contracts work in a map.
 
 ## Reading a line
 
@@ -77,7 +77,7 @@ When a need is met in another form than the one the unit expects, for example ov
 
 ## Kinds of units
 
-`kind` on a unit is optional free text, and three values carry rules:
+`kind` on a unit is optional free text. Three values carry rules, which [spec.md](../references/spec.md#2-the-manifest) states; this is what they mean:
 
 | Kind | Meaning | Rule |
 |---|---|---|
@@ -88,43 +88,6 @@ When a need is met in another form than the one the unit expects, for example ov
 A need of the root is finally reached only by adapters, unless it is marked `platform: true`. That mark is for a service of the host such as time or randomness, which is not an external system and whose contract describes a controllable fake, such as a clock that tests move forward. A unit that states no kind is not judged by this rule. A unit with children may carry a kind too; it says what the box is to its parent's wiring. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`.
 
 What the kinds give: a logic unit can be tested without any fake, so its tests are the cheapest and its examples the most trustworthy; an adapter is the only place where an external protocol lives, so an integration harness puts fakes at the needs of the root and nowhere else; a stateful unit is where state machines live, so its `runtime.md` is where a reviewer looks for them. Any other value is allowed; the checker says so once, as information, and applies no rule.
-
-## Scenarios
-
-A scenario is a path through the software. A scenario tells one story as the chain of calls it causes, in the manifest of a unit under `scenarios`. Each hop is `caller -> target.part(input): result`. A unit is named by its path from the holding unit; a capability or need of the holding unit is named bare:
-
-```yaml
-scenarios:
-  open:
-    summary: The host opens a session
-    source: proto §5
-    given:
-      - transport.transport: idle
-    hops:
-      - host -> session.open(): ok
-      - session -> transport.send([00]): ok
-      - transport/serial -> uart.write([1F 00]): 2 bytes written
-    expect: one frame 1F 00 on the line
-```
-
-A path along a single connection is a scenario too, held by the unit that wires the connection. How the connection is used in general is `## Use` of its contract, in words. Every scenario follows the `## States` of the contracts it uses: `given` sets the state a connection starts in, every hop must be allowed in the current state, and the checker follows each connection from hop to hop ([contracts.md](../references/contracts.md#states)). A path that a connection does not allow is an error of the map, found before anyone writes code.
-
-| Hop | Resolves through | The part is looked up in |
-|---|---|---|
-| `unit -> other-unit.part` | A need of the caller, followed up and down until the target provides for it, at whatever level | the contract of that need |
-| `capability -> unit.part` | The capability of the holding unit, followed down to the target that implements it | the contract of that capability |
-| `unit -> need.part` | A need of the caller, passed up until it reaches that need of the holding unit | the contract of that need |
-| `capability -> need.part`, in a unit without children | Nothing: the capability's implementation uses the need | the contract of that need |
-
-The contract of a connection is one document at every level, so the part is found wherever the hop is written. A name is looked up as a descendant first, then as a capability or need of the holding unit; a name that is both is an error that asks for a rename, as are two connections between the same two units whose contracts both have the part. A scenario belongs to the lowest unit that contains every unit it names; a hop to a need of the root belongs to the root. A story may cross levels, and its diagram is drawn end to end. Every wiring line should appear in a hop of some scenario: a connection that no story needs should not exist.
-
-## Contracts of a connection
-
-A connection carries information in some form: a wire format, a schema, a trait, a command line. The contract of the connection is the reference that defines that form, with examples, and both sides name it. It is not a protocol name: `http` says how the sides talk, the contract says what they say. And it is not a schema file such as `openapi.yaml` or a `.proto`, even where code is generated from one: such a file stays with the code that uses it. The checker reports a connection whose two sides name different documents, or none.
-
-A manifest never points into a sibling, so the contract of a connection between two children lives in the references of the unit that wires them, or higher: `docs/references/clock.md` of the parent, named as `../docs/references/clock.md` by both. A protocol that several parts implement, such as a radio profile served by a device and by its emulator, is such a document, not a unit: a unit holds code. A definition from outside the project, such as the API of a vendor, gets a reference of the root as well, which links the definition by its URL.
-
-A capability that a parent passes through (`public-api: gateway.public-api`) appears in two manifests, each describing it at its own level, and names the same document at both: a reference of the parent, or of a unit above it. A parent that only passes a capability through adds nothing of its own to the summary. A format that travels inside another contract, such as a reading inside an upload, is not a contract of its own: it is a reference that the context files of its users cite.
 
 ## A unit with code of its own
 
@@ -141,6 +104,7 @@ A need behind a feature flag is `optional: true`. It MAY be wired anyway. What o
 For a set of services in one repository:
 
 - Each service folder is a unit. A folder such as `src/` that only groups them stays plain.
-- A database or a queue with no folder of its own is either a need of the root (somebody outside operates it) or a capability of the unit whose files define it, such as a deployment folder.
+- A database or a queue with no folder of its own is either a need of the root (somebody outside operates it) or a capability of the unit whose files define it, such as a deployment folder. A stream of events that rides on the queue has a contract of its own, `Carried by:` the queue's contract.
+- Configuration is a need: its contract lists the settings as parts, with name, type, default and who sets each, and its fake is a table of values. `runs-as` in the manifest says which units are processes, jobs or libraries.
 - A call from one service to another is a need of the caller, wired to a capability of the callee. The contract is the API both sides name.
 - With a flat set of services, all wiring is in one manifest, and every new call between two services changes it. That manifest is the map of the system; expect it to be the file with the most changes.

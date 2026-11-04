@@ -1,6 +1,6 @@
 # The reference tool
 
-`unifold` is one Python file, [unifold.py](../skills/unifold/scripts/unifold.py). It checks a project against the [standard](spec.md), generates the diagrams, and answers questions about the map. Its findings: [rules.md](rules.md). Its JSON: [tool-json.md](tool-json.md).
+`unifold` is one Python file, [unifold.py](../skills/unifold/scripts/unifold.py). It checks a project against the [standard](spec.md), generates the diagrams, and answers questions about the map. Its findings: [rules.md](rules.md). Its JSON: [tool-json.md](tool-json.md). What it writes: [tool-output.md](tool-output.md). `init`, hooks, continuous integration and how to test another implementation: [tool-setup.md](tool-setup.md).
 
 ## Running it
 
@@ -19,13 +19,16 @@ The examples below write `unifold`. `PATH` is any folder inside the project (def
 | Command | Effect |
 |---|---|
 | `init [DIR] [--agents]` | Starts a project in `DIR`: writes the root manifest and a `README.md` from the template where there is none, then the generated files. Changes no existing manifest. |
-| `check [PATH]` | Reports findings. Changes nothing, unless `--fix` is given: then it first writes the diagrams, the decision indexes, the `AGENTS.md` of every unit and the skill stubs where their folders exist. |
-| `show [PATH]` | One unit: responsibility, kind, secret, not, capabilities, needs, who finally provides and uses them, with status, and the scenarios that pass through it. |
-| `capability PATH NAME` | Both ends of every connection of one capability or need, with contracts and README sections. |
-| `impact PATH [CAPABILITY]` | Every unit that depends on the unit or capability, transitively, and the context items that cite its files. For a file, also one that is deleted already, every context item and link that cites it, with line and `Says` text. |
+| `check [PATH]` | Reports findings. Changes nothing, unless `--fix` is given: then it first writes the diagrams, the decision indexes, the root `AGENTS.md` and the skill stubs where their folders exist. |
+| `show [PATH]` | One unit: responsibility, kind, not, capabilities, needs, who finally provides and uses them, with status, the scenarios that pass through it, and its documents, skills and decisions. |
+| `capability PATH NAME` | Both ends of every connection of one capability or need, with summaries and contracts. |
+| `impact PATH [CAPABILITY]` | Every unit that depends on the unit or capability, transitively, and the context items that cite its files. For a file, also one that is deleted already, every link that cites it, with file and line. |
+| `scenario PATH NAME [--expand]` | One scenario of the unit as Markdown: its sequence diagram and the table of its steps with kind, result and state. An included scenario is one step; `--expand` opens every include, end to end across levels. |
+| `states PATH [CONTRACT]` | The `## States` of a contract as Markdown: a state diagram and the table. `CONTRACT` is a path, or the name of the contract under `docs/references/` of the unit. |
+| `brief [PATH]` | What to implement in the unit: the parts of its capabilities with signatures, fields and examples, the fakes of its needs, the states, the scenarios through it, its constants and its context items ([below](#brief-and-trace)). |
+| `trace [PATH] [--tests GLOB] [--strict]` | Which examples of the contracts of the unit's capabilities a file below the unit names by id, and which none does ([below](#brief-and-trace)). |
 | `tree [PATH] [--depth N]` | The unit tree with status, kind, capabilities and needs. |
-| `model [PATH]` | The resolved model of the project as JSON, with a stable schema ([tool-json.md](tool-json.md#model)): every unit, connection, final provider, scenario and decision. For tools that build on the map. |
-| `stamp [PATH]` | Writes or refreshes the stamps of the context items at or below `PATH`, and prints each with file, line and the source it cites. |
+| `model [PATH]` | The resolved model of the project as JSON: every unit, connection, final provider, scenario and decision. For tools that build on the map. |
 | `skills [PATH]` | Lists all skills with their descriptions ([agents.md](agents.md)). |
 | `explore [PATH] [-o FILE\|DIR] [--no-open]` | Writes the explorer, one HTML page with the map and every document, and opens it in a browser. |
 | `rules [ID]` | Prints the rule table, or one rule with its fix. |
@@ -43,7 +46,7 @@ Every command accepts `--json`. With `--json`, a failure also prints JSON ([tool
 
 | Option | Effect |
 |---|---|
-| `--fix` | First writes every generated file, then checks. It writes no stamp. |
+| `--fix` | First writes every generated file, then checks. |
 | `--strict` | Warnings fail too. |
 | `--quiet`, `-q` | No info findings, no fix hints. |
 | `--format github` | Prints workflow commands; GitHub shows them on the changed lines. |
@@ -58,52 +61,30 @@ error W2 cloud/unifold.yaml:14: need 'alerts.push' has no provider
 12 unit(s): 1 error(s), 0 warning(s), 0 info  [W2×1, C2×3 ignored]
 ```
 
-Generated files are built in memory and compared, so a stale diagram is an error; `check --fix` repairs it. The tool reads version 0.4 only and has no migration command. A project of an earlier version is rewritten by hand; the fix of `S1` lists what to change. `--fix` never adds or refreshes a stamp: only `unifold stamp` does, after you have compared `Says` with the source.
+A finding has a severity, the rule, the file to change with the line, what is wrong, and how to fix it. `unifold rules W2` prints one rule; [rules.md](rules.md) lists them all.
 
-## init
+| Severity | Meaning | Effect on `check` |
+|---|---|---|
+| `error` | The map is inconsistent. | Exit code 1. |
+| `warn` | Something that makes a map better but is not needed for consistency. A person decides. | Exit code 1 only with `--strict`. |
+| `info` | A fact worth knowing. | None. Hidden by `--quiet`. |
 
-`unifold init` starts a project. If `DIR` has no `unifold.yaml`, it writes the root manifest: the version of the standard, `name` from the folder name, and `responsibility: TODO`, which `check` reports until a person has replaced it. If `DIR` has no `README.md`, it writes one from the template of the `unifold` skill, with placeholders in angle brackets to replace; `check` reports only its two example headings. Then it writes the generated files, as `check --fix` does. A hand-written `AGENTS.md` is in the way of the generated one: on a terminal `init` asks whether to replace it, otherwise it keeps the file and says so. A project of one unit conforms at once: `check` reports warnings and no error.
+`M1` and `S1` come first; the rest is sorted by file and line. A manifest that does not parse gives one `M1`, and no wiring finding is reported for the lines that name its unit. A root manifest that does not parse, or states another version than 0.4, gives one `M1` or `S1` and nothing else.
 
-`init` reads no code and writes no other manifest. The units of an existing repository are a judgement about its architecture; a build file knows packages, not units. A person makes that judgement, or an agent with the skill `unifold-convert` ([first map](../tutorials/first-map.md)); `check` then says what is missing or inconsistent.
+A project MAY add checks of its own in its build. It SHOULD NOT silence a rule by weakening a manifest, for example by marking a need `optional`. Where a rule cannot be followed in one place, a reference of the root unit says so, so that reviewers see the exception. A build process that fixes a finding at a later stage runs `check --ignore ID` for that rule until then.
 
-The root `AGENTS.md` always carries the unifold block: about 15 lines, plus one row per unit when the project has at most 40 units below the root. `init --agents` also installs the skills `unifold` and `unifold-convert` into `docs/skills/` (text, templates and this tool) and writes the skill stubs into `.agents/skills/` and `.claude/skills/`; the block then names the installed tool and links the skills. `check --fix` keeps the stubs current wherever these folders exist. It prints a hint if a `CLAUDE.md` at the root does not mention `AGENTS.md`, which hides it from Claude Code.
+Generated files are built in memory and compared, so a stale diagram is an error; `check --fix` repairs it. The tool reads version 0.4 only and has no migration command. A project of an earlier version is rewritten by hand; the fix of `S1` lists what to change.
 
-## Generated files
+## brief and trace
 
-`check --fix` writes the files of [spec.md](spec.md), section 7, and the skill stubs: the diagrams, one sequence diagram per scenario with the kind, the result and the state of each step in its table, one state diagram per contract with `## States`, and the index `docs/decisions/index.md` of every unit that has decisions. It removes generated files it no longer writes, and it never overwrites a file that lacks the generated marker: a hand-written `AGENTS.md` is reported until its content has moved to `README.md` and `docs/` and the file is deleted. Links to files that do not exist are left out.
+`unifold brief UNIT` prints what an implementer of the unit needs, from the contracts and the manifests: under `implement`, every part of every capability with its signature, `Pre:`, `Result:`, the error cases and the examples with their ids; under `fake, for your tests`, every need with the parts it uses and the `## Fake` of its contract; the `## States` of each contract; the scenarios that pass through the unit, with the hops that touch it marked; the rows of the nearest `constants.md`; and the items of `context.md`. `--json` gives the same as data.
 
-## The explorer
-
-`unifold explore` writes the explorer, one HTML page with the tree, all diagrams and tables and every document, and opens it in the browser of the system. The explorer is a view of the map, not a file of it: without `-o` the page goes to `explorer.html` under the temporary folder of the system, outside the repository, and nothing is committed; `-o FILE` or `-o DIR` writes it where a project publishes it, for example into a site build, and `--no-open` leaves the browser closed, for a build or an agent. The page leaves out the skills `unifold` and `unifold-convert` that `init --agents` installs at the root. Every scenario has a page of its own, at `#<holder>@scenario:<name>` and linked from each unit it passes through: the summary, `source` and `expect`, the sequence diagram with a legend of how the kind of a part draws a step, the steps with the kind of their part, their contracts and wiring lines, and the lifelines. The page of a contract lists its parts with their kind and the scenarios and steps that use each; a part no scenario uses says so. A second tab, `map`, shows the architecture or component diagram of the deepest unit whose diagram holds every unit the steps name (a plain folder the units share belongs to the unit above it) with the path of the scenario on it: the boxes and connections its steps use are lit and carry the numbers of the steps, a row above the map lists the steps, and a dot runs them in the direction of the data while the current step is marked. The page of a unit shows the first paragraph of its README.md under its name and, above its tables, the section `## Why` and the entries of `not` as a list under Out of scope; every box and frame of its diagrams shows the responsibility of its unit in small text, and a diagram wider than the page opens fitted to its width, with a button for the full size. Every Markdown file of a unit (the README.md in full, contracts with the parts of a folder contract, decisions, explanation, tutorials, skills, AGENTS.md) has a page of its own at `#<unit>@doc:<path in the unit>`, listed by kind on the page of the unit and beside the tree. The tool turns the Markdown into HTML itself, without a library: headings, lists with tasks, tables, code, quotes and Mermaid blocks, drawn like the map; it escapes all HTML of the source, shows front matter as fields, a decision with its status, and the fields of a part (`Kind`, `Pre`, ...) one to a line. A link between documents opens the target in the page, a link to a README.md the page of its unit (with an anchor other than `#why` the page of the README), a link to a generated diagram file its tab or scenario; a link to any other file goes to the file, and a link with a scheme other than http, https and mailto is shown as text. The page loads Mermaid from a CDN and says so if it cannot; the tables work without it. `--mermaid FILE` embeds a local `mermaid.min.js` (the page then works offline and grows by about 5 MB); `--mermaid URL` loads it elsewhere. The page follows the light or dark setting of the system; a button at the top switches and keeps the choice in the browser, under the same key as unifold.md.
-
-## Hooks and continuous integration
-
-GitHub Actions: after `actions/checkout`, add the step `- uses: <owner>/unifold@<tag>` (this repository; inputs `path`, `strict`, `args`). Findings appear as annotations on the pull request.
-
-[pre-commit](https://pre-commit.com): this repository provides the hooks `unifold` (check) and `unifold-fix` (rewrite generated files, then check):
-
-```yaml
-repos:
-  - repo: <URL of this repository>
-    rev: <tag>
-    hooks: [{id: unifold-fix}]
-```
-
-A coding agent should check when it stops, not after every edit: a unit that is half written is broken on purpose. Claude Code, in `.claude/settings.json`:
-
-```json
-{"hooks": {"Stop": [{"hooks": [{"type": "command", "timeout": 60,
-  "command": "cd \"$CLAUDE_PROJECT_DIR\" && uvx unifold check --fix --quiet >&2 || exit 2"}]}]}}
-```
+`unifold trace UNIT` searches the files below the unit, outside `docs/`, for the ids of the examples of the contracts of its capabilities, `<contract>#<part>/<case-slug>`. It reads text and parses no code, so it works for every language; a test names the id in its name or in a comment. It reports `X1` (info) for an example that no file names and `X2` (warn) for an id that no example has. `--tests GLOB` limits the search to files whose path or name matches; `--strict` turns `X1` into a failure. The exit code is 1 on `X2`, and on `X1` with `--strict`. The procedure [implement a unit](../skills/unifold/procedures/implement-a-unit.md) uses both.
 
 ## What the tool does not read
 
-- Code, in whatever language. The tool reads `unifold.yaml` files and Markdown documents.
+- Code, in whatever language. The tool reads `unifold.yaml` files and Markdown documents; `trace` searches text files for example ids and parses nothing.
 - Folders whose name starts with a dot, the `docs` folder of a unit, `node_modules`, `__pycache__`, Cargo build folders, Python virtual environments, symbolic links to folders, the `ignore` folders, and every file and folder that git ignores (`.gitignore`, `.git/info/exclude` and the global excludes; a committed file is read even if a pattern matches it). List third-party code that is committed under `ignore` in the root manifest.
 - Nested projects, for example a submodule with a root manifest of its own. `tree` lists them; they are checked on their own. Something in another repository is a need of the root; no map across repositories is produced.
 - Markdown files other than those named in [documents.md](documents.md), and text inside code blocks.
-- The meaning of a responsibility, a contract or a `Says` paragraph. Of a contract it reads headings, the `Kind:`, `Pre:`, `Result:`, `Errors:` and `Examples:` lines, whether a fenced block exists and whether a table has a row; nothing inside a fenced block.
-
-## Testing another implementation
-
-[conformance.py](../../tests/conformance.py) holds the test cases as data: small projects with the findings that `check --json` must report, as rule, severity and file, and scenarios for `init`, stamps, `--fix`, `model`, `--ignore` and JSON on failure. `uv run tests/conformance.py --tool "CMD"` runs them against another tool; `--write DIR` writes the cases as files. An implementation conforms when all cases pass. Cases for generated files run without the reference generator, so a second generator is tested too.
+- The meaning of a responsibility, a contract or a context item. What it reads of a document is listed in [spec-conformance.md](spec-conformance.md#5-documents).

@@ -8,7 +8,7 @@ A folder with a `unifold.yaml` is a unit: it declares what it is responsible for
 
 One large architecture document, one root file for agents and a wiki beside the code go stale, and neither a newcomer nor a coding agent can take them in. Here the knowledge about a folder is in that folder. Structure is declared once and generated, because it is cheap to derive and expensive to keep correct by hand. Reasons are written, because they cannot be derived, and because nobody should make the same mistake twice.
 
-The standard is explainable in one minute and adoptable in five. That is why the normative text is one page, and why everything else is reference, explanation or a tutorial.
+The standard is explainable in one minute and adoptable in five. That is why the normative text is three short pages, and why everything else is reference, explanation or a tutorial.
 
 ## Install
 
@@ -43,7 +43,7 @@ wiring:
   billing.clock: platform.clock
 ```
 
-`billing` says what it needs, never who supplies it; the root connects the need to `platform`. Both sides name one document, `docs/references/clock.md` of the root: the contract of the connection, which says what a clock gives and in which form. `unifold check` reads the three manifests and writes the component diagram. It fails on a need without a provider, and on two sides that name different contracts. Without the wiring line in the root:
+`billing` says what it needs, never who supplies it; the root connects the need to `platform`. Both sides name one document, `docs/references/clock.md` of the root: the contract of the connection, which says what a clock gives and in which form. `unifold check --fix` reads the three manifests and writes the component diagram; `unifold check` changes nothing. Both fail on a need without a provider, and on two sides that name different contracts. Without the wiring line in the root:
 
 ```text
 error W2 unifold.yaml: need 'billing.clock' has no provider
@@ -56,10 +56,10 @@ error W2 unifold.yaml: need 'billing.clock' has no provider
 
 | File | What it is |
 |---|---|
-| `unifold.yaml` | The manifest: the unit's responsibility, kind and secret, what it provides and needs, the wiring of its children and the scenarios it holds. Checked against the other manifests and the contracts. |
+| `unifold.yaml` | The manifest: the unit's responsibility and kind, what it provides and needs, the wiring of its children and the scenarios it holds. Checked against the other manifests and the contracts. |
 | `README.md` | The front page: what the unit is for, and why it is built this way. The contracts say what can be relied on. |
 | `docs/` | Everything else written about the unit, in fixed places sorted by what the reader is doing: tutorials, skills, references, explanation, decisions. A file exists only when it has content. |
-| `AGENTS.md` | Generated: where the documents and skills of the unit are, for coding agents. |
+| `AGENTS.md` | Generated, at the root only: where the documents and skills are, for coding agents. |
 
 ## How people use it
 
@@ -67,13 +67,13 @@ A newcomer opens a folder and reads its `README.md`. `docs/tutorials/` teaches, 
 
 ## How agents use it
 
-`unifold init --agents` installs the two skills, writes their stubs into `.agents/skills/` and `.claude/skills/`, and adds the unifold block to the root `AGENTS.md`. Every unit's `AGENTS.md` is generated: a pointer to `README.md`, the documents by kind, the skills. Most agents read `AGENTS.md` and find the stubs; Kiro and Aider do not ([agents](https://unifold.md/agents)). Every agent with a shell can run `unifold show`, which prints a folder's capabilities, needs and resolved neighbours, as text or JSON.
+`unifold init --agents` installs the two skills, writes their stubs into `.agents/skills/` and `.claude/skills/`, and adds the unifold block to the root `AGENTS.md`. The root `AGENTS.md` is generated: a pointer to `README.md`, the documents by kind, the skills, and the index of units. Most agents read `AGENTS.md` and find the stubs ([agents](https://unifold.md/agents)). Every agent with a shell can run `unifold show`, which prints a folder's capabilities, needs and resolved neighbours, as text or JSON.
 
 ## What this repository provides
 
 ### The standard
 
-The standard on one page, [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.4/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
+The standard on three pages, starting at [spec.md](https://unifold.md/spec), with the reference chapters beside it and a [JSON Schema](https://unifold.md/0.4/unifold.schema.json) for the manifest. Published at [unifold.md](https://unifold.md).
 
 ### The skills
 
@@ -81,7 +81,7 @@ Two skills in the [Agent Skills](https://agentskills.io/specification) format. [
 
 ### The tool
 
-The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, wiring, contracts, scenarios and documents, generates the diagrams and the `AGENTS.md` files, and prints the resolved model as JSON for tools that build on the map. `unifold explore` opens the explorer: the whole map as one page in the browser, every box clickable, every README, contract and decision beside it; the [examples](https://unifold.md/examples/plantwatch/) show one. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
+The reference tool, described in [tool.md](https://unifold.md/tool) and tested by [tests/conformance.py](https://github.com/wackazong/unifold/blob/main/tests/conformance.py). It checks manifests, wiring, contracts, scenarios and documents, generates the component diagrams and the root `AGENTS.md`, prints what to implement in a unit (`brief`) and which examples of its contracts the tests name (`trace`), draws a scenario or the states of a contract on demand, and prints the resolved model as JSON for tools that build on the map. `unifold explore` opens the explorer: the whole map as one page in the browser, every box clickable, every README, contract and decision beside it; the [examples](https://unifold.md/examples/plantwatch/) show one. A [GitHub Action](https://github.com/wackazong/unifold/blob/main/action.yml) and [pre-commit](https://pre-commit.com) hooks run it.
 
 ## Questions
 
@@ -95,30 +95,17 @@ The reference tool, described in [tool.md](https://unifold.md/tool) and tested b
 
 **Does it fit a project with one package?** Yes. A unit is a folder, not a package, so one package is one unit or several: its module folders, such as `src/billing/` and `src/platform/`, are units when their interfaces are worth naming. With one unit the map is one box, and the value is the root's `README.md` and `docs/` ([requirements](https://unifold.md/requirements)).
 
-**What ends up in my repository?** The `unifold.yaml` files, the generated diagrams and the generated `AGENTS.md` of every unit. The standard is not copied; the root manifest names its version. With `--agents`, also the skills, the tool and the stubs.
+**What ends up in my repository?** The `unifold.yaml` files, the generated diagrams and the generated root `AGENTS.md`. The standard is not copied; the root manifest names its version. With `--agents`, also the skills, the tool and the stubs.
 
 **What about my `docs/` folder, docs site and ADR tool?** `docs/` is where unifold keeps the documents, sorted by kind, and a software artifact can be built from it. Existing decision records move to `docs/decisions/` ([documents](https://unifold.md/documents)).
-
-## Commands
-
-```sh
-# test the tool
-uv run tests/conformance.py
-# check an example
-uv run docs/skills/unifold/scripts/unifold.py check examples/plantwatch
-# open the explorer of an example in the browser
-uv run docs/skills/unifold/scripts/unifold.py explore examples/plantwatch
-# build the site and check its links
-uv run site/build.py --check
-```
 
 ## Read next
 
 | Kind | Pages |
 |---|---|
-| The standard | [spec.md](https://unifold.md/spec), the standard on one page; [unifold.schema.json](https://unifold.md/0.4/unifold.schema.json) |
-| Reference | [documents](https://unifold.md/documents), [writing](https://unifold.md/writing), [contracts](https://unifold.md/contracts), [agents](https://unifold.md/agents), [tool](https://unifold.md/tool), [tool JSON](https://unifold.md/tool-json), [rules](https://unifold.md/rules) |
-| Explanation | [requirements](https://unifold.md/requirements), [reasoning](https://unifold.md/reasoning), [wiring](https://unifold.md/wiring), [invariants](https://unifold.md/invariants), [risks](https://unifold.md/risks), [decisions](https://github.com/wackazong/unifold/blob/main/docs/decisions/index.md) |
+| The standard | [spec.md](https://unifold.md/spec), [spec-wiring.md](https://unifold.md/spec-wiring) and [spec-conformance.md](https://unifold.md/spec-conformance), the standard on three pages; [unifold.schema.json](https://unifold.md/0.4/unifold.schema.json) |
+| Reference | [documents](https://unifold.md/documents), [where things go](https://unifold.md/placement), [writing](https://unifold.md/writing), [decisions](https://unifold.md/decision-records), [contracts](https://unifold.md/contracts), [qualities](https://unifold.md/qualities), [a contract written out](https://unifold.md/contract-example), [agents](https://unifold.md/agents), [tool](https://unifold.md/tool), [setting up the tool](https://unifold.md/tool-setup), [generated files and the explorer](https://unifold.md/tool-output), [tool JSON](https://unifold.md/tool-json), [rules](https://unifold.md/rules) |
+| Explanation | [requirements](https://unifold.md/requirements), [reasoning](https://unifold.md/reasoning), [design ideas](https://unifold.md/principles), [wiring](https://unifold.md/wiring), [scenarios](https://unifold.md/scenarios), [invariants](https://unifold.md/invariants), [risks](https://unifold.md/risks), [decisions](https://github.com/wackazong/unifold/blob/main/docs/decisions/index.md) |
 | Tutorial | [Your first map](https://unifold.md/first-map) |
 | Examples | [slugline](https://github.com/wackazong/unifold/tree/main/examples/slugline), a tested Cargo workspace; [serial-line](https://github.com/wackazong/unifold/tree/main/examples/serial-line), a small design with contracts, scenarios and the three kinds; [plantwatch](https://github.com/wackazong/unifold/tree/main/examples/plantwatch), a design written before any code, with every document convention |
 

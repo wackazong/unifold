@@ -1,83 +1,18 @@
 # Writing the documents
 
-[documents.md](documents.md) says which files a unit has. This chapter says how each is written, what a reviewer checks, and the style they share.
-
-## Context items and stamps
-
-`docs/explanation/context.md` lists the decisions, conventions and terms from above that a reader must know to understand the unit. Each item is a `###` heading:
-
-```markdown
-### [cloud/0002 Each service owns its data](../../../docs/decisions/0002-each-service-owns-its-data.md)
-<!-- unifold:cites sha=3f9a1c2e -->
-
-Says: no service reads or writes the database schema of another.
-
-Here: `ingest` keeps its duplicate index in a schema of its own.
-```
-
-- The heading links to the source. **Cite the smallest part**: a fragment cites one section (`#heading`) or, where no heading has that anchor, one table row whose first cell gives it (`glossary.md#stamp` is the row `| **stamp** | ... |`; code font and bold do not count). The stamp then covers that part only. An item that cites a whole file goes stale with every edit of the file.
-- `Says` restates the part that this unit uses, in at most 200 characters. It MAY be longer for something the unit implements, such as a data model. `Here` gives the consequence for this unit.
-- The comment is the **stamp**: a hash of the cited part. Nobody types it, and only `unifold stamp` writes it, printing each item it confirms. The checker warns while a stamp is missing or its source has changed: read the source, correct `Says`, then run `unifold stamp`.
-- Cite only what matters here. More than about ten items usually means that the file copies its ancestors instead of selecting from them. Other files of the unit refer to an item by linking to this file.
-
-## The other explanation files
-
-- `requirements.md` states what the unit must achieve and for whom, then its quality goals in the order in which they win when they conflict. Each goal names something a review or a test could observe. "Fast" is not a goal; "a batch of 500 is answered within 200 ms" is. Guarantees of one capability stay in `README.md`.
-- `reasoning.md` is the long form of `## Why`. Write one bold sentence per force, then the paragraph that explains it, and link every rejected alternative to its decision. Trade-offs are a table: chosen, given up, decision.
-- `invariants.md` is a list. Each line is a statement that is true at every moment, or never, and names where it holds.
-- `runtime.md` says how one unit behaves while it runs: its states and the transitions between them, what happens at start and at stop, timing and timeouts, concurrency, limits, and what it does when something fails. In words, tables and state diagrams. The state tables a unit's code needs go here; the states that a consumer of a connection sees are `## States` of its contract. A story that walks through several units in order is a scenario in the manifest, where it is checked and drawn; a hand-drawn sequence diagram of such a story is a review finding.
-- `deployment.md` is a table: part, where it runs, instances, durable state, reachable from outside. Below it, the consequences: what can be restarted, what is a single point of failure.
-- `risks.md` lists risks, known limits and technical debt, one bold label each, with what it costs and what would remove it. A decision that was taken knowingly is cited, not repeated.
-
-## Decisions
-
-Decision records use [MADR](https://adr.github.io/madr/): one file per decision, `docs/decisions/NNNN-short-title.md`, with a four-digit number that is unique within the unit, and this front matter:
-
-```yaml
----
-status: proposed      # or: accepted, rejected, deprecated, superseded by NNNN, derived
-date: 2026-10-07
-decision-makers: [name]   # once the status is accepted
----
-```
-
-- A decision belongs to the lowest unit whose insides it fully covers. A decision about how two siblings talk belongs to their parent.
-- **Agents propose, humans accept.** An agent writes `status: proposed`. Only a person who may decide for the unit sets `accepted`.
-- A decision that a source makes, not a person and not an agent, has `status: derived` and `derived-from`, the passage, and a section `## Source says` that summarises the passage in the author's words, complete enough that the decision stands alone without the source. An agent may write it. It binds like `accepted` until a person accepts or supersedes it. Whether the passage says what the decision claims is a review question, as `Says` is.
-- Only accepted and derived decisions bind. Tools mark proposed ones where they show them.
-- An accepted decision is not edited, except for its status, for links to files that moved, for a link around the number of another decision, and for a link to a document that it changes. To replace it, write a new one and set the old one to `superseded by NNNN`. To change only a part, write a new one that says "This amends", links the old one, and says what changes; the rest of the old one stays in force.
-- A decision links each document it changes, and the same change rewrites those documents to the new state. The link goes around the words that name the document, or into a sentence under `## More Information`. A reference does not link back: `unifold impact FILE` lists the decisions that link a file.
-- A decision links only where a link may go ([documents.md](documents.md#where-a-file-may-point)). A decision does not link into a unit below; that unit takes the decision into its `context.md`, and its documents state the result.
-- `docs/decisions/index.md` is generated for each unit that has decisions.
+[documents.md](documents.md) says which files a unit has. This chapter says how each is written, what a reviewer checks, and the style they share. [decision-records.md](decision-records.md) says how a decision and a context item are written, and [contracts.md](contracts.md) how a contract is written. What each explanation file holds is in [documents.md](documents.md).
 
 ## References and the glossary
 
-A reference is `docs/references/<topic>.md`: facts as they are now, for example a contract, a part of one, or a convention that several contracts share. It names no decision and gives no reasons: the decision that settles a fact links the reference. Procedures go to skills. Notes about the work stay with the process that does the work. A reference that would exceed the line limit becomes a folder with an `index.md` that links to every part. API reference that a tool produces from code is not written by hand. `docs/references/glossary.md` holds the terms that have one fixed meaning inside the unit, one table row per term, so that each can be cited alone. A term is defined in the lowest unit that covers its uses.
+A reference is `docs/references/<topic>.md`: facts as they are now, for example a contract ([contracts.md](contracts.md)), a part of one, or a convention that several contracts share. It gives no reasons; where a decision settled a fact, it may link that decision. Procedures go to skills. Notes about the work stay with the process that does the work. A reference that would exceed the word limit becomes a folder with an `index.md` that links to every part. For a contract, `docs/references/<topic>/index.md` holds every section, with `## Parts` as a list of links in the order of use, and every part is a file `<topic>/<part>.md` with the body of a `###` section; the manifests name `index.md`, and a part name resolves to a heading in the file or to a file in the folder. API reference that a tool produces from code is not written by hand. `docs/references/glossary.md` holds the terms that have one fixed meaning inside the unit, one table row per term, so that each can be cited alone. A term is defined in the lowest unit that covers its uses.
 
-`docs/references/constants.md` holds the fixed values a unit and the units below it use: a table whose first columns are `Name` and `Value`, one row per value, named everywhere else and written out only there, such as `MAX_PAYLOAD`. A column `Source` MAY say where a value comes from, such as `proto §4.2`. It names no decision, so a value that a decision of the project chose has no source.
-
-## Contracts
-
-A contract is the one document of a connection: both sides name it, the consumer's tests are written from it, and the fake that stands in for it in those tests is defined in it. [contracts.md](contracts.md) explains it and holds the template. Its body:
-
-- A header that says whose contract it is, `Notation:`, the notation of the signature blocks, and `Sources:`, a line of text that says where the facts come from, such as `proto §4`, or says `none`. It names no decision. WIT, the interface language of the WebAssembly component model, is the default notation; any other is allowed, and there is no list.
-- `## Use` says how a consumer uses the connection: in which order it calls the parts, what it does when a call fails, who may call when, and the rules that hold for every part. Where the order matters, it is a numbered list of the calls, the normal path first, then each failure that changes the state.
-- `## States`, where the connection has state, holds a line `Start: <state>` and a table `State | Part | Result | Next` with the states that a consumer can see or must respect. Every row names a part; a result is empty, `ok` or an error case of the part.
-- `## Parts` holds one `###` heading per part, in the order of use. The heading is the part's name, lower-case kebab-case, the same name the manifests use under `parts`.
-- `Kind:` is `command`, `query`, `event` or `type`.
-- Every part has a fenced code block: its signature. The checker verifies that the block exists and reads nothing inside it.
-- A command or query has `Pre:`, `Result:`, `Errors:` and an `Examples:` table with at least one row. Examples are inputs with expected results; they are the first tests of the provider and the whole behaviour of a replay fake.
-- A type is defined once within the subtree of the unit that holds the contract. Another contract that uses it links to the definition.
-- `## Fake` says what a stand-in for this contract does in the tests of its consumers: it replays the examples, follows the states and refuses everything else, or it shows a strongly simplified behaviour that the section describes, with the faults it can inject. For a contract whose provider is a `logic` unit, or a capability of the root, the section MAY say `the real implementation`.
-- A contract that outgrows the line limit becomes a folder: `index.md` holds every other section and `## Parts` as a list of links; every part is a file `<part>.md` with the same body as a `###` section. A part name resolves to a heading in the contract file or to a file in the contract folder.
-
-The checker verifies `## Use`, `## Parts`, `Kind:`, the signature block, the fields and examples of a command or query, the single definition of a type, `## Fake`, and the table of `## States`; it does not check the header, what `## Use` says or the case of a part heading.
+`docs/references/constants.md` holds the fixed values a unit and the units below it use: a table whose first columns are `Name` and `Value`, one row per value, named everywhere else and written out only there, such as `MAX_PAYLOAD`. A column `Source` MAY say where a value comes from, such as `proto §4.2`.
 
 ## Skills
 
 A skill is a how-to guide for a recurring task in the unit, in the [Agent Skills](https://agentskills.io/specification) format: `docs/skills/<name>/SKILL.md`, with a front matter that has `name`, equal to the folder name, and `description`. The description says for whom the procedure is, when it is written for an end user.
 
-- A skill belongs to the lowest unit in which the whole procedure happens. The generated `AGENTS.md` lists every skill of the unit.
+- A skill belongs to the lowest unit in which the whole procedure happens. `unifold show` lists the skills of a unit, and `unifold skills` those of the project.
 - `unifold check --fix` writes a generated stub for each skill where agents search for skills ([agents.md](agents.md)). The source stays here.
 - A person reviews a skill that an agent wrote before others rely on it.
 
@@ -89,45 +24,21 @@ A tutorial is `docs/tutorials/<name>.md`: a lesson that leads one stated reader,
 
 The checker compares files with each other. Whoever reviews a change, a person or an agent, checks the meaning:
 
-1. Can the unit be used after reading its `README.md` and the contracts that its manifest names? Does a section of `README.md` repeat what a contract says?
-2. Does a file name a sibling, a user or, outside `context.md`, an ancestor? Write the need or capability it stands for instead.
-3. Does the parent restate what a child provides or how it works inside?
-4. Does `## Why` or an explanation file list units or connections? Does a hand-drawn sequence diagram tell a story that a scenario tells?
-5. For each changed connection: does the provider cover what the need expects? `unifold capability` prints both sides. Do the examples of each part cover its errors and the sides of every precondition? Does `## Use` say in which order the parts are called and what a consumer does when a call fails? Do `## Use` and `## States` say what the sources say?
-6. Is each `Says` still true to its source, and each `Here` still true? Does the passage a `derived` decision cites say what `## Source says` claims?
-7. Is a changed value or limit stated elsewhere? Search for the old value. Is every fixed value that a document names in code font a row of the nearest `constants.md`?
-8. Did anything set a decision to `accepted` without a person asking for it?
-9. Does `status` match reality, and is it the only place that says how far the work is? Does `contract` point at what really defines the capability? Does the `responsibility` join unrelated things with "and"?
-10. Does each guarantee and each goal name something a test could observe?
-11. Is every file of its kind: does a reference give reasons or name a decision, by a link or by its number, a tutorial define, an explanation instruct? Move the passage to its home.
-12. Can the reader that [Plain language](#plain-language) names follow each paragraph without opening a link? Is every abbreviation spelled out or in the glossary, and is every decision cited for what it decides, with a link or as `unit/0002`?
-13. Does every document but a decision describe the unit as it is now? Does one say what changed, or still describe the state before the change? Does each new decision link the documents it changes?
+1. Can the unit be used after reading its `README.md` and the contracts that its manifest names?
+2. For each changed connection, does the provider cover what the need expects? `unifold capability` prints both sides. Do the examples of each part cover its errors and both sides of every precondition?
+3. Does a file name a sibling or a user, or restate what another file states? Write the need or the capability, or link the file.
+4. Is a changed name or value stated elsewhere? Search for the old one.
+5. Does every document describe the unit as it is now, and does `status` match reality? Did anything set a decision to `accepted` without a person asking for it?
+6. Does a human reader understand each document easily ([Plain language](#plain-language))?
 
 ## Plain language
 
-The documents follow [ISO 24495-1](https://www.iso.org/standard/78907.html), the international standard for plain language: a reader finds what they need, understands it and can use it. The Markdown style below keeps sentences short; these rules keep them complete.
-
-- Write for one reader: a person who knows the domain but has read neither the sources nor the files of other units. They understand each paragraph without opening a link. A link adds depth, not meaning.
-- Write whole sentences, with a subject, a verb and the articles that English needs: "the session cancels the delayed work", not "cancels delayed work".
-- Write "and" or "or", never a slash between two words: "the bond and the key", not "bond/key". A slash stays in paths, in units such as km/h and in fixed names such as TCP/IP.
-- Spell out an abbreviation at its first use in a file, unless it is a row of the glossary.
-- Put at most three nouns in a row. Turn a noun made from a verb back into the verb: "the runtime reserves capacity before it admits a command", not "pre-admission capacity reservation".
-- Use a parenthesis for an example, an abbreviation or a citation, never for a second statement.
-- Outside a reference, cite a decision for what it decides: say what it decides, and link its number as the source. `Each service keeps its own data ([0002](docs/decisions/0002-each-service-owns-its-data.md)).` Not: "Accepted 0002 applies."
-- Link a decision of an ancestor through its item in `docs/explanation/context.md`. Where no link may go, such as to a decision of a child, write the unit before the number: `transport/0002`.
-- A reference names no decision, neither by a link nor by its number. It states the fact that the decision settled. The checker warns about a link from a reference into a `docs/decisions/` folder.
-- Describe the unit as it is now. A document other than a decision does not say what changed, when, or which decision changed it: not "no longer", "was changed to", "added by 0118" or "as amended". When a fact changes, rewrite the sentence to the new fact.
-- Describe what a unit does and what it needs, not how far its implementation is or what comes in which version. A statement about the product does not carry "planned", "pending", "unresolved", "not yet implemented", "for now", "in version 2.0" or "the alpha version". The state of the work is written once, outside the prose. An open question is a proposed decision, and a unit without code has `status: planned`. A version of a format or a contract, such as "records of version 1.0 have 19 bytes", states a fact and stays.
-- Say what a thing is. Say what it is not only where a reader would otherwise assume it.
-- Give reasons where reasons are asked for. A `## Why` that lists decisions in the order they were taken is history.
+Write every document in language that a human reader understands easily.
 
 ## Markdown style
 
-- A hand-written file has at most 200 lines. Before one grows beyond that, split the reference, or move the long why to `docs/explanation/reasoning.md` or a procedure into a skill. Or ask whether the unit is too big. Write one line per paragraph and per list item; nobody wraps prose by hand.
+- A hand-written file has at most 1,500 words, not counting its front matter, and `## Why` of a `README.md` at most 250. Before one grows beyond that, split the reference, or move the long why to `docs/explanation/reasoning.md` or a procedure into a skill. Or ask whether the unit is too big. Write one line per paragraph and per list item; nobody wraps prose by hand.
 - A mention of another file SHOULD be a link whose text says what the target is. Units, capabilities and needs are named in code font. A file has one `#` title; `##` and `###` follow without skipping a level.
-- State facts in the present tense, the main statement first. Name the actor: "the gateway rejects uploads above 1 MB". No history; that is in the decisions and in version control.
-- A sentence makes one statement and SHOULD have at most 25 words; in a step of a skill or a tutorial, at most 20. Split at the colon or semicolon that joins two statements. A paragraph has one topic and at most six sentences; a list item is a paragraph.
-- A step is an instruction: the verb first, one action per sentence, then what the reader sees. "Run `check`. It prints no error." Not: "After running `check`, which should print no error, ...".
 - One term for one thing: the term of [spec.md](spec.md) section 1 or of the unit's glossary, never a synonym. A unit *provides* and *needs*; the parent *connects*. Not "offers" or "exposes" for provides, not "depends on" for needs.
 - YAML in a manifest is written in block style, one key per line; the short form `name: one-line summary` for a capability or need stays. Flow style, `{...}`, is valid and the checker does not care, but a value that contains `:` or a comma must then be quoted.
 

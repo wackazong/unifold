@@ -7,14 +7,14 @@ What the standard must achieve, for whom, and which qualities win when they conf
 1. **Explainable in one minute.** A reader who knows what a folder and a dependency are understands the idea from the first page: a manifest per folder, needs that do not name their provider, wiring by the parent, a check, generated diagrams.
 2. **Adoptable in five.** A repository gets a root manifest and a green check in minutes, and every further unit is one small file. Nothing is restructured and nothing is copied in.
 3. **One set of documents for people and agents.** Whoever opens a folder, a newcomer, a maintainer, an end user or a coding agent, finds the same files in the same places and reads the same text. Nothing is written twice for a second audience, and nothing is kept outside the tree.
-4. **Checked, not promised.** Everything the standard asks for is either checked by a tool or stated as a question for a reviewer. A clean check means that the files agree with each other. Whether the code follows them is for tests and review.
+4. **Checked, not promised.** Everything the standard asks for is either checked by a tool or stated as a question for a reviewer. A clean check means that the files agree with each other. Whether the code follows them is for tests and review; `unifold trace` shows which examples of a contract a test names.
 5. **The standard is tried.** Every rule is tried on the examples in this repository before a project has to follow it.
 
 ## Quality goals, in the order in which they win
 
 | Rank | Quality | Observed as |
 |---|---|---|
-| 1 | Small normative surface | Everything normative about manifests, wiring and generated files fits one page of at most 200 lines. |
+| 1 | Small normative surface | Everything normative about manifests, wiring and generated files fits three pages, [spec.md](../references/spec.md), [spec-wiring.md](../references/spec-wiring.md) and [spec-conformance.md](../references/spec-conformance.md). |
 | 2 | Checkable | Every finding of the tool has an id, a test case and a fix text. |
 | 3 | Incremental | One folder can be a unit while the rest of the repository is untouched and the check stays green. |
 | 4 | Independent | No rule depends on a programming language, a build system or a code host. Nothing reads code. |

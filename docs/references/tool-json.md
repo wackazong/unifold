@@ -1,6 +1,8 @@
 # JSON output of the reference tool
 
-Every command of the [tool](tool.md) accepts `--json` and then prints one JSON value on standard output. Paths are relative to the project root, with forward slashes; the root itself is `"."`. A version of the tool may add keys; a reader ignores the keys it does not know. The output of `model` has a schema of its own, versioned with the standard, and a key of it is never removed within a version.
+Every command of the [tool](tool.md) accepts `--json` and then prints one JSON value on standard output. It holds what the text output holds, under the same names: `show` the unit with the final providers and users of its entries, `capability` both ends of a connection, `impact` the dependents, `tree` the units, `model` the whole resolved map, `rules` the rule table. Paths are relative to the project root, with forward slashes; the root itself is `"."`. A version of the tool may add keys; a reader ignores the keys it does not know. A `status` other than `active`, and a decision status other than `accepted` or `derived`, means: not in force.
+
+Two shapes are fixed, because builds and agents act on them: the failure of a command, and the findings of `check`.
 
 ## Failure
 
@@ -16,7 +18,7 @@ When a command cannot run, it prints this object, a message on standard error, a
 | `no-project` | No `unifold.yaml` with the key `unifold` here or above |
 | `bad-root` | The root manifest does not parse or states another version than 0.4; `check` reports it as a finding instead |
 | `no-such-path`, `not-a-folder`, `not-a-root` | The path given does not fit the command |
-| `unknown-capability`, `unknown-rule`, `nested-project` | The thing asked for does not exist here |
+| `unknown-capability`, `unknown-scenario`, `unknown-rule`, `nested-project` | The thing asked for does not exist here |
 | `not-writable`, `io`, `no-mermaid` | A file could not be read or written |
 | `internal` | A bug in the tool |
 
@@ -39,142 +41,11 @@ For `check`, the object also has `summary` and an empty `findings` list.
 - `severity` is `error`, `warn` or `info`. `line` is a number or `null`. `file` is the file to change; for a missing `README.md` or `SKILL.md` it is the folder.
 - `fix` says what to do, specific to the finding where the tool can tell.
 - `ignored` counts the findings that `--ignore` dropped, per rule; they are not in `findings` and not in the counts.
-- With `--fix`, `summary.fixed` has `written`, `removed` and `refused` (lists of paths). `--fix` writes generated files only, never a stamp.
+- With `--fix`, `summary.fixed` has `written`, `removed` and `refused` (lists of paths). `--fix` writes generated files only.
 - `--format github` prints the same findings as lines `::error file=cloud/unifold.yaml,line=14,title=unifold W2::message Fix: ...`, with paths relative to the current folder, then the summary line.
 
-## show
+## brief and trace
 
-```json
-{"name": "serial", "path": "transport/serial",
- "responsibility": "Moves frames through the serial port with deadlines",
- "kind": "adapter", "status": "planned",
- "secret": {"what": "opening the port, writing to it and reading it with deadlines",
-            "decision": "transport/docs/decisions/0001-the-line-is-one-unit.md"},
- "not": [{"text": "frame layout", "need": "frames"}, {"text": "retries", "need": null}],
- "manifest": "transport/serial/unifold.yaml",
- "parent": {"path": "transport", "name": "transport", "status": "planned", "responsibility": "..."},
- "children": [], "nested-projects": [],
- "capabilities": {"transport": {
-   "summary": "...", "contract": "docs/references/transport.md", "parts": null,
-   "used-by": [{"unit": "session", "status": "planned", "need": "transport", "config": null}]}},
- "needs": {"frames": {
-   "summary": "...", "contract": "docs/references/frames.md", "parts": ["encode"],
-   "optional": false, "platform": false,
-   "provided-by": [{"unit": "codec", "status": "planned", "capability": "frames", "config": null}]}},
- "scenarios": [{"unit": ".", "name": "open", "summary": "The host opens a session"}],
- "skills": [{"name": "add-a-quantity", "path": "...", "description": "..."}],
- "decisions": [{"path": "...", "title": "...", "status": "proposed"}],
- "documents": {"tutorials": [], "references": ["..."], "explanation": ["..."]},
- "diagrams": ["transport/serial/docs/diagrams/context.md"],
- "files": ["transport/serial/README.md", "..."]}
-```
+`brief` prints `{"unit", "name", "responsibility", "kind", "status", "not", "readme", "capabilities", "needs", "scenarios", "constants", "context"}`. A capability has `name`, `summary`, `implemented-by` and `contract`; a need has `name`, `summary`, `optional`, `parts-used`, `provided-by` and `contract`. A `contract` is `{"path", "parts", "states", "fake", "fake-text"}`, and a part `{"name", "kind", "signature", "pre", "result", "errors", "examples"}` with each example `{"id", "case", "given", "input", "expected"}`.
 
-- `used-by` and `provided-by` are resolved through the whole tree: they name the units whose own code is on the other side. A unit above can be such a user, when it wires a need of its own to this capability; a need that a unit meets inside is provided by a unit below it, never from outside.
-- The other form of an entry: `{"outside": true, "root-capability": "api"}` and `{"outside": true, "root-need": "clock", ...}` for the world outside the project.
-- `config` is the name of the alternative, or `null`. `parts` is the list under `contract`, or `null` for the whole contract.
-- `contract` is a path relative to the root. Both sides of a connection name the same contract, so an entry under `used-by` or `provided-by` repeats none.
-- `scenarios` lists the scenarios whose hops name the unit or use a wiring line of it, with the unit that holds each.
-- A `status` other than `active`, and a decision status other than `accepted` or `derived`, means: not in force. The text output marks these in brackets.
-
-## capability
-
-```json
-{"unit": "db", "name": "store", "side": "capabilities",
- "ends": [
-  {"unit": "db", "status": "planned", "side": "capabilities", "name": "store",
-   "summary": "Keeps things", "contract": "docs/references/store.md", "parts": null,
-   "optional": null, "readme": "text of the README section, or null"},
-  {"unit": "web/inner", "status": "active", "side": "needs", "name": "store", "...": "...",
-   "optional": false, "config": null}]}
-```
-
-The first end is the capability or need asked for; the others are every final user or provider. An end outside the project has `"outside": true`.
-
-## impact
-
-```json
-{"unit": "db", "status": "planned", "capability": null, "file": null,
- "dependents": [{"unit": "web/inner", "status": "active", "distance": 1,
-                 "via": "need 'store' is met by capability 'store' of db"}],
- "exposed-as": [{"unit": ".", "capability": "store"}],
- "outside": ["store"], "root-capabilities-affected": ["api", "store"],
- "citations": [{"file": "web/docs/explanation/context.md", "line": 12, "cites": "db/README.md",
-                "kind": "context-item", "title": "db: storage rules",
-                "says": "...", "stamp": "current"}]}
-```
-
-With a file as `PATH`, `file` is its path and `citations` holds every context item and link that cites it, also when the file is deleted already; a row of kind `link` has no `title`, `says` or `stamp`. Without a file, `citations` holds the context items that cite a file of the unit. `distance` 1 is a direct user, which can be the parent when its own need is wired to the unit; higher numbers depend on a dependent. `exposed-as` lists the units above that provide the capability as their own; `outside` the capabilities of the root through which the world uses it directly; `root-capabilities-affected` every capability of the root that depends on it. `stamp` is `current`, `stale` or `missing`.
-
-## tree, skills, rules
-
-`tree` prints a list, the root first:
-
-```json
-[{"path": "cloud", "name": "cloud", "depth": 1, "status": "planned", "kind": "system",
-  "responsibility": "...", "parent": ".", "capabilities": ["public-api"],
-  "needs": ["push-service"], "children": ["cloud/platform"], "nested-projects": []}]
-```
-
-`skills` prints `[{"name", "unit", "path", "description"}]`. `rules` prints `[{"id", "severity", "what", "fix", "url"}]`.
-
-## model
-
-`unifold model` prints the resolved map of the whole project. Its schema is `unifold-model` 0.4 and changes only with a decision; within 0.4 keys are added, never removed or changed in meaning. Keys that start with `x-` in a manifest, a capability, a need or a scenario are passed through untouched under `x`. A process tool reads this and nothing else.
-
-```json
-{"unifold-model": "0.4", "tool": "0.4.0", "project": "serial-line", "root": "/work/serial-line",
- "units": [
-  {"path": "transport", "name": "transport", "parent": ".", "children": ["transport/framing", "transport/serial"],
-   "responsibility": "Sends and receives frames over the serial line", "kind": "adapter",
-   "status": "planned", "readme": "transport/README.md",
-   "secret": {"what": "how frames travel over the line", "decision": "transport/docs/decisions/0001-the-line-is-one-unit.md"},
-   "not": [{"text": "frame layout", "need": "frames"}, {"text": "retries after a failed write", "need": null}],
-   "capabilities": [
-    {"name": "transport", "summary": "...", "contract": "docs/references/transport.md", "parts": null,
-     "contract-parts": [{"name": "send", "kind": "command"}, {"name": "receive", "kind": "query"}], "fake": "described",
-     "contract-states": null,
-     "final-users": [{"unit": "session", "need": "transport", "config": null}], "x": {}}],
-   "needs": [
-    {"name": "uart", "summary": "...", "contract": "docs/references/uart.md", "parts": null,
-     "contract-parts": [{"name": "write", "kind": "command"}], "fake": "described",
-     "contract-states": null, "optional": false, "platform": false,
-     "final-providers": [{"outside": true, "root-need": "uart", "config": null}], "x": {}}],
-   "wiring": [
-    {"key": "transport", "value": "serial.transport", "alternative": null, "form": "implemented-by",
-     "user": null, "need": null, "provider": "transport/serial", "capability": "transport", "to-need": null},
-    {"key": "serial.uart", "value": "uart", "alternative": null, "form": "passed-up",
-     "user": "transport/serial", "need": "uart", "provider": null, "capability": null, "to-need": "uart"}],
-   "scenarios": [
-    {"name": "reassemble", "summary": "Two frames arrive in one read", "source": "proto §4.3",
-     "given": [{"condition": "two frames wait on the line"}],
-     "expect": "receive returns the first payload", "hops": [
-      {"caller": "transport", "target": "serial", "part": "receive", "input": null, "result": "the first payload",
-       "part-kind": "query", "caller-unit": null, "target-unit": "transport/serial",
-       "contract": "docs/references/transport.md", "via": [{"unit": "transport", "key": "transport"}],
-       "state-before": null, "state": null}],
-     "x": {}}],
-   "decisions": [{"path": "transport/docs/decisions/0001-the-line-is-one-unit.md", "title": "The line is one unit",
-                  "status": "proposed", "date": "2026-10-27", "derived-from": null, "answer": null}],
-   "documents": {"tutorials": [], "references": ["transport/docs/references/framing.md"], "explanation": []},
-   "x": {}}],
- "root-needs": [{"name": "uart", "platform": false, "reached-by": ["transport/serial"]},
-                {"name": "clock", "platform": true, "reached-by": ["session"]}]}
-```
-
-- `units` holds every unit, the root first, then by path. `parent` is `null` for the root.
-- `form` of a wiring row is `connection` (a need of a child met by a sibling), `passed-up` (to `to-need` of this unit), `met-inside` (a need of this unit, `user` is this unit) or `implemented-by` (`capability` is the own capability named by `key`). One row per alternative; `alternative` is its name or `null`.
-- `final-users` and `final-providers` are the `used-by` and `provided-by` of `show`, without status. `contract-parts` lists the parts the contract defines, with their kind, or is `null` when the entry names no contract. `contract-states` is the `## States` of the contract, `{"start", "rows": [{"state", "part", "result", "next"}]}` with a result of `any`, `ok` or an error case, or `null` for a contract without states. `fake` is `real` when the contract's `## Fake` section says `the real implementation`, `described` when it says anything else, and `null` without the section or the contract.
-- A scenario's `given` lists `{"connection", "state"}` and `{"condition"}` items in the order written. A hop's `input` is the text in its parentheses or `null`, and `result` is its result. `state-before` and `state` are the states of its connection before and after the hop, or `null` for a connection whose contract has no states.
-- A hop's `caller` and `target` are the names as written; `caller-unit` and `target-unit` are the paths of the units they name, or `null` for a capability or need of the holding unit. `via` lists the wiring lines the hop uses, from the top down, as the unit that holds the line and the key of the line; it is empty for a hop between a capability and a need of a unit without children. `contract` is the document in which `part` was looked up. An unresolved hop has `unresolved`, the hop as written, and `error`.
-- `answer` of a decision is `null` when it has no `## Answer` section, else `{"empty": true}` or `{"empty": false}`: an open question of a process is a decision whose `## Answer` is empty.
-- `reached-by` names the units whose own code finally uses a need of the root.
-
-## Commands that write
-
-`init`: `{"ok": true, "root", "written": [paths], "notes": [text], "units": 1}`; `written` holds the root manifest, if `init` wrote it, and the generated files. `explore`: `{"ok": true, "written": "/abs/explorer.html", "opened": true}`; `opened` is false with `--no-open` or when no browser could be started. `stamp` names every stamp it wrote; `action` is `added` or `refreshed`:
-
-```json
-{"ok": true, "stamped": 1, "items": [
-  {"file": "web/docs/explanation/context.md", "line": 12, "cites": "db/README.md",
-   "title": "db: storage rules", "action": "refreshed"}]}
-```
+`trace` prints `{"unit", "examples": [{"id", "contract", "part", "case", "line", "tests"}], "unknown": [{"file", "line", "id"}], "findings", "summary": {"examples", "tested", "untested", "unknown"}}`. A finding has the shape of a finding of `check`, with the rules `X1` and `X2`.
