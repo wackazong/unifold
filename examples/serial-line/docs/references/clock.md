@@ -2,6 +2,8 @@
 
 Contract of the need `clock` of `serial-line`: the current time, a service of the host platform. Notation: wit.
 Sources: none; the protocol says only how long a wait may take
+Binding: platform
+Version: 1
 
 ## Use
 
@@ -22,9 +24,9 @@ Result: milliseconds since an arbitrary start. Two calls never return a smaller 
 Errors: none.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| monotonic | `now()` twice | the second value is not smaller than the first |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| monotonic | the call before returned `1000` | `now()` | `1000` or a larger value |
 
 ## Fake
 

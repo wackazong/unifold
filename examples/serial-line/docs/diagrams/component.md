@@ -1,16 +1,16 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: serial-line
 
-**serial-line** · [README](../../README.md) · [architecture](architecture.md)
+**serial-line** · [README](../../README.md)
 
 The units directly inside `serial-line` and how they are connected. An arrow points from the unit that needs something to the unit that provides it. Rounded nodes are capabilities of the framing unit, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a unit that is planned.
 
 ```mermaid
 flowchart LR
   subgraph u_root["serial-line"]
-    u_codec["codec (logic)"]
-    u_session["session (stateful)"]
-    u_transport["transport (adapter)"]
+    u_codec["codec (logic, library)"]
+    u_session["session (stateful, library)"]
+    u_transport["transport (adapter, library)"]
   end
   n_root___clock{{"clock"}}
   n_root___uart{{"uart"}}
@@ -29,9 +29,9 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [codec](../../codec/README.md) | logic | Encodes a payload into the bytes of a frame and decodes a frame from bytes | **planned** |  |
-| [session](../../session/README.md) | stateful | Runs the host side of a session through its states and timeouts | **planned** |  |
-| [transport](../../transport/README.md) | adapter | Sends and receives frames over the serial line | **planned** | [component](../../transport/docs/diagrams/component.md) |
+| [codec](../../codec/README.md) | logic, library | Encodes a payload into the bytes of a frame and decodes a frame from bytes | **planned** |  |
+| [session](../../session/README.md) | stateful, library | Runs the host side of a session through its states and timeouts | **planned** |  |
+| [transport](../../transport/README.md) | adapter, library | Sends and receives frames over the serial line | **planned** | [component](../../transport/docs/diagrams/component.md) |
 
 ### Connections
 

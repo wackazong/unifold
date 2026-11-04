@@ -2,6 +2,7 @@
 
 Contract of `framing.framing`, cutting the byte stream of the line into frames. Notation: wit.
 Sources: proto §4.3
+Binding: in-process
 
 ## Use
 

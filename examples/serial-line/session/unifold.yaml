@@ -1,12 +1,10 @@
 responsibility: Runs the host side of a session through its states and timeouts
 kind: stateful
+runs-as: library
 status: planned
-secret:
-  what: the session state machine and its timing
-  decision: docs/decisions/0001-the-session-has-four-states.md
 not:
-  - frame layout: transport
-  - the serial port and its deadlines: transport
+  - the layout of a frame; whatever provides the need `transport` knows it
+  - the serial port and its deadlines; they lie behind the need `transport`
   - retrying a failed open
 capabilities:
   host:

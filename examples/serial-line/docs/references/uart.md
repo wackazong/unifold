@@ -2,10 +2,20 @@
 
 Contract of the need `uart` of `serial-line`: the serial port of the host computer, opened at 115200 baud, 8 data bits, no parity, one stop bit. Notation: wit.
 Sources: proto §3
+Binding: serial
+Version: 1
 
 ## Use
 
-The consumer writes bytes to the port and reads the bytes that arrived. The port is open for the whole run of the program, so the connection has no state of its own: `write` and `read` may be called at any time, by one caller at a time.
+The consumer writes bytes to the port and reads the bytes that arrived. The port is open for the whole run of the program, so the connection has no state of its own: `write` and `read` may be called at any time.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| concurrency | one caller at a time |
+| ordering | bytes are handed to the port, and delivered from it, in the order in which they were written or arrived |
+| timeout | `read` returns as soon as at least one byte arrived, or empty once `timeout-ms` have passed |
 
 ## Parts
 
@@ -22,10 +32,10 @@ Result: every byte was handed to the port, in order.
 Errors: `failed` when the port reported an error; the bytes may be partly written.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| a frame | `write([1F, 01, 01, 12])` | ok, the port received the four bytes |
-| port gone | `write([1F])` after the port failed | `failed` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| a frame | the port is open | `write([1F, 01, 01, 12])` | ok |
+| port gone | the port failed | `write([1F])` | `failed` |
 
 ### read
 
@@ -40,11 +50,11 @@ Result: the bytes that arrived, at most `max`, as soon as at least one arrived o
 Errors: `failed` when the port reported an error.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| bytes waiting | `read(64, 50)` with `1F 01 81 9B` waiting | `[1F, 01, 81, 9B]` |
-| silence | `read(64, 50)`, nothing arrives | `[]` after 50 ms |
-| port gone | `read(64, 50)` after the port failed | `failed` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| bytes waiting | `1F 01 81 9B` are waiting | `read(64, 50)` | `[1F, 01, 81, 9B]` |
+| silence | nothing arrives for 50 ms | `read(64, 50)` | `[]` |
+| port gone | the port failed | `read(64, 50)` | `failed` |
 
 ### uart-error
 

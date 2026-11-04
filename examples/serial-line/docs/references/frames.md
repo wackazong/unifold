@@ -2,10 +2,17 @@
 
 Contract of `codec.frames`, the layout of a frame. Notation: wit.
 Sources: proto §4
+Binding: in-process
 
 ## Use
 
-A consumer encodes a payload into the bytes of a frame, and decodes the frame at the start of a byte sequence. The connection has no state: any part may be called at any time, also at the same time.
+A consumer encodes a payload into the bytes of a frame, and decodes the frame at the start of a byte sequence. The connection has no state: any part may be called at any time.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| concurrency | any number of callers at the same time; a call reads nothing but its input |
 
 ## Parts
 
@@ -27,8 +34,8 @@ Examples:
 | empty payload, proto §4.2 | `encode([])` | `1F 00 00` |
 | OPEN, proto §4.2 | `encode([01])` | `1F 01 01 12` |
 | DATA hi, proto §4.2 | `encode([03, 68, 69])` | `1F 03 03 68 69 C2` |
-| longest payload | 255 bytes `00` | 258 bytes, the last `D7` |
-| one over the limit | 256 bytes | `too-long` |
+| longest payload | `encode(255 bytes 00)` | 258 bytes, the last `D7` |
+| one over the limit | `encode(256 bytes 00)` | `too-long` |
 
 ### decode
 

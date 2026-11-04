@@ -1,15 +1,15 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: transport
 
-[serial-line](../../../docs/diagrams/component.md) / **transport** · [README](../../README.md) · [context](context.md)
+[serial-line](../../../docs/diagrams/component.md) / **transport** · [README](../../README.md)
 
 The units directly inside `transport` and how they are connected. An arrow points from the unit that needs something to the unit that provides it. Rounded nodes are capabilities of the framing unit, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a unit that is planned.
 
 ```mermaid
 flowchart LR
   subgraph u_transport["transport"]
-    u_transport__framing["framing (logic)"]
-    u_transport__serial["serial (adapter)"]
+    u_transport__framing["framing (logic, library)"]
+    u_transport__serial["serial (adapter, library)"]
   end
   n_transport___frames{{"frames"}}
   n_transport___uart{{"uart"}}
@@ -28,8 +28,8 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status |
 |---|---|---|---|
-| [framing](../../framing/README.md) | logic | Cuts the byte stream from the line into frames | **planned** |
-| [serial](../../serial/README.md) | adapter | Moves frames through the serial port with deadlines | **planned** |
+| [framing](../../framing/README.md) | logic, library | Cuts the byte stream from the line into frames | **planned** |
+| [serial](../../serial/README.md) | adapter, library | Moves frames through the serial port with deadlines | **planned** |
 
 ### Connections
 

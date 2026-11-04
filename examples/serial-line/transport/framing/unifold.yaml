@@ -1,11 +1,9 @@
 responsibility: Cuts the byte stream from the line into frames
 kind: logic
+runs-as: library
 status: planned
-secret:
-  what: where a frame starts in a stream, what to drop and how much to keep
-  decision: docs/decisions/0001-bytes-before-a-magic-byte-are-dropped.md
 not:
-  - frame layout and checksum: frames
+  - the frame layout and its checksum; the need `frames` provides them
   - reading the port
 capabilities:
   framing:

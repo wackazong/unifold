@@ -1,12 +1,10 @@
 responsibility: Moves frames through the serial port with deadlines
 kind: adapter
+runs-as: library
 status: planned
-secret:
-  what: opening the port, writing to it and reading it with deadlines
-  decision: ../docs/decisions/0001-the-line-is-one-unit-cut-into-port-and-reassembly.md
 not:
-  - frame layout: frames
-  - cutting the stream into frames: framing
+  - the frame layout; the need `frames` provides it
+  - cutting the stream into frames; the need `framing` provides it
 capabilities:
   transport:
     summary: Send one payload as a frame; receive the next frame's payload
