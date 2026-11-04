@@ -16,9 +16,12 @@ documents where they belong, the generated files current.
   show [PATH]                 one unit with its resolved neighbours
   capability PATH NAME        both ends of every connection of one entry
   impact PATH [CAPABILITY]    everything that depends on a unit or capability, or cites a file
+  brief [PATH]                what to implement in a unit: its contracts, examples, fakes and scenarios
+  scenario PATH NAME          one scenario as a sequence diagram with its steps, as Markdown
+  states PATH CONTRACT        the states of a contract as a state diagram with its table, as Markdown
+  trace [PATH]                which examples of a unit's contracts a test names, and which none does
   tree [PATH]                 the unit tree
-  model [PATH]                the resolved project as JSON, with a stable schema
-  stamp [PATH]                confirm context items: write and refresh their stamps
+  model [PATH]                the resolved project as JSON
   skills [PATH]               list the skills of the project
   explore [PATH]              write the explorer and open it in a browser
   rules [ID]                  the rules that `check` applies
@@ -29,7 +32,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import hashlib
+import fnmatch
 import json
 import os
 import re
@@ -53,8 +56,8 @@ SPEC_VERSIONS = ("0.4",)
 MODEL_VERSION = "0.4"
 SITE_URL = "https://unifold.md"
 MANIFEST = "unifold.yaml"
-MAX_LINES = 200
-MAX_WHY_LINES = 20             # lines that are not blank under `## Why` of a README.md
+MAX_WORDS = 1500               # words of a hand-written document, outside its front matter
+MAX_WHY_WORDS = 250            # words under `## Why` of a README.md
 LIST_LIMIT = 12                # more files of one kind than this are counted, not linked, in AGENTS.md
 MAX_DEPTH = 3
 SHARED_FROM = 3                # so many children passing one need up are listed, not drawn
@@ -65,7 +68,6 @@ STUB_MARK = MARK_PREFIX + " - do not edit; run `unifold check --fix` -->"
 BLOCK_BEGIN = "<!-- unifold:begin - generated block; run `unifold check --fix` to refresh -->"
 BLOCK_BEGIN_PREFIX = "<!-- unifold:begin"
 BLOCK_END = "<!-- unifold:end -->"
-STAMP = re.compile(r"^<!--\s*unifold:cites\s+sha=([0-9a-f]{8})\s*-->\s*$")
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
 NEVER_SCANNED = {"node_modules", "__pycache__"}
 STUB_DIRS = (".agents/skills", ".claude/skills")
@@ -79,47 +81,29 @@ README_TEMPLATE = """# <folder-name>
 
 ## Why
 
-<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess, in whole sentences. Where a decision gives a reason, state the reason and link the decision. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them. No list of decisions either: the decisions are their own record.>
-
-## Capabilities
-
-<One `###` section for each capability whose summary and contract do not say everything. Delete the others, and the whole section if none is left.>
-
-### `<capability-name>`
-
-<Only what the contract does not say: what this unit adds beyond it, each guarantee in a form a test could check, and its own limits. Do not repeat the contract; the manifest names it.>
-
-## Needs
-
-<One `###` section for each need whose summary and contract do not say everything. Delete the others, and the whole section if none is left.>
-
-### `<need-name>`
-
-<Only what the contract does not say: what this unit expects beyond it, never who supplies it. For an optional need: what the unit does without it.>
-
-## Commands
-
-<!-- Optional: the few commands to build, test and run this unit. Delete the section otherwise. -->
-
-## Read next
-
-<!-- Optional: a few links into docs/ whose order matters. Delete the section otherwise. -->
+<Why this unit exists and why it is cut this way: what it hides because it is hard to get right or likely to change, what it leaves to others and why, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess, in whole sentences. Where a decision gives a reason, state the reason and link the decision. At most 250 words; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them. No list of decisions either: the decisions are their own record.>
 """   # the same text as the skill asset assets/README.template.md
 ROOT_KEYS = ("unifold", "name", "ignore", "diagrams")
-UNIT_KEYS = ("responsibility", "kind", "status", "secret", "not", "capabilities", "needs", "wiring",
+UNIT_KEYS = ("responsibility", "kind", "runs-as", "status", "not", "capabilities", "needs", "wiring",
              "scenarios")
 CAPABILITY_KEYS = ("summary", "contract")
 NEED_KEYS = ("summary", "contract", "optional", "platform")
 SCENARIO_KEYS = ("summary", "source", "given", "hops", "expect")
 STATUSES = ("planned", "active", "deprecated")
 WELL_KNOWN_KINDS = ("logic", "stateful", "adapter")
-PART_KINDS = ("command", "query", "event", "type")
+PART_KINDS = ("command", "query", "event", "callback", "type")
+CALL_KINDS = ("command", "query")                 # the consumer calls the provider
+NBSP = "\u00a0"
+STEP_WIDTH = 34                                     # the characters of one line of a step in a sequence diagram; a wider one shrinks the picture
+RAISE_KINDS = ("event", "callback")               # the provider calls the consumer
+SCENARIO_REF = re.compile(r"^\s*(?:([A-Za-z0-9][\w./-]*)\s*->\s*)?([A-Za-z0-9][\w./-]*)\.([A-Za-z0-9][\w-]*)\s*$")
 DIAGRAM_MODES = ("parents", "none")
 DECISION_STATUS = re.compile(r"^(proposed|accepted|rejected|deprecated|derived|superseded by (\d{4}))$")
 HOP = re.compile(r"^\s*(\S.*?)\s*->\s*(\S.*?)\s*$")
-PART_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 CONSTANT_PATTERN = r"\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b"
-FIELD_LINE = re.compile(r"^(Kind|Pre|Result|Errors|Examples):\s*(.*?)\s*$")
+FIELD_LINE = re.compile(r"^(Kind|Pre|Result|Errors|Examples|When|Delivery):\s*(.*?)\s*$")
+HEADER_LINE = re.compile(r"^(Notation|Sources|Binding|Carried by|Version):\s*(.*?)\s*$")
+RUNS_AS = ("library", "process", "job", "ui", "firmware")
 DECISION_FILE = re.compile(r"^(\d{4})-[a-z0-9][a-z0-9-]*\.md$")
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ENTRY_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
@@ -142,7 +126,7 @@ RULES = {
            "Write `unifold: \"0.4\"` in the root `unifold.yaml`. A 0.3 project is rewritten by hand: every hop gets a result, `caller -> target.part(input): result`. A 0.2 project also needs `responsibility` instead of `summary` on a unit, and no `verified-by`."),
     "S3": ("error", "Every unit has a `README.md`.",
            "Write the file (the template is in the `unifold` skill)."),
-    "S7": ("error", "Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`.",
+    "S7": ("warn", "Every folder in `docs/skills/` has a `SKILL.md` whose front matter has `name`, equal to the folder name, and `description`.",
            "Correct the front matter."),
     "S9": ("error", "A decision file is named `NNNN-short-title.md` with a number that is unique in the unit; its front matter has an ISO `date` and a `status` that is proposed, accepted, rejected, deprecated, superseded by NNNN, or derived; `accepted` names `decision-makers`; `superseded by NNNN` names an existing decision; `derived` has `derived-from` and a section `## Source says`.",
            "Correct the file name or the front matter; give a derived decision the passage it rests on."),
@@ -150,11 +134,11 @@ RULES = {
            "Move the file or folder into the folder of its kind: tutorials (learn), skills (do), references (look up), explanation (understand)."),
     "M1": ("error", "A manifest is a YAML mapping without duplicate keys.",
            "Correct the YAML. The unit and its wiring are not checked until it parses."),
-    "M2": ("error", "A manifest has a one-line `responsibility` and otherwise only the keys, types and values of the standard; root-only keys are in the root; `platform` stands on a need of the root only; `contract` is a path or a mapping with `path` and `parts`; names of capabilities, needs and scenarios use letters, digits, `-` and `_` and start with a letter or digit; no text is a placeholder (`<...>`).",
+    "M2": ("error", "A manifest has a one-line `responsibility` and otherwise only the keys, types and values of the standard; root-only keys are in the root; `runs-as` is one of `library`, `process`, `job`, `ui` and `firmware`; `platform` stands on a need of the root only; `contract` is a path or a mapping with `path` and `parts`; names of capabilities, needs and scenarios use letters, digits, `-` and `_` and start with a letter or digit; `contract` names a file, not a fragment; a folder under `ignore` exists; no text of the manifest is a placeholder (`<...>`).",
            "Correct the key or value named in the message. A unit has `responsibility`, not `summary`. Project-specific keys start with `x-`: write `owner`, and `kind` on a capability or need, as `x-owner` and `x-kind`. `max-lines` and `diagram-links` do not exist; delete them."),
     "M7": ("error", "`contract` is a path, relative to the manifest, to a Markdown file that exists in `docs/references/` of this unit or of an ancestor.",
            "Write the contract as `docs/references/<topic>.md` of the unit that wires the connection, and name it from both sides. A schema file is not a contract, and a definition from outside the project is linked from the reference by its URL. Otherwise correct the path, create the file, or remove the key until there is something to point at."),
-    "M10": ("warn", "No responsibility or summary is still `TODO`.",
+    "M10": ("warn", "No responsibility or summary starts with `TODO`.",
            "Replace `TODO` with one line that says what the unit, capability or need is."),
     "M11": ("error", "Every name under `parts` is a part of the named contract: a `###` heading under `## Parts`, or a file in the contract folder.",
            "Correct the name, or add the part to the contract."),
@@ -176,28 +160,30 @@ RULES = {
            "Move the input, output or state the finding names into a `stateful` or `adapter` unit, or change the kind."),
     "K3": ("warn", "The final provider of no need of an `adapter` is an `adapter`.",
            "Let both talk to a `stateful` or `logic` unit in between, or merge them: one adapter talks to one external system."),
-    "K4": ("warn", "A need of the root without `platform: true` is finally reached only by `adapter` units. Silent for a unit that states no `kind`.",
+    "K4": ("warn", "A need of the root without `platform: true` is finally reached only by `adapter` units. Silent for a unit whose `kind` is not `logic` or `stateful`.",
            "Put an adapter between the unit named and the external system, or mark a host service `platform: true`."),
-    "K5": ("error", "`secret` is a mapping with `what`, one line, and `decision`, a path relative to the manifest that exists and is a decision of this unit or of an ancestor.",
-           "Write the decision that says why this is the secret, and point at it."),
-    "K6": ("error", "`not` is a list; an item is a one-line text, or one line mapped to a need of the unit.",
-           "Write each item as text, or as `thing: need` where `need` is a need of this unit."),
-    "N1": ("error", "Every hop resolves to one connection, its part is in that connection's contract, and no name is ambiguous: a name that is both a descendant and a capability or need of the holding unit, or two connections between the same units whose contracts both have the part.",
-           "Wire the connection the hop needs, add the part to the contract, or rename what is ambiguous."),
-    "N2": ("error", "A scenario has `summary`, `hops` and `expect`; its name follows the rule for names. A hop is `caller -> target.part: result`, with an optional input in parentheses after the part, and a result that is text. `given` is a list whose items are a sentence or `connection: state`.",
-           "Complete the scenario. Give every hop its result, for example `- host -> session.open(): ok`. Quote a result that YAML reads as something other than text, such as `\"yes\"` or `\"null\"`."),
-    "N3": ("warn", "Every wiring line of a unit is used by a hop of a scenario that passes through the unit. Silent where no scenario passes through the unit.",
+    "K6": ("error", "`not` is a list of one-line texts.",
+           "Write each item as one line of text."),
+    "N1": ("error", "Every hop resolves to one connection in the direction of the call: a command or query from the consumer to the provider, an event or callback from the provider to the consumer. Its part is a command, query, event or callback of that connection's contract, and no name is ambiguous: a name that is both a descendant and a capability or need of the holding unit, or two connections between the same units whose contracts both have the part, unless the hop names the capability (`target.capability.part`).",
+           "Wire the connection the hop needs, add the part to the contract, or write `target.capability.part`."),
+    "N2": ("error", "A scenario has `summary`, `hops` and `expect`; its name follows the rule for names. A hop is `caller -> target.part: result`, with an optional input in parentheses after the part, and a result that is text; a command or query has a result. An item of `hops` is also `parallel`, a list of two or more lists of hops, `repeat`, a mapping with `hops` and `until` or `times`, or `child.scenario`, a scenario of a unit below. `given` is a list whose items are a sentence or `connection: state`.",
+           "Complete the scenario. Give every hop its result, for example `- host -> session.open(): ok`. Quote a result that YAML reads as something other than text, such as `\"1000\"`, `\"yes\"` or `\"null\"`."),
+    "N3": ("warn", "Every wiring line of a unit is used by a hop of a scenario: one that passes through the unit, or one of a child at the capability or need the line connects. Silent where no scenario passes through the unit.",
            "Write the scenario that needs the line, or remove the connection."),
     "N4": ("info", "Every command, query and event of a contract is used by a hop of a scenario. Silent where the project has no scenario, or a hop does not resolve.",
            "Write the scenario that uses the part, or remove the part from the contract."),
     "N5": ("error", "An item `connection: state` under `given` names a connection the way a hop names its target, `unit.capability` or a need of the holding unit, whose contract has `## States`, and a state of that table.",
            "Correct the name or the state, or write the condition as a sentence."),
-    "N6": ("error", "Every hop over a connection whose contract has `## States` is allowed in the current state of that connection, with its result. A connection starts in the state that `given` names, or else in the start state of its contract.",
+    "N6": ("error", "Every hop over a connection whose contract has `## States` is allowed in the current state of that connection, with its result. A connection starts in the state that `given` names, or else in the start state of its contract. The hops of a `repeat` are followed twice.",
            "Correct the hop or its result, set the state the path starts from under `given`, or add the row that allows the step to the `## States` table of the contract."),
-    "C1": ("warn", "A contract has `## Parts` with at least one part, each with `Kind:` command, query, event or type.",
-           "Write the parts as [writing.md](writing.md#contracts) says."),
-    "C2": ("warn", "A command or query has `Pre:`, `Result:`, `Errors:` and an `Examples:` table with at least one row.",
-           "Complete the part; the examples are the first tests."),
+    "N7": ("error", "A hop agrees with the examples of its part: a result `= <case>` names an example of the part, and a hop whose input is the `Input` of an example has that example's `Expected` as its result.",
+           "Correct the hop, or correct the example in the contract; the examples are the tests."),
+    "N8": ("warn", "A result that is not `ok` and not a literal of the contract is spelled exactly like an error case of the part: a result that differs from an error case only in case, or in `-` and `_`, is reported.",
+           "Spell the error case as `Errors:` names it; a result that is not an error case counts as a success and moves the state."),
+    "C1": ("warn", "A contract has `## Parts` with at least one part, each with `Kind:` command, query, event, callback or type.",
+           "Write the parts as [contracts.md](contracts.md#parts) says."),
+    "C2": ("warn", "A command, query or callback has `Pre:`, `Result:`, `Errors:` and an `Examples:` table with the columns `Case | Input | Expected`, or `Case | Given | Input | Expected`, at least one row, and a case name that is unique within the part.",
+           "Complete the part; the examples are the first tests. Name each case once: its slug is the id of the example."),
     "C3": ("warn", "Every part has a fenced code block, its signature.",
            "Write the signature in the notation the header names."),
     "C4": ("warn", "A type is defined once within the subtree of the unit that holds the contract.",
@@ -208,28 +194,26 @@ RULES = {
            "Say how a consumer uses the connection: in which order it calls the parts, what it does when a call fails, and the rules that hold for every part."),
     "C7": ("error", "A `## States` section has a line `Start: <state>` and a table `State | Part | Result | Next`. Every part is a command, query or event of the contract, every result is empty, `ok` or an error case of the part, every next state is a state of the table, the start state is one of them, and no two rows match the same step.",
            "Correct the table. A deadline is an event part that the provider raises when the time is up, or the error of the next call."),
+    "C8": ("warn", "A `## Qualities` section of a contract is a table with the columns `Aspect | Guarantee`.",
+           "Write the qualities as rows: latency, throughput, concurrency, ordering, delivery, idempotency, timeout, availability, limits, security, or others."),
+    "C9": ("warn", "An event has `When:` and `Delivery:`; its `Examples:` table, where it has one, has the columns `Case | Action | Emitted` or `Case | Given | Action | Emitted`.",
+           "Say what raises the event and how it is delivered (at-most-once, at-least-once or exactly-once, and the order key)."),
+    "C10": ("warn", "A type is used: the signature of a command, query, event or callback names it, directly or through another type; a manifest lists it under `parts`; or a contract links to it. Silent for a contract that has only types.",
+            "Name the type in the signature of the part that uses it, or remove it. Properties of a device or a service belong in `## Qualities`."),
     "L1": ("error", "The target of every relative link in a hand-written document exists, including its anchor: a heading, or the first cell of a table row.",
            "Correct the link."),
     "L2": ("error", "A relative link stays inside the project, and no link is an absolute path.",
            "Write the link relative to this file; cite things outside the project by full URL."),
-    "L7": ("warn", "`docs/explanation/context.md` cites no decision that is rejected, deprecated or superseded, and an `active` unit cites no decision that is still `proposed`; `derived` binds.",
-           "Cite the successor, or have the decision accepted."),
-    "L9": ("warn", "Every item of `docs/explanation/context.md` is a `###` heading with a link, followed by a paragraph that starts with `Says` and one that starts with `Here`.",
-           "Complete the item."),
-    "L10": ("warn", "Every context item carries a stamp, and the cited part (the file, or the section or table row that the fragment of the link names) has not changed since the stamp was written.",
-           "Read the cited source again, correct `Says`, then run `unifold stamp`. Only `unifold stamp` writes stamps; `check --fix` never does."),
-    "L11": ("warn", "A link stays inside the unit, goes down to a direct child (its folder or its `README.md`), goes up from `docs/explanation/context.md` to an ancestor's `README.md`, decisions or references, or targets a file that the unit's manifest names as `contract`. No other link goes sideways or deeper.",
-           "Remove the link. What the unit wants from a sibling is a need in its manifest; what it takes from above is an item in `docs/explanation/context.md`."),
-    "T1": ("warn", "A hand-written document has at most 200 lines.",
+    "L11": ("warn", "No link goes sideways: its target lies in the unit, in a unit above it or in a unit below it.",
+           "Remove the link, and declare a need for what the unit wants from the sibling."),
+    "T1": ("warn", "A hand-written document has at most 1,500 words outside its front matter. A word is a string between spaces that contains a letter or a digit.",
            "Split the file: a reference into parts, the long why into `docs/explanation/reasoning.md`, a procedure into a skill."),
-    "T4": ("warn", "The `## Why` section of `README.md` has at most 20 lines that are not blank.",
+    "T4": ("warn", "The `## Why` section of `README.md` has at most 250 words.",
            "Move the long form to `docs/explanation/reasoning.md`."),
-    "T5": ("warn", "A `###` heading in code font under `## Capabilities` or `## Needs` of a `README.md` names a capability or need of the manifest.",
-           "Rename or remove the section; the manifest is the list of capabilities and needs."),
-    "T8": ("warn", "A reference, a Markdown file in `docs/references/`, has no link into a `docs/decisions/` folder.",
-           "Delete the mention and state the fact as it is now. The reason stays in the decision, which links this reference; `unifold impact FILE` lists the decisions that link a file. Cite a source document as text, never a decision."),
-    "G1": ("error", "Every generated file exists, is not ignored by git, and equals what the generator writes now, the scenario diagrams included; no leftover generated file remains; `docs/diagrams/` holds only generated files and `AGENTS.md` is generated.",
-           "Run `unifold check --fix`. A hand-written `AGENTS.md` is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command."),
+    "T9": ("warn", "`README.md` starts with a `#` title and one paragraph, has a `## Why` section, and holds no placeholder in angle brackets (`<...>`).",
+           "Write the title, the first paragraph and `## Why`; replace every `<...>` of the template with text."),
+    "G1": ("error", "Every generated file exists, is not ignored by git, and equals what the generator writes now, the scenario diagrams included; no leftover generated file remains; `docs/diagrams/` holds only generated files and the root `AGENTS.md` is generated.",
+           "Run `unifold check --fix`. A hand-written `AGENTS.md` at the root is not overwritten: move its content to `README.md` and `docs/`, delete it, then run the command."),
 }
 SEVERITY_ORDER = {"error": 0, "warn": 1, "info": 2}
 
@@ -439,7 +423,7 @@ class Doc:
         """{slug of the first cell: line number} of the body rows of every table.
 
         The first cell is read like a heading (code font and bold do not count), so the
-        row `| **stamp** | ... |` is `#stamp`. The first row with a slug wins.
+        row `| **unit** | ... |` is `#unit`. The first row with a slug wins.
         """
         if self._rows is None:
             out, prose = {}, self.prose
@@ -481,11 +465,6 @@ def split_link(link: str):
     return unquote(path.split("?", 1)[0]), unquote(anchor)
 
 
-def content_hash(lines) -> str:
-    text = " ".join(" ".join(lines).split())
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:8]
-
-
 # ------------------------------------------------------------------ model
 
 class Entry:
@@ -522,16 +501,9 @@ class Unit:
             self.name = _text(manifest.get("name")) or self.name
         self.responsibility = " ".join(_text(manifest.get("responsibility")).split())
         self.kind = _text(manifest.get("kind"))
-        secret = manifest.get("secret")
-        self.secret = {"what": " ".join(_text(secret.get("what")).split()),
-                       "decision": _text(secret.get("decision")) or None} if isinstance(secret, dict) else None
-        self.nots: list = []                    # [(text, need or None)]
-        for item in (manifest.get("not") if isinstance(manifest.get("not"), list) else []):
-            if isinstance(item, str):
-                self.nots.append((" ".join(item.split()), None))
-            elif isinstance(item, dict) and len(item) == 1:
-                text, need = next(iter(item.items()))
-                self.nots.append((" ".join(str(text).split()), str(need) if need is not None else ""))
+        self.runs_as = _text(manifest.get("runs-as"))
+        self.nots: list = [" ".join(item.split()) for item in (manifest.get("not") if isinstance(manifest.get("not"), list) else [])
+                           if isinstance(item, str)]
         self.scenarios: dict = {}               # name -> {summary, source, expect, given: [raw], hops: [raw], x: {}}
         raw = manifest.get("scenarios")
         if isinstance(raw, dict):
@@ -565,6 +537,7 @@ class Unit:
             for name, value in raw.items():
                 spec = {"summary": value} if isinstance(value, str) else \
                     value if isinstance(value, dict) else {}
+                inherit = value is None or value == {}          # an empty entry takes summary and contract from its one connection
                 contract, parts = spec.get("contract"), None
                 if isinstance(contract, dict):
                     raw_parts = contract.get("parts")
@@ -573,7 +546,7 @@ class Unit:
                 out[str(name)] = {
                     "summary": " ".join(_text(spec.get("summary")).split()),
                     "contract": _text(contract) or None,
-                    "parts": parts,
+                    "parts": parts, "inherit": inherit, "inherited-from": None,
                     "optional": spec.get("optional") is True,
                     "platform": spec.get("platform") is True,
                     "x": {k: v for k, v in spec.items() if isinstance(k, str) and k.startswith("x-")}}
@@ -687,6 +660,46 @@ class Project:
                 unit._by_name.setdefault(child.name, []).append(child)
         for unit in reversed(self.units):       # children first: a parent must know which
             self._connect(unit)                 # needs its children meet inside
+        self._inherit()
+
+    def _inherit(self):
+        """An empty entry takes its summary and contract from the one entry its wiring joins it to:
+        a child's need from its provider, a unit's capability from the child that implements it, a
+        unit's own need from the child that meets it. Chains are followed until nothing changes."""
+        def source(unit, side, name):
+            if side == "needs":
+                conn = unit.inner.get(name)
+                if conn is None and unit.parent is not None:
+                    conn = unit.parent.conn.get((unit, name))
+                    if conn is not None and len(conn.entries) == 1 and conn.entries[0].kind == "own":
+                        return unit.parent, "needs", conn.entries[0].capability
+            else:
+                conn = unit.impl.get(name)
+            if conn is None or len(conn.entries) != 1 or conn.entries[0].kind != "child":
+                return None
+            return conn.entries[0].unit, "capabilities", conn.entries[0].capability
+
+        for _ in range(len(self.units) + 1):
+            changed = False
+            for unit in self.units:
+                for side in ("capabilities", "needs"):
+                    for name, spec in getattr(unit, side).items():
+                        if not spec["inherit"] or spec["summary"]:
+                            continue
+                        found = source(unit, side, name)
+                        if found is None:
+                            continue
+                        other, other_side, other_name = found
+                        other_spec = getattr(other, other_side).get(other_name)
+                        if not other_spec or not other_spec["summary"]:
+                            continue
+                        spec["summary"], spec["inherited-from"] = other_spec["summary"], f"{other.rel}.{other_name}"
+                        if other_spec["contract"] and not SCHEME.match(other_spec["contract"]):
+                            target = os.path.normpath(os.path.join(other.path, other_spec["contract"].split("#")[0]))
+                            spec["contract"] = os.path.relpath(target, unit.path).replace(os.sep, "/")
+                        changed = True
+            if not changed:
+                break
 
     # ----- files, cached
 
@@ -1195,9 +1208,12 @@ def check_manifest(project: Project, unit: Unit):
         elif key == "owner":
             bad("key 'owner' is not part of the standard; nothing reads it", key,
                 fix="Rename the key to `x-owner` to keep it for the project, or delete the line.")
+        elif key == "secret":
+            bad("key 'secret' is not part of the standard", key,
+                fix="Delete the key. Say what the unit hides in the first sentence of `## Why` of its README.md, and link the decision there.")
         elif key in ("max-lines", "diagram-links"):
             bad(f"key '{key}' is not part of the standard"
-                + ("; the line limit is 200" if key == "max-lines" else "; boxes in diagrams do not link"),
+                + ("; the word limit is 1,500 in every project" if key == "max-lines" else "; boxes in diagrams do not link"),
                 key, fix="Delete the line.")
         else:
             close = difflib.get_close_matches(key.lower(), ROOT_KEYS + UNIT_KEYS, 1)
@@ -1211,7 +1227,7 @@ def check_manifest(project: Project, unit: Unit):
         project.add("K1", where, f"kind '{unit.kind}' is not one of {', '.join(WELL_KNOWN_KINDS)}; "
                                  "no rule applies to it", lines.get(("kind",)))
     check_unit_fields(project, unit)
-    for key, allowed in (("status", STATUSES), ("diagrams", DIAGRAM_MODES)):
+    for key, allowed in (("status", STATUSES), ("diagrams", DIAGRAM_MODES), ("runs-as", RUNS_AS)):
         value = manifest.get(key, allowed[0])
         if key in manifest and (not isinstance(value, str) or value not in allowed):
             hint = " (YAML reads yes, no, on and off as true and false)" \
@@ -1222,6 +1238,16 @@ def check_manifest(project: Project, unit: Unit):
         if ignore is not None and (not isinstance(ignore, list)
                                    or not all(isinstance(p, str) and p.strip() for p in ignore)):
             bad("'ignore' must be a list of folders, for example `ignore: [vendor]`", "ignore")
+        elif ignore:
+            for item in ignore:
+                if SCHEME.match(item) or os.path.isabs(item) or item.strip().startswith(".."):
+                    bad(f"'ignore' names a folder relative to the root, not '{item}'", "ignore")
+                elif not os.path.isdir(os.path.join(project.root, item.strip())):
+                    bad(f"'ignore' names a folder that does not exist: '{item}'", "ignore",
+                        fix="Delete the entry, or correct the path.")
+    for key in ("kind",):
+        if isinstance(manifest.get(key), str) and PLACEHOLDER.match(manifest[key].strip()):
+            bad(f"'{key}' is a placeholder ({manifest[key].strip()}); write a value or delete the line", key)
     for section, allowed in (("capabilities", CAPABILITY_KEYS), ("needs", NEED_KEYS)):
         raw = manifest.get(section)
         if raw is None:
@@ -1238,9 +1264,15 @@ def check_manifest(project: Project, unit: Unit):
             if isinstance(spec, str):
                 summary_of(spec, label, section, name)
                 continue
+            if spec is None or spec == {}:
+                entry = getattr(unit, section).get(str(name), {})
+                if not entry.get("summary"):
+                    bad(f"{label} is empty and nothing is wired to it to take a summary and a contract from; "
+                        "write its summary, or wire it to exactly one entry", section, str(name))
+                continue
             if not isinstance(spec, dict):
-                bad(f"{label} must be a summary text or a mapping with 'summary', not "
-                    f"{show_value(spec)}", section, str(name))
+                bad(f"{label} must be a summary text, a mapping with 'summary', or empty, not "
+                    f"{show_value(spec)}", section, name)
                 continue
             summary_of(spec.get("summary"), label, section, name)
             for key, value in spec.items():
@@ -1306,6 +1338,10 @@ def check_contract_key(project: Project, unit: Unit, label: str, value, section:
         project.add("M2", where, f"{label}: 'contract' must be one path, or a mapping with `path` and "
                                  f"`parts`, not {show_value(value)}", line)
         return
+    if "#" in value:
+        project.add("M2", where, f"{label}: 'contract' names a file, not a fragment: {value.strip()}", line,
+                    fix="Delete the `#...` part; `parts` says which parts this side uses.")
+        return
     problem = path_problem(project, unit, value.strip(), True)
     if problem:
         project.add("M7", where, f"{label}: 'contract' {problem}: {value.strip()}", line)
@@ -1320,60 +1356,19 @@ def check_contract_key(project: Project, unit: Unit, label: str, value, section:
 
 
 def check_unit_fields(project: Project, unit: Unit):
-    """`secret` (K5) and `not` (K6)."""
+    """`not` (K6)."""
     where, lines, manifest = unit.manifest_path, unit.lines, unit.manifest
-    if "secret" in manifest:
-        secret, line = manifest["secret"], lines.get(("secret",))
-        if not isinstance(secret, dict) or set(secret) - {"what", "decision"} or not secret:
-            project.add("K5", where, "`secret` is a mapping with `what` and `decision`", line)
-        else:
-            what = secret.get("what")
-            if not isinstance(what, str) or not what.strip() or "\n" in what.strip():
-                project.add("K5", where, "`secret.what` is one line of text", lines.get(("secret", "what"), line))
-            decision = secret.get("decision")
-            if not isinstance(decision, str) or not decision.strip():
-                project.add("K5", where, "`secret.decision` is a path to a decision",
-                            lines.get(("secret", "decision"), line))
-            else:
-                problem = decision_problem(project, unit, decision.strip())
-                if problem:
-                    project.add("K5", where, f"`secret.decision` {problem}: {decision.strip()}",
-                                lines.get(("secret", "decision"), line))
     if "not" in manifest:
         items, line = manifest["not"], lines.get(("not",))
         if not isinstance(items, list):
             project.add("K6", where, f"`not` is a list, not {show_value(items)}", line)
         else:
             for item in items:
-                if isinstance(item, str):
-                    if not item.strip() or "\n" in item.strip():
-                        project.add("K6", where, "an item of `not` is one line of text", line)
-                elif isinstance(item, dict) and len(item) == 1:
-                    text, need = next(iter(item.items()))
-                    if not isinstance(need, str) or need not in unit.needs:
-                        project.add("K6", where, f"`not` item '{text}' names '{need}', which is not a need of "
-                                                 f"this unit (needs: {', '.join(unit.needs) or 'none'})", line)
-                else:
-                    project.add("K6", where, "an item of `not` is one line of text, or one line mapped to a "
-                                             f"need of this unit, not {show_value(item)}", line)
-
-
-def decision_problem(project: Project, unit: Unit, value: str):
-    """Why a `secret.decision` path is not acceptable, or None."""
-    if SCHEME.match(value) or os.path.isabs(value):
-        return "must be a path relative to the manifest"
-    target = os.path.normpath(os.path.join(unit.path, value))
-    if not project.inside(target):
-        return "points outside the project"
-    if project.kind_of(target) != "file":
-        return "does not exist"
-    kind, owner = project.owner_of(target)
-    if kind != "unit" or (owner is not unit and owner not in unit.ancestors()):
-        return "is not a decision of this unit or of an ancestor"
-    folder = os.path.join(owner.path, "docs", "decisions") + os.sep
-    if not target.startswith(folder) or not DECISION_FILE.match(os.path.basename(target)):
-        return "is not a file in docs/decisions/ of this unit or of an ancestor"
-    return None
+                if not isinstance(item, str) or not item.strip() or "\n" in item.strip():
+                    project.add("K6", where, "an item of `not` is one line of text, not "
+                                             f"{show_value(item)}", line)
+                elif PLACEHOLDER.match(item.strip()):
+                    project.add("M2", where, f"an item of `not` is a placeholder ({item.strip()})", line)
 
 
 def path_problem(project: Project, unit: Unit, value: str, contract: bool = True):
@@ -1513,6 +1508,11 @@ def check_wiring(project: Project, unit: Unit):
 
 # ----- documents
 
+def word_count(lines: list) -> int:
+    """The words of some lines: the strings between spaces that contain a letter or a digit."""
+    return sum(1 for line in lines for token in line.split() if any(c.isalnum() for c in token))
+
+
 def managed_files(project: Project, unit: Unit) -> list:
     """The hand-written Markdown files of a unit that the document rules cover: README.md
     and the files in docs/decisions, docs/explanation, docs/references, docs/skills and
@@ -1641,70 +1641,12 @@ def status_mark(status: str) -> str:
             "derived": "derived: a source settles it; binds until a person accepts it"}.get(status, status)
 
 
-def context_items(doc: Doc) -> list:
-    """The items of a docs/explanation/context.md: heading, link, stamp, Says and Here."""
-    items, current = [], None
-    heading_lines = {h[0]: h for h in doc.headings}
-    for number, line in doc.prose:
-        heading = heading_lines.get(number)
-        if heading:
-            current = None
-            if heading[1] == 3:
-                link = INLINE_LINK.search(heading[2])
-                target = link.group(1) if link else None
-                if target and target.startswith("<"):
-                    target = target[1:-1]
-                current = {"line": number, "heading": heading[2], "link": target,
-                           "stamp": None, "stamp-line": None, "says": [], "here": False,
-                           "part": None, "first": True}
-                items.append(current)
-            continue
-        if current is None or not line.strip():
-            continue
-        match = STAMP.match(line.strip())
-        if match and current["first"]:
-            current["stamp"], current["stamp-line"] = match.group(1), number
-        elif re.match(r"^Says\b", line):
-            current["part"] = "says"
-        elif re.match(r"^Here\b", line):
-            current["part"], current["here"] = "here", True
-        if current["part"] == "says":
-            current["says"].append(line.strip())
-        current["first"] = False
-    for item in items:
-        text = " ".join(item["says"])
-        item["has-says"] = bool(item["says"])
-        item["says"] = re.sub(r"^Says\s*[:,]?\s*", "", text)
-        title = re.sub(r"\]\(.*$", "", item["heading"]).lstrip("[").strip()
-        item["title"] = title or item["heading"]
-    return items
-
-
-def cited_hash(project: Project, context_path: str, link: str):
-    """(hash or None, problem or None) of what a context item cites."""
-    if not link or SCHEME.match(link) or link.startswith(("#", "/")):
-        return None, None
-    rel_path, anchor = split_link(link)
-    target = os.path.normpath(os.path.join(os.path.dirname(context_path), rel_path))
-    if project.kind_of(target) != "file":
-        return None, None                            # a broken link is rule L1
-    doc = project.doc(target)
-    if anchor:
-        section = doc.section(anchor.lower())
-        if section is None:
-            return None, (f"'#{anchor}' is neither a heading nor the first cell of a table "
-                          f"row in {project.rel(target)}")
-        return content_hash(section), None
-    return content_hash(doc.lines), None
-
-
 def check_documents(project: Project, unit: Unit):
     """The document conventions for the files of one unit."""
     if unit.broken:
         return
     readme = os.path.join(unit.path, "README.md")
     docs = os.path.join(unit.path, "docs")
-    context = os.path.join(docs, "explanation", "context.md")
     if project.kind_of(readme) != "file":
         project.add("S3", unit.path, "the unit has no README.md")
     if project.kind_of(docs) == "dir":
@@ -1731,55 +1673,37 @@ def check_documents(project: Project, unit: Unit):
         if generated_location(unit, path):
             continue
         doc = project.doc(path)
-        if len(doc.lines) > MAX_LINES:
-            project.add("T1", path, f"{len(doc.lines)} lines; the limit is {MAX_LINES}")
-        check_links(project, unit, path, doc, path == context)
+        count = word_count(doc.lines[doc.body_start:])
+        if count > MAX_WORDS:
+            project.add("T1", path, f"{count:,} words; the limit is {MAX_WORDS:,}")
+        check_links(project, unit, path, doc)
     if project.kind_of(readme) == "file":
-        doc, section = project.doc(readme), ""
-        for number, level, text, _ in doc.headings:
-            if level <= 2:
-                section = text.strip().lower() if level == 2 else ""
-            elif level == 3 and section in ("capabilities", "needs"):
-                names = [m.group(2) for m in CODE_SPAN.finditer(text)]
-                known = unit.capabilities if section == "capabilities" else unit.needs
-                if names and names[0] not in known:
-                    close = difflib.get_close_matches(names[0], list(known), 1)
-                    hint = f"; did you mean '{close[0]}'?" if close else ""
-                    project.add("T5", readme, f"heading '{names[0]}' under '## "
-                                              f"{section.title()}' is not in the manifest{hint}", number)
+        doc = project.doc(readme)
+        has_why = False
         for index, (number, level, text, _) in enumerate(doc.headings):
             if level == 2 and text.strip().lower() == "why":
+                has_why = True
                 end = next((n for n, lvl, _, _ in doc.headings[index + 1:] if lvl <= 2),
                            len(doc.lines) + 1)
-                why = sum(1 for line in doc.lines[number:end - 1] if line.strip())
-                if why > MAX_WHY_LINES:
-                    project.add("T4", readme, f"'## Why' has {why} lines that are not blank; "
-                                              f"at most {MAX_WHY_LINES}", number)
+                why = word_count(doc.lines[number:end - 1])
+                if why > MAX_WHY_WORDS:
+                    project.add("T4", readme, f"'## Why' has {why} words; at most {MAX_WHY_WORDS}", number)
                 break
-    if project.kind_of(context) == "file":
-        check_context(project, unit, context)
-    check_reference_decisions(project, unit)
-
-
-def is_reference(unit: Unit, path: str) -> bool:
-    return path.startswith(os.path.join(unit.path, "docs", "references") + os.sep)
-
-
-def check_reference_decisions(project: Project, unit: Unit):
-    """T8: a reference has no link into a docs/decisions folder."""
-    for path in managed_files(project, unit):
-        if not is_reference(unit, path):
-            continue
-        doc, base, seen = project.doc(path), os.path.dirname(path), set()
-        for number, link in doc.links:
-            if SCHEME.match(link) or link.startswith(("#", "/")):
-                continue
-            target = os.path.normpath(os.path.join(base, split_link(link)[0]))
-            parts = project.rel(target).split("/")
-            if any(parts[i:i + 2] == ["docs", "decisions"] for i in range(len(parts) - 1)) \
-                    and (number, target) not in seen:
-                seen.add((number, target))
-                project.add("T8", path, f"links to {project.rel(target)}; a reference names no decision", number)
+        title = next((h for h in doc.headings if h[1] == 1), None)
+        first = next((n for n, line in doc.prose if line.strip() and not line.lstrip().startswith("<!--")), None)
+        if title is None or title[0] != first:
+            project.add("T9", readme, "README.md starts with a `#` title", 1)
+        else:
+            following = next((h[0] for h in doc.headings if h[0] > title[0]), len(doc.lines) + 1)
+            if not any(title[0] < n < following and line.strip() for n, line in doc.prose):
+                project.add("T9", readme, "one paragraph follows the title: what the unit is for, and for whom", title[0])
+        if not has_why:
+            project.add("T9", readme, "README.md has no `## Why` section", 1)
+        placeholder = next(((n, line) for n, line in doc.prose
+                            if PLACEHOLDER.match(line.strip()) and not line.lstrip().startswith("<!--")), None)
+        if placeholder:
+            project.add("T9", readme, f"a placeholder of the template is still there: {placeholder[1].strip()[:60]}",
+                        placeholder[0])
 
 
 def check_decisions(project: Project, unit: Unit):
@@ -1832,7 +1756,7 @@ def manifest_targets(project: Project, unit: Unit) -> set:
     return out
 
 
-def check_links(project: Project, unit: Unit, path: str, doc: Doc, is_context: bool):
+def check_links(project: Project, unit: Unit, path: str, doc: Doc):
     base = os.path.dirname(path)
     for line, link in doc.links:
         if SCHEME.match(link) or link.startswith("//"):
@@ -1866,110 +1790,12 @@ def check_links(project: Project, unit: Unit, path: str, doc: Doc, is_context: b
             project.add("L2", path, f"link leaves the project: {link}", line,
                         "Cite things outside the project by full URL.")
         elif owner_kind == "foreign":
-            if project.foreign[owner] is not unit or \
-                    target not in (owner, os.path.join(owner, "README.md")):
-                project.add("L11", path, "a nested project is linked only by its README.md, "
-                                        f"from the unit that contains it: {link}", line)
-        elif owner is unit:
-            continue
-        elif owner.parent is unit:
-            if target not in (owner.path, os.path.join(owner.path, "README.md")):
-                project.add("L11", path, f"link into the child '{owner.name}' must target its "
-                                        f"README.md: {link}", line)
-        elif owner.depth_below(unit) is not None:
-            project.add("L11", path, f"link reaches into '{owner.rel}', below a child; link to "
-                                    f"the README.md of the direct child instead: {link}", line)
-        elif unit.depth_below(owner) is not None:
-            decisions = os.path.join(owner.path, "docs", "decisions") + os.sep
-            references = os.path.join(owner.path, "docs", "references") + os.sep
-            if not is_context:
-                project.add("L11", path, f"upward link outside docs/explanation/context.md: {link}",
-                            line, "Cite it as an item in docs/explanation/context.md and link to "
-                                  "that file.")
-            elif not (target == os.path.join(owner.path, "README.md")
-                      or target.startswith((decisions, references))):
-                project.add("L11", path, "docs/explanation/context.md cites only an ancestor's "
-                                        f"README.md, decisions and references: {link}", line)
-            elif target.startswith(decisions) and target.endswith(".md") \
-                    and os.path.basename(target) != "index.md" and kind == "file":
-                status = decision_info(project, target)["status"]
-                if status.startswith(("rejected", "deprecated", "superseded")):
-                    project.add("L7", path, f"cites a decision that is {status}: {link}", line)
-                elif status == "proposed" and unit.status == "active":   # derived binds
-                    project.add("L7", path, "an active unit relies on a decision that is "
-                                            f"still proposed: {link}", line)
-        else:
+            project.add("L2", path, f"link leaves the project, into the nested project '{project.rel(owner)}': {link}",
+                        line, "Cite a nested project by full URL, or declare a need for what it provides.")
+        elif owner_kind == "unit" and owner is not unit and owner.depth_below(unit) is None \
+                and unit.depth_below(owner) is None:
             project.add("L11", path, f"sideways link into '{owner.rel}'; a unit does not know "
                                     f"its siblings: {link}", line)
-
-
-def check_context(project: Project, unit: Unit, path: str):
-    doc = project.doc(path)
-    items = context_items(doc)
-    if not items:
-        project.add("L9", path, "no item found; an item is a `### [title](link)` heading, "
-                                "then `Says` and `Here`")
-    unstamped = []
-    for item in items:
-        missing = [text for text, ok in (
-            ("a link in the heading", bool(item["link"])),
-            ("a paragraph that starts with 'Says'", item["has-says"]),
-            ("a paragraph that starts with 'Here'", item["here"])) if not ok]
-        if missing:
-            project.add("L9", path, f"item '{item['title'][:60]}' lacks " + ", ".join(missing),
-                        item["line"])
-        expected, problem = cited_hash(project, path, item["link"])
-        if problem:
-            project.add("L10", path, f"item '{item['title'][:60]}': {problem}", item["line"])
-        elif expected is None:
-            continue
-        elif item["stamp"] is None:
-            unstamped.append(item)
-        elif item["stamp"] != expected:
-            project.add("L10", path, f"item '{item['title'][:60]}': the cited source changed "
-                                     "since the stamp was written", item["line"])
-    if unstamped:
-        project.add("L10", path, f"{len(unstamped)} item(s) without a stamp, first: "
-                                 f"'{unstamped[0]['title'][:60]}'", unstamped[0]["line"],
-                    "Compare each `Says` with its source, then run `unifold stamp`.")
-
-
-def stamp_file(project: Project, path: str) -> list:
-    """Write the stamps of one docs/explanation/context.md. Returns one row per stamp written.
-
-    A missing stamp is added and a stamp whose source changed is replaced. This is the
-    deliberate act of `unifold stamp`; no other command writes a stamp.
-    """
-    doc = project.doc(path)
-    lines, rows = list(doc.lines), []
-    for item in reversed(context_items(doc)):
-        expected, _ = cited_hash(project, path, item["link"])
-        if expected is None or item["stamp"] == expected:
-            continue
-        stamp = f"<!-- unifold:cites sha={expected} -->"
-        if item["stamp-line"]:
-            lines[item["stamp-line"] - 1] = stamp
-        else:
-            lines.insert(item["line"], stamp)
-        rel_path, anchor = split_link(item["link"])
-        cited = project.rel(os.path.normpath(os.path.join(os.path.dirname(path), rel_path)))
-        rows.append({"file": project.rel(path), "line": item["line"],
-                     "cites": cited + (f"#{anchor}" if anchor else ""), "title": item["title"],
-                     "action": "refreshed" if item["stamp"] is not None else "added"})
-    if rows:
-        write_text(path, "\n".join(lines) + "\n")
-        project.forget(path)
-    return rows[::-1]
-
-
-def stamp_all(project: Project, below: str = None) -> list:
-    rows = []
-    for unit in project.units:
-        path = os.path.join(unit.path, "docs", "explanation", "context.md")
-        if os.path.isfile(path) and \
-                (below is None or unit.path == below or unit.path.startswith(below + os.sep)):
-            rows += stamp_file(project, path)
-    return rows
 
 
 # ----- contracts
@@ -2092,48 +1918,82 @@ def contract_of_path(project: Project, path: str) -> dict:
     if found is not None:
         return found
     doc = project.doc(path)
-    out = {"path": path, "folder": os.path.basename(path) == "index.md", "parts": {},
+    out = {"path": path, "folder": os.path.basename(path) == "index.md", "parts": {}, "header": {},
+           "carrier": None, "qualities": None,
            "has-parts": any(h[1] == 2 and h[3] == "parts" for h in doc.headings),
            "has-fake": any(h[1] == 2 and h[3] == "fake" for h in doc.headings), "fake": None,
            "has-use": any(h[1] == 2 and h[3] == "use" for h in doc.headings),
            "states": contract_states(doc)}
+    first_section = next((h[0] for h in doc.headings if h[1] == 2), len(doc.lines) + 1)
+    for number, line in doc.prose:                    # the header: the lines before the first section
+        if number >= first_section:
+            break
+        field = HEADER_LINE.match(line.strip())
+        if field:
+            out["header"][field.group(1)] = field.group(2)
+    carried = out["header"].get("Carried by")
+    if carried:
+        link = INLINE_LINK.search("](" + carried + ")") if not carried.startswith("[") else INLINE_LINK.search(carried)
+        target = (link.group(1).strip("<>") if link else carried).split("#")[0]
+        out["carrier"] = os.path.normpath(os.path.join(os.path.dirname(path), target))
+    qualities = level_two(doc, "qualities")
+    if qualities is not None:
+        header, rows = first_table(qualities[1], qualities[0])
+        out["qualities"] = {"line": qualities[0], "header": header,
+                            "rows": [{"aspect": plain(c[0]), "guarantee": c[1].strip() if len(c) > 1 else ""} for _, c in rows]}
     fake = next((h for h in doc.headings if h[1] == 2 and h[3] == "fake"), None)
+    out["fake-text"] = ""
     if fake is not None:
-        first = next((line.strip() for line in (doc.section("fake") or [])[1:] if line.strip()), "")
+        body = [line for line in (doc.section("fake") or [])[1:]]
+        first = next((line.strip() for line in body if line.strip()), "")
         out["fake"] = "real" if "the real implementation" in first.lower() else "described"
+        out["fake-text"] = "\n".join(body).strip()
 
-    def part_of(lines: list, start_line: int, file: str) -> dict:
-        part = {"kind": None, "fence": False, "fields": set(), "errors": set(), "examples": 0, "line": start_line,
-                "file": file}
-        fence, table, in_examples = None, [], False
-        for line in lines:
+    def part_of(name: str, lines: list, start_line: int, file: str) -> dict:
+        part = {"name": name, "kind": None, "fence": False, "signature": "", "fields": set(), "texts": {},
+                "errors": set(), "examples": 0, "header": None, "rows": [], "line": start_line, "file": file}
+        fence, signature, table, in_examples = None, [], [], False
+        for offset, line in enumerate(lines):
             match = FENCE.match(line)
             if fence:
                 if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) \
                         and not match.group(2).strip():
                     fence = None
+                    if not part["signature"]:
+                        part["signature"] = "\n".join(signature)
+                else:
+                    signature.append(line)
                 continue
             if match and not (match.group(1)[0] == "`" and "`" in match.group(2)):
-                fence, part["fence"] = match.group(1), True
+                fence, part["fence"], signature = match.group(1), True, []
                 continue
             field = FIELD_LINE.match(line)
             if field:
                 part["fields"].add(field.group(1))
+                part["texts"][field.group(1)] = field.group(2).strip()
                 if field.group(1) == "Kind":
                     part["kind"] = field.group(2).strip().lower()
                 elif field.group(1) == "Errors":           # the error cases: names in code font, not constants or expressions
                     part["errors"].update(" ".join(n.split()) for n in re.findall(r"`([^`()<>=]+)`", field.group(2))
                                           if n.strip() and not re.fullmatch(CONSTANT_PATTERN, n.strip()))
                 in_examples = field.group(1) == "Examples"
-                table = []
                 continue
             text = line.strip()
             if in_examples:
                 if text.startswith("|"):
-                    table.append(text)
+                    table.append((start_line + offset, line))
                 elif text:
                     in_examples = False
-                part["examples"] = max(part["examples"], len([r for r in table[2:] if not TABLE_RULE.match(r)]))
+        if table:                                      # the first table under `Examples:`
+            header, rows = first_table([l for _, l in table], table[0][0])
+            part["header"], part["examples"] = header, len(rows)
+            columns = {c: i for i, c in enumerate(header or [])}
+            for number, cells in rows:
+                get = lambda c: cells[columns[c]].strip() if c in columns and columns[c] < len(cells) else ""
+                case = get("case")
+                part["rows"].append({"line": number, "case": case, "given": get("given"),
+                                     "input": get("input") or get("action"), "expected": get("expected") or get("emitted"),
+                                     "id": example_id(path, name, case)})
         return part
 
     if out["folder"]:
@@ -2142,7 +2002,7 @@ def contract_of_path(project: Project, path: str) -> dict:
             file = os.path.join(folder, name)
             if name.endswith(".md") and name != "index.md" and os.path.isfile(file):
                 part_doc = project.doc(file)
-                out["parts"][name[:-3]] = part_of(part_doc.lines[part_doc.body_start:], 1, file)
+                out["parts"][name[:-3]] = part_of(name[:-3], part_doc.lines[part_doc.body_start:], 1, file)
     else:
         headings = doc.headings
         inside = False
@@ -2151,9 +2011,24 @@ def contract_of_path(project: Project, path: str) -> dict:
                 inside = slug == "parts"
             elif level == 3 and inside:
                 end = next((n for n, lvl, _, _ in headings[index + 1:] if lvl <= 3), len(doc.lines) + 1)
-                out["parts"][heading_slug(text)] = part_of(doc.lines[number:end - 1], number, path)
+                out["parts"][heading_slug(text)] = part_of(heading_slug(text), doc.lines[number:end - 1], number, path)
     cache[path] = out
     return out
+
+
+EXAMPLE_HEADERS = (["case", "input", "expected"], ["case", "given", "input", "expected"])
+EVENT_HEADERS = (["case", "action", "emitted"], ["case", "given", "action", "emitted"])
+
+
+def example_id(contract_path: str, part: str, case: str) -> str:
+    """The id of an example row: `<contract>#<part>/<case-slug>`; a test names it."""
+    return f"{contract_topic(contract_path)}#{part}/{heading_slug(plain(case))}"
+
+
+def example_row(part: dict, case: str):
+    """The example row of a part whose case has this slug, or None."""
+    wanted = heading_slug(plain(case))
+    return next((r for r in part["rows"] if heading_slug(plain(r["case"])) == wanted), None)
 
 
 def contracts_of_project(project: Project) -> dict:
@@ -2172,7 +2047,7 @@ def contracts_of_project(project: Project) -> dict:
 
 
 def check_contracts(project: Project):
-    """C1 to C5: the body of every contract that a manifest names."""
+    """C1 to C6, C8 to C10, and through check_states C7: the body of every contract that a manifest names."""
     types: dict = {}                                  # type name -> [(holder unit, contract path)]
     for path, users in sorted(contracts_of_project(project).items()):
         contract = contract_of_path(project, path)
@@ -2189,7 +2064,7 @@ def check_contracts(project: Project):
                                          + ", ".join(PART_KINDS), line)
             if not part["fence"]:
                 project.add("C3", where, f"part '{name}' has no fenced code block with its signature", line)
-            if part["kind"] in ("command", "query"):
+            if part["kind"] in ("command", "query", "callback"):
                 missing = [f for f in ("Pre", "Result", "Errors") if f not in part["fields"]]
                 if "Examples" not in part["fields"]:
                     missing.append("Examples")
@@ -2197,6 +2072,28 @@ def check_contracts(project: Project):
                     missing.append("a row in the Examples table")
                 if missing:
                     project.add("C2", where, f"part '{name}' lacks " + ", ".join(f"`{m}:`" if m[0].isupper() and " " not in m else m for m in missing), line)
+                elif part["header"] not in EXAMPLE_HEADERS:
+                    project.add("C2", where, f"part '{name}': the examples table has the columns `Case | Input | Expected` "
+                                             f"or `Case | Given | Input | Expected`, not `{' | '.join(part['header'] or [])}`",
+                                part["rows"][0]["line"] - 2 if part["rows"] else line)
+                else:
+                    seen = {}
+                    for row in part["rows"]:
+                        slug = heading_slug(plain(row["case"]))
+                        if not slug:
+                            project.add("C2", where, f"part '{name}': an example row names its case", row["line"])
+                        elif slug in seen:
+                            project.add("C2", where, f"part '{name}': the case '{row['case']}' is also the case of the row "
+                                                     f"on line {seen[slug]}; name each case once", row["line"])
+                        seen.setdefault(slug, row["line"])
+            if part["kind"] == "event":
+                missing = [f for f in ("When", "Delivery") if f not in part["fields"]]
+                if missing:
+                    project.add("C9", where, f"event '{name}' lacks " + ", ".join(f"`{m}:`" for m in missing), line)
+                if "Examples" in part["fields"] and part["header"] not in EVENT_HEADERS:
+                    project.add("C9", where, f"event '{name}': the examples table has the columns `Case | Action | Emitted` "
+                                             f"or `Case | Given | Action | Emitted`, not `{' | '.join(part['header'] or [])}`",
+                                part["rows"][0]["line"] - 2 if part["rows"] else line)
             if part["kind"] == "type":
                 types.setdefault(name, []).append((holder, where, line))
         if not contract["has-fake"]:
@@ -2204,6 +2101,9 @@ def check_contracts(project: Project):
                                     "of its consumers")
         if not contract["has-use"]:
             project.add("C6", path, "no `## Use` section: say what a consumer does with the connection")
+        qualities = contract["qualities"]
+        if qualities is not None and qualities["header"] != ["aspect", "guarantee"]:
+            project.add("C8", path, "`## Qualities` needs a table with the columns `Aspect | Guarantee`", qualities["line"])
         check_states(project, path, contract)
     for name, places in sorted(types.items()):
         for index, (holder, where, line) in enumerate(places):
@@ -2214,10 +2114,66 @@ def check_contracts(project: Project):
                     project.add("C4", where, f"type '{name}' is also defined in {project.rel(other_where)}; "
                                              "one definition in a subtree, the other contract links to it", line)
                     break
+    check_unused_types(project)
+
+
+def names_type(signature: str, name: str) -> bool:
+    """Whether a signature names a type, in the spelling of its notation: `exit-status`, `exit_status`,
+    `exit status` or `ExitStatus`. `sensor` is not named by `sensor-id`."""
+    words = r"[ _-]?".join(re.escape(word) for word in re.split(r"[-_]", name))
+    return re.search(r"(?<![\w-])" + words + r"(?![\w-])", signature, re.IGNORECASE) is not None
+
+
+def references_to_parts(project: Project, contracts: dict) -> set:
+    """{(contract path, part name)} that a manifest lists under `parts` or a link in a contract points to."""
+    out = set()
+    for unit in project.units:
+        if unit.broken:
+            continue
+        for entries in (unit.capabilities, unit.needs):
+            for spec in entries.values():
+                target = contract_target(project, unit, spec.get("contract"))[1]
+                out.update((target, part) for part in spec.get("parts") or [])
+    for path, contract in contracts.items():
+        for file in {path} | {part["file"] for part in contract["parts"].values()}:
+            for _, link in project.doc(file).links:
+                if SCHEME.match(link) or link.startswith("/"):
+                    continue
+                rel_path, anchor = split_link(link)
+                target = os.path.normpath(os.path.join(os.path.dirname(file), rel_path)) if rel_path else file
+                if contract["folder"] and file == path and os.path.dirname(target) == os.path.dirname(path):
+                    continue                          # the index of a contract folder lists its parts; that is no use
+                if target in contracts and anchor:
+                    out.add((target, anchor.lower()))
+                elif os.path.join(os.path.dirname(target), "index.md") in contracts and target.endswith(".md"):
+                    out.add((os.path.join(os.path.dirname(target), "index.md"), os.path.basename(target)[:-3]))
+    return out
+
+
+def check_unused_types(project: Project):
+    """C10: a type some part reaches. Only a name in a signature counts, not the same word in a sentence."""
+    contracts = {path: contract_of_path(project, path) for path in contracts_of_project(project)}
+    referenced = references_to_parts(project, contracts)
+    for path, contract in sorted(contracts.items()):
+        parts = contract["parts"]
+        types = {name for name, part in parts.items() if part["kind"] == "type"}
+        users = [part["signature"] for part in parts.values() if part["kind"] in CALL_KINDS + RAISE_KINDS]
+        if not users:                                 # a contract of types only offers the types themselves
+            continue
+        used = {name for name in types if (path, name) in referenced}
+        waiting = users + [parts[name]["signature"] for name in used]
+        while waiting:
+            signature = waiting.pop()
+            for name in sorted(types - used):
+                if names_type(signature, name):
+                    used.add(name)
+                    waiting.append(parts[name]["signature"])
+        for name in sorted(types - used):
+            project.add("C10", parts[name]["file"], f"type '{name}' is used by no part of the contract", parts[name]["line"])
 
 
 def calling_kinds(contract: dict) -> set:
-    return {n for n, p in contract["parts"].items() if p["kind"] in ("command", "query", "event")}
+    return {n for n, p in contract["parts"].items() if p["kind"] in CALL_KINDS + RAISE_KINDS}
 
 
 def check_states(project: Project, path: str, contract: dict):
@@ -2239,7 +2195,7 @@ def check_states(project: Project, path: str, contract: dict):
             project.add("C7", path, "a row of `## States` names its state and its next state", row["line"])
             continue
         if row["part"] not in known:
-            project.add("C7", path, f"'{row['part']}' is not a command, query or event of this contract", row["line"])
+            project.add("C7", path, f"'{row['part']}' is not a command, query, event or callback of this contract", row["line"])
             continue
         wanted = row_result(row["result"])
         part = contract["parts"][row["part"]]
@@ -2289,7 +2245,7 @@ def check_kinds(project: Project):
             if spec["platform"] or need in root.inner:
                 continue
             for user, _ in final_users(root, need):
-                if user is not root and user.kind and user.kind != "adapter":
+                if user is not root and user.kind in ("logic", "stateful"):
                     project.add("K4", root.manifest_path, f"need '{need}' of the root is finally reached by "
                                                           f"'{user.rel}' of kind '{user.kind or 'none'}'; an "
                                                           "external system is reached by adapters only",
@@ -2366,11 +2322,12 @@ def find_descendant(project: Project, holder: Unit, path: str):
 
 
 def resolve_hop(project: Project, holder: Unit, hop: str):
-    """Resolve one hop of a scenario of `holder`.
+    """Resolve one hop of a scenario of `holder`, written in the direction of the call.
 
     Returns (result, error). result: {"caller", "target", "part", "input", "kind": the part's kind,
-    "contract": abs path, "via": [(unit, key)], "caller-unit", "target-unit"}; the unit fields are
-    None for a bare capability or need of the holder.
+    "direction": "call" (consumer to provider) or "raise" (provider to consumer), "contract": abs path,
+    "via": [(unit, key)], "caller-unit", "target-unit", "caller-side", "target-side" ("unit", "capability"
+    or "need" of the holder), "caller-entry", "target-entry", "provider", "provider-key"}.
     """
     match = HOP.match(hop)
     if not match:
@@ -2378,75 +2335,153 @@ def resolve_hop(project: Project, holder: Unit, hop: str):
     caller_text, (target_text, given_input) = match.group(1), split_call(match.group(2), keep=True)
     target_path, _, part = target_text.rpartition(".")
     if not target_path or not part:
-        return None, f"the target of hop '{hop}' is `unit.part` or `need.part`"
+        return None, f"the target of hop '{hop}' is `unit.part`, `need.part` or `capability.part`"
 
-    def lookup(name: str, side: str):
+    def lookup(name: str):
+        """(unit, "capability"|"need"|None, entry name, error): what a name of the holder's level means."""
         unit = find_descendant(project, holder, name)
-        entry = name in (holder.capabilities if side == "capability" else holder.needs)
-        if unit is not None and entry:
-            return None, None, f"'{name}' is both a unit below and a {side} of this unit; rename one"
-        if unit is None and not entry:
-            other = "need" if side == "capability" else "capability"
-            hint = f"; it is a {other} of this unit, and a {other} is not a {'caller' if side == 'capability' else 'target'}" \
-                if name in (holder.needs if side == "capability" else holder.capabilities) else ""
-            return None, None, f"'{name}' is neither a unit below this one nor a {side} of it{hint}"
-        return unit, (name if entry else None), None
+        cap, need = name in holder.capabilities, name in holder.needs
+        if unit is not None and (cap or need):
+            return None, None, None, f"'{name}' is both a unit below and a {'capability' if cap else 'need'} of this unit; rename one"
+        if unit is None and not cap and not need:
+            return None, None, None, f"'{name}' is neither a unit below this one nor a capability or need of it"
+        return unit, ("capability" if cap else "need" if need else "unit"), (name if cap or need else None), None
 
-    caller, caller_cap, error = lookup(caller_text, "capability")
+    qualifier = None                                 # `target.capability.part` names the connection when two share the part
+    target, target_side, target_entry, error = lookup(target_path)
+    if error and "." in target_path:
+        shorter, _, capability = target_path.rpartition(".")
+        unit_here = find_descendant(project, holder, shorter)
+        if unit_here is not None and capability in unit_here.capabilities:
+            target_path, qualifier = shorter, capability
+            target, target_side, target_entry, error = lookup(target_path)
     if error:
         return None, error
-    target, target_need, error = lookup(target_path, "need")
+    caller, caller_side, caller_entry, error = lookup(caller_text)
     if error:
         return None, error
-
-    def has_part(contract_path):
-        return contract_path and contract_of_path(project, contract_path)["parts"].get(part) is not None
 
     def contract_path_of(owner: Unit, spec: dict):
         return contract_target(project, owner, spec.get("contract"))[1]
 
-    found = []                                       # (contract path, via)
-    if caller is not None and target is not None:
-        for need, spec in caller.needs.items():
-            for unit, capability, via in chain_of_need(caller, need):
-                if unit is target:
-                    found.append((contract_path_of(caller, spec), via, need))
+    def connections(consumer, consumer_side, consumer_entry, provider, provider_side, provider_entry):
+        """[(contract, via, need, capability)] from a consumer (a unit, or a capability of the holder flowing
+        down) to a provider (a unit, or a need of the holder passed up), or (None, why not)."""
+        found = []
+        if consumer_side == "need" or provider_side == "capability":
+            return None, None
+        if consumer_side == "unit" and provider_side == "unit":
+            for need, spec in consumer.needs.items():
+                for unit, capability, via in chain_of_need(consumer, need):
+                    if unit is provider:
+                        found.append((contract_path_of(consumer, spec), via, need, capability))
+                        break
+            return found, f"no need of '{consumer.rel if consumer else consumer_entry}' is provided for by '{provider.rel}'"
+        if consumer_side == "capability" and provider_side == "unit":
+            spec = holder.capabilities[consumer_entry]
+            for unit, capability, via in chain_of_need_of_capability(holder, consumer_entry):
+                if unit is provider:
+                    found.append((contract_path_of(holder, spec), via, consumer_entry, capability))
                     break
-        if not found:
-            return None, f"no need of '{caller_text}' is provided for by '{target_path}'"
-    elif caller_cap is not None and target is not None:
-        spec = holder.capabilities[caller_cap]
-        for unit, capability, via in chain_of_need_of_capability(holder, caller_cap):
-            if unit is target:
-                found.append((contract_path_of(holder, spec), via, caller_cap))
-                break
-        if not found:
-            return None, f"capability '{caller_cap}' of this unit is not implemented by '{target_path}'"
-    elif caller is not None and target_need is not None:
-        for need, spec in caller.needs.items():
-            up = chain_up(caller, need, holder)
-            if up and up[0] == target_need:
-                found.append((contract_path_of(caller, spec), up[1], need))
-        if not found:
-            return None, f"no need of '{caller_text}' is passed up to the need '{target_need}' of this unit"
-    else:
+            return found, f"capability '{consumer_entry}' of this unit is not implemented by '{provider.rel}'"
+        if consumer_side == "unit" and provider_side == "need":
+            for need, spec in consumer.needs.items():
+                up = chain_up(consumer, need, holder)
+                if up and up[0] == provider_entry:
+                    found.append((contract_path_of(consumer, spec), up[1], need, None))
+            return found, f"no need of '{consumer.rel}' is passed up to the need '{provider_entry}' of this unit"
         if holder.children:
-            return None, (f"a hop from the capability '{caller_cap}' to the need '{target_need}' of this unit "
+            return None, (f"a hop between the capability '{consumer_entry}' and the need '{provider_entry}' of this unit "
                           "is for a unit without children; here it goes through the children")
-        found.append((contract_path_of(holder, holder.needs[target_need]), [], target_need))
-    with_part = [f for f in found if has_part(f[0])]
-    if not with_part:
-        contracts = sorted({project.rel(f[0]) for f in found if f[0]} or {"none"})
-        return None, f"part '{part}' is not in the contract {', '.join(contracts)}"
-    if len(with_part) > 1:
-        return None, (f"'{caller_text}' reaches '{target_path}' through {len(with_part)} connections whose contracts "
-                      f"both have the part '{part}' (needs {', '.join(f[2] for f in with_part)}); rename one part")
-    contract, via, _ = with_part[0]
+        return [(contract_path_of(holder, holder.needs[provider_entry]), [], provider_entry, None)], None
+
+    def matches(found, kinds):
+        """The connections of `found` whose contract has the part with one of `kinds`, after the qualifier."""
+        if not found:
+            return []
+        out = []
+        for item in found:
+            if qualifier is not None and item[3] != qualifier:
+                continue
+            contract = item[0] and contract_of_path(project, item[0])
+            if contract and contract["parts"].get(part) is not None:
+                out.append((item, contract["parts"][part].get("kind")))
+        return [(item, kind) for item, kind in out if kind in kinds]
+
+    forward, why_forward = connections(caller, caller_side, caller_entry, target, target_side, target_entry)
+    reverse, why_reverse = connections(target, target_side, target_entry, caller, caller_side, caller_entry)
+    calls = matches(forward, CALL_KINDS)
+    raises = matches(reverse, RAISE_KINDS)
+    if not calls and not raises:
+        wrong_way = matches(forward, RAISE_KINDS) or matches(reverse, CALL_KINDS)
+        if wrong_way:
+            kind = wrong_way[0][1]
+            who = "the provider raises it" if kind in RAISE_KINDS else "the consumer calls it"
+            return None, (f"'{part}' is {'an' if kind == 'event' else 'a'} {kind}, and {who}: write "
+                          f"`{target_path} -> {caller_text}.{part}`")
+        typed = [item for item in (forward or []) + (reverse or [])
+                 if item[0] and contract_of_path(project, item[0])["parts"].get(part, {}).get("kind") == "type"]
+        if typed:
+            return None, f"'{part}' is a type of {project.rel(typed[0][0])}; a hop names a command, query, event or callback"
+        if forward:
+            contracts = sorted({project.rel(f[0]) for f in forward if f[0]} or {"none"})
+            return None, f"part '{part}' is not in the contract {', '.join(contracts)}"
+        if reverse and not forward:
+            contracts = sorted({project.rel(f[0]) for f in reverse if f[0]} or {"none"})
+            return None, f"part '{part}' is not in the contract {', '.join(contracts)}"
+        return None, why_forward or why_reverse or f"'{caller_text}' and '{target_path}' are not connected"
+    chosen = calls or raises
+    if len(chosen) > 1:
+        caps = sorted({item[3] for item, _ in chosen if item[3]})
+        return None, (f"'{caller_text}' reaches '{target_path}' through {len(chosen)} connections whose contracts "
+                      f"both have the part '{part}' (needs {', '.join(item[2] for item, _ in chosen)}); write "
+                      + (f"`{target_path}.<capability>.{part}` with one of {', '.join(caps)}" if caps else "the need"))
+    (contract, via, need, capability), kind = chosen[0]
+    direction = "call" if calls else "raise"
+    provider, provider_unit = (target_path, target) if direction == "call" else (caller_text, caller)
+    provider_entry = target_entry if direction == "call" else caller_entry
     return {"caller": caller_text, "target": target_path, "part": part, "input": given_input,
-            "contract": contract, "via": via,
-            "kind": contract_of_path(project, contract)["parts"][part].get("kind"),
-            "caller-unit": caller, "target-unit": target, "caller-capability": caller_cap,
-            "target-need": target_need}, None
+            "contract": contract, "via": via, "kind": kind, "direction": direction, "problems": [],
+            "caller-unit": caller, "target-unit": target,
+            "caller-side": caller_side, "target-side": target_side,
+            "caller-entry": caller_entry, "target-entry": target_entry,
+            "caller-capability": caller_entry if caller_side == "capability" else None,
+            "target-need": target_entry if target_side == "need" else None,
+            "provider": provider, "provider-key": (provider_unit or ("need", provider_entry), contract)}, None
+
+
+def check_hop_result(project: Project, result: dict):
+    """N7 and N8: the result of a resolved hop against the examples and the error cases of its part.
+    A result `= <case>` takes the input and the expected result of that example."""
+    part = contract_of_path(project, result["contract"])["parts"][result["part"]]
+    value = result.get("result")
+    if value is None:
+        return
+    where = f"{project.rel(result['contract'])}, part '{result['part']}'"
+    if value.startswith("="):
+        row = example_row(part, value[1:].strip())
+        if row is None:
+            result["problems"].append(("N7", f"no example '{value[1:].strip()}' in {where}"))
+            return
+        result["example"], result["result"] = row["id"], plain(row["expected"])
+        if result.get("input") is None and row["input"]:
+            result["input"] = plain(row["input"])
+        return
+    if result.get("input") is not None:
+        rows = [r for r in part["rows"] if plain(r["input"]) == plain(result["input"]) and r["input"]]
+        if rows and all(plain(r["expected"]) != plain(value) for r in rows):
+            row = rows[0]
+            result["problems"].append(("N7", f"the example '{row['case']}' of {where} expects "
+                                              f"'{plain(row['expected'])}' for this input, not '{value}'"))
+        elif rows:
+            result["example"] = next(r["id"] for r in rows if plain(r["expected"]) == plain(value))
+    bare = plain(value)
+    if bare.lower() != "ok" and bare not in part["errors"]:
+        loose = lambda s: re.sub(r"[-_\s]", "", s).lower()
+        close = [e for e in part["errors"] if loose(e) == loose(bare)]
+        if close:
+            result["problems"].append(("N8", f"the result '{value}' is not the error case `{close[0]}` of {where}; "
+                                              "it counts as a success"))
 
 
 def chain_of_need_of_capability(unit: Unit, capability: str) -> list:
@@ -2464,19 +2499,174 @@ def chain_of_need_of_capability(unit: Unit, capability: str) -> list:
     return out
 
 
+def include_of(project: Project, holder: Unit, text: str):
+    """(unit, scenario name, caller) when `text` includes a scenario of a unit below `holder`:
+    `<unit>.<scenario>` or `<caller> -> <unit>.<scenario>`; else None. A hop whose part is also a
+    scenario of the target counts as an include only when no connection has that part."""
+    match = SCENARIO_REF.match(text)
+    if not match:
+        return None
+    child = find_descendant(project, holder, match.group(2))
+    if child is None or match.group(3) not in child.scenarios:
+        return None
+    return child, match.group(3), match.group(1)
+
+
+def expand_reference(project: Project, holder: Unit, text: str, seen: tuple):
+    """The hops of a scenario of a unit below `holder`, rewritten to the names of `holder`'s level:
+    ([(item, group path)], groups, error). `text` is `<unit>.<scenario>` or `<caller> -> <unit>.<scenario>`;
+    the caller picks the user of a capability of the included unit where it has several."""
+    found = include_of(project, holder, text)
+    if found is None:
+        match = SCENARIO_REF.match(text)
+        return None, None, (f"'{match.group(2)}' is not a unit below this one, or holds no scenario '{match.group(3)}'"
+                            if match else f"'{text}' is neither a hop nor `unit.scenario`")
+    child, name, caller_text = found
+    hint = None
+    if caller_text is not None:
+        hint_unit = find_descendant(project, holder, caller_text)
+        if hint_unit is not None:
+            hint = hint_unit
+        elif caller_text in holder.capabilities:
+            hint = ("capability", caller_text)
+        else:
+            return None, None, f"'{caller_text}' is neither a unit below this one nor a capability of it"
+    if name not in child.scenarios:
+        return None, None, f"'{child.rel}' holds no scenario '{name}'"
+    if (child, name) in seen:
+        return None, None, f"scenario '{name}' of '{child.rel}' includes itself"
+    prefix = os.path.relpath(child.path, holder.path).replace(os.sep, "/")
+
+    def above(child_ref: Unit, side: str, entry: str):
+        """How the holder's level names a capability or need of the included unit: its user or provider there."""
+        if side == "capability" and not child_ref.children:   # a leaf's own code implements its capability
+            return prefix, None
+        current, current_entry = child_ref, entry
+        while current is not holder:
+            parent = current.parent
+            if side == "capability":
+                users = parent.capability_users.get((current, current_entry), [])
+                if len(users) > 1 and hint is not None and parent is holder:
+                    users = [u for u in users if (u[0] == "need" and u[1] is hint) or (u[0] == "capability" and ("capability", u[1]) == hint)] or users
+                if len(users) != 1:
+                    return None, (f"'{current.rel}.{current_entry}' has {len(users)} users in '{parent.rel}'; a scenario that includes "
+                                  "it needs exactly one")
+                use = users[0]
+                if use[0] == "need" and use[1] is parent:
+                    return None, f"'{current.rel}.{current_entry}' meets a need of '{parent.rel}' itself, which no hop can name"
+                if use[0] == "need":
+                    if parent is not holder:
+                        return None, "a scenario includes scenarios of direct children only"
+                    return os.path.relpath(use[1].path, holder.path).replace(os.sep, "/"), None
+                current, current_entry = parent, use[1]
+            else:
+                conn = parent.conn.get((current, current_entry))
+                if conn is None:
+                    return None, f"need '{current_entry}' of '{current.rel}' is not connected"
+                entry_ = conn.entries[0]
+                if entry_.kind == "child":
+                    if parent is not holder:
+                        return None, "a scenario includes scenarios of direct children only"
+                    return os.path.relpath(entry_.unit.path, holder.path).replace(os.sep, "/"), None
+                current, current_entry = parent, entry_.capability
+        return current_entry, None
+
+    groups, out = [], []
+    flat, problems = flatten_hops(child.scenarios[name]["hops"], groups)
+    if problems:
+        return None, None, f"scenario '{name}' of '{child.rel}': {problems[0]}"
+    pending, index = list(flat), 0                    # an include inserts its hops here, at the child's level, and they are mapped like the others
+    while index < len(pending):
+        item, path = pending[index]
+        index += 1
+        text_, value, problem = hop_item(item)
+        if text_ is not None and include_of(project, child, text_) is not None:
+            inner, inner_groups, error = expand_reference(project, child, text_, seen + ((child, name),))
+            if error:
+                return None, None, error
+            base = len(groups)
+            for g in inner_groups:
+                g["id"] += base
+                g["parent"] = (g["parent"] + base) if g["parent"] is not None else (path[-1] if path else None)
+                g["branches"] = [b + base for b in g["branches"]]
+            groups += inner_groups
+            pending[index:index] = [(inner_item, path + tuple(p + base for p in inner_path)) for inner_item, inner_path in inner]
+            continue
+        if text_ is None:
+            out.append((item, path))
+            continue
+        result, error = resolve_hop(project, child, text_)
+        if error:
+            return None, None, f"scenario '{name}' of '{child.rel}', hop '{text_}': {error}"
+        names = {}
+        for side in ("caller", "target"):
+            if result[f"{side}-side"] == "unit":
+                names[side] = prefix + "/" + result[side]
+            else:
+                mapped, error = above(child, result[f"{side}-side"], result[f"{side}-entry"])
+                if error:
+                    return None, None, f"scenario '{name}' of '{child.rel}', hop '{text_}': {error}"
+                names[side] = mapped
+        call = result["part"] + (f"({result['input']})" if result.get("input") is not None else "")
+        out.append(({f"{names['caller']} -> {names['target']}.{call}": value}, path))
+    return out, groups, None
+
+
 def hop_item(item) -> tuple:
-    """(hop text or None, result text or None, problem or None) of one item of `hops`."""
+    """(hop text or None, result text or None, problem or None) of one hop of `hops`. A hop without a result
+    is allowed here; whether its part needs one is checked once the hop is resolved."""
     if isinstance(item, str):
-        return item, None, "it has no result; write `caller -> target.part: result`"
+        return item, None, None
     if not isinstance(item, dict) or len(item) != 1:
         return None, None, "a hop is one line, `caller -> target.part: result`"
     (text, value), = item.items()
-    if isinstance(value, bool) or value is None or isinstance(value, (list, dict)):
-        why = "it has no result" if value is None else (
-            f"its result is read as {show_value(value)}; quote it" if isinstance(value, bool) else "its result is text")
+    if value is None:
+        return str(text), None, None
+    if not isinstance(value, str):
+        why = f"its result is read as {show_value(value)}, not as text; quote it" \
+            if isinstance(value, (bool, int, float)) else "its result is text"
         return str(text), None, why
-    value = " ".join(str(value).split())
-    return str(text), (value or None), (None if value else "it has no result")
+    value = " ".join(value.split())
+    return str(text), (value or None), None
+
+
+def flatten_hops(items, groups: list, path: tuple = ()) -> tuple:
+    """([(item, group path)], problems) of the items of `hops`: hops and references flat, the blocks
+    `parallel` and `repeat` as groups. A group is {"id", "kind", "label", "parent", "branches"}."""
+    out, problems = [], []
+    for item in items if isinstance(items, list) else []:
+        if isinstance(item, dict) and len(item) == 1 and next(iter(item)) in ("parallel", "repeat"):
+            (kind, value), = item.items()
+            gid = len(groups)
+            if kind == "parallel":
+                if not isinstance(value, list) or len(value) < 2 or not all(isinstance(b, list) and b for b in value):
+                    problems.append("`parallel` is a list of two or more lists of hops")
+                    continue
+                group = {"id": gid, "kind": "parallel", "label": "", "parent": path[-1] if path else None, "branches": []}
+                groups.append(group)
+                for branch in value:
+                    bid = len(groups)
+                    groups.append({"id": bid, "kind": "branch", "label": "", "parent": gid, "branches": []})
+                    group["branches"].append(bid)
+                    inner, more = flatten_hops(branch, groups, path + (gid, bid))
+                    out += inner
+                    problems += more
+            else:
+                if not isinstance(value, dict) or not isinstance(value.get("hops"), list) or not value["hops"] \
+                        or ("until" in value) == ("times" in value) \
+                        or ("times" in value and (isinstance(value["times"], bool) or not isinstance(value["times"], int) or value["times"] < 1)) \
+                        or ("until" in value and not isinstance(value["until"], str)) \
+                        or set(value) - {"hops", "until", "times"}:
+                    problems.append("`repeat` is a mapping with `hops` and `until` (text) or `times` (a number)")
+                    continue
+                label = f"until {value['until']}" if "until" in value else f"{value['times']} times"
+                groups.append({"id": gid, "kind": "repeat", "label": label, "parent": path[-1] if path else None, "branches": []})
+                inner, more = flatten_hops(value["hops"], groups, path + (gid,))
+                out += inner
+                problems += more
+        else:
+            out.append((item, path))
+    return out, problems
 
 
 def given_item(item) -> tuple:
@@ -2532,26 +2722,47 @@ def walk_states(project: Project, scenario: dict):
             else:
                 entry["state"], current[key] = text, text
         given.append(entry)
-    states = []
-    for _, result, _ in scenario["hops"]:
+    states = [(None, None, None)] * len(scenario["hops"])
+    groups, paths = scenario["groups"], scenario["paths"]
+
+    def order(indices: list, level: int) -> list:
+        """The hops in the order the walk follows them: the hops of a `repeat` twice, so that a round can follow a round."""
+        out, i = [], 0
+        while i < len(indices):
+            path = paths[indices[i]]
+            if len(path) <= level:
+                out.append(indices[i])
+                i += 1
+                continue
+            gid, j = path[level], i
+            while j < len(indices) and len(paths[indices[j]]) > level and paths[indices[j]][level] == gid:
+                j += 1
+            out += order(indices[i:j], level + 1) * (2 if groups[gid]["kind"] == "repeat" else 1)
+            i = j
+        return out
+
+    for index in order(list(range(len(scenario["hops"]))), 0):
+        _, result, _ = scenario["hops"][index]
         contract = contract_of_path(project, result["contract"]) if result else None
-        if contract is None or not stateful(contract) or result.get("result") is None:
-            states.append((None, None, None))
+        if contract is None or not stateful(contract) or (result.get("result") is None and result["kind"] not in RAISE_KINDS):
             continue
-        key = (result["target-unit"] or ("need", result["target-need"]), result["contract"])
+        key = result["provider-key"]
         before = current.get(key, contract["states"]["start"])
         if before is None:                            # unknown after an earlier problem
-            states.append((None, None, None))
             continue
-        after, why = next_state(contract, before, result["part"], result["result"])
-        states.append((before, after, why and f"{why} ({project.rel(result['contract'])})"))
+        after, why = next_state(contract, before, result["part"], result["result"] if result.get("result") is not None else "")
+        if states[index] == (None, None, None):
+            states[index] = (before, after, why and f"{why} ({project.rel(result['contract'])})")
+        elif why and not states[index][2]:            # the second round of a repeat
+            states[index] = states[index][:2] + (f"{why} when the repeat runs again ({project.rel(result['contract'])})",)
         current[key] = after
     scenario["given"], scenario["states"] = given, states
 
 
 def resolved_scenarios(project: Project) -> list:
     """Every scenario of the project with its hops resolved: [{"unit", "name", "spec", "hops": [(hop,
-    result, error)], "given", "states"}], cached. A result carries the hop's "input" and "result"."""
+    result, error)], "groups", "paths", "given", "states"}], cached. A result carries the hop's "input"
+    and "result". Blocks (`parallel`, `repeat`) are groups; a hop's path lists the groups it is in."""
     cached = project.__dict__.get("_scenarios")
     if cached is not None:
         return cached
@@ -2560,20 +2771,95 @@ def resolved_scenarios(project: Project) -> list:
         if unit.broken:
             continue
         for name, spec in unit.scenarios.items():
-            hops = []
-            for item in spec["hops"]:
-                text, value, _ = hop_item(item)
+            groups: list = []
+            flat, _ = flatten_hops(spec["hops"], groups)
+            hops, paths = [], []
+            for item, path in flat:
+                text, value, problem = hop_item(item)
                 if text is None:
                     hops.append((str(item), None, "a hop is one line, `caller -> target.part: result`"))
+                    paths.append(path)
+                    continue
+                included = include_of(project, unit, text)
+                if included is not None or ("->" not in text and SCENARIO_REF.match(text)):
+                    if included is not None and "->" in text and resolve_hop(project, unit, text)[0] is not None:
+                        hops.append((text, None, f"'{text}' is both a hop and the scenario '{included[1]}' of '{included[0].rel}'; rename one"))
+                        paths.append(path)
+                        continue
+                    inner, inner_groups, error = expand_reference(project, unit, text, ((unit, name),))
+                    if error:
+                        hops.append((text, None, error))
+                        paths.append(path)
+                        continue
+                    child, scenario_name, caller_text = included
+                    base = len(groups)
+                    ref_id = base
+                    groups.append({"id": ref_id, "kind": "ref", "label": f"{os.path.relpath(child.path, unit.path).replace(os.sep, '/')}.{scenario_name}",
+                                   "parent": path[-1] if path else None, "branches": [],
+                                   "caller": caller_text, "unit": os.path.relpath(child.path, unit.path).replace(os.sep, "/"),
+                                   "caller-unit": find_descendant(project, unit, caller_text) if caller_text else None,
+                                   "child": child})
+                    for g in inner_groups:
+                        g["id"] += base + 1
+                        g["parent"] = (g["parent"] + base + 1) if g["parent"] is not None else ref_id
+                        g["branches"] = [b + base + 1 for b in g["branches"]]
+                    groups += inner_groups
+                    for inner_item, inner_path in inner:
+                        inner_text, inner_value, _ = hop_item(inner_item)
+                        result, error = resolve_hop(project, unit, inner_text)
+                        if result:
+                            result["result"] = inner_value
+                            check_hop_result(project, result)
+                        hops.append((inner_text, result, error))
+                        paths.append(path + (ref_id,) + tuple(p + base + 1 for p in inner_path))
                     continue
                 result, error = resolve_hop(project, unit, text)
                 if result:
                     result["result"] = value
+                    if value is None and result["kind"] in CALL_KINDS and not problem:
+                        result["problems"].append(("N2", f"it has no result; a {result['kind']} has one"))
+                    check_hop_result(project, result)
+                elif problem:
+                    error = problem
                 hops.append((text, result, error))
-            scenario = {"unit": unit, "name": name, "spec": spec, "hops": hops}
+                paths.append(path)
+            scenario = {"unit": unit, "name": name, "spec": spec, "hops": hops, "groups": groups, "paths": paths}
             walk_states(project, scenario)
             out.append(scenario)
     project.__dict__["_scenarios"] = out
+    return out
+
+
+def lines_outside(unit: Unit, side: str, entry) -> list:
+    """The wiring lines above `unit` that a step at one of its capabilities or needs goes through, and
+    the lines below the providers of the need: a scenario of a child uses the lines of its parents."""
+    out, current, name = [], unit, entry
+    if side == "need":
+        while current.parent is not None and name not in current.inner:
+            conn = current.parent.conn.get((current, name))
+            if conn is None:
+                break
+            out.append((current.parent, conn.key))
+            for e in conn.entries:                    # the lines below a provider, down to the unit that implements it
+                if e.kind == "child":
+                    out += [line for _, _, via in chain_of_need_of_capability(e.unit, e.capability) for line in via]
+            passed = next((e.capability for e in conn.entries if e.kind == "own"), None)
+            if passed is None:
+                break
+            current, name = current.parent, passed
+        return out
+    if side != "capability":
+        return []
+    while current.parent is not None:
+        parent = current.parent
+        for conn in parent.conn.values():             # the needs of siblings wired to the capability
+            if any(e.kind == "child" and e.unit is current and e.capability == name for e in conn.entries):
+                out.append((parent, conn.key))
+        up = next((cap for cap, conn in parent.impl.items() if any(e.unit is current and e.capability == name for e in conn.entries)), None)
+        if up is None:
+            break
+        out.append((parent, parent.impl[up].key))     # the capability of the parent it implements
+        current, name = parent, up
     return out
 
 
@@ -2622,7 +2908,10 @@ def check_scenarios(project: Project):
             if hops is not None and not isinstance(hops, list):
                 project.add("N2", unit.manifest_path, f"scenario '{name}': `hops` is a list of "
                                                       "`caller -> target.part: result`", line)
-            for item in hops if isinstance(hops, list) else []:
+            flat, problems = flatten_hops(hops if isinstance(hops, list) else [], [])
+            for problem in problems:
+                project.add("N2", unit.manifest_path, f"scenario '{name}': {problem}", line)
+            for item, _ in flat:
                 text, _, problem = hop_item(item)
                 if problem:
                     project.add("N2", unit.manifest_path, f"scenario '{name}', hop '{text or show_value(item)}': "
@@ -2634,6 +2923,8 @@ def check_scenarios(project: Project):
             for key in ("summary", "expect", "source"):
                 if key in spec and (not isinstance(spec[key], str) or not spec[key].strip()):
                     project.add("N2", unit.manifest_path, f"scenario '{name}': `{key}` is one line of text", line)
+                elif key in spec and PLACEHOLDER.match(spec[key].strip()):
+                    project.add("M2", unit.manifest_path, f"scenario '{name}': `{key}` is a placeholder ({spec[key].strip()})", line)
     unresolved: set = set()                           # holders of a scenario with an unresolved hop
     for scenario in resolved_scenarios(project):
         unit, name = scenario["unit"], scenario["name"]
@@ -2644,14 +2935,30 @@ def check_scenarios(project: Project):
                             f"'{entry['connection'] or entry['text'] or ''}': {entry['problem']}", line)
         for index, ((hop, result, error), (_, _, problem)) in enumerate(zip(scenario["hops"], scenario["states"]), 1):
             if error:
-                project.add("N1", unit.manifest_path, f"scenario '{name}', hop '{hop}': {error}", line)
+                rule = "N2" if error.startswith("its result") or "a hop is one line" in error else "N1"
+                project.add(rule, unit.manifest_path, f"scenario '{name}', hop '{hop}': {error}", line)
                 unresolved.add(unit)
             else:
                 for holder, key in result["via"]:
                     used.setdefault(holder, set()).add(key)
+                for side, entry in ((result["caller-side"], result["caller-entry"]), (result["target-side"], result["target-entry"])):
+                    for holder, key in lines_outside(unit, side, entry):   # a scenario of a child uses the lines of its parents
+                        used.setdefault(holder, set()).add(key)
+                carrier = contract_of_path(project, result["contract"])["carrier"]
+                if carrier:                           # the carrier's connections at the units of the hop count as used
+                    ends = {u for u in (result["caller-unit"], result["target-unit"]) if u is not None}
+                    for owner in project.units:
+                        for (child, need), conn in owner.conn.items():
+                            if child in ends and contract_target(project, child, child.needs[need].get("contract"))[1] == carrier:
+                                used.setdefault(owner, set()).add(conn.key)
+                        for need, conn in owner.inner.items():
+                            if owner in ends and contract_target(project, owner, owner.needs[need].get("contract"))[1] == carrier:
+                                used.setdefault(owner, set()).add(conn.key)
             if problem:
                 project.add("N6", unit.manifest_path, f"scenario '{name}', hop {index} '{hop}: "
                                                       f"{result['result']}': {problem}", line)
+            for rule, message in (result or {}).get("problems", []):
+                project.add(rule, unit.manifest_path, f"scenario '{name}', hop {index} '{hop}': {message}", line)
     for unit, keys in used.items():
         wiring = unit.manifest.get("wiring")
         if not isinstance(wiring, dict) or unit in unresolved:   # fix N1 first
@@ -2667,7 +2974,7 @@ def check_scenarios(project: Project):
     for path in sorted(contracts_of_project(project)):
         contract = contract_of_path(project, path)
         for name, part in contract["parts"].items():
-            if part["kind"] in ("command", "query", "event") and (path, name) not in used_parts:
+            if part["kind"] in CALL_KINDS + RAISE_KINDS and (path, name) not in used_parts:
                 project.add("N4", part["file"], f"part '{name}' is used by no hop of a scenario", part["line"])
 
 
@@ -2716,6 +3023,8 @@ def leftovers(project: Project, expected: dict) -> list:
             candidates = [os.path.join(folder, n) for n in project.listdir(folder)
                           if n.endswith(".md")]
         candidates.append(os.path.join(doc, "decisions", "index.md"))
+        if unit.parent is not None:
+            candidates.append(os.path.join(unit.path, "AGENTS.md"))
         for path in candidates:
             if path in expected or project.kind_of(path) != "file":
                 continue
@@ -2772,9 +3081,15 @@ def responsibility_note(unit: Unit) -> str:
     return f"<br/><span class='note'>{text}</span>" if text else ""
 
 
+def kind_and_runs_as(unit: Unit) -> str:
+    """What a unit is and what it runs as, as far as its manifest says: `stateful, process`."""
+    return ", ".join(x for x in (unit.kind, unit.runs_as) if x)
+
+
 def unit_label(unit: Unit) -> str:
-    """The name of a unit in a diagram, with its kind where it has one."""
-    return f"{unit.name} ({unit.kind})" if unit.kind else unit.name
+    """The name of a unit in a diagram, with its kind and what it runs as where it states them."""
+    about = kind_and_runs_as(unit)
+    return f"{unit.name} ({about})" if about else unit.name
 
 
 def diagram_kinds(project: Project, unit: Unit) -> list:
@@ -2782,14 +3097,7 @@ def diagram_kinds(project: Project, unit: Unit) -> list:
     mode = project.diagrams
     if mode == "none" or unit.broken:
         return []
-    kinds = []
-    if unit.parent is not None and unit.children:
-        kinds.append("context")
-    if unit.children:
-        kinds.append("component")
-    if any(child.children for child in unit.children):
-        kinds.append("architecture")
-    return kinds
+    return ["component"] if unit.children else []
 
 
 def best_diagram(project: Project, unit: Unit):
@@ -2991,7 +3299,7 @@ def unit_table(project: Project, units: list, out_dir: str) -> list:
     for unit, target in zip(units, targets):
         name = file_link(project, out_dir, unit.name, os.path.join(unit.path, "README.md"))
         link = f"[{os.path.basename(target)[:-3]}]({link_to(out_dir, target)})" if target else ""
-        rows.append(f"| {name} | {cell(unit.kind)} | {cell(unit.responsibility)} | "
+        rows.append(f"| {name} | {cell(kind_and_runs_as(unit))} | {cell(unit.responsibility)} | "
                     f"{status_cell(unit)} |" + (f" {link} |" if extra else ""))
     return rows
 
@@ -3013,50 +3321,6 @@ def path_link(project: Project, unit: Unit, value, out_dir: str, text: str) -> s
 
 def via_note(item: dict) -> str:
     return f" ({item['config']})" if item.get("config") else ""
-
-
-def connection_tables(project: Project, unit: Unit, out_dir: str) -> list:
-    """Final providers and final users of a unit, as tables."""
-    rows = []
-    if unit.needs:
-        rows += ["", "### Who provides what this unit needs", "",
-                 "| Need | Contract | Provided by | Capability |",
-                 "|---|---|---|---|"]
-        for need, spec in unit.needs.items():
-            head = f"| {need} | " \
-                   f"{path_link(project, unit, spec['contract'], out_dir, 'contract')} | "
-            found = providers_of(unit, need)
-            if not found:
-                note = "nobody (optional)" if spec["optional"] else "**no provider**"
-                rows.append(head + f"{note} | |")
-            for item in found:
-                note = via_note(item)
-                if item["where"] == "outside":
-                    rows.append(head + f"outside the project, as need `{item['capability']}` of the "
-                                       f"root{note} | |")
-                else:
-                    target = item["unit"]
-                    rows.append(head + f"{unit_ref(project, target, out_dir)}{note} | {item['capability']} |")
-    if unit.capabilities:
-        rows += ["", "### Who uses what this unit provides", "",
-                 "| Capability | Contract | Used by | As need |",
-                 "|---|---|---|---|"]
-        for capability, spec in unit.capabilities.items():
-            head = f"| {capability} | " \
-                   f"{path_link(project, unit, spec['contract'], out_dir, 'contract')} | "
-            found = users_of(unit, capability)
-            if not found:
-                rows.append(head + "nobody | |")
-            for item in found:
-                if item["where"] == "outside":
-                    rows.append(head + f"outside the project, as capability `{item['need']}` of the "
-                                       "root | |")
-                else:
-                    user = item["unit"]
-                    rows.append(
-                        head + f"{unit_ref(project, user, out_dir)}{via_note(item)} | "
-                        f"{item['need']} |")
-    return rows
 
 
 def wiring_table(unit: Unit) -> list:
@@ -3107,21 +3371,23 @@ def diagrams_for(project: Project, unit: Unit) -> dict:
     out_dir = os.path.join(unit.path, "docs", "diagrams")
     out = {}
     for kind in diagram_kinds(project, unit):
-        if kind == "context":
-            if unit.parent is None:
-                out[kind] = (lone_context(project, unit, out_dir), [unit],
-                             {node_id(unit): unit}, [])
-            else:
-                out[kind] = diagram(project, unit.parent, 0, out_dir, focus=unit)
-        elif kind == "component":
-            out[kind] = diagram(project, unit, 1, out_dir)
-        else:
-            for depth in range(MAX_DEPTH, 1, -1):
-                found = diagram(project, unit, depth, out_dir)
-                if len(found[0]) + len(found[1]) <= MAX_LINES or depth == 2:
-                    break
-            out[kind] = (*found, depth)
+        out[kind] = diagram(project, unit, 1, out_dir)
     return out
+
+
+def lifelines_of(scenario: dict) -> dict:
+    """{name: (kind, what it does)} of the lifelines of a scenario: a unit, or a capability or need of the holder."""
+    holder, about = scenario["unit"], {}
+    for hop, result, error in scenario["hops"]:
+        if not result:
+            continue
+        for name, unit, side, entry in ((result["caller"], result["caller-unit"], result["caller-side"], result["caller-entry"]),
+                                        (result["target"], result["target-unit"], result["target-side"], result["target-entry"])):
+            spec = (holder.capabilities if side == "capability" else holder.needs).get(entry) if side != "unit" else None
+            info = (kind_and_runs_as(unit), unit.responsibility) if unit else ("", spec["summary"]) if spec else ("", "")
+            if name not in about or (info[1] and not about[name][1]):
+                about[name] = info
+    return about
 
 
 def scenario_sequence(scenario: dict) -> tuple:
@@ -3129,13 +3395,16 @@ def scenario_sequence(scenario: dict) -> tuple:
     {name: participant id}). A lifeline stands right after the ones introduced through the same
     partner: the lifelines form a tree by the first step that names each, walked depth first.
 
-    A step is drawn as the kind of its part says: a command or query from the caller to the target,
-    an event from the target that raises it to the caller that receives it, with an open arrowhead.
-    The receiver of a step is active until a lifeline further out makes the next step, or the
-    scenario ends; a unit below the receiver acts for it, as it implements the receiver's
-    capability. An event from an idle provider lands on the activation of a busy receiver, or
-    starts one. A query answers with a dashed arrow when its receiver's activation ends. A
-    command that nothing follows inside leaves no bar, only its arrow."""
+    A step is drawn as the kind of its part says: a command, query or callback with a solid arrow
+    from the caller to the target, an event with an open arrowhead from the unit that raises it to
+    the one that receives it. The receiver of a step is active until a lifeline further out makes
+    the next step, or the scenario ends; a unit below the receiver acts for it, as it implements
+    the receiver's capability. When the receiver is done, a dashed arrow returns its result; a step
+    that nothing follows inside leaves no bar and carries its result on its own arrow. An event is
+    asynchronous: when a unit raises one, the call it was handling has returned, and so has every
+    call that waited for that return and does nothing more afterwards; a unit handling an event
+    keeps running; an event from a unit outside the open calls arrives during them. An event lands
+    on the open bar of its receiver; only an idle receiver gets a new bar."""
     within = lambda a, b: a == b or a.startswith(b + "/") or b.startswith(a + "/")   # the same lifeline, or one below the other
     kids: dict = {}                                   # name -> the lifelines its steps introduced, in order
     roots: list = []                                  # the lifelines no earlier one introduced
@@ -3161,62 +3430,116 @@ def scenario_sequence(scenario: dict) -> tuple:
         walk(root)
     ids = {n: "p" + safe_id(n) for n in names}
     text = lambda t: label(str(t).replace(";", "#59;"))  # a `;` ends a statement of a sequence diagram
-    holder, about = scenario["unit"], {}              # name -> (kind, what it does): a unit, or a capability or need
-    for hop, result, error in scenario["hops"]:
-        if not result:
-            continue
-        for name, unit, entry in ((result["caller"], result["caller-unit"], holder.capabilities.get(result["caller-capability"])),
-                                  (result["target"], result["target-unit"], holder.needs.get(result["target-need"]))):
-            about[name] = (unit.kind, unit.responsibility) if unit else ("", entry["summary"]) if entry else ("", "")
-    boxes = {}                                        # name -> its lines: the name, «kind», the text wrapped by hand
+    wrapped = lambda t: "<br/>".join(text(line.replace(NBSP, " ")) for line in textwrap.wrap(   # a step number, a result and a count of steps stay with their word
+        re.sub(r"^(↩ )?(\d+) · ", lambda m: f"{m[1] or ''}{m[2]}{NBSP}·{NBSP}", str(t)).replace(" → ", f" →{NBSP}").replace(" steps)", f"{NBSP}steps)").replace(" step)", f"{NBSP}step)"),
+        STEP_WIDTH, break_long_words=False, break_on_hyphens=False))
+    about = lifelines_of(scenario)
+    lines = ["---", "config:", "  sequence:", "    mirrorActors: false", "---", "sequenceDiagram"]   # the names stand on top only: a picture stays short
     for n in names:
-        kind, what = about.get(n, ("", ""))
-        boxes[n] = [n] + ([f"«{kind}»"] if kind else []) + textwrap.wrap(str(what or ""), 32, break_long_words=False)
-    most = max((len(b) for b in boxes.values()), default=1)
-    lines = ["---", "config:", "  sequence:", f"    height: {max(65, 16 * most + 28)}", "---"] if most > 3 else []
-    lines.append("sequenceDiagram")                   # a box keeps the height of the config, whatever its text: room for every line
-    for n in names:
-        lines.append(f'  participant {ids[n]} as {"<br/>".join(text(line) for line in boxes[n])}')
-    busy: list = []                                   # (receiver, sender, step, kind) of the steps still running, innermost last
+        kind = about.get(n, ("", ""))[0]              # what a lifeline does is in the table of the page: a narrow box leaves the picture wide enough to read
+        lines.append(f'  participant {ids[n]} as {text(n)}' + (f"<br/>{text(f'«{kind}»')}" if kind else ""))
+    busy: list = []                                   # (receiver, sender, step, kind, answer, path, note) of the steps still running, innermost last
 
     def done(step: tuple):
-        receiver, sender, index, kind, answer = step
-        if kind == "query":
-            lines.append(f"  {ids[receiver]}-->>{ids[sender]}: ↩ {index}" + (f" · {text(answer)}" if answer else ""))
-        lines.append(f"  deactivate {ids[receiver]}")
+        """The receiver of the step is done: its result returns, its bar ends and the state its step
+        led to is noted. A step with nothing inside leaves no bar: a command or callback then carries
+        its result on its own arrow, and a query answers with a dashed arrow."""
+        receiver, sender, index, kind, answer, _, note = step
+        back = f"  {ids[receiver]}-->>{ids[sender]}: " + wrapped(f"↩ {index}" + (f" · {answer}" if answer else ""))
+        if lines[-1] == f"  activate {ids[receiver]}":
+            lines.pop()
+            if kind == "query":
+                lines.append(back)
+            elif answer and kind != "event":
+                lines[-1] = lines[-1][:lines[-1].index(": ") + 2] + wrapped(f"{steps[index]} → {answer}")
+        else:
+            if kind != "event":
+                lines.append(back)
+            lines.append(f"  deactivate {ids[receiver]}")
+        if note:
+            lines.append(note)
 
+    steps: dict = {}                                  # step -> the text of its arrow: a result that stays on the arrow joins it
     shown: set = set()                                # the stateful connections whose state is drawn already
     states = scenario.get("states") or [(None, None, None)] * len(scenario["hops"])
-    for index, ((hop, result, error), (before, after, _)) in enumerate(zip(scenario["hops"], states), 1):
+    groups, paths = scenario.get("groups") or [], scenario.get("paths") or [()] * len(scenario["hops"])
+    opened: list = []                                 # the groups whose block is open, outermost first
+
+    def closes(next_path: tuple):
+        while opened and opened[-1] not in next_path:   # a block ends with the steps that started inside it
+            while busy and opened[-1] in busy[-1][5]:
+                done(busy.pop())
+            if groups[opened[-1]]["kind"] != "branch":   # the `end` of a par closes its last branch too
+                lines.append("  end")
+            opened.pop()
+
+    def idle_after(index: int) -> bool:
+        """Whether the receiver of the innermost open step takes no further step before a lifeline
+        further out does: its call has returned."""
+        receiver, outer = busy[-1][0], [b[1] for b in busy]
+        for hop, result, error in scenario["hops"][index:]:
+            if result and within(result["caller"], receiver):
+                return False
+            if result and any(within(result["caller"], o) for o in outer):
+                return True
+        return True
+
+    for index, ((hop, result, error), (before, after, _), path) in enumerate(zip(scenario["hops"], states, paths), 1):
         if not result:
             continue
+        closes(path)
         kind = result.get("kind")
-        sender, receiver = (result["target"], result["caller"]) if kind == "event" else (result["caller"], result["target"])
-        lands = kind == "event" and not any(within(sender, b[0]) for b in busy) and any(within(receiver, b[0]) for b in busy)
-        while busy and not within(receiver if lands else sender, busy[-1][0]):   # the steps inside the last one are over when a lifeline further out acts
-            done(busy.pop())
-        key = (result["target"], result["contract"])
-        if before is not None and key not in shown:   # the state a connection starts the scenario in
+        sender, receiver = result["caller"], result["target"]
+        raises = kind == "event" or result.get("raised")
+        if (raises and not any(within(sender, b[0]) or within(sender, b[1]) for b in busy)) or (kind == "include" and sender == receiver):
+            pass                                      # a unit outside the open calls raises it, or nobody calls: it happens during them
+        else:
+            while busy and not within(sender, busy[-1][0]):   # the steps inside the last one are over when a lifeline further out acts
+                done(busy.pop())
+            waiting = sender                          # an event is asynchronous: the call its raiser was handling has returned,
+            while raises and busy and busy[-1][3] != "event" and within(waiting, busy[-1][0]) \
+                    and (waiting == sender or idle_after(index)):   # and so has every call that waited for it and does nothing more
+                waiting = busy[-1][1]
+                done(busy.pop())
+        for gid in path:
+            if gid in opened:
+                continue
+            group = groups[gid]
+            if group["kind"] == "parallel":
+                lines.append("  par")
+            elif group["kind"] == "branch":
+                if groups[group["parent"]]["branches"].index(gid) > 0:
+                    lines.append("  and")
+            elif group["kind"] == "repeat":
+                lines.append(f"  loop {text(group['label'])}")
+            else:
+                lines.append("  rect rgb(245, 245, 245)")
+                lines.append(f"  Note over {ids[result['caller']]}: {text('scenario ' + group['label'])}")
+            opened.append(gid)
+        key = result.get("provider-key")
+        if key is not None and before is not None and key not in shown:   # the state a connection starts the scenario in
             shown.add(key)
-            lines.append(f"  Note over {ids[result['target']]}: {text(before)}")
+            lines.append(f"  Note over {ids[result['provider']]}: {text(contract_topic(result['contract']) + ': ' + before)}")
+        if kind == "include":                         # a collapsed included scenario: one step, no bar; a note when no caller is named
+            lines.append(f"  Note over {ids[receiver]}: {wrapped(f'{index} · ' + result['label'])}" if sender == receiver else
+                         f"  {ids[sender]}{'-)' if raises else '->>'}{ids[receiver]}: {wrapped(f'{index} · ' + result['label'])}")
+            continue
         call = result["part"] + (f"({result['input']})" if result.get("input") is not None else "")
         answer = result.get("result") or ""
-        lines.append(f"  {ids[sender]}{'-)' if kind == 'event' else '->>'}{ids[receiver]}: {index} · {text(call)}"
-                     + (f" → {text(answer)}" if answer and kind != "query" else ""))
-        if not lands:                                 # an event from an idle provider lands on the bar of a busy receiver; every other step opens one
-            lines.append(f"  activate {ids[receiver]}")
-            busy.append((receiver, sender, index, kind, answer))
-        if after is not None and after != before:
-            lines.append(f"  Note over {ids[result['target']]}: {text(after)}")
+        note = (f"  Note over {ids[result['provider']]}: {text(contract_topic(result['contract']) + ': ' + after)}"
+                if key is not None and after is not None and after != before else None)
+        steps[index] = f"{index} · {call}"
+        lines.append(f"  {ids[sender]}{'-)' if kind == 'event' else '->>'}{ids[receiver]}: "
+                     + wrapped(steps[index] + (f" → {answer}" if answer and kind == "event" else "")))
+        if kind == "event" and note:                  # an event changes the state when it is raised; a call when it returns
+            lines.append(note)
+        if kind == "event" and any(b[0] == receiver for b in busy):   # it lands on the open bar of its receiver
+            continue
+        lines.append(f"  activate {ids[receiver]}")
+        busy.append((receiver, sender, index, kind, answer, path, None if kind == "event" else note))
+    closes(())
     while busy:
         done(busy.pop())
-    kept: list = []                                   # a command that nothing follows inside leaves no bar, only its arrow
-    for line in lines:
-        if kept and kept[-1].startswith("  activate ") and line == "  deactivate " + kept[-1][11:]:
-            kept.pop()
-            continue
-        kept.append(line)
-    lines = kept
     expect = scenario["spec"]["expect"]
     if expect and names and names[-1]:                # `wrap:` keeps a long expectation within the lifelines
         lines.append(f"  Note over {ids[names[0]]},{ids[names[-1]]}: wrap: Expect: {text(expect)}"
@@ -3224,20 +3547,69 @@ def scenario_sequence(scenario: dict) -> tuple:
     return lines, ids
 
 
-def scenario_page(project: Project, scenario: dict) -> str:
-    """docs/diagrams/scenario-<name>.md: a sequence diagram of the hops, end to end, and a table."""
+def collapsed(scenario: dict) -> dict:
+    """The scenario with every included scenario folded into one step: the view `unifold scenario`
+    prints by default. Hops that lie in a top-level `ref` group become one step of kind `include`, from
+    the caller of its first step, unless the include names one. A first step whose caller lies inside
+    the included unit has no caller here: the step is a note on the unit."""
+    groups = scenario.get("groups") or []
+    hops, paths, states, done = [], [], [], set()
+    for (hop, result, error), path, state in zip(scenario["hops"], scenario.get("paths") or [()] * len(scenario["hops"]),
+                                                 scenario.get("states") or [(None, None, None)] * len(scenario["hops"])):
+        ref = next((g for g in path if groups[g]["kind"] == "ref"), None)
+        if ref is None:
+            hops.append((hop, result, error))
+            paths.append(path)
+            states.append(state)
+            continue
+        if ref in done:
+            continue
+        done.add(ref)
+        group = groups[ref]
+        inside = sum(1 for p in scenario["paths"] if ref in p)
+        first = result or {}                          # the first hop that lies in the group
+        outside = first.get("caller") and first["caller"] != group["unit"] and not first["caller"].startswith(group["unit"] + "/")
+        caller = group.get("caller") or (first["caller"] if outside else group["unit"])
+        same = caller == first.get("caller")
+        hops.append((group["label"], {"caller": caller, "target": group["unit"], "part": group["label"], "input": None,
+                                      "result": f"{inside} step{'s' if inside != 1 else ''}", "kind": "include", "direction": "call", "contract": None,
+                                      "label": f"scenario {group['label']} ({inside} step{'s' if inside != 1 else ''})", "via": [], "problems": [],
+                                      "raised": first.get("kind") == "event" and same,
+                                      "caller-unit": first.get("caller-unit") if same else group.get("caller-unit") or group["child"],
+                                      "target-unit": group["child"],
+                                      "caller-side": first.get("caller-side", "unit") if same else "unit", "target-side": "unit",
+                                      "caller-entry": first.get("caller-entry") if same else None, "target-entry": None,
+                                      "provider": group["unit"], "provider-key": None}, None))
+        paths.append(tuple(g for g in path[:path.index(ref)]))
+        states.append((None, None, None))
+    return {**scenario, "hops": hops, "paths": paths, "states": states}
+
+
+def scenario_page(project: Project, scenario: dict, expand: bool = False) -> str:
+    """The page of a scenario, as `unifold scenario` prints it: a sequence diagram of the hops, end to end, and a table."""
     unit, name, spec = scenario["unit"], scenario["name"], scenario["spec"]
-    out_dir = os.path.join(unit.path, "docs", "diagrams")
-    lines, _ = scenario_sequence(scenario)
+    out_dir = os.getcwd()                             # the page is printed, so its links start where the reader is
+    if not expand:
+        scenario = collapsed(scenario)
+    lines, ids = scenario_sequence(scenario)
+    about = lifelines_of(scenario)
+    lifelines = ["| Lifeline | Kind | What it does |", "|---|---|---|"]
+    lifelines += [f"| `{cell(name)}` | {cell(about.get(name, ('', ''))[0])} | {cell(about.get(name, ('', ''))[1])} |" for name in ids]
     rows = ["| # | Caller | Target | Call | Kind | Result | State | Contract |", "|---|---|---|---|---|---|---|---|"]
     states = scenario.get("states") or [(None, None, None)] * len(scenario["hops"])
-    for index, ((hop, result, error), (_, after, _)) in enumerate(zip(scenario["hops"], states), 1):
-        if result:
+    groups, paths = scenario.get("groups") or [], scenario.get("paths") or [()] * len(scenario["hops"])
+    for index, ((hop, result, error), (_, after, _), path) in enumerate(zip(scenario["hops"], states, paths), 1):
+        if result and result.get("kind") == "include":
+            rows.append(f"| {index} | {'`' + cell(result['caller']) + '`' if result['caller'] != result['target'] else ''} | `{cell(result['target'])}` | scenario `{cell(result['part'])}` | include | "
+                        f"{cell(result['result'])} |  | `unifold scenario {cell(project.rel(result['target-unit'].path))} {cell(result['part'].rsplit('.', 1)[-1])}` |")
+        elif result:
             caller, target = result["caller"], result["target"]
             call = result["part"] + (f"({result['input']})" if result.get("input") is not None else "")
             contract = file_link(project, out_dir, contract_topic(result["contract"]), result["contract"])
+            where = ", ".join(f"{groups[g]['kind']} {groups[g]['label']}".strip() for g in path if groups[g]["kind"] != "branch")
             rows.append(f"| {index} | `{cell(caller)}` | `{cell(target)}` | `{cell(call)}` | "
-                        f"{cell(result.get('kind') or '')} | {cell(result.get('result') or '')} | {cell(after or '')} | {contract} |")
+                        f"{cell(result.get('kind') or '')} | {cell(result.get('result') or '')} | {cell(after or '')} | {contract}"
+                        + (f" ({cell(where)})" if where else "") + " |")
         else:
             rows.append(f"| {index} | `{cell(hop)}` | | | | | | **does not resolve** |")
     crumbs = []
@@ -3255,17 +3627,17 @@ def scenario_page(project: Project, scenario: dict) -> str:
              f"Source: {cell(spec['source'])}" if spec["source"] else "",
              f"Given: {cell(given)}" if given else "",
              f"Expect: {cell(spec['expect'])}" if spec["expect"] else ""]
-    return "\n".join([MARK, f"# Scenario: {name}", "", " / ".join(crumbs) + "".join(" · " + n for n in nav), "",
+    return "\n".join([f"# Scenario: {name}", "", " / ".join(crumbs) + "".join(" · " + n for n in nav), "",
                       *[line for line in intro if line], "",
                       "A unit is named by its path from `" + unit.name + "`; a capability or need of `" + unit.name
-                      + "` is named bare. Every step is one hop along one connection of the map, drawn as the kind of "
-                      "its part says: a command or query goes from the caller to the target, and a dashed arrow brings "
-                      "the result of a query back; an event goes from the provider that raises it to the caller that "
-                      "receives it, with an open arrowhead. A bar is the time a lifeline is busy with a step; it ends "
-                      "when a lifeline further out makes the next step, and a unit below the busy one acts for it. An event "
-                      "from an idle lifeline lands on the bar of a busy receiver, or starts one. A step shows its result; "
-                      "a note on a provider's lifeline shows the state of a connection whose contract has states.", "",
-                      "```mermaid", *lines, "```", "", *rows, ""])
+                      + "` is named bare. Every step is one hop along one connection of the map, in the direction of the "
+                      "call: a command, query or callback from the caller to the target, with a dashed arrow back for the result; "
+                      "an event from the unit that raises it to the one that receives it, with an open arrowhead. A bar is the "
+                      "time a lifeline is busy with a step; it ends when a lifeline further out makes the next step. A step "
+                      "shows its result; a note on a provider's lifeline shows the state of a connection whose contract has "
+                      "states, with the name of the contract. An event is asynchronous: the call that raised it has returned. Steps in parallel and repeated steps are blocks; "
+                      + ("an included scenario is one step, which `--expand` opens." if not expand else "an included scenario is a shaded block."), "",
+                      "```mermaid", *lines, "```", "", *rows, "", *lifelines, ""])
 
 
 def contract_topic(path: str) -> str:
@@ -3275,27 +3647,34 @@ def contract_topic(path: str) -> str:
 
 
 def states_page(project: Project, path: str, contract: dict) -> tuple:
-    """(path, text) of docs/diagrams/states-<contract>.md: the `## States` of a contract as a diagram."""
-    holder, states = project.unit_at(path), contract["states"]
-    out_dir = os.path.join(holder.path, "docs", "diagrams")
+    """(a name, text) of the page of the `## States` of a contract, as `unifold states` prints it: a state diagram and the table.
+    The diagram shows every row: a row that stays in its state stands in the box of the state, a row
+    that moves stands on the arrow, one arrow per pair of states, because Mermaid draws one label per loop."""
+    states = contract["states"]
+    out_dir = os.getcwd()                             # the page is printed, so its links start where the reader is
     topic = contract_topic(path)
     ids = {name: "s" + safe_id(name) for name in states["states"]}
     text = lambda t: label(str(t)).replace(":", "#58;").replace(";", "#59;")
     chart = ["stateDiagram-v2"] + [f'  state "{text(name)}" as {ids[name]}' for name in states["states"]]
     if states["start"] in ids:
         chart.append(f"  [*] --> {ids[states['start']]}")
-    rows = ["| State | Part | Result | Next |", "|---|---|---|---|"]
+    rows, arrows = ["| State | Part | Result | Next |", "|---|---|---|---|"], {}
     for row in states["rows"]:
         if row["state"] in ids and row["next"] in ids:
             result = row_result(row["result"])
-            chart.append(f"  {ids[row['state']]} --> {ids[row['next']]}: {text(row['part'])}"
-                         + ("" if result == "any" else f" · {text(result)}"))
+            step = text(row["part"]) + ("" if result == "any" else f" · {text(result)}")
+            if row["state"] == row["next"]:
+                chart.append(f"  {ids[row['state']]}: {step}")
+            else:
+                arrows.setdefault((row["state"], row["next"]), []).append(step)
         rows.append(f"| {cell(row['state'])} | `{cell(row['part'])}` | {cell(plain(row['result']))} | {cell(row['next'])} |")
-    body = [MARK, f"# States: {topic}", "", f"The states of the contract {file_link(project, out_dir, topic, path)}: "
+    chart += [f"  {ids[a]} --> {ids[b]}: {'<br/>'.join(steps)}" for (a, b), steps in arrows.items()]
+    body = [f"# States: {topic}", "", f"The states of the contract {file_link(project, out_dir, topic, path)}: "
             "what a consumer can see of the connection, and the parts that move it from one state to the next. "
+            "In the diagram, the parts inside a state's box leave the state as it is. "
             "A part that a state does not list must not be called in it. A failure that the table does not name "
             "leaves the state as it is.", "", "```mermaid", *chart, "```", "", *rows, ""]
-    return os.path.join(out_dir, f"states-{topic}.md"), "\n".join(body)
+    return topic, "\n".join(body)
 
 
 def skill_stubs(project: Project) -> dict:
@@ -3342,7 +3721,7 @@ def stub_text(project: Project, name: str, unit: Unit, skill: dict, folder: str)
 def tool_command(project: Project) -> str:
     script = "docs/skills/unifold/scripts/unifold.py"
     if os.path.isfile(os.path.join(project.root, *script.split("/"))):
-        return f"python3 {script}"
+        return f"uv run {script}"
     return "unifold"
 
 
@@ -3379,11 +3758,8 @@ def agents_block(project: Project) -> str:
 
 
 def agents_text(project: Project, unit: Unit) -> str:
-    """The AGENTS.md of a unit: where the documents and skills are.
-
-    No project knowledge, only the way to it. The root's file also carries the unifold
-    block with the unit index.
-    """
+    """The AGENTS.md of the root: where its documents and skills are, and the unifold block
+    with the unit index. No project knowledge, only the way to it."""
     docs = documents_of(project, unit)
 
     def links(items: list) -> str:
@@ -3410,8 +3786,7 @@ def agents_text(project: Project, unit: Unit) -> str:
         lines += ["", "## Skills", "", "| Skill | Description |", "|---|---|"]
         lines += [f"| [{cell(s['name'])}](docs/skills/{url_path(s['name'])}/SKILL.md) | "
                   f"{cell(s['description'])} |" for s in skills]
-    if unit.parent is None:
-        lines += ["", agents_block(project)]
+    lines += ["", agents_block(project)]
     return "\n".join(lines) + "\n"
 
 
@@ -3419,7 +3794,7 @@ def generate(project: Project, force=()) -> dict:
     """Return {path: content} for every generated file of the project.
 
     `force` may contain "stubs": write skill stubs even where the folders do not exist
-    yet. AGENTS.md is written whole for every unit, the root's with the unifold block.
+    yet. AGENTS.md is written at the root only, whole, with the unifold block.
     """
     out: dict = {}
     if not project.usable:
@@ -3429,20 +3804,6 @@ def generate(project: Project, force=()) -> dict:
         kinds = diagram_kinds(project, unit)
         data = diagrams_for(project, unit)
         name = unit.name
-        if "context" in data:
-            chart, shown, _, shared = data["context"]
-            if unit.parent is None:
-                intro = (f"`{name}` and the outside world: the capabilities it provides (rounded) "
-                         "and what it needs from outside (hexagons).")
-                after = connection_tables(project, unit, folder)
-            else:
-                intro = (f"`{name}` inside `{unit.parent.name}`, with the units it is "
-                         f"connected to. " + LEGEND)
-                after = (["", "Shared connections, not drawn:", "", *shared] if shared else []) \
-                    + ["", *unit_table(project, shown[1:], folder)] \
-                    + connection_tables(project, unit, folder)
-            out[os.path.join(folder, "context.md")] = page(
-                project, unit, kinds, "context", f"Context diagram: {name}", intro, chart, after)
         if "component" in data:
             chart, shown, _, shared = data["component"]
             intro = f"The units directly inside `{name}` and how they are connected. " + LEGEND
@@ -3450,25 +3811,6 @@ def generate(project: Project, force=()) -> dict:
                 + ["", *unit_table(project, shown[1:], folder)] + wiring_table(unit)
             out[os.path.join(folder, "component.md")] = page(
                 project, unit, kinds, "component", f"Component diagram: {name}", intro, chart, after)
-        if "architecture" in data:
-            chart, shown, _, shared, depth = data["architecture"]
-            note = "" if depth == MAX_DEPTH else f" Opened {depth} levels only, to stay readable."
-            intro = f"`{name}` opened up {depth} levels deep.{note} " + LEGEND
-            after = (["", "Shared connections, not drawn:", "", *shared] if shared else []) \
-                + ["", *unit_table(project, shown[1:], folder)]
-            out[os.path.join(folder, "architecture.md")] = page(
-                project, unit, kinds, "architecture", f"Architecture diagram: {name}", intro,
-                chart, after)
-    if project.diagrams != "none":
-        for scenario in resolved_scenarios(project):
-            unit = scenario["unit"]
-            folder = os.path.join(unit.path, "docs", "diagrams")
-            out[os.path.join(folder, f"scenario-{scenario['name']}.md")] = scenario_page(project, scenario)
-        for path in sorted(contracts_of_project(project)):
-            contract = contract_of_path(project, path)
-            if stateful(contract) and contract["states"]["rows"]:
-                page_path, text = states_page(project, path, contract)
-                out[page_path] = text
     for unit in project.units:
         infos = decisions_of(project, unit)
         if not infos:
@@ -3482,7 +3824,8 @@ def generate(project: Project, force=()) -> dict:
                         f"{shown} | {info['date']} |")
         nav = [f"[{n}]({link_to(folder, os.path.join(unit.path, n))})"
                for n in ("README.md", "AGENTS.md")
-               if n == "AGENTS.md" or project.kind_of(os.path.join(unit.path, n)) == "file"]
+               if (n == "AGENTS.md" and unit.parent is None)
+               or (n == "README.md" and project.kind_of(os.path.join(unit.path, n)) == "file")]
         out[os.path.join(folder, "index.md")] = "\n".join(
             [MARK, f"# Decisions of {unit.name}", "", *([" · ".join(nav), ""] if nav else []),
              "Accepted and derived decisions bind.", "", *rows, ""])
@@ -3497,8 +3840,8 @@ def generate(project: Project, force=()) -> dict:
             if os.path.isfile(path) and STUB_MARK not in project.text(path):
                 continue                        # a skill somebody wrote there: not ours
             out[path] = stub_text(project, name, unit, skill, folder)
-    for unit in project.units:
-        out[os.path.join(unit.path, "AGENTS.md")] = agents_text(project, unit)
+    if project.root_unit is not None:
+        out[os.path.join(project.root_unit.path, "AGENTS.md")] = agents_text(project, project.root_unit)
     return out
 
 
@@ -3564,13 +3907,13 @@ def describe(project: Project, unit: Unit) -> dict:
     def entry(spec: dict) -> dict:
         return {"summary": spec["summary"],
                 "contract": contract_target(project, unit, spec["contract"])[0] or None,
-                "parts": spec["parts"]}
+                "parts": spec["parts"], "inherited-from": spec.get("inherited-from")}
 
     files = [rel(p) for p in managed_files(project, unit) if not generated_location(unit, p)]
     return {
         "name": unit.name, "path": unit.rel, "responsibility": unit.responsibility,
-        "kind": unit.kind or None, "status": unit.status,
-        "secret": secret_data(project, unit), "not": [{"text": text, "need": need} for text, need in unit.nots],
+        "kind": unit.kind or None, "runs-as": unit.runs_as or None, "status": unit.status,
+        "not": list(unit.nots),
         "manifest": rel(unit.manifest_path),
         "parent": brief(unit.parent) if unit.parent else None,
         "children": [brief(c) for c in unit.children],
@@ -3595,15 +3938,6 @@ def describe(project: Project, unit: Unit) -> dict:
     }
 
 
-def secret_data(project: Project, unit: Unit):
-    if unit.secret is None:
-        return None
-    decision = unit.secret["decision"]
-    target = os.path.normpath(os.path.join(unit.path, decision)) if decision else None
-    return {"what": unit.secret["what"],
-            "decision": project.rel(target) if target and project.inside(target) else decision}
-
-
 def mark(status) -> str:
     """` [planned: not built yet]` for anything that is not in force, else ''."""
     return f" [{status_mark(status)}]" if status and status not in ("active", "accepted", "derived") else ""
@@ -3621,11 +3955,9 @@ def print_show(info: dict):
     line("unit", f"{info['name']}  ({info['path']}){mark(info['status'])}")
     line("does", info["responsibility"])
     line("status", " · ".join(x for x in (
-        info["status"], info["kind"] and "kind " + info["kind"]) if x))
-    if info.get("secret"):
-        line("secret", f"{info['secret']['what']}  decision {info['secret']['decision']}")
+        info["status"], info["kind"] and "kind " + info["kind"], info.get("runs-as") and "runs as " + info["runs-as"]) if x))
     for item in info.get("not") or []:
-        line("not", item["text"] + (f"  → need '{item['need']}'" if item["need"] else ""))
+        line("not", item)
     line("manifest", info["manifest"])
     parent = info["parent"]
     line("parent", (parent["name"] if parent["path"] == "." else parent["path"])
@@ -3637,6 +3969,7 @@ def print_show(info: dict):
     for capability, spec in info["capabilities"].items():
         extra = f"  contract {spec['contract']}" if spec["contract"] else ""
         extra += f" (parts {', '.join(spec['parts'])})" if spec.get("parts") else ""
+        extra += f"  (from {spec['inherited-from']})" if spec.get("inherited-from") else ""
         print(f"  {capability}: {spec['summary']}{extra}")
         for item in spec["used-by"] or [None]:
             if item is None:
@@ -3652,6 +3985,7 @@ def print_show(info: dict):
     for need, spec in info["needs"].items():
         extra = f"  contract {spec['contract']}" if spec["contract"] else ""
         extra += f" (parts {', '.join(spec['parts'])})" if spec.get("parts") else ""
+        extra += f"  (from {spec['inherited-from']})" if spec.get("inherited-from") else ""
         flags = [x for x in ("optional" if spec["optional"] else "",
                              "platform" if spec.get("platform") else "") if x]
         kind = f" ({', '.join(flags)})" if flags else ""
@@ -3681,19 +4015,6 @@ def print_show(info: dict):
     line("files", ", ".join(info["files"]))
 
 
-def readme_section(project: Project, unit: Unit, name: str) -> str:
-    """The text below the `###` heading that names a capability, in the unit's README.md."""
-    readme = os.path.join(unit.path, "README.md")
-    if project.kind_of(readme) != "file":
-        return ""
-    doc = project.doc(readme)
-    for number, level, text, anchor in doc.headings:
-        if level == 3 and name in [m.group(2) for m in CODE_SPAN.finditer(text)]:
-            section = doc.section(anchor) or []
-            return "\n".join(section[1:]).strip()
-    return ""
-
-
 def capability_data(project: Project, unit: Unit, name: str) -> dict:
     """Both ends of every connection of one capability or need."""
     def end(owner: Unit, entry: str, side: str, extra=None) -> dict:
@@ -3702,8 +4023,7 @@ def capability_data(project: Project, unit: Unit, name: str) -> dict:
                 "summary": spec.get("summary", ""),
                 "contract": contract_target(project, owner, spec.get("contract"))[0] or None,
                 "parts": spec.get("parts"),
-                "optional": bool(spec.get("optional")) if side == "needs" else None,
-                "readme": readme_section(project, owner, entry) or None, **(extra or {})}
+                "optional": bool(spec.get("optional")) if side == "needs" else None, **(extra or {})}
 
     if name in unit.capabilities:
         ends = [end(unit, name, "capabilities")]
@@ -3748,15 +4068,12 @@ def print_capability(data: dict):
             print(f"    contract: {item['contract']}" + (f" (parts {', '.join(item['parts'])})" if item.get("parts") else ""))
         if item.get("optional"):
             print("    optional")
-        if item["readme"]:
-            print(item["readme"])
-        else:
-            print("    (no section for it in README.md)")
         print()
 
 
 def citations(project: Project, wanted) -> list:
-    """Context items and links that cite a file for which `wanted(path)` is true."""
+    """Links that cite a file for which `wanted(path)` is true; "context" for a link from a
+    docs/explanation/context.md, which is how a unit takes something over from above."""
     out = []
     for unit in project.units:
         context = os.path.join(unit.path, "docs", "explanation", "context.md")
@@ -3765,22 +4082,14 @@ def citations(project: Project, wanted) -> list:
                 continue
             doc = project.doc(path)
             base = os.path.dirname(path)
-            items = {i["line"]: i for i in context_items(doc)} if path == context else {}
             for line, link in doc.links:
                 if SCHEME.match(link) or link.startswith(("#", "/")):
                     continue
                 target = os.path.normpath(os.path.join(base, split_link(link)[0]))
                 if target == path or not wanted(target):
                     continue
-                item = items.get(line)
-                row = {"file": project.rel(path), "line": line, "cites": project.rel(target),
-                       "kind": "context-item" if item else "link"}
-                if item:
-                    expected, problem = cited_hash(project, path, item["link"])
-                    row.update({"title": item["title"], "says": item["says"],
-                                "stamp": "missing" if item["stamp"] is None else
-                                "current" if item["stamp"] == expected else "stale"})
-                out.append(row)
+                out.append({"file": project.rel(path), "line": line, "cites": project.rel(target),
+                            "kind": "context" if path == context else "link"})
     return out
 
 
@@ -3829,13 +4138,250 @@ def impact(project: Project, unit: Unit, capability=None, file=None) -> dict:
         wanted = lambda target: target == file
     else:
         wanted = lambda target: project.owner_of(target) == ("unit", unit)
-    cited = [row for row in citations(project, wanted) if row["kind"] == "context-item"
-             or file]
+    cited = [row for row in citations(project, wanted) if row["kind"] == "context" or file]
     return {"unit": unit.rel, "status": unit.status, "capability": capability,
             "file": project.rel(file) if file else None,
             "dependents": sorted(dependents.values(), key=lambda d: (d["distance"], d["unit"])),
             "exposed-as": exposed, "outside": outside,
             "root-capabilities-affected": sorted(set(outside + reached)), "citations": cited}
+
+
+TRACE_RULES = {
+    "X1": ("info", "Every example of a contract of a capability of the unit is named by a test: a file below the unit, outside `docs/`, holds the example's id.",
+           "Write the test, and put the id `<contract>#<part>/<case>` in its name or in a comment."),
+    "X2": ("warn", "Every example id that a file below the unit names is an example of a contract of the unit.",
+           "Rename the id after its example, or delete it."),
+}
+EXAMPLE_ID = re.compile(r"(?<![\w/])([A-Za-z0-9][\w.-]*)#([a-z0-9][a-z0-9_-]*)/([a-z0-9][a-z0-9_-]*)")
+
+
+def context_items_of(project: Project, unit: Unit) -> list:
+    """[{"heading", "link", "text"}] of docs/explanation/context.md: each `###` heading with its paragraphs."""
+    path = os.path.join(unit.path, "docs", "explanation", "context.md")
+    if project.kind_of(path) != "file":
+        return []
+    doc, items = project.doc(path), []
+    for index, (number, level, text, _) in enumerate(doc.headings):
+        if level != 3:
+            continue
+        end = next((n for n, lvl, _, _ in doc.headings[index + 1:] if lvl <= 3), len(doc.lines) + 1)
+        link = INLINE_LINK.search(text)
+        body = " ".join(line.strip() for line in doc.lines[number:end - 1] if line.strip())
+        items.append({"heading": re.sub(r"\]\(.*$", "", text).lstrip("[").strip(), "path": project.rel(path),
+                      "link": link.group(1).strip("<>") if link else None, "text": body})
+    return items
+
+
+def constants_of(project: Project, unit: Unit) -> list:
+    """The rows of the nearest docs/references/constants.md at or above the unit: [{"name", "value", "file"}]."""
+    current = unit
+    while current is not None:
+        path = os.path.join(current.path, "docs", "references", "constants.md")
+        if project.kind_of(path) == "file":
+            doc = project.doc(path)
+            header, rows = first_table(doc.lines[doc.body_start:], doc.body_start + 1)
+            columns = {c: i for i, c in enumerate(header or [])}
+            if "name" in columns and "value" in columns:
+                return [{"name": plain(cells[columns["name"]]), "value": plain(cells[columns["value"]])
+                         if columns["value"] < len(cells) else "", "file": project.rel(path)}
+                        for _, cells in rows if cells]
+        current = current.parent
+    return []
+
+
+def part_data(part: dict) -> dict:
+    return {"name": part["name"], "kind": part["kind"], "signature": part["signature"],
+            "pre": part["texts"].get("Pre"), "result": part["texts"].get("Result"),
+            "when": part["texts"].get("When"), "delivery": part["texts"].get("Delivery"),
+            "errors": sorted(part["errors"]),
+            "examples": [{"id": r["id"], "case": r["case"], "given": r["given"] or None,
+                          "input": r["input"], "expected": r["expected"]} for r in part["rows"]]}
+
+
+def brief_data(project: Project, unit: Unit) -> dict:
+    """What an implementer of `unit` needs: the parts of its capabilities with their examples, the fakes
+    of its needs, the states, the scenarios through it, its constants and its context items."""
+    rel = project.rel
+
+    def contract_block(owner: Unit, spec: dict, used):
+        target = contract_target(project, owner, spec.get("contract"))[1]
+        if not target or project.kind_of(target) != "file":
+            return None
+        contract = contract_of_path(project, target)
+        parts = [part_data(p) for n, p in contract["parts"].items() if used is None or n in used]
+        states = None
+        if stateful(contract):
+            states = {"start": contract["states"]["start"],
+                      "rows": [{"state": r["state"], "part": r["part"], "result": row_result(r["result"]), "next": r["next"]}
+                               for r in contract["states"]["rows"]]}
+        return {"path": rel(target), "header": contract["header"], "parts": parts, "states": states,
+                "qualities": [{"aspect": r["aspect"], "guarantee": r["guarantee"]} for r in contract["qualities"]["rows"]]
+                if contract["qualities"] else [], "fake": contract["fake"], "fake-text": contract["fake-text"]}
+
+    capabilities = []
+    for name, spec in unit.capabilities.items():
+        impl = unit.impl.get(name)
+        capabilities.append({"name": name, "summary": spec["summary"],
+                             "implemented-by": [f"{e.unit.rel}.{e.capability}" for e in impl.entries] if impl else [],
+                             "contract": contract_block(unit, spec, None)})
+    needs = []
+    for name, spec in unit.needs.items():
+        needs.append({"name": name, "summary": spec["summary"], "optional": spec["optional"],
+                      "parts-used": spec["parts"], "contract": contract_block(unit, spec, spec["parts"]),
+                      "provided-by": [{"unit": i["unit"].rel, "capability": i["capability"]} if i["where"] == "unit"
+                                      else {"outside": True, "root-need": i["capability"]} for i in providers_of(unit, name)]})
+    scenarios = []
+    for scenario in scenarios_through(project, unit):
+        hops = []
+        for hop, result, error in scenario["hops"]:
+            if result:
+                call = result["part"] + (f"({result['input']})" if result.get("input") is not None else "")
+                hops.append({"text": f"{result['caller']} -> {result['target']}.{call}: {result.get('result') or ''}",
+                             "example": result.get("example"), "touches-unit": result["caller-unit"] is unit or result["target-unit"] is unit})
+            else:
+                hops.append({"text": hop, "example": None, "touches-unit": False, "error": error})
+        scenarios.append({"unit": scenario["unit"].rel, "name": scenario["name"], "summary": scenario["spec"]["summary"],
+                          "expect": scenario["spec"]["expect"], "hops": hops})
+    readme = os.path.join(unit.path, "README.md")
+    return {"unit": unit.rel, "name": unit.name, "responsibility": unit.responsibility, "kind": unit.kind or None,
+            "runs-as": unit.runs_as or None, "status": unit.status, "not": list(unit.nots),
+            "readme": rel(readme) if project.kind_of(readme) == "file" else None,
+            "capabilities": capabilities, "needs": needs, "scenarios": scenarios,
+            "constants": constants_of(project, unit), "context": context_items_of(project, unit)}
+
+
+def print_brief(data: dict):
+    print(f"brief for {named(data['unit'])}{mark(data['status'])}: {data['responsibility']}")
+    for item in data["not"]:
+        print(f"  not: {item}")
+    if data["readme"]:
+        print(f"  why: {data['readme']} (## Why)")
+
+    def parts(block):
+        for part in block["parts"]:
+            print(f"    {part['name']} ({part['kind']})")
+            for line in (part["signature"] or "").splitlines():
+                print(f"        {line}")
+            for key in ("pre", "result", "when", "delivery"):
+                if part.get(key):
+                    print(f"      {key}: {part[key]}")
+            if part["errors"]:
+                print(f"      errors: {', '.join(part['errors'])}")
+            for example in part["examples"]:
+                given = f" given {example['given']}" if example["given"] else ""
+                print(f"      {example['id']}:{given} {example['input']} -> {example['expected']}")
+        if block["states"]:
+            print(f"    states: start {block['states']['start']}")
+            for row in block["states"]["rows"]:
+                print(f"      {row['state']} --{row['part']}" + (f" {row['result']}" if row["result"] != "any" else "")
+                      + f"--> {row['next']}")
+
+    print("\nimplement")
+    for capability in data["capabilities"]:
+        by = f" (implemented by {', '.join(capability['implemented-by'])})" if capability["implemented-by"] else ""
+        print(f"  {capability['name']}: {capability['summary']}{by}")
+        if capability["contract"]:
+            header = ", ".join(f"{k.lower()} {v}" for k, v in capability["contract"]["header"].items() if k in ("Binding", "Version"))
+            print(f"    contract {capability['contract']['path']}" + (f" ({header})" if header else ""))
+            for row in capability["contract"]["qualities"]:
+                print(f"    quality {row['aspect']}: {row['guarantee']}")
+            parts(capability["contract"])
+            if capability["contract"]["fake"] == "real":
+                print("    fake: the real implementation; your users test against this code")
+    print("\nfake, for your tests")
+    for need in data["needs"]:
+        optional = " (optional)" if need["optional"] else ""
+        print(f"  {need['name']}: {need['summary']}{optional}")
+        if need["contract"]:
+            print(f"    contract {need['contract']['path']}" + (f" (parts {', '.join(need['parts-used'])})" if need["parts-used"] else ""))
+            for line in (need["contract"]["fake-text"] or "").splitlines():
+                if line.strip():
+                    print(f"    fake: {line.strip()}")
+            parts(need["contract"])
+    if data["scenarios"]:
+        print("\nscenarios through this unit")
+    for scenario in data["scenarios"]:
+        print(f"  {scenario['name']} ({named(scenario['unit'])}): {scenario['summary']}")
+        for hop in scenario["hops"]:
+            marker = "*" if hop["touches-unit"] else " "
+            print(f"    {marker} {hop['text']}" + (f"  [{hop['example']}]" if hop.get("example") else ""))
+        print(f"    expect: {scenario['expect']}")
+    if data["constants"]:
+        print("\nconstants (" + data["constants"][0]["file"] + ")")
+        for row in data["constants"]:
+            print(f"  {row['name']} = {row['value']}")
+    if data["context"]:
+        print("\ncontext (" + data["context"][0]["path"] + ")")
+        for item in data["context"]:
+            print(f"  {item['heading']}: {item['text']}")
+
+
+def trace_files(project: Project, unit: Unit, patterns: list) -> list:
+    """The files below `unit` that may hold tests: outside any docs/ folder, not ignored, not generated."""
+    out = []
+    for folder, subs, names in os.walk(unit.path):
+        subs[:] = sorted(s for s in subs if not s.startswith(".") and s != "docs" and s not in NEVER_SCANNED
+                         and not project.is_ignored(os.path.join(folder, s)) and not is_build_output(os.path.join(folder, s))
+                         and not os.path.islink(os.path.join(folder, s)))
+        for name in sorted(names):
+            path = os.path.join(folder, name)
+            if name.startswith(".") or name == MANIFEST or project.is_ignored(path) or os.path.islink(path):
+                continue
+            rel = project.rel(path)
+            if patterns and not any(fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(name, p) for p in patterns):
+                continue
+            out.append(path)
+    return out
+
+
+def trace_data(project: Project, unit: Unit, patterns: list) -> dict:
+    """Which example ids of the contracts of the unit's capabilities appear in which files, and which do not."""
+    ids, topics = {}, {}
+    for name, spec in unit.capabilities.items():
+        target = contract_target(project, unit, spec.get("contract"))[1]
+        if not target or project.kind_of(target) != "file":
+            continue
+        topics[contract_topic(target)] = project.rel(target)
+        for part in contract_of_path(project, target)["parts"].values():
+            for row in part["rows"]:
+                ids[row["id"]] = {"id": row["id"], "contract": project.rel(target), "part": part["name"],
+                                  "case": row["case"], "line": row["line"], "tests": []}
+    unknown = []
+    for path in trace_files(project, unit, patterns):
+        try:
+            text = read_text(path)
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "\0" in text[:4000]:
+            continue
+        for number, line in enumerate(text.splitlines(), 1):
+            for match in EXAMPLE_ID.finditer(line):
+                found = match.group(0)
+                if found in ids:
+                    if project.rel(path) not in ids[found]["tests"]:
+                        ids[found]["tests"].append(project.rel(path))
+                elif match.group(1) in topics:
+                    unknown.append({"file": project.rel(path), "line": number, "id": found})
+    findings = []
+    for item in ids.values():
+        if not item["tests"]:
+            findings.append({"rule": "X1", "severity": "info", "file": item["contract"], "line": item["line"],
+                             "message": f"example {item['id']} is named by no test", "fix": TRACE_RULES["X1"][2]})
+    for item in unknown:
+        findings.append({"rule": "X2", "severity": "warn", "file": item["file"], "line": item["line"],
+                         "message": f"{item['id']} is not an example of a contract of this unit", "fix": TRACE_RULES["X2"][2]})
+    return {"unit": unit.rel, "examples": list(ids.values()), "unknown": unknown, "findings": findings,
+            "summary": {"examples": len(ids), "tested": sum(1 for i in ids.values() if i["tests"]),
+                        "untested": sum(1 for i in ids.values() if not i["tests"]), "unknown": len(unknown)}}
+
+
+def print_trace(data: dict):
+    for item in data["examples"]:
+        print(f"{'ok  ' if item['tests'] else 'none'} {item['id']}" + (f"  {', '.join(item['tests'])}" if item["tests"] else ""))
+    for item in data["unknown"]:
+        print(f"warn {item['file']}:{item['line']}: {item['id']} is not an example of a contract of this unit")
+    s = data["summary"]
+    print(f"{s['examples']} example(s): {s['tested']} named by a test, {s['untested']} by none; {s['unknown']} unknown id(s)")
 
 
 def print_impact(data: dict):
@@ -3858,10 +4404,7 @@ def print_impact(data: dict):
     if data["citations"]:
         print("cited by")
         for row in data["citations"]:
-            stale = "" if row.get("stamp") in (None, "current") else f" [stamp {row['stamp']}]"
-            print(f"  {row['file']}:{row['line']}: {row.get('title') or 'link'}{stale}")
-            if row.get("says"):
-                print(f"      Says: {row['says']}")
+            print(f"  {row['file']}:{row['line']}")
 
 
 def tree_data(project: Project, depth=None) -> list:
@@ -4128,7 +4671,7 @@ class Markdown:
             if not line.strip():
                 i += 1
                 continue
-            if line.lstrip().startswith("<!--"):           # a comment: the mark of a generated file, a stamp
+            if line.lstrip().startswith("<!--"):           # a comment, such as the mark of a generated file
                 while i < n and "-->" not in lines[i]:
                     i += 1
                 i += 1
@@ -4702,8 +5245,7 @@ async function render(){
   el("tabs").innerHTML = kinds.map(k => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${k}</button>`).join("");
   let html = readme && readme.why ? `<div class="prose wide">${readme.why}</div>` : "";   // Why, then what the unit leaves out, as sections of the same rank
   const p = Object.entries(u.capabilities), n = Object.entries(u.needs);
-  if (u.secret) html += `<div class="prose wide"><p><strong>Secret:</strong> ${esc(u.secret.what)} (${ref(u.secret.decision)})</p></div>`;
-  if (u.not && u.not.length) html += `<div class="prose wide"><h2 id="out-of-scope">Out of scope</h2><ul>` + u.not.map(n => "<li>" + code(n.text) + (n.need ? ` → <code>${esc(n.need)}</code>` : "") + "</li>").join("") + "</ul></div>";
+  if (u.not && u.not.length) html += `<div class="prose wide"><h2 id="out-of-scope">Out of scope</h2><ul>` + u.not.map(n => "<li>" + code(n) + "</li>").join("") + "</ul></div>";
   if (p.length) html += "<h2>Capabilities</h2><table><tr><th>Capability</th><th>Summary</th><th>Contract</th><th>Used by</th></tr>"
     + p.map(([k, v]) => `<tr id="capability:${esc(k)}"><td><code>${esc(k)}</code></td><td>${esc(v.summary)}</td><td>${ref(v.contract)}${v.parts && v.contract ? " <span class='mute'>(" + v.parts.map(n => part(v.contract, n)).join(", ") + ")</span>" : ""}</td><td>${who(v["used-by"], "need")}</td></tr>`).join("") + "</table>";
   if (n.length) html += "<h2>Needs</h2><table><tr><th>Need</th><th>Summary</th><th>Contract</th><th>Provided by</th></tr>"
@@ -4766,7 +5308,7 @@ function story(s, chain){             // a scenario: what it is and expects, its
   html += "<h2>Lifelines</h2><table><tr><th>Lifeline</th><th>Kind</th><th>Responsibility</th><th>Steps</th></tr>" + lives.map(l => {
     const u = l.side ? null : byPath[l.unit], e = l.side ? h[l.side === "capability" ? "capabilities" : "needs"][l.entry] : null;
     const steps = (k, word) => { const at = s.hops.flatMap((x, i) => x[k] === l.name ? [i + 1] : []); return at.length ? word + " " + at.join(", ") : ""; };
-    return `<tr><td>${life(l.name, u && l.unit, l.side)}</td><td>${u ? esc(u.kind) : esc(l.side + " of " + named(s.unit))}</td><td class="text">${esc(u ? u.responsibility : e && e.summary)}</td><td>${[steps("caller", "calls in"), steps("target", "called in")].filter(Boolean).join("<br>")}</td></tr>`;}).join("") + "</table>";
+    return `<tr><td>${life(l.name, u && l.unit, l.side)}</td><td>${u ? esc([u.kind, u["runs-as"]].filter(Boolean).join(", ")) : esc(l.side + " of " + named(s.unit))}</td><td class="text">${esc(u ? u.responsibility : e && e.summary)}</td><td>${[steps("caller", "calls in"), steps("target", "called in")].filter(Boolean).join("<br>")}</td></tr>`;}).join("") + "</table>";
   const more = scenes.filter(o => o.unit === s.unit && o !== s);
   if (more.length) html += `<h2>More scenarios of ${esc(named(s.unit))}</h2><ul>` + more.map(o => `<li>${sceneLink(o)}: ${esc(o.summary)}</li>`).join("") + "</ul>";
   el("info").innerHTML = html;
@@ -4810,8 +5352,8 @@ function trace(s, f, m){              // the map of `f` with the path of the sce
   const endOf = (x, role) => {        // the boxes an end of a step is drawn as: a unit inside the frame, a capability or need of the frame, or the side of the frame the step crosses
     const r = x[role + "-unit"];
     if (r && within(r)) return drawnAs(r);
-    if (!r && f === s.unit) return sideIds(f, role === "caller" ? "capability" : "need", x[role]);
-    if (role === "target") { const v = x.via.find(v => v.unit === fParent && v.key.startsWith(fName + ".")); return v ? sideIds(f, "need", v.key.slice(fName.length + 1)) : []; }
+    if (!r && f === s.unit) return sideIds(f, x[role + "-side"], x[role]);
+    if (role === (x.direction === "raise" ? "caller" : "target")) { const v = x.via.find(v => v.unit === fParent && v.key.startsWith(fName + ".")); return v ? sideIds(f, "need", v.key.slice(fName.length + 1)) : []; }
     const v = x.via.find(v => v.unit === f && !v.key.includes(".") && byPath[f].capabilities[v.key]); return v ? sideIds(f, "capability", v.key) : []; };
   return draw(m.source, () => {
     shade(); zoom(true);
@@ -4822,7 +5364,7 @@ function trace(s, f, m){              // the map of `f` with the path of the sce
       let edges = from.flatMap(a => to.flatMap(b => between(a, b))), back = false;
       if (!edges.length) { edges = from.flatMap(a => to.flatMap(b => between(b, a))); back = true; }
       const ends = from.concat(to).flatMap(id => parts.filter(n => new RegExp(`-flowchart-${id}-\\d+$|-${id}$`).test(n.id)));
-      return {n: i + 1, edges, ends, reverse: (x["part-kind"] === "event") !== back, query: x["part-kind"] === "query"};
+      return {n: i + 1, edges, ends, reverse: back, query: x["part-kind"] === "query"};
     });
     const numbers = new Map();        // a lit connection -> the numbers of the steps on it
     for (const st of steps) {
@@ -5023,12 +5565,11 @@ def build_explorer(project: Project, out: str, mermaid: str) -> str:
                 continue
             part = contract_of_path(project, result["contract"])["parts"].get(result["part"]) or {}
             hop["part-file"] = project.rel(part["file"]) if part.get("file") else None
-            for name, unit, side, entry in ((result["caller"], result["caller-unit"], "capability", result["caller-capability"]),
-                                            (result["target"], result["target-unit"], "need", result["target-need"])):
+            for name, unit, side, entry in ((result["caller"], result["caller-unit"], result["caller-side"], result["caller-entry"]),
+                                            (result["target"], result["target-unit"], result["target-side"], result["target-entry"])):
                 lifelines[ids[name]] = {"name": name, "unit": unit.rel} if unit else \
                     {"name": name, "unit": holder.rel, "side": side, "entry": entry}
-        page = os.path.join(holder.path, "docs", "diagrams", f"scenario-{scenario['name']}.md")
-        scenarios.append({**data, "unit": holder.rel, "page": project.rel(page) if project.kind_of(page) == "file" else None,
+        scenarios.append({**data, "unit": holder.rel,
                           "diagram": {"source": "\n".join(lines),
                                       "lifelines": {i: lifelines[i] for i in ids.values() if i in lifelines}}})
     up = os.path.relpath(project.root, out_dir).replace(os.sep, "/")
@@ -5140,6 +5681,8 @@ def scenario_data(project: Project, scenario: dict) -> dict:
         if result:
             hops.append({"caller": result["caller"], "target": result["target"], "part": result["part"],
                          "input": result.get("input"), "result": result.get("result"),
+                         "example": result.get("example"), "direction": result.get("direction"),
+                         "caller-side": result.get("caller-side"), "target-side": result.get("target-side"),
                          "part-kind": result.get("kind"), "contract": rel(result["contract"]),
                          "caller-unit": result["caller-unit"].rel if result["caller-unit"] else None,
                          "target-unit": result["target-unit"].rel if result["target-unit"] else None,
@@ -5148,13 +5691,15 @@ def scenario_data(project: Project, scenario: dict) -> dict:
             hops.append({"caller": None, "target": None, "part": None, "contract": None,
                          "caller-unit": None, "target-unit": None, "via": [],
                          "unresolved": hop, "error": error})
-    for hop, (before, after, _) in zip(hops, scenario.get("states") or []):
-        hop["state-before"], hop["state"] = before, after
+    for hop, (before, after, _), path in zip(hops, scenario.get("states") or [], scenario.get("paths") or []):
+        hop["state-before"], hop["state"], hop["groups"] = before, after, list(path)
     spec = scenario["spec"]
     given = [{"connection": e["connection"], "state": e["text"]} if e["connection"] else {"condition": e["text"]}
              for e in scenario.get("given") or [] if e["text"]]
     return {"name": scenario["name"], "summary": spec["summary"], "source": spec["source"] or None,
-            "given": given, "expect": spec["expect"], "hops": hops, "x": spec["x"]}
+            "given": given, "expect": spec["expect"], "hops": hops,
+            "groups": [{"id": g["id"], "kind": g["kind"], "label": g["label"], "parent": g["parent"]}
+                       for g in scenario.get("groups") or []], "x": spec["x"]}
 
 
 def build_model(project: Project) -> dict:
@@ -5235,10 +5780,9 @@ def build_model(project: Project) -> dict:
         units.append({
             "path": unit.rel, "name": unit.name, "parent": unit.parent.rel if unit.parent else None,
             "children": [c.rel for c in unit.children], "responsibility": unit.responsibility,
-            "kind": unit.kind or None, "status": unit.status,
+            "kind": unit.kind or None, "runs-as": unit.runs_as or None, "status": unit.status,
             "readme": rel(readme) if project.kind_of(readme) == "file" else None,
-            "secret": secret_data(project, unit),
-            "not": [{"text": text, "need": need} for text, need in unit.nots],
+            "not": list(unit.nots),
             "capabilities": [entry(unit, n, s, "capabilities") for n, s in unit.capabilities.items()],
             "needs": [entry(unit, n, s, "needs") for n, s in unit.needs.items()],
             "wiring": wiring_rows(unit),
@@ -5279,16 +5823,22 @@ COMMANDS = {
             "are none, and the generated files; with --agents also install the skills and the "
             "skill stubs",
     "check": "check manifests, wiring, contracts, documents and generated files; with --fix, "
-             "first write the generated files: diagrams, decision indexes, AGENTS.md and skill stubs",
+             "first write the generated files: diagrams, decision indexes, the root AGENTS.md and skill stubs",
     "show": "describe the unit that contains PATH, with its resolved neighbours",
     "capability": "print both ends of every connection of one capability or need",
     "impact": "list everything that depends on a unit or capability, and who cites its files; "
               "for a file, also a deleted one, who cites it",
+    "brief": "print what to implement in the unit that contains PATH: the parts of its capabilities with "
+             "signatures and examples, the fakes of its needs, the states, the scenarios through it, its "
+             "constants and context items",
+    "trace": "search the files below the unit for the ids of the examples of its contracts, and report "
+             "the examples that no test names and the ids that no example has",
+    "scenario": "print one scenario of the unit that contains PATH as Markdown: its sequence diagram and the table of its steps; "
+                "an included scenario is one step unless --expand is given",
+    "states": "print the `## States` of a contract (a path, or its name in docs/references/ of the unit) as Markdown: a state diagram and the table",
     "tree": "print the unit tree with status, capabilities and needs",
-    "model": "print the resolved project as JSON with a stable schema: units, connections, final "
+    "model": "print the resolved project as JSON: units, connections, final "
              "providers, scenarios, decisions",
-    "stamp": "write or refresh the stamps of the context items at or below PATH, and print "
-             "each one with the source it cites",
     "skills": "list every skill of the project",
     "explore": "write the explorer, one HTML page with the map and every document, and open it "
                "in a browser",
@@ -5320,8 +5870,8 @@ def build_parser() -> argparse.ArgumentParser:
                      help="install the skills `unifold` and `unifold-convert` and the skill stubs")
     cmd = command("check")
     cmd.add_argument("--fix", action="store_true",
-                     help="first write the generated files: diagrams, decision indexes, AGENTS.md "
-                          "and the skill stubs; stamps are written only by `unifold stamp`")
+                     help="first write the generated files: diagrams, decision indexes, the root "
+                          "AGENTS.md and the skill stubs")
     cmd.add_argument("--strict", action="store_true", help="exit with 1 on warnings too")
     cmd.add_argument("--quiet", "-q", action="store_true",
                      help="hide info findings and fix hints")
@@ -5341,7 +5891,18 @@ def build_parser() -> argparse.ArgumentParser:
     cmd.add_argument("capability", nargs="?", help="limit to one capability")
     cmd = command("tree")
     cmd.add_argument("--depth", type=int, help="levels below the root to print")
-    command("stamp")
+    command("brief")
+    cmd = command("scenario", path=False)
+    cmd.add_argument("path", help="folder of the unit that holds the scenario")
+    cmd.add_argument("name", help="name of the scenario")
+    cmd.add_argument("--expand", action="store_true", help="open every included scenario instead of showing it as one step")
+    cmd = command("states", path=False)
+    cmd.add_argument("path", help="folder of the unit, or the contract file")
+    cmd.add_argument("contract", nargs="?", help="the contract: a path, or its name under docs/references/ of the unit")
+    cmd = command("trace")
+    cmd.add_argument("--tests", action="append", metavar="GLOB",
+                     help="search only files whose path or name matches (repeatable); default: every file below the unit outside docs/")
+    cmd.add_argument("--strict", action="store_true", help="exit with 1 when an example is named by no test")
     command("skills")
     cmd = command("explore")
     cmd.add_argument("-o", "--output", metavar="FILE|DIR",
@@ -5434,20 +5995,6 @@ def run(args) -> int:
                 print(f"{row['name']}  [{row['unit']}]  {row['path']}\n    {row['description']}")
         emit(args, rows, text)
         return 0
-    if name == "stamp":
-        target = real(args.path)
-        rows = stamp_all(project, None if target == project.root else
-                         unit_for(project, args.path).path)
-
-        def text():
-            for row in rows:
-                print(f"{row['action']} {row['file']}:{row['line']}: '{row['title']}' "
-                      f"cites {row['cites']}")
-            print(f"{len(rows)} stamp(s) written" + (
-                "; a stamp says that somebody compared `Says` with the cited source"
-                if rows else ""))
-        emit(args, {"ok": True, "stamped": len(rows), "items": rows}, text)
-        return 0
     if name == "tree":
         emit(args, tree_data(project, args.depth), lambda: print_tree(project, args.depth))
         return 0
@@ -5465,6 +6012,32 @@ def run(args) -> int:
     if name == "show":
         info = describe(project, unit)
         emit(args, info, lambda: print_show(info))
+    elif name == "brief":
+        data = brief_data(project, unit)
+        emit(args, data, lambda: print_brief(data))
+    elif name == "scenario":
+        scenario = next((s for s in resolved_scenarios(project) if s["unit"] is unit and s["name"] == args.name), None)
+        if scenario is None:
+            raise Fail("unknown-scenario", f"'{unit.rel}' holds no scenario '{args.name}' (it holds: "
+                                           f"{', '.join(unit.scenarios) or 'none'})")
+        emit(args, scenario_data(project, scenario), lambda: print(scenario_page(project, scenario, args.expand), end=""))
+    elif name == "states":
+        given = args.contract or args.path
+        target = real(given) if os.path.isfile(given) else os.path.join(unit.path, "docs", "references", given + ("" if given.endswith(".md") else ".md"))
+        if project.kind_of(target) != "file":
+            raise Fail("no-such-path", f"no contract {given} in {unit.rel}")
+        contract = contract_of_path(project, target)
+        if not stateful(contract):
+            raise Fail("unknown-capability", f"{project.rel(target)} has no `## States`")
+        _, text = states_page(project, target, contract)
+        emit(args, {"contract": project.rel(target), "states": contract["states"]["states"],
+                    "start": contract["states"]["start"], "rows": contract["states"]["rows"]}, lambda: print(text, end=""))
+    elif name == "trace":
+        data = trace_data(project, unit, args.tests or [])
+        emit(args, data, lambda: print_trace(data))
+        bad = any(f["severity"] == "warn" for f in data["findings"]) or \
+            (args.strict and any(f["severity"] == "info" for f in data["findings"]))
+        return 1 if bad else 0
     elif name == "capability":
         data = capability_data(project, unit, args.name)
         emit(args, data, lambda: print_capability(data))
