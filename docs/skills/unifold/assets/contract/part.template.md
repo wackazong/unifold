@@ -13,4 +13,4 @@ Examples:
 
 | Case | Input | Expected |
 |---|---|---|
-| <case> | `<call>` | <result> |
+| <name of the case, once in this part> | `<call>` | <result, exact> |

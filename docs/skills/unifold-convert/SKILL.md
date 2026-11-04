@@ -8,7 +8,7 @@ license: MIT OR Apache-2.0
 
 The result is a map that a person can accept: a few well-chosen units, wired by the unit above, and a clean `check`. Each unit has a `unifold.yaml` that says what the folder provides and what it needs. No script writes this map. A build file knows packages and their dependencies. It does not know which folders are parts of the architecture, what a part provides, or what it needs from others. You read the repository and decide; the tool checks that what you wrote is consistent. It does not read code, so you compare the map with the code.
 
-`unifold` below means the tool: `uvx unifold`, or the copy that `unifold init --agents` installs, `uv run docs/skills/unifold/scripts/unifold.py`. The standard is one page: <https://unifold.md/spec>. How to work in a converted project: the skill `unifold`.
+`unifold` below means the tool: `uvx unifold`, or the copy that `unifold init --agents` installs, `uv run docs/skills/unifold/scripts/unifold.py`. The standard has three pages, starting at <https://unifold.md/spec>. How to work in a converted project: the skill `unifold`.
 
 ## 0. Before you start
 

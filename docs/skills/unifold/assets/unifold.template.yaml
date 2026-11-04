@@ -7,20 +7,17 @@ responsibility: <what the unit is responsible for, in one sentence>
 # name: <project-name>   # root only, and every root should set it; default: the folder name
 # status: planned        # planned | active (default) | deprecated
 # kind: <logic | stateful | adapter | any other word>   # the first three carry rules
-secret:
-  what: <the one piece of knowledge this unit hides, in one line>
-  decision: docs/decisions/<NNNN-title>.md   # a decision of this unit or an ancestor that says why
+# runs-as: <library | process | job | ui | firmware>
 not:
-  - <what this unit does not do>: <need of this unit through which it is delegated>
-  - <what this unit does not do, delegated to nobody>
+  - <what this unit does not do, one line>
 capabilities:
-  <capability-name>: <what the capability provides, in one line>
-  <other-capability>:
+  <capability-name>:
     summary: <what the capability provides, in one line>
     contract: ../docs/references/<topic>.md   # the reference of the parent that defines the connection
+  <draft-capability>: <one line is enough while nothing is wired to it>
 needs:
-  <need-name>: <what this unit expects from whoever provides it>
-  <other-need>:
+  <passed-up-need>:          # empty: takes summary and contract from the one line that wires it
+  <need-name>:
     summary: <what this unit expects from whoever provides it>
     contract:
       path: ../docs/references/<topic>.md
@@ -46,8 +43,13 @@ scenarios:                   # a feature: one story as the chain of calls it cau
     given:                     # optional: the state the path starts in
       - <child>.<capability>: <a state of its contract's ## States>
       - <a condition, as a sentence>
-    hops:                      # caller -> target.part(input): result; the result is required
+    hops:                      # caller -> target.part(input): result, in the direction of the call
       - <own-capability> -> <child>.<part>(<input>): <result>        # the entry: implemented by a child
-      - <child> -> <other-child>.<part>(<input>): <result>           # a need of the caller, met by the target
+      - <child> -> <other-child>.<part>(<input>): <result>           # a command or query: the consumer calls
+      - <other-child> -> <child>.<event>(<input>)                    # an event or callback: the provider calls; no result needed
       - <child>/<grandchild> -> <own-need>.<part>(<input>): <result> # a need passed up to a need of this unit
+      - <child>.<scenario>                                           # include a scenario of a child
+      - <other-child> -> <child>.<scenario>                          # the same, naming who calls into the child
+      - repeat: {until: <result>, hops: [<hop>]}                     # or times: <n>
+      - parallel: [[<hop>], [<hop>]]                                 # two or more lists that run at the same time
     expect: <the observable outcome, exact where the source gives it>

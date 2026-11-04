@@ -1,7 +1,10 @@
 # <topic>
 
 Contract of `<unit>.<capability>`, <what the connection is about, in a few words>. Notation: wit.
-Sources: <where the facts come from, as text; or none. Never a decision.>
+Sources: <where the facts come from, as text; or none>
+Binding: <optional>
+Carried by: <optional: [contract](other.md)>
+Version: <optional>
 
 ## Use
 

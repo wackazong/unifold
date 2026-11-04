@@ -4,28 +4,4 @@
 
 ## Why
 
-<Why this unit exists and why it is cut this way: the long form of its secret and its not, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess, in whole sentences. Where a decision gives a reason, state the reason and link the decision. At most 20 lines that are not blank; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them. No list of decisions either: the decisions are their own record.>
-
-## Capabilities
-
-<One `###` section for each capability whose summary and contract do not say everything. Delete the others, and the whole section if none is left.>
-
-### `<capability-name>`
-
-<Only what the contract does not say: what this unit adds beyond it, each guarantee in a form a test could check, and its own limits. Do not repeat the contract; the manifest names it.>
-
-## Needs
-
-<One `###` section for each need whose summary and contract do not say everything. Delete the others, and the whole section if none is left.>
-
-### `<need-name>`
-
-<Only what the contract does not say: what this unit expects beyond it, never who supplies it. For an optional need: what the unit does without it.>
-
-## Commands
-
-<!-- Optional: the few commands to build, test and run this unit. Delete the section otherwise. -->
-
-## Read next
-
-<!-- Optional: a few links into docs/ whose order matters. Delete the section otherwise. -->
+<Why this unit exists and why it is cut this way: what it hides because it is hard to get right or likely to change, what it leaves to others and why, the forces that shaped it, the main trade-off, what must stay true. Write the reasons a newcomer cannot guess, in whole sentences. Where a decision gives a reason, state the reason and link the decision. At most 250 words; the long form is docs/explanation/reasoning.md. No list of children, capabilities or connections: the manifest holds them and `unifold show` prints them. No list of decisions either: the decisions are their own record.>

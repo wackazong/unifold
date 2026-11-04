@@ -1,7 +1,10 @@
 # <topic>
 
 Contract of `<unit>.<capability>`, <what the connection is about, in a few words>. Notation: wit.
-Sources: <where the facts come from, as text: proto §4; or none. Never a decision.>
+Sources: <where the facts come from, as text: proto §4; or none>
+Binding: <optional: in-process, http, message, cli, ble, file, ...>
+Carried by: <optional: [the contract of the transport this rides on](other.md)>
+Version: <optional; a contract of the root should have one>
 
 ## Use
 
@@ -23,6 +26,14 @@ Start: <state>.
 | <state> | `<part-name>` | ok | <state> |
 | <state> | `<part-name>` | `<case>` | <state> |
 
+## Qualities
+
+<Optional; delete the section otherwise. What the connection promises beyond its parts.>
+
+| Aspect | Guarantee |
+|---|---|
+| <latency, throughput, concurrency, ordering, delivery, idempotency, timeout, availability, limits, security, ...> | <what a test could observe> |
+
 ## Parts
 
 ### <part-name>
@@ -40,7 +51,7 @@ Examples:
 
 | Case | Input | Expected |
 |---|---|---|
-| <name of the case, and the source where it gives the vector> | `<call>` | <result, exact> |
+| <name of the case, once in this part, and the source where it gives the vector> | `<call>` | <result, exact: a value, ok, or an error case> |
 | <one over the limit> | <input> | `<error case>` |
 
 ### <type-name>
@@ -54,6 +65,22 @@ record <type-name> { <field>: <type> }
 | Field | Meaning |
 |---|---|
 | <field> | <what it holds> |
+
+### <event-name>
+
+Kind: event
+
+```wit
+<event-name>: func(<payload>: <type>);
+```
+
+When: <what raises the event>.
+Delivery: <at-most-once, at-least-once or exactly-once; the order key>.
+Examples:
+
+| Case | Action | Emitted |
+|---|---|---|
+| <name of the case> | <what happens> | `<event-name>` with <payload> |
 
 ### <error-type>
 

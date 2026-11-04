@@ -4,4 +4,4 @@
 
 | Name | Value | Unit | Source |
 |---|---|---|---|
-| `<NAME_OF_VALUE>` | <value> | <unit or empty> | <where it comes from, as text, never a decision; or empty> |
+| `<NAME_OF_VALUE>` | <value> | <unit or empty> | <where it comes from, as text or a link; or empty> |

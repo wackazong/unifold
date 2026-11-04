@@ -4,7 +4,7 @@ This repository follows [unifold](https://unifold.md). Some folders are units: t
 
 When you change code:
 
-1. Read the `unifold.yaml` of the folder you change, and its `README.md` if it has one; `AGENTS.md` says where its documents are.
+1. Read the `unifold.yaml` and the `README.md` of the unit you change; `unifold show` lists its documents and skills.
 2. If you add, remove or rename something that other folders use, or start to use another folder, change the manifest and the `wiring` in the manifest of the unit above.
 3. Run the tool and commit what it writes:
 
