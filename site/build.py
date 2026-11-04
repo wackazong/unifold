@@ -52,22 +52,81 @@ TUT = ROOT / "docs" / "tutorials"
 
 # slug (the URL), source file, name in the navigation, one line for indexes, kind
 CHAPTERS = [
-    ("spec", REF / "spec.md", "The standard", "The whole standard on one page: manifest, wiring, documents, what a checker guarantees.", "Standard"),
-    ("documents", REF / "documents.md", "Documents", "The files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, where a file may point.", "Reference"),
-    ("writing", REF / "writing.md", "Writing", "How each document is written: context items, decisions, references, contracts, skills, tutorials, explanation files, the review checklist.", "Reference"),
-    ("contracts", REF / "contracts.md", "Contracts", "The one document of a connection: parts with signatures and examples, the fake, folders, the template.", "Reference"),
+    ("spec", REF / "spec.md", "The standard", "The first page of the standard: the terms and the manifest.", "Standard"),
+    ("spec-wiring", REF / "spec-wiring.md", "Wiring and scenarios", "The second page of the standard: wiring, and scenarios as hops across the map.", "Standard"),
+    ("spec-conformance", REF / "spec-conformance.md", "Checks and conformance", "The third page of the standard: documents, what a checker guarantees, generated files, nested projects, conformance.", "Standard"),
+    ("documents", REF / "documents.md", "Documents", "The files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, the references.", "Reference"),
+    ("placement", REF / "placement.md", "Where things go", "The one rule for links, what belongs where, and the documents beside what a repository already has.", "Reference"),
+    ("writing", REF / "writing.md", "Writing", "How each document is written: explanation files, references, skills, tutorials, the review checklist, the style.", "Reference"),
+    ("decision-records", REF / "decision-records.md", "Decisions", "How a decision record and a context item are written.", "Reference"),
+    ("contracts", REF / "contracts.md", "Contracts", "The one document of a connection and how it is written: the header, use, states, parts with signatures and examples, the fake, folders.", "Reference"),
+    ("qualities", REF / "qualities.md", "Qualities", "What a connection promises beyond its parts: the ## Qualities table and its aspects.", "Reference"),
+    ("contract-example", REF / "contract-example.md", "A contract written out", "A whole contract, from the header to the fake.", "Reference"),
     ("agents", REF / "agents.md", "Agents", "How coding agents find and use unifold, per agent.", "Reference"),
-    ("tool", REF / "tool.md", "Tool", "The reference tool: commands, output, hooks, continuous integration.", "Reference"),
+    ("tool", REF / "tool.md", "Tool", "The reference tool: commands, check, init, hooks, continuous integration.", "Reference"),
+    ("tool-setup", REF / "tool-setup.md", "Setting up the tool", "init, hooks, continuous integration, and testing another implementation.", "Reference"),
+    ("tool-output", REF / "tool-output.md", "Generated files and the explorer", "What the reference tool writes: the generated files and the explorer.", "Reference"),
     ("tool-json", REF / "tool-json.md", "Tool JSON", "The JSON that the reference tool prints.", "Reference"),
-    ("rules", REF / "rules.md", "Rules", "Every finding the reference tool reports.", "Reference"),
+    ("rules", REF / "rules.md", "Rules", "Every finding the reference tool reports, generated from its rule table.", "Reference"),
     ("requirements", EXPL / "requirements.md", "Requirements", "What the standard must achieve, for which repositories it fits, where the value is.", "Explanation"),
-    ("reasoning", EXPL / "reasoning.md", "Reasoning", "Where the parts come from, what unifold adds, the design ideas behind it, Diátaxis and arc42.", "Explanation"),
-    ("wiring", EXPL / "wiring.md", "Wiring", "Wiring in practice: names, passing needs up, several children on one provider, alternatives, adapters, the kinds of units, scenarios, services.", "Explanation"),
+    ("reasoning", EXPL / "reasoning.md", "Reasoning", "Where the parts come from, what unifold adds, its three principles, Diátaxis and arc42.", "Explanation"),
+    ("principles", EXPL / "principles.md", "Design ideas", "Ports and adapters, domain-driven design, SOLID and test first in the standard.", "Explanation"),
+    ("wiring", EXPL / "wiring.md", "Wiring", "Wiring in practice: names, passing needs up, several children on one provider, alternatives, adapters, the kinds of units, services.", "Explanation"),
+    ("scenarios", EXPL / "scenarios.md", "Scenarios", "Scenarios and the contracts of connections in practice.", "Explanation"),
     ("invariants", EXPL / "invariants.md", "Invariants", "What is true of the standard, the skills and the tool at every moment.", "Explanation"),
     ("risks", EXPL / "risks.md", "Risks", "Risks and known limits of the standard.", "Explanation"),
     ("first-map", TUT / "first-map.md", "Your first map", "A tutorial: a root manifest, two units, a connection, the first diagram, documents for one unit.", "Tutorial"),
 ]
 SLUG_OF = {src.resolve(): slug for slug, src, _, _, _ in CHAPTERS}
+
+# docs/references/rules.md is generated from the rule table of the tool, so that the page and the tool
+# cannot differ. The build writes it; --check reports it when it is stale.
+RULES_PAGE = REF / "rules.md"
+RULE_GROUPS = [
+    ("S", "structure", None),
+    ("M", "manifest", None),
+    ("W", "wiring", "A finding about wiring names the manifest that holds the line: the parent's for a need of a child, the unit's own for a need it meets inside."),
+    ("K", "kinds and unit fields", None),
+    ("N", "scenarios", None),
+    ("C", "contracts", "These rules read the documents that manifests name as `contract`."),
+    ("L", "links", "These rules read the hand-written documents of a unit ([documents.md](documents.md)): `README.md` and the Markdown files in `docs/tutorials/`, `docs/explanation/`, `docs/decisions/`, `docs/references/` and `docs/skills/` (not the `assets/` and `scripts/` of a skill). Links inside code blocks and code spans are ignored."),
+    ("T", "text", None),
+    ("G", "generated files", "`check` builds every generated file in memory and compares. The generated marker exempts a file from the document rules only at a path that the generator writes."),
+]
+STALE: list[str] = []
+
+
+def rules_page() -> str:
+    """The Markdown of docs/references/rules.md, from `unifold rules --json`."""
+    out = subprocess.run([sys.executable, str(TOOL), "rules", "--json"], capture_output=True, text=True, check=True)
+    rules = json.loads(out.stdout)
+    letters = [g[0] for g in RULE_GROUPS]
+    stray = [r["id"] for r in rules if r["id"][0] not in letters]
+    if stray:
+        die(f"rules without a group in RULE_GROUPS: {', '.join(stray)}")
+    lines = ["<!-- generated by site/build.py from the rule table of the tool; do not edit -->",
+             "# Rules of the reference tool", "",
+             "`unifold check` applies these rules, and each finding names one of them. How to read a finding: "
+             "[tool.md](tool.md#check). What no tool can check is in the [review checklist](writing.md#review-checklist). "
+             "A rule id is never reused; a gap in the numbering is the id of a rule that the tool does not have.", ""]
+    for letter, title, note in RULE_GROUPS:
+        lines += [f"## {letter}: {title}", ""] + ([note, ""] if note else [])
+        lines += ["| Rule | Severity | What must hold | How to fix |", "|---|---|---|---|"]
+        lines += [f'| <a id="{r["id"].lower()}"></a>`{r["id"]}` | {r["severity"]} | {r["what"]} | {r["fix"]} |'
+                  for r in rules if r["id"][0] == letter]
+        lines.append("")
+    return "\n".join(lines)
+
+
+def sync_rules_page(check_only: bool) -> None:
+    page = rules_page()
+    if RULES_PAGE.exists() and RULES_PAGE.read_text(encoding="utf-8") == page:
+        return
+    if check_only:
+        STALE.append(f"{RULES_PAGE.relative_to(ROOT)} differs from the rule table of the tool; run `uv run site/build.py`")
+    else:
+        RULES_PAGE.write_text(page, encoding="utf-8")
+
 # old addresses that still get a page
 REDIRECTS = {"guide": "/", "adopting": "/first-map/", "design": "/reasoning/"}
 
@@ -830,6 +889,7 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
 # Build
 # --------------------------------------------------------------------------
 def build() -> None:
+    sync_rules_page(check_only="--check" in sys.argv[1:])
     schema = REF / "unifold.schema.json"
     if not schema.exists():
         die(f"{schema.relative_to(ROOT)} is missing. The site serves it at /<version>/unifold.schema.json; "
@@ -923,7 +983,7 @@ def build() -> None:
         "generates the diagrams.", "",
         "All pages below are plain Markdown. The same pages exist as HTML without the `.md` ending.", "",
         "## Standard", "",
-        f"- [unifold {version}: the standard]({SITE_URL}/spec.md): {CHAPTERS[0][3]}",
+        *[f"- [{n}]({SITE_URL}/{s}.md): {d}" for s, _, n, d, k in CHAPTERS if k == "Standard"],
         f"- [JSON Schema of the manifest]({SITE_URL}/{version}/unifold.schema.json): For validating `unifold.yaml`.",
     ]
     for kind in ("Reference", "Explanation", "Tutorial"):
@@ -988,7 +1048,7 @@ def resolve(url_path: str) -> Path | None:
 def check() -> int:
     from html.parser import HTMLParser
     void = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
-    problems: list[str] = []
+    problems: list[str] = list(STALE)
     n_links = 0
 
     class P(HTMLParser):
