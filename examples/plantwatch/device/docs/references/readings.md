@@ -2,10 +2,11 @@
 
 Contract of `sampling.readings`, which `store` names `readings` and `link` names `live-readings`: every new reading at the moment it is taken, as the provider hands it to each subscriber. Notation: wit.
 Sources: the reading schema of plantwatch.
+Binding: in-process
 
 ## Use
 
-Each subscriber subscribes once, at start, and from then on receives every new reading as `new-reading`, in ascending order of sequence number. The provider calls the subscribers one after the other, in the order in which they subscribed. `sampling-interval` may be called at any time.
+The provider calls the subscribers one after the other, in the order in which they subscribed, and all have returned before the next reading is taken. A reading does not change after it has been handed out. `sampling-interval` may be called at any time. If no sensor answers, the reading has all three quantities absent and is still taken; a quantity is absent, not wrong, when its raw value is unavailable or outside the plausible limits of the calibration. A subscriber that keeps readings ignores a reading whose sequence number is not higher than the highest it has received.
 
 ## States
 
@@ -19,6 +20,16 @@ Start: unsubscribed.
 | subscribed | `new-reading` | | subscribed |
 | subscribed | `sampling-interval` | | subscribed |
 
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| delivery | every reading reaches every subscriber exactly once, in ascending order of sequence number, at the moment it is taken |
+| concurrency | one subscriber is called at a time; the next reading is taken only after all have returned |
+| limits | at most 4 subscribers; the interval is 900 s unless the build sets another value between 300 s and 3600 s, and does not change after start; a board gives readings for 16 383 starts and for 262 143 readings per start, then no more |
+| timing | the first reading is taken within 10 s after start, the following ones at whole multiples of the interval after the first; a measurement begins at most 1 s after its time, and a connection delays a reading by at most 1 s |
+| accuracy | soil moisture is calibrated for the type of probe, not for the single board, and is accurate to 5 percentage points |
+
 ## Parts
 
 ### subscribe
@@ -29,15 +40,15 @@ Kind: command
 subscribe: func(subscriber: subscriber) -> result<_, subscribe-error>;
 ```
 
-Pre: called once per subscriber, at start; fewer than 4 subscribers are registered.
-Result: every reading reaches this subscriber once, in ascending order of sequence number, at the moment it is taken. Subscribers are called one after another, in the order in which they registered, and all have returned before the next reading is taken.
+Pre: fewer than 4 subscribers are registered.
+Result: every reading reaches this subscriber once, in ascending order of sequence number, at the moment it is taken.
 Errors: `too-many` when 4 subscribers are registered already.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| two subscribers | `store`, then `link` subscribe; a reading is taken | `store` receives it, then `link`; each once |
-| a fifth | `subscribe` with 4 registered | `too-many` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| two subscribers | `store` subscribed, then `link` | a reading is taken | `store` receives it, then `link`; each once |
+| a fifth | 4 subscribers are registered | `subscribe` | `too-many` |
 
 ### new-reading
 
@@ -47,7 +58,8 @@ Kind: event
 new-reading: func(reading: reading);
 ```
 
-A reading does not change after it has been handed out.
+When: a reading is taken.
+Delivery: exactly once per subscriber, in ascending order of sequence number.
 
 ### sampling-interval
 

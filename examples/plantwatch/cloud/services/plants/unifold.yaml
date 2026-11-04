@@ -1,9 +1,7 @@
 responsibility: Registry of plants with their sensors, thresholds and reading history
-kind: service
+kind: stateful
+runs-as: process
 status: planned
-secret:
-  what: how the history of a plant is stored and aggregated
-  decision: docs/decisions/0001-raw-readings-for-90-days-hourly-aggregates-for-2-years.md
 not:
   - accepting or validating uploaded readings
   - deciding whether a plant needs attention; plants stores thresholds and compares nothing with them

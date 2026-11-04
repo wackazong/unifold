@@ -18,6 +18,6 @@ Result: facts that do not change while the sensor stick runs, in the layout abov
 Errors: none; Info is readable by anyone in range.
 Examples:
 
-| Case | Expected |
-|---|---|
-| Sensor id `00a1b2c3d4e5f607`, all three quantities, interval 900 s, capacity 2 880, build 1.0.0 | `01 00 00 A1 B2 C3 D4 E5 F6 07 07 84 03 40 0B 01 00 00` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| The example sensor stick | sensor id `00a1b2c3d4e5f607`, all three quantities, interval 900 s, capacity 2 880, build 1.0.0 | read Info | `01 00 00 A1 B2 C3 D4 E5 F6 07 07 84 03 40 0B 01 00 00` |

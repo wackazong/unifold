@@ -20,13 +20,13 @@ Errors: the result codes of [transfer-result](transfer-result.md), and the ATT e
 | A record is longer than ATT MTU minus 3 | Result `mtu-too-small`, sends no record | Exchanges a larger MTU and fetches again |
 | Central receives a record it must reject | Nothing | Drops that record, keeps the others, and still confirms up to `last` |
 
-Examples: a sensor stick stores the 96 readings 4711 to 4806 and has taken none after them; each case starts from this state; values are bytes on Transfer control, in hexadecimal.
+Examples: a sensor stick stores the 96 readings 4711 to 4806 and has taken none after them; each case starts from this state; the input is the bytes the central writes to Transfer control, in hexadecimal, and the expected result is what the sensor stick answers.
 
-| Case | Central writes | Sensor stick answers |
-|---|---|---|
-| Fetch everything | `01 00 00 00 00 00 00` | 96 records, then `80 01 00 60 00 C6 12 00 00 00` |
-| Fetch with a limit of 10 | `01 00 00 00 00 0A 00` | Records 4711 to 4720, then `80 01 00 0A 00 70 12 00 00 01` |
-| Fetch above the newest | `01 C7 12 00 00 00 00` | No record, `80 01 00 00 00 00 00 00 00 00` |
-| Request too short | `01 00 00` | `80 01 02 00 00 00 00 00 00 00` |
-| Fetch during a fetch | `01 00 00 00 00 00 00` | ATT error `0xFE`, no indication |
-| Fetch, Transfer data not enabled | `01 00 00 00 00 00 00` | ATT error `0xFD`, no indication |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| Fetch everything | | `01 00 00 00 00 00 00` | 96 records, then `80 01 00 60 00 C6 12 00 00 00` |
+| Fetch with a limit of 10 | | `01 00 00 00 00 0A 00` | records 4711 to 4720, then `80 01 00 0A 00 70 12 00 00 01` |
+| Fetch above the newest | | `01 C7 12 00 00 00 00` | no record, `80 01 00 00 00 00 00 00 00 00` |
+| Request too short | | `01 00 00` | `80 01 02 00 00 00 00 00 00 00` |
+| Fetch during a fetch | a fetch is running | `01 00 00 00 00 00 00` | ATT error `0xFE`, no indication |
+| Fetch, Transfer data not enabled | notifications of Transfer data are not enabled | `01 00 00 00 00 00 00` | ATT error `0xFD`, no indication |

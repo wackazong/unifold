@@ -10,7 +10,7 @@ What is true at every moment inside this unit, across its children. The promise 
 - A closed alert stays closed.
 - Judging uses the time of readings only, never the clock. Handling the same events in the same order gives the same alerts on any day.
 - The children do not know each other. What one wants from another is a need with a contract of its own; only the wiring of this unit connects them.
-- A need of the judging logic is of kind `library`. Whatever lives behind a network gets an adapter.
+- The judging logic calls its needs as functions in its own process. Whatever lives behind a network gets an adapter.
 - Only the process stores anything. A library that must remember something between two calls returns it to its caller. The one exception is recorded in [0003](../decisions/0003-thresholds-reach-the-judging-logic-through-an-adapter.md).
 
 How the children share the work for the notification invariant:

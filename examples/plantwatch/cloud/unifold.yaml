@@ -1,5 +1,6 @@
 responsibility: Server side that turns uploaded readings into plant history and alerts
-kind: system
+kind: stateful
+runs-as: process
 status: planned
 not:
   - talking to a sensor stick; readings arrive only through the public API
@@ -7,18 +8,14 @@ not:
   - changing or deleting a single reading
   - user accounts with passwords, recovery or sharing; an owner is whoever holds a token of that owner
   - threshold presets and knowledge about plant species
-  - delivering a notification to a phone: push-service
+  - delivering a notification to a phone; the need `push-service` does that
 capabilities:
   public-api:
-    summary: Upload readings and query plants, history and alerts
-    contract: ../docs/references/public-api/index.md
 needs:
   push-service:
     summary: Takes a notification for an owner and delivers it to the phones registered for that owner
     contract: ../docs/references/push-service.md
   container-host:
-    summary: Runs containers, gives them a private network and persistent volumes
-    contract: ../docs/references/container-host.md
 wiring:
   ingest.event-bus: platform.event-bus
   plants.event-bus: platform.event-bus
@@ -39,21 +36,23 @@ scenarios:
     summary: An upload is accepted, enters the history, is judged and opens an alert
     source: decisions 0001 and 0003 of cloud
     hops:
-      - public-api -> gateway.upload-batch(00a1b2c3d4e5f607, reading 4711): 200, 4711 is new
-      - gateway -> ingest.upload-batch(00a1b2c3d4e5f607, reading 4711): 200, 4711 is new
-      - ingest -> platform.publish(ingest.readings.v1, the event 00a1b2c3d4e5f607-4711): acknowledged
-      - plants -> ingest.reading-accepted(00a1b2c3d4e5f607-4711): ok
-      - plants -> platform.deliver(the event 00a1b2c3d4e5f607-4711): ok
-      - plants -> platform.transaction: ok
-      - plants -> platform.commit: ok
-      - services/alerts/server -> ingest.reading-accepted(00a1b2c3d4e5f607-4711): ok
-      - services/alerts/server -> platform.deliver(the event 00a1b2c3d4e5f607-4711): ok
-      - services/alerts/plant-lookup -> plants.lookup-by-sensor(00a1b2c3d4e5f607): 200 with plant_id P and owner_id A
-      - services/alerts/server -> platform.transaction: ok
-      - services/alerts/server -> platform.commit: ok
-      - services/alerts/notifier -> push-service.send(the notification of the alert): taken
-      - public-api -> gateway.list-alerts(): 200 with the open alert
-      - gateway -> services/alerts/server.list-alerts(): 200 with the open alert
-      - public-api -> gateway.get-history(P): 200 with reading 4711
-      - gateway -> plants.get-history(P): 200 with reading 4711
+      - public-api -> services/gateway.upload-batch(00a1b2c3d4e5f607, reading 4711): 200, 4711 is new
+      - services/gateway -> services/ingest.upload-batch(00a1b2c3d4e5f607, reading 4711): 200, 4711 is new
+      - services/ingest -> platform.publish(ingest.readings.v1, the event 00a1b2c3d4e5f607-4711): acknowledged
+      - parallel:
+          - - services/ingest -> services/plants.reading-accepted(00a1b2c3d4e5f607-4711)
+            - services/plants -> platform.transaction(add reading 4711 to the history of P): ok
+            - services/plants -> platform.commit(the position behind the event): ok
+          - - services/alerts.handle-a-reading
+      - public-api -> services/gateway.list-alerts(): 200 with the open alert
+      - services/alerts.list-the-open-alerts
+      - public-api -> services/gateway.get-history(P): 200 with reading 4711
+      - services/gateway -> services/plants.get-history(P): 200 with reading 4711
     expect: the upload is answered with `new` before history and evaluation have seen the reading; within 10 seconds the reading is in the history of its plant; within 1 minute the alert is open and its notification is handed to the push service; the two branches run independently and in any order
+  start-the-server-side:
+    summary: The container host starts the server side
+    source: deployment of cloud
+    hops:
+      - platform -> container-host.volume(the backup volume, on another storage device than the database volume): ok
+      - platform -> container-host.run(the bus and the database, each with its volumes): ok
+    expect: the bus and the database run as containers with their three volumes, the backup volume on other storage than the database volume, and every service reaches them by name on the private network

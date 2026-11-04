@@ -45,8 +45,8 @@ Items are in ascending order of time; raw readings with the same time are in asc
 Errors: `404` `not_found` when the plant does not exist or belongs to another owner; `400` `invalid_request` for a malformed parameter; the [errors](error.md) that every operation can answer.
 Examples:
 
-| Case | Request | Response |
-|---|---|---|
-| One hour | `resolution=hour` for an hour with 4 readings | The item shown above, `count` 4 |
-| Late reading | A reading of 14:15 is uploaded after the hour 14:00 was fetched | The aggregate of 14:00 has changed at the next request |
-| More than a page | 1 500 raw readings in the period | `200` with 1 000 items and `next`; the next request with `cursor` returns the rest |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| One hour | an hour with 4 readings | `GET /v1/plants/{P}/history?resolution=hour` over that hour | the item shown above, `count` 4 |
+| Late reading | the hour 14:00 was fetched, then a reading of 14:15 was uploaded | the same request again | `200`; the aggregate of 14:00 has changed |
+| More than a page | 1 500 raw readings in the period | `GET /v1/plants/{P}/history?resolution=raw` over the period | `200` with 1 000 items and `next`; the next request with `cursor` returns the rest |

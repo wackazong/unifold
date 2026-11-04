@@ -1,5 +1,6 @@
 responsibility: Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE
-kind: firmware
+kind: stateful
+runs-as: firmware
 status: planned
 not:
   - wall-clock time; the firmware counts ticks and never knows the date
@@ -8,15 +9,9 @@ not:
   - updating itself
 capabilities:
   ble-link:
-    summary: Serves live and stored readings to a nearby central over BLE
-    contract: ../docs/references/ble-profile/index.md
 needs:
   soil-probe:
-    summary: Capacitive soil moisture probe with an analogue output
-    contract: ../docs/references/soil-probe.md
   ambient-sensor:
-    summary: Light and temperature sensor on an I2C bus
-    contract: ../docs/references/ambient-sensor.md
 wiring:
   ble-link: link.ble-link
   sampling.sensor-io: hal.sensor-io
@@ -28,3 +23,38 @@ wiring:
   link.live-readings: sampling.readings
   hal.ambient-sensor: ambient-sensor
   hal.soil-probe: soil-probe
+scenarios:
+  take-a-reading:
+    summary: The sensor stick wakes at the sampling time, takes a reading, stores it and sleeps again
+    source: runtime of device, the sleep and wake cycle
+    given:
+      - sampling.readings: subscribed
+    hops:
+      - hal -> sampling.alarm
+      - sampling -> hal.ticks(): 12 / 86405
+      - sampling -> hal.measure(): three raw values
+      - hal -> soil-probe.output(): a share of the supply
+      - hal -> ambient-sensor.read(): both values within 150 ms
+      - sampling -> store.new-reading(reading 3145825)
+      - store -> hal.write(the slot of 3145825): ok
+      - sampling -> link.new-reading(reading 3145825)
+      - link -> hal.send(Live reading, the record of 3145825): ok
+      - link -> hal.send(Status, the counters with 3145825 as the newest reading): ok
+      - sampling -> hal.set-alarm(at second 87305): ok
+    expect: one reading with the next sequence number and the tick count of the measurement is in the log and survives power loss; a connected central is notified of it as Live reading and of the new Status; the board sleeps until the next alarm
+  serve-a-fetch:
+    summary: A central opens a session, fetches the 96 stored readings and confirms them
+    source: BLE profile, fetch stored readings and confirm
+    hops:
+      - ble-link -> link.open-session(): ok
+      - link -> hal.answer(7, value(18 bytes)): ok
+      - ble-link -> link.status(): 0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
+      - ble-link -> link.fetch(01 00 00 00 00 C8 00): 96 records, then 80 01 00 60 00 C6 12 00 00 00
+      - repeat:
+          times: 96
+          hops:
+            - link -> store.read(the number after the last record sent, 0 first): the next stored reading, 4711 first
+            - link -> hal.send(Transfer data, the record): ok
+      - ble-link -> link.confirm(02 C6 12 00 00): 80 02 00 00 00 00 00 00 00
+      - link -> store.mark-delivered(4806): ok
+    expect: the central receives the readings 4711 to 4806 in ascending order, exactly as the log holds them; the confirm result goes out only after the mark is durable, and the readings up to 4806 are no longer stored

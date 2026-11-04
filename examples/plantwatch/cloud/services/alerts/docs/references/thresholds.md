@@ -2,10 +2,20 @@
 
 Contract of `plant-lookup.thresholds`: the function `lookup`, how `plant-lookup` turns the answers of whoever provides `plants-api` into its three answers, and how long it keeps them. The rules for calls that it follows are cited in [context](../explanation/context.md). Notation: wit.
 Sources: the lookup by sensor id of `plants-api`.
+Binding: in-process
 
 ## Use
 
 The caller asks `lookup` for the plant of a sensor stick and gets one of three answers. A call has no effect that the caller can observe, so the connection has no state. `lookup` may be called at any time, also twice at the same moment for one sensor id.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| latency | an answer from memory within 1 ms; otherwise the time of one request, at most 5 seconds; when the registry does not answer, 17 seconds, three waits of 5 seconds and the pauses |
+| caching | an answer is kept per sensor id for 60 seconds after its request was sent, in the memory of the instance; at most 10 000 answers are kept, beyond that the oldest is dropped |
+| retry | a failed request is repeated at most twice, after 0.2 and after 1 second |
+| concurrency | two calls for the same sensor id at the same moment share one request |
 
 ## Parts
 
@@ -27,28 +37,21 @@ Result: one of `attached`, `unattached` and `unavailable`, from memory or from o
 | `503`, no connection, or no response within 5 seconds | repeat, see below | no |
 | any other status, or a body that cannot be read | `unavailable` | no |
 
-A failed request is repeated at most twice, after 0.2 and after 1 second; after the third failure the answer is `unavailable`. An answer is kept per sensor id, in the memory of the instance, with the time at which the request for it was sent. A call within 60 seconds after that time is answered from memory; a later call sends a new request, and the old answer is not used again. At most 10 000 answers are kept; beyond that the oldest is dropped. Two calls for the same sensor id at the same moment share one request.
-
-| Situation | `lookup` returns within |
-|---|---|
-| answer from memory | 1 ms |
-| the registry answers | the time of one request, at most 5 seconds |
-| the registry does not answer | 17 seconds: three waits of 5 seconds and the pauses |
-
+A failed request is repeated at most twice; after the third failure the answer is `unavailable`. A call within 60 seconds after the time at which the kept request was sent is answered from memory; a later call sends a new request, and the old answer is not used again.
 Errors: none; `lookup` raises no error. `unavailable` is an answer.
-Examples: the registry holds the plant P of owner A with the sensor stick `00a1b2c3d4e5f607` and the lower threshold 30.0 for soil moisture.
+Examples: the registry holds the plant P of owner A with the sensor stick `00a1b2c3d4e5f607` and the lower threshold 30.0 for soil moisture; the expected result names the requests sent.
 
-| Case | Call | Requests sent | Answer |
+| Case | Given | Input | Expected |
 |---|---|---|---|
-| first call | `lookup("00a1b2c3d4e5f607")` at 09:00:00 | 1 | `attached`, P, A, `{soil_moisture: {min: 30.0}}` |
-| again soon | the same at 09:00:59 | 0 | the same |
-| after a change | the threshold is set to 35.0 at 09:00:10; call at 09:01:01 | 1 | `attached` with `min` 35.0 |
-| no thresholds | a plant without thresholds | 1 | `attached` with `{}` |
-| not attached | `lookup("ffffffffffffffff")` | 1 | `unattached` |
-| malformed id | `lookup("00A1")` | 0 | `unattached` |
-| short outage | `503`, then `200` | 2 | `attached`, after about 0.2 seconds |
-| outage | the registry refuses connections; an answer from 09:00:00 exists; call at 09:02:00 | 3 | `unavailable` |
-| unknown quantity | the plant has thresholds for `soil_ph` | 1 | `attached`; `thresholds` contains `soil_ph` |
+| first call | nothing is kept | `lookup("00a1b2c3d4e5f607")` at 09:00:00 | `attached`, P, A, `{soil_moisture: {min: 30.0}}`; 1 request |
+| again soon | the answer of `first call` | `lookup("00a1b2c3d4e5f607")` at 09:00:59 | the same answer; 0 requests |
+| after a change | the answer of `first call`; the threshold was set to 35.0 at 09:00:10 | `lookup("00a1b2c3d4e5f607")` at 09:01:01 | `attached` with `min` 35.0; 1 request |
+| no thresholds | the plant has no thresholds | `lookup` of its sensor id | `attached` with `{}`; 1 request |
+| not attached | | `lookup("ffffffffffffffff")` | `unattached`; 1 request |
+| malformed id | | `lookup("00A1")` | `unattached`; 0 requests |
+| short outage | the registry answers `503`, then `200` | `lookup("00a1b2c3d4e5f607")` | `attached`, after about 0.2 seconds; 2 requests |
+| outage | the registry refuses connections; an answer from 09:00:00 exists | `lookup("00a1b2c3d4e5f607")` at 09:02:00 | `unavailable`; 3 requests |
+| unknown quantity | the plant has thresholds for `soil_ph` | `lookup` of its sensor id | `attached`; `thresholds` contains `soil_ph`; 1 request |
 
 ### lookup-answer
 

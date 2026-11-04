@@ -4,7 +4,7 @@
 
 ## Why
 
-When an alert opens and closes is the part of the product that owners feel and that changes most. This unit holds exactly that logic and nothing else, so that it can be read in one sitting and tested with a table of readings and expected alerts. It changes when the rules of judging change: a new quantity, a different margin, another way to look at light.
+What this unit hides is the margins and the state with which a reading is judged ([0001](docs/decisions/0001-flapping-is-prevented-by-a-margin-on-closing.md)). When an alert opens and closes is the part of the product that owners feel and that changes most. This unit holds exactly that logic and nothing else, so that it can be read in one sitting and tested with a table of readings and expected alerts. It changes when the rules of judging change: a new quantity, a different margin, another way to look at light.
 
 To stay testable it has no state and knows no technology. What it concluded from earlier readings travels in a value that the caller keeps. Plant and thresholds come through a need whose contract the provider names too; a test meets that need with a table ([context](docs/explanation/context.md)).
 

@@ -1,17 +1,17 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: device
 
-[plantwatch](../../../docs/diagrams/component.md) / **device** · [README](../../README.md) · [context](context.md)
+[plantwatch](../../../docs/diagrams/component.md) / **device** · [README](../../README.md)
 
 The units directly inside `device` and how they are connected. An arrow points from the unit that needs something to the unit that provides it. Rounded nodes are capabilities of the framing unit, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a unit that is planned.
 
 ```mermaid
 flowchart LR
   subgraph u_device["device"]
-    u_device__hal["hal (adapter)"]
-    u_device__link["link (library)"]
-    u_device__sampling["sampling (library)"]
-    u_device__store["store (library)"]
+    u_device__hal["hal (adapter, library)"]
+    u_device__link["link (stateful, library)"]
+    u_device__sampling["sampling (stateful, library)"]
+    u_device__store["store (stateful, library)"]
   end
   n_device___ambient_dsensor{{"ambient-sensor"}}
   n_device___soil_dprobe{{"soil-probe"}}
@@ -34,10 +34,10 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status |
 |---|---|---|---|
-| [hal](../../hal/README.md) | adapter | Hardware abstraction of the sensor stick board | **planned** |
-| [link](../../link/README.md) | library | Implements the BLE profile on top of the radio | **planned** |
-| [sampling](../../sampling/README.md) | library | Takes a calibrated reading at every sampling interval | **planned** |
-| [store](../../store/README.md) | library | Keeps readings on the sensor stick until they have been delivered | **planned** |
+| [hal](../../hal/README.md) | adapter, library | Hardware abstraction of the sensor stick board | **planned** |
+| [link](../../link/README.md) | stateful, library | Implements the BLE profile on top of the radio | **planned** |
+| [sampling](../../sampling/README.md) | stateful, library | Takes a calibrated reading at every sampling interval | **planned** |
+| [store](../../store/README.md) | stateful, library | Keeps readings on the sensor stick until they have been delivered | **planned** |
 
 ### Connections
 

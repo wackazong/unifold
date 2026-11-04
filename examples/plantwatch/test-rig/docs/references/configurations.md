@@ -68,3 +68,13 @@ A wait that runs out ends the test in error, with two exceptions: a reading that
 | End, also after an error | Removes its plants, forgets the pairing, writes the report |
 
 If the start fails, every test is reported as in error with the cause, and the report is still written.
+
+## Conditions of a run
+
+| Condition | Content |
+|---|---|
+| Device in range | Exactly one device is in radio range of the machine that runs the rig, open for pairing when the rig looks for it and connected to nothing else during the run |
+| BLE adapter | The rig may use the BLE adapter alone |
+| Without `scenario-control` | The rig runs in `real`, skips every test that needs a scenario and reports it as skipped, waits in real time for the device to take a reading, and checks only that values are valid |
+| Owner | The rig uses a token of an owner that exists for testing only |
+| Plants | The rig removes every plant of this owner at the start of a run, creates the plants it needs, and removes them at the end |

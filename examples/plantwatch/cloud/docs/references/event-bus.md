@@ -2,30 +2,28 @@
 
 Contract of `platform.event-bus`: what a service that publishes or subscribes can rely on. The bus does not look into a value. Notation: the operations of a Kafka client, written as text.
 Sources: the event conventions of `cloud`.
+Binding: message
 
 ## Use
 
 A publisher publishes messages to a declared topic. When the order of its messages with one key matters, it waits for each acknowledgement or uses the idempotent mode of its client. A subscriber subscribes once per topic and subscription name and then receives the messages as `deliver`. It confirms a message by committing the position behind it, for a partition that it holds. After a lost connection the instance subscribes again. `read-from-beginning` needs no subscription and may be called at any time.
 
-## Access
+The bus speaks the Apache Kafka protocol, as clients of version 3.0 or newer speak it, at host `event-bus`, port 9092, inside the private network. A topic is declared with the skill `platform-add-a-topic` of `platform`.
 
-| Item | Value |
+## Qualities
+
+| Aspect | Guarantee |
 |---|---|
-| wire protocol | Apache Kafka protocol, as spoken by clients of version 3.0 or newer |
-| address | host `event-bus`, port 9092, inside the private network |
-| authentication | none; the private network is the boundary |
-| encryption | none |
-
-## What can go wrong
-
-| Event | Effect for a service |
-|---|---|
-| restart of the bus, up to 1 minute | publishing and receiving fail; clients reconnect by themselves; nothing acknowledged is lost |
-| a subscriber is down for less than 7 days | it continues where it stopped |
-| a subscriber is down for more than 7 days | messages older than 7 days are gone for it |
-| loss of the volume | all messages and positions are lost; the bus has no backup; topics are declared again, empty |
-
-The bus is sized for 200 messages per second over all topics, averaged over a minute, and for 10 GB of stored messages.
+| security | no authentication and no encryption; the private network is the boundary |
+| throughput | 200 messages per second over all topics, averaged over a minute |
+| latency | a burst of 1 000 messages of one publisher is acknowledged within 1 second; a connected subscriber receives a new message within 1 second |
+| ordering | messages with the same key lie in the same partition and are delivered in the order in which the bus stored them; no order holds between keys |
+| delivery | at least once: after a restart or a new assignment of partitions, delivery continues behind the last confirmed position, and messages behind it that were already handled are delivered again; the bus never skips a message |
+| durability | an acknowledged message survives a restart of the bus; a message that was not acknowledged may or may not be stored, so a publisher that sends it again can cause a second copy |
+| retention | a stream topic keeps every message for 7 days, consumed or not: a subscriber that is down for less than 7 days continues where it stopped, one that is down longer finds the older messages gone; the position of a subscription that no instance has used for 7 days is forgotten |
+| limits | 10 GB of stored messages; a key of 1 to 256 bytes; a value of at most 64 kB; 12 partitions per topic |
+| availability | a restart of the bus takes up to 1 minute, during which publishing and receiving fail; clients reconnect by themselves, and nothing acknowledged is lost |
+| backup | none: a loss of the volume loses all messages and positions, and topics are declared again, empty |
 
 ## Parts
 
@@ -37,16 +35,16 @@ Kind: command
 publish(topic, message) -> acknowledged
 ```
 
-Pre: the topic is declared with the skill `platform-add-a-topic` of `platform`; the message has a key of 1 to 256 bytes and a value of at most 64 kB.
-Result: the bus acknowledges the message after it has written the message to its volume; an acknowledged message survives a restart. The key selects the partition. Messages that one publisher sends with the same key are stored in the order in which it sent them, provided the publisher waits for each acknowledgement or uses the idempotent mode of its client. The bus acknowledges a burst of 1 000 messages of one publisher within 1 second.
-Errors: the publish fails for a topic that is not declared, and no topic is created. A message that was not acknowledged may or may not be stored; a publisher that sends it again can cause a second copy.
+Pre: the topic is declared; the message has a key of 1 to 256 bytes and a value of at most 64 kB.
+Result: the bus acknowledges the message after it has written the message to its volume. The key selects the partition. Messages that one publisher sends with the same key are stored in the order in which it sent them, provided the publisher waits for each acknowledgement or uses the idempotent mode of its client.
+Errors: the publish fails for a topic that is not declared, and no topic is created.
 Examples:
 
-| Case | Action | Result |
+| Case | Input | Expected |
 |---|---|---|
-| undeclared topic | publish to `greenhouse.pots.v1`, which is not declared | the publish fails; no topic is created |
-| order within a key | publish A, then B, both with key `k`, each after the acknowledgement of the one before | every subscription receives A before B |
-| remove a key | publish an empty value with key `k` to a keep-latest topic | the key is removed |
+| undeclared topic | `publish("greenhouse.pots.v1", m)`, the topic not declared | the publish fails; no topic is created |
+| order within a key | publish A, then B, both with key `k`, each after the acknowledgement of the one before | acknowledged; every subscription receives A before B |
+| remove a key | publish an empty value with key `k` to a keep-latest topic | acknowledged; the key is removed |
 
 ### subscribe
 
@@ -57,15 +55,15 @@ subscribe(topic, subscription-name) -> stream of messages
 ```
 
 Pre: the topic is declared.
-Result: the instance joins the consumer group with that name. A subscription that is used for the first time starts with the oldest message that the topic still keeps. All connected instances that use the same subscription name share the partitions; one partition is read by one instance at a time, and when an instance joins or leaves, the bus assigns the partitions anew. After a restart or a new assignment, delivery continues behind the last confirmed position; messages behind it that were already handled are delivered again. Within a partition, messages are delivered in stored order; the bus never skips a message, and a subscriber that does not confirm stays where it is. A connected subscriber receives a new message within 1 second. The bus forgets the position of a subscription that no instance has used for 7 days.
+Result: the instance joins the consumer group with that name. A subscription that is used for the first time starts with the oldest message that the topic still keeps. All connected instances that use the same subscription name share the partitions; one partition is read by one instance at a time, and when an instance joins or leaves, the bus assigns the partitions anew. Within a partition, messages are delivered in stored order, and a subscriber that does not confirm stays where it is.
 Errors: subscribing to a topic that is not declared fails.
 Examples:
 
-| Case | Action | Result |
-|---|---|---|
-| two instances | two instances use the subscription `greenhouse` | each message of key `k` goes to one of them; both never read the same partition at once |
-| new subscription | a subscription is used for the first time on a topic with messages of the last 3 days | it receives all of them, oldest first |
-| long absence | a subscriber returns after 8 days | messages older than 7 days are gone; delivery starts with the oldest one kept |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| two instances | | two instances call `subscribe(topic, "greenhouse")` | each message of key `k` goes to one of them; both never read the same partition at once |
+| new subscription | the topic holds messages of the last 3 days | `subscribe` with a name that is used for the first time | it receives all of them, oldest first |
+| long absence | the only subscriber of a name was away for 8 days | `subscribe` with that name | messages older than 7 days are gone; delivery starts with the oldest one kept |
 
 ### deliver
 
@@ -74,6 +72,9 @@ Kind: event
 ```text
 deliver(subscription-name, partition, message)
 ```
+
+When: a message is stored in a partition that the instance holds and every earlier message of the partition has been delivered to it.
+Delivery: at least once, in stored order per partition; a message that was not confirmed is delivered again after a restart or a new assignment of partitions.
 
 ### commit
 
@@ -88,9 +89,9 @@ Result: the bus remembers for the subscription and partition the position up to 
 Errors: none beyond a lost connection, after which the instance subscribes again.
 Examples:
 
-| Case | Action | Result |
-|---|---|---|
-| repeat after a restart | a subscriber handles a message, does not confirm it and reconnects | it receives the same message again |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| repeat after a restart | a subscriber handled a message and did not commit the position behind it | the subscriber reconnects and subscribes again | it receives the same message again |
 
 ### read-from-beginning
 
@@ -105,9 +106,9 @@ Result: every message the topic still keeps, without a subscription, for example
 Errors: reading a topic that is not declared fails.
 Examples:
 
-| Case | Action | Result |
-|---|---|---|
-| keep-latest | publish `v1`, then `v2` with key `k` to a keep-latest topic; read from the beginning a day later | the reader gets `v2` for `k`, and possibly `v1` before it |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| keep-latest | `v1`, then `v2` with key `k` were published to a keep-latest topic a day ago | `read-from-beginning(topic)` | `v2` for `k`, and possibly `v1` before it |
 
 ### message
 

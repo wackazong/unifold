@@ -30,6 +30,6 @@ The sensor stick rejects the write itself in these cases, and no indication foll
 | `0xFE` Procedure already in progress | `fetch` or `confirm` is written while a fetch is running |
 | `0x05`, `0x0F` | The connection is not encrypted, see [open-session](open-session.md) |
 
-| Case | Central writes | Sensor stick answers |
+| Case | Input | Expected |
 |---|---|---|
-| Unknown op code | `7F` | `80 7F 01` |
+| Unknown op code | the central writes `7F` | the sensor stick indicates `80 7F 01` |

@@ -1,15 +1,13 @@
 responsibility: Shared infrastructure of the services - message bus and database
 kind: adapter
+runs-as: process
 status: planned
-secret:
-  what: the products behind the bus and the database, and how they are operated
-  decision: docs/decisions/0001-postgresql-and-a-kafka-compatible-broker.md
 not:
   - tables, indexes and migrations; they belong to the service that owns the schema
   - the content and the meaning of messages; platform knows topic names and nothing about the events in them
   - redundancy; version 1 runs one instance of each
   - logs and metrics of services
-  - running the containers and keeping their volumes: container-host
+  - running the containers and keeping their volumes; the need `container-host` does that
 capabilities:
   event-bus:
     summary: Durable publish and subscribe with at-least-once delivery
@@ -19,5 +17,3 @@ capabilities:
     contract: ../docs/references/sql-db.md
 needs:
   container-host:
-    summary: Runs containers, gives them a private network and persistent volumes
-    contract: ../../docs/references/container-host.md

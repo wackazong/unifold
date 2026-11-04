@@ -34,7 +34,7 @@ An alert says that one quantity of one plant is beyond one threshold.
 | `closed_reason` | `recovered`, `threshold_changed` or `expired`. Absent while it is open. |
 | `notification` | `pending`: not yet handed to the push service. `sent`: the push service has taken the notification; whether a phone showed it is not known. `failed`: the push service refused the notification for good, or did not take it within 24 hours. |
 
-## What is judged
+What is judged:
 
 | Quantity | Judged value |
 |---|---|
@@ -46,7 +46,7 @@ An alert says that one quantity of one plant is beyond one threshold.
 - Light is not judged during the first 24 hours after the first reading of a sensor stick for a plant.
 - A reading with an estimated time, and a reading that is not newer than the last judged reading of the same sensor stick, is not judged.
 
-## Life of an alert
+The life of an alert:
 
 - An alert opens when the judged value of a reading is below `min` or above `max` and no alert is open for the same plant, quantity and bound.
 - At most one alert is open per plant, quantity and bound. While it is open, further readings beyond the threshold change nothing.

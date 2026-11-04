@@ -4,19 +4,13 @@
 
 ## Why
 
-The radio is the part of a phone program that fails most often and differs most between iOS and Android: sensor sticks go out of range in the middle of a transfer, the operating system suspends the program after seconds, the owner switches Bluetooth off. This library exists so that all of that stays in one place. Its consumer gets a plain promise: here is a batch of readings, tell me when you have stored it.
+What this unit hides is the fetch session with a sensor stick and the time anchors per boot ([0001](docs/decisions/0001-confirm-in-chunks-and-resume-at-the-oldest-unconfirmed-reading.md)). The radio is the part of a phone program that fails most often and differs most between iOS and Android: sensor sticks go out of range in the middle of a transfer, the operating system suspends the program after seconds, the owner switches Bluetooth off. This library exists so that all of that stays in one place. Its consumer gets a plain promise: here is a batch of readings, tell me when you have stored it.
 
 The unit changes for two reasons that both come from the radio: the BLE profile gets a new version, or iOS or Android change what a program may do with BLE in the background. Nothing else should reach it.
 
 The main trade-off: the client stores no readings. A reading exists on the sensor stick until the consumer has acknowledged it, so there is no third place where readings could wait or get lost. The price is that a fetch depends on a consumer that answers within seconds, and that an interrupted fetch repeats work ([0001](docs/decisions/0001-confirm-in-chunks-and-resume-at-the-oldest-unconfirmed-reading.md)).
 
 What must stay true: the client never confirms a reading to a sensor stick before the consumer has acknowledged it.
-
-## Capabilities
-
-### `sensor-readings`
-
-The client fetches by itself: when the operating system reports a paired sensor stick, when the program comes onto the screen, and when the consumer asks. In the background it fetches each sensor stick at most 4 times a day. It runs one fetch at a time.
 
 ## Read next
 

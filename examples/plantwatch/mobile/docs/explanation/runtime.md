@@ -4,7 +4,7 @@ The scenarios that cross several parts and that no single part can tell. Stories
 
 ## A paired sensor stick comes into range while the app is closed
 
-The operating system wakes the app when a paired sensor stick advertises nearby. What follows, from the connection to the confirmed readings, is the scenario `fetch-readings` of plantwatch; `ble-client` and `sync` appear in it. A fetch that the system ends early loses nothing: the sensor stick still holds every unconfirmed reading, and the upload waits for the next opportunity with a network connection.
+The operating system wakes the app when a paired sensor stick advertises nearby. What follows, from the connection to the confirmed readings, is the scenario `fetch-readings` of `mobile`, which `unifold scenario mobile fetch-readings` draws; `ble-client` and `sync` appear in it. A fetch that the system ends early loses nothing: the sensor stick still holds every unconfirmed reading, and the upload waits for the next opportunity with a network connection.
 
 ## Background fetching as the system sees the app
 
@@ -27,4 +27,4 @@ In `Watching` the app does not run. The operating system holds the request and s
 
 ## The owner changes a threshold without a network connection
 
-The scenario [change-a-threshold-offline](../diagrams/scenario-change-a-threshold-offline.md) follows a change of the owner through `ui` and `sync` to the server. Until the server has the new threshold, alerts follow the old one. The screen says so through the mark "not yet sent".
+The scenario `change-a-threshold-offline`, which `unifold scenario mobile change-a-threshold-offline` draws, follows a change of the owner through `ui` and `sync` to the server. Until the server has the new threshold, alerts follow the old one. The screen says so through the mark "not yet sent".

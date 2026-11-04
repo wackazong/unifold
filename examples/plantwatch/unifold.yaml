@@ -1,7 +1,6 @@
 unifold: "0.4"
 name: plantwatch
 responsibility: Tells people when their house plants need water, using a sensor in the pot, a phone app and cloud services
-kind: system
 status: planned
 not:
   - automatic watering; plantwatch tells people and does not act
@@ -9,8 +8,6 @@ not:
   - identifying plant species; the user sets the thresholds or picks a preset
 capabilities:
   app-ui:
-    summary: Shows the state of each plant and tells the user when to water it
-    contract: docs/references/app-ui.md
   test-report:
     summary: Result of the automated end-to-end tests, for developers and CI
     contract: docs/references/test-report.md
@@ -45,53 +42,14 @@ wiring:
   device.ambient-sensor: ambient-sensor
   device.soil-probe: soil-probe
 scenarios:
-  take-a-reading:
-    summary: The sensor stick wakes at the sampling time, takes a reading and stores it
-    source: runtime of device, the sleep and wake cycle
-    given:
-      - device/sampling.readings: subscribed
-    hops:
-      - device/sampling -> device/hal.alarm: ok
-      - device/sampling -> device/hal.ticks(): 12 / 86405
-      - device/sampling -> device/hal.measure(): three raw values
-      - device/hal -> soil-probe.output(): a share of the supply
-      - device/hal -> ambient-sensor.read(): both values within 150 ms
-      - device/store -> device/sampling.new-reading(reading 3145825): ok
-      - device/store -> device/hal.write: ok
-      - device/link -> device/sampling.new-reading(reading 3145825): ok
-      - device/link -> device/hal.send(Live reading, the record of 3145825): ok
-      - device/sampling -> device/hal.set-alarm(at second 87305): ok
-    expect: one reading with the next sequence number and the tick count of the measurement is in the log and survives power loss; a connected central is notified of it as Live reading and of the new Status; the board sleeps until the next alarm
-  fetch-readings:
-    summary: A paired sensor stick comes into range and the phone fetches, stores and confirms its readings
-    source: BLE profile, fetch stored readings and confirm
-    given:
-      - mobile/ble-client.sensor-readings: attached
-    hops:
-      - mobile/ble-client -> device/link.open-session(): ok
-      - device/link -> device/hal.answer(7, value(18 bytes)): ok
-      - mobile/ble-client -> device/link.status(): 0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
-      - mobile/ble-client -> device/link.fetch(01 00 00 00 00 C8 00): 96 records, then 80 01 00 60 00 C6 12 00 00 00
-      - device/link -> device/store.read(0): reading 4711
-      - device/link -> device/hal.send(Transfer data, the record of 4711): ok
-      - mobile/sync -> mobile/ble-client.batch(96 readings, more-to-come no): ok
-      - mobile/sync -> mobile/ble-client.acknowledge(the batch id): ok
-      - mobile/ble-client -> device/link.confirm(02 C6 12 00 00): 80 02 00 00 00 00 00 00 00
-      - device/link -> device/store.mark-delivered(4806): ok
-    expect: the 96 readings 4711 to 4806 are stored on the phone with a UTC time each and are marked delivered on the sensor stick; the phone disconnects and the readings wait for the next upload
   upload-and-alert:
     summary: The phone uploads readings, the server opens an alert and the owner is notified once
     source: requirements of plantwatch, the public API, consistency
     given:
       - mobile/sync.plant-data: active
     hops:
-      - mobile/sync -> cloud/services/gateway.upload-batch(00a1b2c3d4e5f607, readings 4711 to 4806): 200, 4711 to 4806 are new
-      - cloud/services/alerts/notifier -> push-service.send(the notification of the alert): taken
-      - mobile/ui -> push-service.deliver(the notification of the alert): ok
-      - app-ui -> mobile/ui.notification-tap(the notification about Monstera): the app opens the screen of "Monstera"
-      - mobile/ui -> mobile/sync.plant(Monstera): Monstera with its open alert
-      - mobile/sync -> cloud/services/gateway.list-alerts(): 200 with the open alert of Monstera
-      - app-ui -> mobile/ui.plants(): the plant is first in the list with "needs water"
+      - mobile -> cloud.upload-leads-to-alert
+      - mobile.an-alert-arrives
     expect: within 1 minute after the upload response the alert is open on the server and its notification is handed to the push service; the phone shows one notification, a tap opens "Monstera", and the plant is first in the list with "needs water"
   end-to-end-alert-test:
     summary: The rig drives the simulated sensor stick through a dry spell and sees one alert
@@ -99,37 +57,15 @@ scenarios:
     hops:
       - test-report -> test-rig.run(simulated, group alert): ALERT-01 passed, exit status 0
       - test-rig -> emulator.put-scenario(the scenario of ALERT-01): 200 with the state object, elapsed_s 0, readings_taken 1
-      - test-rig -> cloud/services/gateway.put-plant(lower limit of 30 percent for soil moisture): 200 with the plant
-      - test-rig -> emulator.put-time(elapsed_s 2700): 200 with the state object
-      - test-rig -> emulator.open-session(): ok
-      - test-rig -> emulator.fetch(01 00 00 00 00 00 00): the stored readings, then a fetch result with success
-      - test-rig -> emulator.confirm(up to the last reading of the fetch): 80 02 00 00 00 00 00 00 00
-      - test-rig -> cloud/services/gateway.upload-batch(the fetched readings): 200, every reading is new
-      - test-rig -> cloud/services/gateway.list-alerts(plant_id of the test plant): 200 with one open alert, soil moisture below the limit
+      - test-rig -> cloud.put-plant(lower limit of 30 percent for soil moisture): 200 with the plant
+      - repeat:
+          times: 3
+          hops:
+            - test-rig -> emulator.put-time(elapsed_s 2700, then 7200, then 10800): 200 with the state object
+            - test-rig -> emulator.open-session(): ok
+            - test-rig -> emulator.fetch(everything from the oldest unconfirmed reading): the stored readings, then a fetch result with success
+            - test-rig -> emulator.confirm(up to the last reading of the fetch): 80 02 00 00 00 00 00 00 00
+            - emulator -> test-rig.disconnected
+            - test-rig -> cloud.upload-batch(the fetched readings): 200, every reading is new
+            - test-rig -> cloud.list-alerts(plant_id of the test plant): no alert after the first upload, one open alert after the second and the third
     expect: no alert 60 seconds after the first upload; within 60 seconds after the second, one open alert for the plant with soil moisture below the limit and its notification reported as handed on; after the third, the same alert and no other; the report has ALERT-01 passed and the exit status is 0
-  first-plant:
-    summary: An owner starts the app, adds a plant, pairs a sensor stick and binds it to the plant
-    source: tutorial first-plant of mobile
-    hops:
-      - app-ui -> mobile/ui.owner(): the app works and asks for no name and no password
-      - mobile/ui -> mobile/sync.start(): ok
-      - app-ui -> mobile/ui.edit-plant(Monstera, a preset): the plant is added
-      - mobile/ui -> mobile/sync.create-plant(Monstera, the lower limits of the preset, none): the plant id
-      - app-ui -> mobile/ui.pair(Monstera): the sensor stick is paired and bound to the plant
-      - mobile/ui -> mobile/ble-client.search(an observer): a list with the new sensor stick
-      - mobile/ble-client -> device/link.advertising(flags 03, has-readings and bonding-open): ok
-      - mobile/ui -> mobile/ble-client.pair(00a1b2c3d4e5f607): paired
-      - mobile/ble-client -> device/link.open-session(): ok
-      - mobile/ble-client -> device/link.info(): 01 00 00 A1 B2 C3 D4 E5 F6 07 07 84 03 40 0B 01 00 00
-      - mobile/ui -> mobile/sync.change-plant(Monstera, sensor id 00a1b2c3d4e5f607): ok
-      - mobile/sync -> cloud/services/gateway.create-owner(): 201 with owner_id, token and expires_at
-      - mobile/sync -> cloud/services/gateway.put-plant(Monstera with the sensor stick): 200 with the plant
-      - mobile/ui -> push-service.register(the owner id): ok
-    expect: the sensor stick is bonded and listed as paired, "Monstera" exists on the phone and on the server with the sensor stick attached, and the phone is registered for the notifications of the new owner
-  start-the-server-side:
-    summary: The container host starts the server side
-    source: deployment of cloud
-    hops:
-      - cloud/platform -> container-host.run(the bus and the database, each with its volumes): ok
-      - cloud/platform -> container-host.volume(the backup volume, on another storage device than the database volume): ok
-    expect: the bus and the database run as containers with their three volumes, the backup volume on other storage than the database volume, and every service reaches them by name on the private network

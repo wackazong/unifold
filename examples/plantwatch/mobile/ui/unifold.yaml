@@ -1,14 +1,12 @@
 responsibility: Screens of the phone app
 kind: adapter
+runs-as: ui
 status: planned
-secret:
-  what: the screens and the ways between them
-  decision: docs/decisions/0001-the-plant-list-is-home-and-alerts-have-no-screen-of-their-own.md
 not:
   - fetching readings from sensor sticks
-  - storing data and exchanging data with a server: plant-data
+  - storing data and exchanging data with a server; the need `plant-data` provides both
   - deciding whether a plant needs attention
-  - composing or delivering notifications: push-service
+  - composing or delivering notifications; the need `push-service` delivers them
   - layouts for landscape, tablets or watches
   - units other than percent, lux and degrees Celsius
 capabilities:
@@ -17,8 +15,6 @@ capabilities:
     contract: ../../docs/references/app-ui.md
 needs:
   plant-data:
-    summary: Plants, history and alerts, readable offline and updated when they change
-    contract: ../docs/references/plant-data/index.md
   pairing:
     summary: Finds a new sensor stick nearby and binds it to this phone
     contract: ../docs/references/pairing.md

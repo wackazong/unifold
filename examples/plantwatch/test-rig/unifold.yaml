@@ -1,9 +1,6 @@
 responsibility: Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware
-kind: test
+runs-as: job
 status: planned
-secret:
-  what: the rig's own central and the catalogue of promises it tests
-  decision: docs/decisions/0003-the-rig-is-its-own-central.md
 not:
   - tests of a single part; each part tests itself
   - what happens on a phone; screens, background fetching, the arrival of a notification

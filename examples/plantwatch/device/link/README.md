@@ -4,36 +4,13 @@
 
 ## Why
 
-Everything that knows the profile is in this unit: UUIDs, byte layouts, op codes, the state of a running procedure. `link` exists so that a change of the profile changes one unit, and a change of the profile is the only thing that makes it change. Nothing else in the program sees a GATT attribute.
+What this unit hides is how the procedures of the profile are served from the log and the radio ([0001](docs/decisions/0001-serve-a-fetch-from-the-log-on-demand.md)). Everything that knows the profile is in this unit: UUIDs, byte layouts, op codes, the state of a running procedure. `link` exists so that a change of the profile changes one unit, and a change of the profile is the only thing that makes it change. Nothing else in the program sees a GATT attribute.
 
 `link` owns no data. It reads stored readings where they are kept and has them marked there. So there is one owner of "what is delivered", and a connection that breaks leaves nothing behind in `link` that could disagree with it. The only state `link` has is the state of the current connection, and that is meant to vanish with the connection.
 
 The price is that `link` has three needs and is mostly a state machine between them. Its correctness is its agreement with a text it does not own.
 
 What must stay true: a fetch changes nothing; a confirm result goes out only after the mark is durable; and nothing outside `link` builds or parses a record of the profile.
-
-## Capabilities
-
-### `ble-link`
-
-Where the BLE profile leaves a choice or sets only a bound, a central can rely on this:
-
-- **Advertising.** While no central is connected, `link` advertises every 1285 ms. The advertising data shows the newest sequence number and whether stored readings wait, and follows a change within 2 s.
-- **Connections.** `link` closes a connection that has carried no request for 30 s, and any connection after 10 minutes.
-- **Fetch.** `link` sends the stored readings exactly as `reading-log` returns them, in ascending order. A fetch changes nothing.
-- **Confirm.** `link` has the readings marked as delivered before it indicates the result. When a central sees `success`, the mark survives power loss.
-- **Live readings.** `link` notifies a subscribed central of every new reading within one connection interval after it gets the reading.
-- **Time reference.** The tick count in Status is the tick count of the read request itself, not a stored value.
-
-What `link` does not add: how many readings are available, how long they are kept and what happens when memory is full are properties of whatever provides `reading-log`. `link` has no buffer of its own.
-
-Limits: at the default ATT MTU, `link` sends one reading per notification. To a central that takes 4 notifications per connection event at an interval of 100 ms or less, `link` sends at least 40 readings per second: 2 880 readings in at most 72 s.
-
-## Needs
-
-### `radio`
-
-`link` takes all time from the tick counts of the radio events. It has no other source of time.
 
 ## Read next
 

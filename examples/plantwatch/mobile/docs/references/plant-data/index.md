@@ -2,14 +2,18 @@
 
 Contract of `sync.plant-data`: the queries, commands and guarantees of the capability through which the data on the phone is read and changed. The description is independent of a programming language. Reading, plant, thresholds, change state, alert, session and the ages of data are the things cited in [context.md](../../explanation/context.md). Notation: wit.
 Sources: the public API and the reading schema of plantwatch.
+Binding: in-process
 
 ## Use
 
 The caller lets the phone act for an owner: for a new one with `start`, or for an existing one with `join`. While the session is `active`, it reads and observes plants, history, alerts and the exchange state, changes plants and asks for a refresh. A query never uses the network. A command works without a network connection, except where its part asks for one. `leave` ends the session and removes the owner's data from the phone. When the server refuses the token at an exchange, the provider raises `session-lost`; the data then stays readable, no command changes it, and the phone either joins the owner again with `join` or leaves it with `leave`.
 
-1. `start` or `join`, then queries and commands, then `leave`.
-2. When `leave` fails with `network needed`, the session stays `active`, and `start` fails with `session exists`. The caller calls `leave` again once the phone has a network connection.
-3. After `session-lost`, the queries still answer. `join` with a new token of the same owner makes the session `active` again; `leave` ends it, also without a network connection.
+1. When `leave` fails with `network needed`, the session stays `active`, and `start` fails with `session exists`. The caller calls `leave` again once the phone has a network connection.
+2. After `session-lost`, the queries still answer. `join` with a new token of the same owner makes the session `active` again; `leave` ends it, also without a network connection.
+
+The exchange with the server runs by itself: after new readings, after a command, when a network connection appears, and when `refresh` asks for it. Readings of a sensor stick that is attached to no plant wait on the phone and are not uploaded.
+
+Every query has two forms: "get" returns the answer once; "observe" returns it and returns it again whenever it changes. Every time is UTC; the capability converts neither times nor units of measure. Each case of a part starts with an `active` session and one plant, "Monstera", that is `in step` and has a sensor stick, unless the case says otherwise. The screens of `ui` are tested with these cases.
 
 ## States
 
@@ -56,9 +60,19 @@ Start: none.
 | lost | `join` | ok | active |
 | lost | `leave` | ok | none |
 
-## Parts
+## Qualities
 
-Every query has two forms: "get" returns the answer once; "observe" returns it and returns it again whenever it changes.
+| Aspect | Guarantee |
+|---|---|
+| latency | a query never uses the network and never waits for a running exchange; within the limits of this contract, "get" answers within 100 milliseconds; after a change, an observer receives the new answer within 1 second, and changes in quick succession may arrive as one answer |
+| durability | when a command returns, its effect survives a crash and a restart, and it reaches the server without further calls |
+| ordering | changes to one plant reach the server in the order they were made |
+| visibility | a reading that has been taken in from a sensor stick appears in "plants" and "history" from the moment its batch is acknowledged; when the server refuses a change, the plant shows the server's values, the state `refused` and the reason, until "dismiss refusal" or the next change |
+| immutability | a reading that a query has returned is returned with the same values, time and flag for as long as it is kept |
+| alerts | the answer contains exactly the alerts the server sent at the last exchange; the capability derives none from readings and thresholds |
+| limits | 50 plants, 90 days of history per plant, one owner at a time; an upper limit of a plant that was set elsewhere survives every change made through this capability |
+
+## Parts
 
 | Part | What it is |
 |---|---|
@@ -77,28 +91,6 @@ Every query has two forms: "get" returns the answer once; "observe" returns it a
 | [refresh](refresh.md) | a fetch from sensor sticks in range and an exchange now |
 | [command-failure](command-failure.md) | the failures of commands |
 | [refusal-reason](refusal-reason.md) | the reasons of a refusal by the server |
-
-## Guarantees
-
-- **Queries are local.** A query never uses the network and never waits for a running exchange. Within the limits of this contract, "get" answers within 100 milliseconds.
-- **Observers see every final state.** After a change, an observer receives the new answer within 1 second. Changes in quick succession may arrive as one answer.
-- **Commands are durable.** When a command returns, its effect survives a crash and a restart, and it reaches the server without further calls.
-- **Commands keep their order.** Changes to one plant reach the server in the order they were made.
-- **Readings are visible before upload.** A reading that has been taken in from a sensor stick appears in "plants" and "history" from the moment its batch is acknowledged.
-- **Readings do not change.** A reading that a query has returned is returned with the same values, time and flag for as long as it is kept.
-- **Alerts are the server's.** The answer contains exactly the alerts the server sent at the last exchange. The capability derives none from readings and thresholds.
-- **A refusal is visible.** When the server refuses a change, the plant shows the server's values, the state `refused` and the reason, until "dismiss refusal" or the next change.
-- **Limits it does not show are kept.** An upper limit of a plant that was set elsewhere survives every change made through this capability.
-
-## Limits
-
-- 50 plants, 90 days of history per plant.
-- One owner at a time.
-- Every time is UTC. The capability converts neither times nor units of measure.
-
-## Examples
-
-Each case of a part starts with an `active` session and one plant, "Monstera", that is `in step` and has a sensor stick, unless the case says otherwise. The screens of `ui` are tested with these cases.
 
 ## Fake
 

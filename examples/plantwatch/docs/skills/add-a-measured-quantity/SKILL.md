@@ -20,7 +20,7 @@ A new quantity touches every part that handles a reading. The order below keeps 
 9. **Judge it.** In [cloud](../../../cloud/README.md), store the quantity and, if it can cause an alert, add a threshold for it.
 10. **Finish** with `unifold check --fix`, then `unifold check`.
 
-Inside each part, start with its `AGENTS.md` and use the skills listed there.
+Inside each part, start with `unifold show` and use the skills it lists.
 
 ## What else changes
 

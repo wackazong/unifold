@@ -18,4 +18,4 @@ What joins them is chosen so that a failure does not spread. Readings travel as 
 4. [docs/references/service-calls.md](docs/references/service-calls.md): rules for HTTP calls between services
 5. [docs/references/glossary.md](docs/references/glossary.md): the terms of the server side
 6. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from the project
-7. [Context diagram](docs/diagrams/context.md), [component diagram](docs/diagrams/component.md), [architecture diagram](docs/diagrams/architecture.md), [decisions](docs/decisions/index.md)
+7. [Component diagram](docs/diagrams/component.md), [decisions](docs/decisions/index.md)

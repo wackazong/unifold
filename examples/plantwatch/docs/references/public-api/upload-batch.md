@@ -41,17 +41,17 @@ The server recognises a duplicate by sensor id and sequence number alone; it doe
 Errors: an error status means that no reading of the batch was looked at: `400` `invalid_request` for a body that is not of the form above or a malformed `sensor_id`; `413` `payload_too_large` for more than 500 readings or more than 1 MB; and the [errors](error.md) every operation can answer. After `503`, `429` or no response the client keeps all readings and sends the same batch again later; after `401` it renews the token, then sends the same batch again; after `400` or `413` the batch is built wrongly, and sending it again unchanged does not help.
 Examples: uploads for the sensor stick `00a1b2c3d4e5f607` at 2026-10-06T09:00:00Z; unless stated, a reading is valid and was taken at 08:45:00Z.
 
-| Case | Uploaded | Response |
-|---|---|---|
-| New reading | Sequence number 4711, never uploaded | `200`, `4711` is `new` |
-| The same batch again | Sequence number 4711 once more | `200`, `4711` is `duplicate` |
-| Value out of range | 4712 with `soil_moisture` 104.2 | `200`, `4712` is `rejected`, `value_out_of_range` |
-| Absent quantity written as `null` | 4713 with `"light": null` | `200`, `4713` is `rejected`, `malformed_reading` |
-| Time in the future | 4714, taken at 2026-10-07T09:00:01Z | `200`, `4714` is `rejected`, `time_in_future` |
-| Too old | 4715, taken at 2026-07-08T08:59:59Z | `200`, `4715` is `rejected`, `too_old` |
-| Mixed batch | 4716 valid, 4717 out of range, 4718 valid | `200`, results `new`, `rejected`, `new` in this order |
-| Estimated time | 4719 with an estimated time | `200`, `4719` is `new`; no alert opens or closes |
-| Empty batch | `{"readings": []}` | `200` with `{"results": []}` |
-| Too many readings | 501 readings | `413` `payload_too_large`; no reading is looked at |
-| Malformed sensor id | Path `/v1/sensors/00A1/batches` | `400` `invalid_request` |
-| Body too large | A body of 1 MB and 1 byte | `413` `payload_too_large` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| New reading | | a batch with sequence number 4711, never uploaded | `200`, `4711` is `new` |
+| The same batch again | the batch of `New reading` was accepted | the same batch with 4711 | `200`, `4711` is `duplicate` |
+| Value out of range | | 4712 with `soil_moisture` 104.2 | `200`, `4712` is `rejected`, `value_out_of_range` |
+| Absent quantity written as `null` | | 4713 with `"light": null` | `200`, `4713` is `rejected`, `malformed_reading` |
+| Time in the future | | 4714, taken at 2026-10-07T09:00:01Z | `200`, `4714` is `rejected`, `time_in_future` |
+| Too old | | 4715, taken at 2026-07-08T08:59:59Z | `200`, `4715` is `rejected`, `too_old` |
+| Mixed batch | | 4716 valid, 4717 out of range, 4718 valid | `200`, results `new`, `rejected`, `new` in this order |
+| Estimated time | | 4719 with an estimated time | `200`, `4719` is `new`; no alert opens or closes |
+| Empty batch | | `{"readings": []}` | `200` with `{"results": []}` |
+| Too many readings | | 501 readings | `413` `payload_too_large`; no reading is looked at |
+| Malformed sensor id | | a batch on the path `/v1/sensors/00A1/batches` | `400` `invalid_request` |
+| Body too large | | a body of 1 MB and 1 byte | `413` `payload_too_large` |

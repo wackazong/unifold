@@ -2,10 +2,20 @@
 
 Contract of `rules.evaluation`: the function `evaluate` and the rules by which `rules` judges a reading. What a client of the product sees of these rules is cited in [context](../explanation/context.md); this contract adds the exact procedure, the margins and the state. Notation: wit.
 Sources: the alert as the public API of plantwatch defines it.
+Binding: in-process
 
 ## Use
 
 The caller passes the readings of one sensor stick to `evaluate` one after the other. With each reading it passes the state that the call before returned. After `cannot-decide` it keeps its state and passes the same reading again later. The state lives with the caller, so the connection has none: `evaluate` may be called at any time, also for several sensor sticks at once.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| latency | an evaluation takes at most 10 ms beyond the time that the call of `thresholds` takes |
+| determinism | the same reading, the same state and the same answer of `thresholds` give the same result: `evaluate` uses no clock and no random value, keeps nothing between calls, and does nothing outside its result but one call of `thresholds`, whose answer it uses as it is given |
+| concurrency | calls for different sensor sticks may run at the same time |
+| timeout | the caller waits up to 20 seconds for a result |
 
 ## Parts
 
@@ -18,7 +28,7 @@ evaluate: func(reading: reading, state: option<state>) -> evaluation-result;
 ```
 
 Pre: `state` is the `state` of the previous result for the same sensor stick, or nothing; the caller passes the readings of one sensor stick one after the other and hands the state back exactly as returned. `evaluate` cannot detect a state that belongs to another sensor stick.
-Result: decided, with `plant`, `changes` and `state`, or cannot decide now. The same reading, the same state and the same answer of `thresholds` give the same result: `evaluate` uses no clock and no random value, keeps nothing between calls, and does nothing outside its result but one call of `thresholds`, whose answer it uses as it is given. A lost state makes `evaluate` start afresh: an alert that was open can open again. An evaluation takes at most 10 ms beyond the time that the call of `thresholds` takes. The steps, in order:
+Result: decided, with `plant`, `changes` and `state`, or cannot decide now. A lost state makes `evaluate` start afresh: an alert that was open can open again. The steps, in order:
 
 | Step | Condition or action | Outcome |
 |---|---|---|
@@ -62,23 +72,23 @@ Opening and closing, for a bound with the judged value v, the threshold now T, t
 | `temperature` | 1.0 degree Celsius |
 | `light` | 10 percent of the threshold, at least 50 lux |
 
-Errors: none; `cannot-decide` is a result, not an error. The caller keeps its state and passes the same reading again later.
-Examples: one sensor stick, attached to the plant P with the lower threshold 30.0 for soil moisture; each call gets the state that the call before it returned.
+Errors: none; `cannot-decide` is a result, not an error.
+Examples: one sensor stick, attached to the plant P with the lower threshold 30.0 for soil moisture; each call gets the state that the call before it returned, and `Given` is the answer of `thresholds`.
 
-| Call | Reading | Answer of `thresholds` | Result |
+| Case | Given | Input | Expected |
 |---|---|---|---|
-| 1 | 14:00, 31.0, no state | `attached` P, `min` 30.0 | P, no changes |
-| 2 | 14:15, 28.4 | the same | P, `open` `soil_moisture`/`min`, value 28.4, threshold 30.0 |
-| 3 | 14:30, 33.0 | the same | P, no changes: 33.0 is below 30.0 + 5.0 |
-| 4 | 14:30, 33.0 again | not called | no changes, state unchanged |
-| 5 | 14:45, 35.0 | the same | P, `close` `soil_moisture`/`min`, `recovered`, value 35.0 |
-| 6 | 15:00, 29.0, estimated time | not called | no changes, state unchanged |
-| 7 | 15:00, 29.0 | `unavailable` | cannot decide now |
-| 8 | 15:00, 29.0 | `attached` P, `min` 30.0 | P, `open` `soil_moisture`/`min`, value 29.0, threshold 30.0 |
-| 9 | 15:15, 29.5 | `attached` P, thresholds `{}` | P, `close` `soil_moisture`/`min`, `threshold_changed`, no threshold |
-| 10 | 15:30, 29.5 | `unattached` | `plant` nothing, no changes, empty state |
-| light 1 | 02:00 of the next day, light 0; lower threshold 800 lux; the plant has been judged for two days; 2 400 lux were measured at 13:00 | `attached` P, `light` `min` 800 | no changes: the judged value is 2 400 |
-| light 2 | 14:00 of the next day, light 600, nothing brighter since 14:00 of the day before | the same | `open` `light`/`min`, value 600, threshold 800 |
+| call 1 | `attached` P, `min` 30.0 | 14:00, 31.0, no state | P, no changes |
+| call 2 | the same | 14:15, 28.4 | P, `open` `soil_moisture`/`min`, value 28.4, threshold 30.0 |
+| call 3 | the same | 14:30, 33.0 | P, no changes: 33.0 is below 30.0 + 5.0 |
+| call 4 | not called | 14:30, 33.0 again | no changes, state unchanged |
+| call 5 | the same | 14:45, 35.0 | P, `close` `soil_moisture`/`min`, `recovered`, value 35.0 |
+| call 6 | not called | 15:00, 29.0, estimated time | no changes, state unchanged |
+| call 7 | `unavailable` | 15:00, 29.0 | cannot decide now |
+| call 8 | `attached` P, `min` 30.0 | 15:00, 29.0 | P, `open` `soil_moisture`/`min`, value 29.0, threshold 30.0 |
+| call 9 | `attached` P, thresholds `{}` | 15:15, 29.5 | P, `close` `soil_moisture`/`min`, `threshold_changed`, no threshold |
+| call 10 | `unattached` | 15:30, 29.5 | `plant` nothing, no changes, empty state |
+| light 1 | `attached` P, `light` `min` 800; the plant has been judged for two days; 2 400 lux were measured at 13:00 | 02:00 of the next day, light 0 | no changes: the judged value is 2 400 |
+| light 2 | the same; nothing brighter than 600 lux since 14:00 of the day before | 14:00 of the next day, light 600 | `open` `light`/`min`, value 600, threshold 800 |
 
 ### reading
 

@@ -12,7 +12,7 @@ Result: the readings of the plant in ascending time: the readings its sensor sti
 Errors: `unknown plant`, `no session`, `store unusable`.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| reading taken in | a batch of 96 readings is stored; no exchange yet | "history" contains the 96 readings |
-| hourly | four readings in one hour with soil moisture 41.2, 41.8, 42.1 and 42.5 | one entry: minimum 41.2, mean 41.9, maximum 42.5 |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| reading taken in | a batch of 96 readings is stored; no exchange yet | `history(id, from, to, raw)` over their span | the 96 readings |
+| hourly | four readings in one hour with soil moisture 41.2, 41.8, 42.1 and 42.5 | `history(id, from, to, hourly)` over that hour | one entry: minimum 41.2, mean 41.9, maximum 42.5 |

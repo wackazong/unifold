@@ -10,23 +10,10 @@ Inside, the logic of judging, the technologies behind a network and the plumbing
 
 What must stay true: an alert opens once, and an opened alert leads to one notification, although events and calls can repeat.
 
-## Capabilities
-
-### `alerts-api`
-
-- Every call of the push service for the same alert uses the same collapse identifier, so that a repetition replaces the earlier notification on a phone.
-- A sensor stick that was moved to another plant takes up to 60 seconds to apply, like a changed threshold.
-
-## Needs
-
-### `plants-api`
-
-`alerts` waits up to 5 seconds for a lookup and then treats the registry as unavailable.
-
 ## Read next
 
 1. [docs/explanation/invariants.md](docs/explanation/invariants.md), [runtime.md](docs/explanation/runtime.md): invariants, the life of an alert, the handling of one reading
 2. [alerts API](../../docs/references/alerts-api.md): how the API is served
 3. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
 4. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-5. [Context diagram](docs/diagrams/context.md), [component diagram](docs/diagrams/component.md), [decisions](docs/decisions/index.md)
+5. [Component diagram](docs/diagrams/component.md), [decisions](docs/decisions/index.md)

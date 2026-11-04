@@ -4,19 +4,13 @@
 
 ## Why
 
-Somebody has to own the answer to "which plant is this, and whose". This unit does, and it changes when what is known about a plant changes: its fields, its thresholds, its history. Names, attached sensor sticks and thresholds are entered rarely and read often, and they must be correct at once, so they live in one place with one schema and are served by calls.
+What this unit hides is how the history of a plant is stored and aggregated ([0001](docs/decisions/0001-raw-readings-for-90-days-hourly-aggregates-for-2-years.md)). Somebody has to own the answer to "which plant is this, and whose". This unit does, and it changes when what is known about a plant changes: its fields, its thresholds, its history. Names, attached sensor sticks and thresholds are entered rarely and read often, and they must be correct at once, so they live in one place with one schema and are served by calls.
 
 History is kept in the same service because the registry decides where a reading belongs: the attachment of a sensor stick to a plant is the join between the two. A separate history service would need that attachment for every single reading ([0002](docs/decisions/0002-a-reading-joins-the-plant-at-the-time-it-is-handled.md)).
 
 History is a projection of the reading events, not a second truth. It is built so that handling an event twice changes nothing and that the order of events does not matter. Raw readings are kept only as long as a client can still ask for them; beyond that, hourly aggregates carry the two years ([0001](docs/decisions/0001-raw-readings-for-90-days-hourly-aggregates-for-2-years.md)).
 
 The trade-off: queries and event handling share one service and one database. A heavy history query can slow down the intake of events. That is accepted.
-
-## Needs
-
-### `sql-db`
-
-`plants` plans with at most 25 920 raw readings and 17 520 hourly aggregates per plant.
 
 ## Read next
 

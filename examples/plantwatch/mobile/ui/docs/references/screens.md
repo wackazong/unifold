@@ -1,6 +1,6 @@
 # Screens and navigation
 
-The screens, the ways between them, and what each screen shows in each state. The things shown are those of the data model cited in [context.md](../explanation/context.md); the unit's own terms are in the [glossary](glossary.md). Every state is checked with the cases of the [examples of `plant-data`](../../../docs/references/plant-data/index.md#examples).
+The screens, the ways between them, and what each screen shows in each state. The things shown are those of the data model cited in [context.md](../explanation/context.md); the unit's own terms are in the [glossary](glossary.md). Every state is checked with the cases of the [examples of `plant-data`](../../../docs/references/plant-data/index.md#use).
 
 ## Screens
 

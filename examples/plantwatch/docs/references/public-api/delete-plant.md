@@ -12,6 +12,7 @@ Result: `204`; the plant and its history are removed and the sensor stick is det
 Errors: `404` `not_found` for a plant id that belongs to another owner; the [errors](error.md) that every operation can answer.
 Examples:
 
-| Case | Request | Response |
-|---|---|---|
-| Delete twice | `DELETE` of P, then again | `204` both times |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| Delete | | `DELETE /v1/plants/{P}` with a token of the owner of P | `204` |
+| Delete again | P was deleted | `DELETE /v1/plants/{P}` with a token of the owner of P | `204` |

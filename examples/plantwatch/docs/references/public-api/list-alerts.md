@@ -21,8 +21,8 @@ Result: `200` with `{"items": [alert, ...], "next": "<cursor>"}`: the [alerts](a
 Errors: `400` `invalid_request` for a malformed parameter; the [errors](error.md) that every operation can answer.
 Examples: owner A has the plant P with one closed alert X and one open alert Y.
 
-| Case | Request | Response |
+| Case | Input | Expected |
 |---|---|---|
-| Default list | `GET /v1/alerts` | `200`, items: Y |
-| All alerts | `GET /v1/alerts?state=all` | `200`, items: Y, then X |
-| Unknown plant | `GET /v1/alerts?plant_id=<unknown>` | `200`, no items |
+| Default list | `GET /v1/alerts` with a token of A | `200`, items: Y |
+| All alerts | `GET /v1/alerts?state=all` with a token of A | `200`, items: Y, then X |
+| Unknown plant | `GET /v1/alerts?plant_id=<unknown>` with a token of A | `200`, no items |

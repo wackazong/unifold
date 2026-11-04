@@ -1,9 +1,7 @@
 responsibility: Finds sensor sticks and fetches their readings over BLE
-kind: library
+kind: stateful
+runs-as: library
 status: planned
-secret:
-  what: the fetch session with a sensor stick and the time anchors per boot
-  decision: docs/decisions/0001-confirm-in-chunks-and-resume-at-the-oldest-unconfirmed-reading.md
 not:
   - storing readings; the client holds a reading only between receiving it and the consumer's acknowledgement
   - binding a sensor stick to a plant
@@ -19,5 +17,3 @@ capabilities:
     contract: ../docs/references/pairing.md
 needs:
   sensor-link:
-    summary: A sensor stick in radio range that serves its readings over BLE
-    contract: ../../docs/references/ble-profile/index.md

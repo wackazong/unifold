@@ -1,14 +1,12 @@
 responsibility: Turns an opened alert into one notification to the owner
 kind: adapter
+runs-as: library
 status: planned
-secret:
-  what: how one notification per alert is achieved towards the push service
-  decision: docs/decisions/0001-once-means-repeatable-with-a-collapse-identifier.md
 not:
   - deciding whether or when to notify; notifier notifies when it is called
   - repeating a failed attempt by itself
   - remembering which alerts were notified
-  - registering phones or knowing which phones an owner has: push
+  - registering phones or knowing which phones an owner has; the need `push` addresses the owner
   - notifying about anything but an opened alert; no reminders, no "alert closed"
   - languages other than English
 capabilities:
@@ -17,5 +15,3 @@ capabilities:
     contract: ../docs/references/notification.md
 needs:
   push:
-    summary: Takes one notification for an owner, with a collapse identifier, and delivers it to that owner's phones
-    contract: ../../../../docs/references/push-service.md

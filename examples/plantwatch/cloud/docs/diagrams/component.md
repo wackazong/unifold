@@ -1,18 +1,18 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: cloud
 
-[plantwatch](../../../docs/diagrams/component.md) / **cloud** · [README](../../README.md) · [context](context.md) · [architecture](architecture.md)
+[plantwatch](../../../docs/diagrams/component.md) / **cloud** · [README](../../README.md)
 
 The units directly inside `cloud` and how they are connected. An arrow points from the unit that needs something to the unit that provides it. Rounded nodes are capabilities of the framing unit, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a unit that is planned.
 
 ```mermaid
 flowchart LR
   subgraph u_cloud["cloud"]
-    u_cloud__platform["platform (adapter)"]
-    u_cloud__services__alerts["alerts (service)"]
-    u_cloud__services__gateway["gateway (service)"]
-    u_cloud__services__ingest["ingest (service)"]
-    u_cloud__services__plants["plants (service)"]
+    u_cloud__platform["platform (adapter, process)"]
+    u_cloud__services__alerts["alerts (process)"]
+    u_cloud__services__gateway["gateway (adapter, process)"]
+    u_cloud__services__ingest["ingest (stateful, process)"]
+    u_cloud__services__plants["plants (stateful, process)"]
   end
   n_cloud___push_dservice{{"push-service"}}
   n_cloud___container_dhost{{"container-host"}}
@@ -38,11 +38,11 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [platform](../../platform/README.md) | adapter | Shared infrastructure of the services - message bus and database | **planned** |  |
-| [alerts](../../services/alerts/README.md) | service | Decides when a plant needs attention and notifies its owner once | **planned** | [component](../../services/alerts/docs/diagrams/component.md) |
-| [gateway](../../services/gateway/README.md) | service | Single entry point of the server side that authenticates callers and routes requests | **planned** |  |
-| [ingest](../../services/ingest/README.md) | service | Accepts uploaded readings and announces each accepted one as an event | **planned** |  |
-| [plants](../../services/plants/README.md) | service | Registry of plants with their sensors, thresholds and reading history | **planned** |  |
+| [platform](../../platform/README.md) | adapter, process | Shared infrastructure of the services - message bus and database | **planned** |  |
+| [alerts](../../services/alerts/README.md) | process | Decides when a plant needs attention and notifies its owner once | **planned** | [component](../../services/alerts/docs/diagrams/component.md) |
+| [gateway](../../services/gateway/README.md) | adapter, process | Single entry point of the server side that authenticates callers and routes requests | **planned** |  |
+| [ingest](../../services/ingest/README.md) | stateful, process | Accepts uploaded readings and announces each accepted one as an event | **planned** |  |
+| [plants](../../services/plants/README.md) | stateful, process | Registry of plants with their sensors, thresholds and reading history | **planned** |  |
 
 ### Connections
 

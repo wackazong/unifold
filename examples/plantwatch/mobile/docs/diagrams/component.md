@@ -1,16 +1,16 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: mobile
 
-[plantwatch](../../../docs/diagrams/component.md) / **mobile** · [README](../../README.md) · [context](context.md)
+[plantwatch](../../../docs/diagrams/component.md) / **mobile** · [README](../../README.md)
 
 The units directly inside `mobile` and how they are connected. An arrow points from the unit that needs something to the unit that provides it. Rounded nodes are capabilities of the framing unit, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a unit that is planned.
 
 ```mermaid
 flowchart LR
   subgraph u_mobile["mobile"]
-    u_mobile__ble_dclient["ble-client (library)"]
-    u_mobile__sync["sync (library)"]
-    u_mobile__ui["ui (adapter)"]
+    u_mobile__ble_dclient["ble-client (stateful, library)"]
+    u_mobile__sync["sync (stateful, library)"]
+    u_mobile__ui["ui (adapter, ui)"]
   end
   n_mobile___sensor_dlink{{"sensor-link"}}
   n_mobile___cloud_dapi{{"cloud-api"}}
@@ -32,9 +32,9 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status |
 |---|---|---|---|
-| [ble-client](../../ble-client/README.md) | library | Finds sensor sticks and fetches their readings over BLE | **planned** |
-| [sync](../../sync/README.md) | library | Keeps plants, history and alerts on the phone and in step with the server | **planned** |
-| [ui](../../ui/README.md) | adapter | Screens of the phone app | **planned** |
+| [ble-client](../../ble-client/README.md) | stateful, library | Finds sensor sticks and fetches their readings over BLE | **planned** |
+| [sync](../../sync/README.md) | stateful, library | Keeps plants, history and alerts on the phone and in step with the server | **planned** |
+| [ui](../../ui/README.md) | adapter, ui | Screens of the phone app | **planned** |
 
 ### Connections
 

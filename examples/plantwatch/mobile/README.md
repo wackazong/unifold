@@ -12,18 +12,6 @@ The main trade-off: everything the owner sees comes from a store on the phone, n
 
 What must stay true: a reading is stored on the phone before the sensor stick is told to forget it, and it stays there until the server has it.
 
-## Capabilities
-
-### `app-ui`
-
-In the background the app fetches each sensor stick at most 4 times a day. After a force-quit, with Bluetooth off or without a permission, background collection resumes when the owner opens the app again.
-
-## Needs
-
-### `push-service`
-
-The app does not depend on delivery. Every alert that a notification announces is on the screens after the next exchange with the server.
-
 ## Read next
 
 1. [docs/tutorials/first-plant.md](docs/tutorials/first-plant.md): for an owner with a new sensor stick, up to the first reading on the screen
@@ -35,5 +23,5 @@ The app does not depend on delivery. Every alert that a notification announces i
 7. [app-ui.md of plantwatch](../docs/references/app-ui.md): what the owner can rely on
 8. [docs/references/glossary.md](docs/references/glossary.md): the app's own terms
 9. [docs/explanation/context.md](docs/explanation/context.md): what the app inherits from above
-10. [Context diagram](docs/diagrams/context.md), [component diagram](docs/diagrams/component.md)
+10. [Component diagram](docs/diagrams/component.md)
 11. [Decisions](docs/decisions/index.md)

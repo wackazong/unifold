@@ -1,17 +1,15 @@
 responsibility: Decides when a plant needs attention and notifies its owner once
-kind: service
+runs-as: process
 status: planned
 not:
-  - storing thresholds or plants; alerts asks for them: plants-api
+  - storing thresholds or plants; alerts asks for them through the need `plants-api`
   - storing readings or history
   - reminders; an alert that stays open sends nothing more
   - alerts about missing data, such as a sensor stick that has gone silent
   - acknowledging or closing an alert by hand
-  - choosing which phones get a notification: push
+  - choosing which phones get a notification; the need `push` does that
 capabilities:
   alerts-api:
-    summary: Open and past alerts per plant
-    contract: ../../docs/references/alerts-api.md
 needs:
   reading-events:
     summary: One event per accepted reading, at least once, in order of acceptance per sensor stick
@@ -43,13 +41,20 @@ scenarios:
     summary: One reading event is judged, the alerts it causes are stored, and an opened alert is notified
     source: decisions 0001 and 0002 of alerts
     hops:
-      - server -> event-bus.deliver(the event 00a1b2c3d4e5f607-4711): ok
-      - server -> reading-events.reading-accepted(00a1b2c3d4e5f607-4711): ok
-      - server -> sql-db.transaction: ok
+      - reading-events -> server.reading-accepted(00a1b2c3d4e5f607-4711)
+      - server -> sql-db.transaction(read the evaluation state of 00a1b2c3d4e5f607): ok
       - server -> rules.evaluate(the reading of 14:15 with 28.4, the state of the reading before): P, open soil_moisture min, value 28.4, threshold 30.0
       - rules -> plant-lookup.lookup(00a1b2c3d4e5f607): "attached, P, A, {soil_moisture: {min: 30.0}}"
       - plant-lookup -> plants-api.lookup-by-sensor(00a1b2c3d4e5f607): 200 with plant_id P and owner_id A
-      - server -> event-bus.commit: ok
+      - server -> sql-db.transaction(store the opened alert, its pending notification and the new state): ok
+      - server -> event-bus.commit(the position behind the event): ok
       - server -> notifier.notify(the opened alert, soil_moisture min, 28.4, 30.0): sent
       - notifier -> push.send(the notification of the alert): taken
     expect: the alerts to open and close and the new evaluation state are stored in one transaction, then the event is confirmed; for an opened alert one notification is handed to the push service and the alert's notification becomes `sent`, also after a restart, since the delivery step is not tied to the event
+  list-the-open-alerts:
+    summary: A client asks for the open alerts of its owner
+    source: the alerts API
+    hops:
+      - alerts-api -> server.list-alerts(owner A, state open): 200 with the open alert
+      - server -> sql-db.statement(select the open alerts of owner A): one row
+    expect: the answer holds every open alert of the owner, newest first, and nothing of another owner

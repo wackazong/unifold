@@ -1,11 +1,22 @@
 # container-host
 
-Contract of the need `container-host` of plantwatch: what runs the containers of the server side. Nothing in plantwatch implements it. The clock of every container stays within 10 seconds of UTC. Notation: the requests to the host as text.
+Contract of the need `container-host` of plantwatch: what runs the containers of the server side. Nothing in plantwatch implements it. Notation: the requests to the host as text.
 Sources: the deployment of `cloud`; no product is named.
+Binding: cli
+Version: 1
 
 ## Use
 
-The server side asks the host for its volumes, runs each container with its name and its volumes, and publishes at most one port. Apart from that one port, the host has no state that limits the calls: `run` and `volume` may be called at any time.
+The server side asks the host for its volumes, runs each container with its name and its volumes, and publishes at most one port. It asks for three volumes, one for the event bus, one for the database and one for database backups, and places the backup volume on other storage than the database volume; `platform` publishes no port. Apart from that one port, the host has no state that limits the calls: `run` and `volume` may be called at any time.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| clock | the clock of every container stays within 10 seconds of UTC |
+| availability | a container that stops runs again within a minute |
+| durability | a volume survives restart and replacement of its container; two volumes can be placed on separate storage devices |
+| security | the containers are on a private network in which they find each other by name; nothing in it is reachable from outside except the one published port, whose publisher terminates TLS |
 
 ## Parts
 
@@ -22,10 +33,10 @@ Result: the host runs the container and restarts one that stops. The container i
 Errors: none that plantwatch relies on.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| a container stops | a container of the server side stops | it runs again within a minute |
-| name resolution | a container connects to the host name `sql-db` | it reaches the database container |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| a container stops | | `run(image, "ingest", volumes)` | the container runs; when it stops, it runs again within a minute |
+| name resolution | the database container runs under the name `sql-db` | `run` of a container that connects to the host name `sql-db` | it reaches the database container |
 
 ### volume
 
@@ -40,9 +51,9 @@ Result: a container that asks for a volume gets one that survives restart and re
 Errors: none that plantwatch relies on.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| a container is replaced | a new container takes the place of the old one | its volume holds what the old one wrote |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| a container is replaced | the old container wrote to the volume `db-data` | `run` of a new container that takes the place of the old one, with `db-data` | its volume holds what the old one wrote |
 
 ### publish
 
@@ -59,7 +70,7 @@ Examples:
 
 | Case | Input | Expected |
 |---|---|---|
-| a request from the internet | to a service other than the published one | no connection |
+| one port | `publish(gateway, 443)` | the port is reachable from the internet with TLS terminated by the publisher; a request from the internet to any other service gets no connection |
 
 ## Fake
 

@@ -4,7 +4,7 @@
 
 ## Why
 
-The logic that judges a reading must not know that thresholds live behind a network. This unit exists to hold that knowledge in one place: the path of the request, the time limit, the repeats, the meaning of each status and how long an answer may be reused. It changes when the way the registry of plants is reached changes, and for no other reason.
+What this unit hides is how long an answer of the registry is kept and how a failed request is repeated ([0001](docs/decisions/0001-keep-an-answer-for-at-most-60-seconds.md)). The logic that judges a reading must not know that thresholds live behind a network. This unit exists to hold that knowledge in one place: the path of the request, the time limit, the repeats, the meaning of each status and how long an answer may be reused. It changes when the way the registry of plants is reached changes, and for no other reason.
 
 It is cut as an adapter with a plain function on one side and HTTP on the other, so that its caller can be tested with a stand-in that returns fixed answers, and so that a different source of thresholds replaces this unit and nothing else.
 

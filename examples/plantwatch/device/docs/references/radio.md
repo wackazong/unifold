@@ -2,10 +2,22 @@
 
 Contract of `hal.radio`: a BLE peripheral with a GATT server for one central at a time, Bluetooth 4.2 on the LE 1M PHY. Transmit power is 0 dBm. The provider knows nothing about the meaning of an attribute. Notation: wit.
 Sources: the radio stack of the board as `hal` absorbs it; the BLE profile of plantwatch for what the caller needs.
+Binding: in-process
 
 ## Use
 
-The caller configures the radio once at start, before advertising, then sets the advertising data and opens bonding when it needs to. While a central is connected, the caller answers every `read` and `write` event with `answer`. It sends notifications and indications only where the central has switched them on. `send` and `disconnect` need a connected central. Events arrive in the order in which they happened.
+The caller configures the radio once at start, before advertising, then sets the advertising data and opens bonding when it needs to. While a central is connected, the caller answers every `read` and `write` event with `answer`. It sends notifications and indications only where the central has switched them on. `send` and `disconnect` need a connected central. Every radio event carries a tick count; the caller takes all time from these tick counts and has no other source of time.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| ordering | events arrive in the order in which they happened, each with the tick count at which it happened |
+| throughput | at least 4 notifications of up to 20 bytes per connection event |
+| latency | after a disconnect, advertising resumes within 1 s; a change of the advertising data is on air with the next advertising event |
+| limits | up to 16 characteristics of up to 128 bytes; an ATT MTU of 23 to 131 bytes; at least 4 bonds kept across power loss |
+| security | bonding is LE Secure Connections, Just Works; a request on a characteristic that requires encryption over an unencrypted connection is answered by the provider itself with an ATT error |
+| concurrency | `hal` delivers the events and alarms of all four contracts one after another, never two at the same time; whenever no event is being handled, the board sleeps, keeps counting time and keeps the radio schedule, and draws the sleep current of the board reference |
 
 ## Parts
 
@@ -22,9 +34,9 @@ Result: the characteristics are declared, up to 16, in one or more services. The
 Errors: none.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| idle limit | `limits` with 30 s without requests; no request arrives for 30 s | the provider closes the connection and reports `disconnected` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| idle limit | a central is connected and sends no request for 30 s | `configure` with `limits` of 30 s without requests | the provider closes the connection and reports `disconnected` |
 
 ### set-advertising
 
@@ -35,13 +47,13 @@ set-advertising: func(data: list<u8>, scan-response: list<u8>, on: bool, interva
 ```
 
 Pre: `data` and `scan-response` have up to 31 bytes each; `interval-ms` is 100 to 2000.
-Result: the next advertising event carries the new bytes; the caller may replace them at any time. While advertising is on and no central is connected, the provider advertises connectable and scannable on all three advertising channels. After a disconnect it resumes within 1 s.
+Result: the next advertising event carries the new bytes; the caller may replace them at any time. While advertising is on and no central is connected, the provider advertises connectable and scannable on all three advertising channels.
 Errors: none.
 Examples:
 
 | Case | Input | Expected |
 |---|---|---|
-| new data | the caller replaces the advertising data at an interval of 1285 ms | a scanner sees the new bytes at most 1285 ms later |
+| new data | `set-advertising` with new data at an interval of 1285 ms | a scanner sees the new bytes at most 1285 ms later |
 
 ### open-bonding
 
@@ -52,14 +64,14 @@ open-bonding: func(duration-s: u16);
 ```
 
 Pre: none.
-Result: the provider accepts a new bond until the duration ends. Bonding is LE Secure Connections, Just Works; the provider never asks the central for security. It keeps at least 4 bonds across power loss; when all places are taken, a new bond replaces the one used longest ago. While bonding is closed, the provider rejects pairing by a central without a bond with `Pairing Not Supported`.
+Result: the provider accepts a new bond until the duration ends. The provider never asks the central for security. When all places for bonds are taken, a new bond replaces the one used longest ago. While bonding is closed, the provider rejects pairing by a central without a bond with `Pairing Not Supported`.
 Errors: none.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| a fifth central | bonds while bonding is open and 4 bonds are kept | its bond replaces the one used longest ago |
-| too late | a central without a bond starts pairing 10 s after the duration ended | rejected with `Pairing Not Supported` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| a fifth central | 4 bonds are kept and bonding is open | a fifth central bonds | its bond replaces the one used longest ago |
+| too late | the duration ended 10 s ago | a central without a bond starts pairing | rejected with `Pairing Not Supported` |
 
 ### disconnect
 
@@ -87,13 +99,13 @@ send: func(characteristic: u8, value: list<u8>, indicate: bool) -> result<_, no-
 ```
 
 Pre: a central is connected and has switched notifications or indications of the characteristic on.
-Result: the provider takes the notification or indication. Per connection event it sends at least 4 notifications of up to 20 bytes.
+Result: the provider takes the notification or indication.
 Errors: `no-room` when the provider cannot take it now; `room-again` is reported later.
 Examples:
 
 | Case | Input | Expected |
 |---|---|---|
-| a burst | the caller hands over 6 notifications in one connection event | the provider takes at least 4, answers `no-room` for the rest and later reports `room-again` |
+| a burst | 6 calls of `send` in one connection event | the provider takes at least 4, answers `no-room` for the rest and later reports `room-again` |
 
 ### answer
 
@@ -108,9 +120,9 @@ Result: the provider sends the answer to the central: a value, success, or an AT
 Errors: none.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| a read | `answer(7, value(18 bytes))` for the read request 7 | the central receives the 18 bytes |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| a read | the read request 7 is open | `answer(7, value(18 bytes))` | the central receives the 18 bytes |
 
 ### identity
 
@@ -145,13 +157,18 @@ variant radio-event {
 }
 ```
 
-Every event carries the tick count at which it happened. Events arrive in the order in which they happened. `mtu-changed` carries the ATT MTU, 23 to 131 bytes. A `read` or `write` names the characteristic and, for a write, its bytes; the caller answers it with `answer`. `subscription-changed` names the characteristic and whether notifications or indications are now on; the provider keeps that state per characteristic and switches everything off at each new connection, also for a bonded central. A request on a characteristic that requires encryption over an unencrypted connection is answered by the provider itself, with ATT error `0x05` when the central has no bond and `0x0F` when it has one; the caller sees no event.
+When: a central connects or disconnects, the ATT MTU changes, the central reads or writes a characteristic, the central switches notifications or indications of a characteristic on or off, or the provider has room again after `no-room`.
+Delivery: exactly once per event, in the order in which the events happened.
 
-| Case | Expected |
-|---|---|
-| a central without a bond writes to a protected characteristic | ATT error `0x05`; no event |
-| a bonded central does the same before encryption is on | ATT error `0x0F`; no event |
-| a bonded central reconnects | every subscription is off until the central switches it on |
+Every event carries the tick count at which it happened. `mtu-changed` carries the ATT MTU, 23 to 131 bytes. A `read` or `write` names the characteristic and, for a write, its bytes; the caller answers it with `answer`. `subscription-changed` names the characteristic and whether notifications or indications are now on; the provider keeps that state per characteristic and switches everything off at each new connection, also for a bonded central. A request on a characteristic that requires encryption over an unencrypted connection is answered by the provider itself, with ATT error `0x05` when the central has no bond and `0x0F` when it has one; the caller sees no event.
+
+Examples:
+
+| Case | Action | Emitted |
+|---|---|---|
+| a central without a bond writes to a protected characteristic | the write arrives over an unencrypted connection | nothing; the provider answers ATT error `0x05` |
+| a bonded central writes before encryption is on | the write arrives over an unencrypted connection | nothing; the provider answers ATT error `0x0F` |
+| a bonded central reconnects | the connection is made | `connected`; every subscription is off until the central switches it on |
 
 ### characteristic
 

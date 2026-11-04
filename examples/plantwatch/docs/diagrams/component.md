@@ -1,18 +1,18 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: plantwatch
 
-**plantwatch** · [README](../../README.md) · [architecture](architecture.md)
+**plantwatch** · [README](../../README.md)
 
 The units directly inside `plantwatch` and how they are connected. An arrow points from the unit that needs something to the unit that provides it. Rounded nodes are capabilities of the framing unit, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a unit that is planned.
 
 ```mermaid
 flowchart LR
   subgraph u_root["plantwatch"]
-    u_cloud["cloud (system)"]
-    u_device["device (firmware)"]
-    u_emulator["emulator (tool)"]
-    u_mobile["mobile (app)"]
-    u_test_drig["test-rig (test)"]
+    u_cloud["cloud (stateful, process)"]
+    u_device["device (stateful, firmware)"]
+    u_emulator["emulator (stateful, process)"]
+    u_mobile["mobile (stateful, ui)"]
+    u_test_drig["test-rig (job)"]
   end
   n_root___push_dservice{{"push-service"}}
   n_root___container_dhost{{"container-host"}}
@@ -43,11 +43,11 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status | Diagram |
 |---|---|---|---|---|
-| [cloud](../../cloud/README.md) | system | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](../../cloud/docs/diagrams/component.md) |
-| [device](../../device/README.md) | firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../device/docs/diagrams/component.md) |
-| [emulator](../../emulator/README.md) | tool | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | **planned** |  |
-| [mobile](../../mobile/README.md) | app | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../mobile/docs/diagrams/component.md) |
-| [test-rig](../../test-rig/README.md) | test | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** |  |
+| [cloud](../../cloud/README.md) | stateful, process | Server side that turns uploaded readings into plant history and alerts | **planned** | [component](../../cloud/docs/diagrams/component.md) |
+| [device](../../device/README.md) | stateful, firmware | Firmware of the sensor stick that measures soil and surroundings and serves the readings over BLE | **planned** | [component](../../device/docs/diagrams/component.md) |
+| [emulator](../../emulator/README.md) | stateful, process | Desktop program that behaves like a sensor stick and is driven by a scenario instead of hardware | **planned** |  |
+| [mobile](../../mobile/README.md) | stateful, ui | Phone app that collects readings from sensor sticks, shows the plants and relays data to the server | **planned** | [component](../../mobile/docs/diagrams/component.md) |
+| [test-rig](../../test-rig/README.md) | job | Runs end-to-end tests from the sensor link to the alert, against real or simulated hardware | **planned** |  |
 
 ### Connections
 

@@ -2,12 +2,14 @@
 
 Contract of `app-ui`, the promises the app makes to its owner, independent of how a screen looks. The screens and the way between them, and the data model behind them, are up to [mobile](../../mobile/README.md). Notation: what the owner does and sees, as text.
 Sources: the requirements and the product parameters of plantwatch.
+Binding: ui
+Version: 1
 
 ## Use
 
 The owner starts the app without an account, adds plants, and puts a sensor stick to each plant. From then on the app fetches, uploads and registers for notifications without being asked, and the owner sees the plants, their history and their alerts. The app has no state that limits what the owner may do: every part may be used at any time, also without a network connection. Pairing and fetching need Bluetooth.
 
-## What the app does not promise
+The app does not promise:
 
 - A time by which a reading reaches the phone or the server. It depends on the phone coming near the sensor stick.
 - Background fetching after a force-quit, with Bluetooth off or without the permissions.
@@ -15,27 +17,19 @@ The owner starts the app without an account, adds plants, and puts a sensor stic
 - Exact times for readings flagged as estimated.
 - A way back to the owner's data for a phone that has lost its token while no other phone of the owner is at hand.
 
-## Limits, permissions and accessibility
+The app does not depend on the delivery of notifications: every alert that a notification announces is on the screens after the next exchange with the server, also when notifications are not allowed. When the newest reading of a plant is older than 24 hours, the screen says "No readings since" with the time. A low value in the history is not marked as a problem by itself. Temperatures are shown in degrees Celsius only.
 
-| Limit | Value |
+## Qualities
+
+| Aspect | Guarantee |
 |---|---|
-| sensor sticks paired with one phone | 20 |
-| plants of one owner | 50 |
-| history on the phone | 90 days per plant |
-| owners per phone | 1 |
+| limits | 20 sensor sticks paired with one phone, 50 plants of one owner and 90 days of history per plant on the phone, which are [product parameters](product-parameters.md); 1 owner per phone; in the background the app fetches each sensor stick at most 4 times a day |
 | systems | the iOS and Android versions that [mobile](../../mobile/README.md) names |
 | languages | English and German |
-| screen orientation | portrait |
-
-The first three values are [product parameters](product-parameters.md). The app asks for a permission at the moment the owner first needs it and says why:
-
-| Permission | Without it |
-|---|---|
-| Bluetooth | no pairing and no fetching; everything already on the phone stays visible; the app says what is missing and leads to the system settings |
-| notifications | no notifications; alerts are visible in the app |
-| camera | no joining an owner by scanning a code; everything else works |
-
-Every state that is shown by colour is also shown by text or a symbol. Every control has a label for screen readers. Text follows the text size set in the system.
+| orientation | portrait |
+| latency | a change to a plant shows within 1 second; when the owner opens the app near a paired sensor stick, a fetch starts within 5 seconds |
+| permissions | the app asks for a permission at the moment the owner first needs it and says why; without Bluetooth there is no pairing and no fetching, everything already on the phone stays visible, and the app says what is missing and leads to the system settings; without notifications there are none, and alerts are visible in the app; without the camera there is no joining an owner by scanning a code, and everything else works |
+| accessibility | every state that is shown by colour is also shown by text or a symbol; every control has a label for screen readers; text follows the text size set in the system |
 
 ## Parts
 
@@ -54,10 +48,10 @@ Result: a list of all plants. Plants with an open alert come first, with the rea
 Errors: none.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| offline view | flight mode; newest reading 2 days old | the plant with that reading and "2 days ago"; no error, no loading state |
-| alert arrives | after the upload the server reports an open alert | the plant is first in the list with "needs water" |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| offline view | flight mode; newest reading 2 days old | the owner opens the app | the plant with that reading and "2 days ago"; no error, no loading state |
+| alert arrives | after the upload the server reports an open alert | the owner opens the app | the plant is first in the list with "needs water" |
 
 ### plant
 
@@ -72,9 +66,9 @@ Result: the latest reading and the history of the last 90 days for soil moisture
 Errors: none.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| low value, no alert yet | a fetched reading of 23 %, not uploaded | 23 % in the history; the plant is not marked "needs water" |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| low value, no alert yet | a fetched reading of 23 %, not uploaded | the owner opens the plant | 23 % in the history; the plant is not marked "needs water" |
 
 ### edit-plant
 
@@ -89,9 +83,9 @@ Result: the plant is added, changed or removed; a change is marked until the ser
 Errors: a refusal by the server, shown with its reason.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| change offline | flight mode; the owner sets the limit to 25 % | 25 % within 1 second, marked "not yet sent"; the mark goes after the next exchange |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| change offline | flight mode | the owner sets the limit to 25 % | 25 % within 1 second, marked "not yet sent"; the mark goes after the next exchange |
 
 ### pair
 
@@ -106,9 +100,9 @@ Result: the sensor stick is paired and bound to the plant.
 Errors: refused with the reason when 20 sensor sticks are paired.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| 21st sensor stick | 20 sensor sticks are paired | pairing is refused with the reason; the 20 stay paired |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| 21st sensor stick | 20 sensor sticks are paired | the owner puts a further sensor stick to a plant | pairing is refused with the reason; the 20 stay paired |
 
 ### notification-tap
 
@@ -123,9 +117,9 @@ Result: the app opens the plant the notification is about.
 Errors: none.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| tap on a notification | a notification about the alert of "Monstera" | the app opens the screen of "Monstera" |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| tap on a notification | a notification about the alert of "Monstera" is shown | the owner taps it | the app opens the screen of "Monstera" |
 
 ### owner
 
@@ -140,9 +134,9 @@ Result: the app asks for no name and no password and works from the first start,
 Errors: none.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| first start | a new phone in flight mode | the app works and asks for no name and no password |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| first start | a new phone in flight mode | the owner starts the app | the app works and asks for no name and no password |
 
 ### fetch
 
@@ -152,11 +146,14 @@ Kind: event
 the phone comes near a paired sensor stick -> the app fetches its stored readings
 ```
 
-With the app not open, the app fetches the stored readings as far as the operating system lets it run. When the owner opens the app near a paired sensor stick, a fetch starts within 5 seconds and runs to the end while the app stays open.
+When: the phone comes near a paired sensor stick, or the owner opens the app near one. With the app not open, the app fetches the stored readings as far as the operating system lets it run. When the owner opens the app near a paired sensor stick, a fetch starts within 5 seconds and runs to the end while the app stays open.
+Delivery: at least once; a fetch that is cut off is taken up again at the next opportunity, and a reading that reaches the phone twice is kept once.
 
-| Case | Given | Expected |
-|---|---|---|
-| fetch on opening | sensor stick in range holds 96 unconfirmed readings; no network | a fetch starts within 5 seconds; afterwards the history holds the 96 readings |
+Examples:
+
+| Case | Given | Action | Emitted |
+|---|---|---|---|
+| fetch on opening | sensor stick in range holds 96 unconfirmed readings; no network | the owner opens the app | a fetch starts within 5 seconds; afterwards the history holds the 96 readings |
 
 ### upload
 
@@ -166,7 +163,8 @@ Kind: event
 readings are on the phone and a network connection exists -> the app uploads them without being asked
 ```
 
-Without a network connection the readings stay on the phone and are visible in the history.
+When: readings are on the phone and a network connection exists. Without a network connection the readings stay on the phone and are visible in the history.
+Delivery: at least once; the server reports a reading it already has as a duplicate, so nothing is stored twice.
 
 ### registration
 
@@ -176,11 +174,14 @@ Kind: event
 the owner has allowed notifications and the server has created the owner -> the app registers the phone through push-service for its owner
 ```
 
-The app registers again whenever the platform changes the phone's address. When the phone leaves its owner, the app ends that registration.
+When: the owner has allowed notifications and the server has created the owner, and again whenever the platform changes the phone's address. When the phone leaves its owner, the app ends that registration.
+Delivery: at least once per address of the phone; no order.
 
-| Case | Given | Expected |
-|---|---|---|
-| no notifications | the owner has not allowed notifications | no registration; the alert shows in the app |
+Examples:
+
+| Case | Given | Action | Emitted |
+|---|---|---|---|
+| no notifications | the owner has not allowed notifications | the server raises an alert | no registration; the alert shows in the app |
 
 ## Fake
 

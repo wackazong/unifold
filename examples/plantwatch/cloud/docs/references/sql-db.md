@@ -2,38 +2,24 @@
 
 Contract of `platform.sql-db`: what a service that stores data can rely on. Notation: SQL and the connection parameters, written as text.
 Sources: none.
+Binding: sql
 
 ## Use
 
-A service connects with its role and runs its statements inside transactions on that connection. A transaction covers the schema of the role and nothing else. When the connection breaks or is refused, the service connects again and repeats the open transaction. A role has at most 20 connections at a time.
+A service connects with its role and runs its statements inside transactions on that connection. A transaction covers the schema of the role and nothing else. When the connection breaks or is refused, the service connects again and repeats the open transaction. The database speaks the wire protocol and the SQL dialect of PostgreSQL 16 at host `sql-db`, port 5432, database `main`, inside the private network; its time zone is UTC.
 
-## Access
+## Qualities
 
-| Item | Value |
+| Aspect | Guarantee |
 |---|---|
-| wire protocol and SQL dialect | PostgreSQL 16 |
-| address | host `sql-db`, port 5432, database `main`, inside the private network |
-| authentication | role name and password; the deployment gives both to the containers of the service and to nobody else |
-| encryption | none; the private network is the boundary |
-| time zone | UTC |
-
-## Limits, backup and failures
-
-| Item | Limit |
-|---|---|
-| connections per role | 20 |
-| duration of one statement | 30 seconds, then the database cancels it |
-| idle time inside an open transaction | 60 seconds, then the database ends the connection |
-| size of all schemas together | 50 GB; the operator is warned at 80 percent |
-
-- The database is backed up in full once a day. Its transaction log is copied to the backup volume continuously. Backups are kept for 14 days.
-- After a loss of the database volume, the state of at most 5 minutes before the loss is restored. The restore is done by hand and takes up to 1 hour. A restore brings back all schemas to the same moment; a single schema cannot be restored alone.
-
-| Event | Effect for a service |
-|---|---|
-| restart of the database, up to 1 minute | connections break and new ones are refused; the service reconnects and repeats the open transaction |
-| loss of the volume | up to 1 hour without database, then data as of at most 5 minutes before the loss; changes of these minutes are gone |
-| the size limit is exceeded | nothing at once |
+| security | role name and password; the deployment gives both to the containers of the service and to nobody else; no encryption, the private network is the boundary |
+| concurrency | at most 20 connections per role |
+| timeout | a statement is cancelled after 30 seconds; a connection that is idle inside an open transaction for 60 seconds is ended |
+| limits | 50 GB for all schemas together; the operator is warned at 80 percent; exceeding the limit does nothing at once |
+| durability | a committed transaction survives a restart of the database |
+| backup | a full backup once a day, the transaction log copied to the backup volume continuously, backups kept for 14 days |
+| recovery | after a loss of the database volume, the state of at most 5 minutes before the loss is restored, by hand, within 1 hour; a restore brings back all schemas to the same moment, and a single schema cannot be restored alone; the changes of these minutes are gone |
+| availability | a restart of the database takes up to 1 minute, during which connections break and new ones are refused; the service reconnects and repeats the open transaction |
 
 ## Parts
 
@@ -42,7 +28,7 @@ A service connects with its role and runs its statements inside transactions on 
 Kind: command
 
 ```text
-connect(host sql-db, port 5432, database main, role, password) -> connection
+connect(host sql-db, port 5432, database main, role, password) -> connection, search path: the schema of the role
 ```
 
 Pre: the role exists; the role has fewer than 20 connections open.
@@ -50,9 +36,9 @@ Result: a connection whose search path is the schema of the role.
 Errors: the connection is refused at the 21st connection of a role, and while the database restarts.
 Examples:
 
-| Case | Action | Result |
-|---|---|---|
-| too many connections | the role opens a 21st connection | the connection is refused |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| too many connections | the role has 20 connections open | `connect` with that role | the connection is refused |
 
 ### transaction
 
@@ -63,11 +49,11 @@ BEGIN [ISOLATION LEVEL READ COMMITTED | REPEATABLE READ | SERIALIZABLE]; ...; CO
 ```
 
 Pre: a connection is open.
-Result: transactions are atomic, consistent, isolated and durable; a committed transaction survives a restart of the database. The default isolation level is read committed. A transaction covers one schema; nothing spans two services.
+Result: transactions are atomic, consistent, isolated and durable. The default isolation level is read committed. A transaction covers one schema; nothing spans two services.
 Errors: a transaction at repeatable read or serializable can fail with a serialization error and is then repeated by the service; the database ends the connection after 60 seconds idle inside an open transaction.
 Examples:
 
-| Case | Action | Result |
+| Case | Input | Expected |
 |---|---|---|
 | restart | a transaction is committed, then the database restarts | the change is there after the restart |
 | idle | a transaction stays open without a statement for 61 seconds | the connection is ended |
@@ -85,9 +71,9 @@ Result: the statement is carried out. A service may rely on these features of th
 Errors: a permission error for any other schema; the database cancels a statement after 30 seconds and the transaction fails.
 Examples:
 
-| Case | Action | Result |
+| Case | Input | Expected |
 |---|---|---|
-| own schema | the role `greenhouse` creates the table `greenhouse.pot` | success |
+| own schema | the role `greenhouse` creates the table `greenhouse.pot` | ok |
 | foreign schema | the role `greenhouse` reads a table of another schema | permission error |
 | long statement | a statement runs for 31 seconds | the database cancels it; the transaction fails |
 

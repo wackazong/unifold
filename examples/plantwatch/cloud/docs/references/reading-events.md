@@ -2,12 +2,12 @@
 
 Contract of `ingest.reading-events`: the stream on which `ingest` announces accepted readings. The envelope and the naming rules of events are defined by `cloud` ([events](events.md)) and cited in [context](../explanation/context.md). Units, ranges and resolutions are those of the project conventions. Notation: JSON, one object per event.
 Sources: the reading schema of plantwatch, the public API of plantwatch, the event conventions of `cloud`.
+Binding: message
+Carried by: [event-bus](event-bus.md)
 
 ## Use
 
 A service subscribes to the topic on the event bus and receives one `reading-accepted` for every reading that `ingest` accepts. The stream has no state of its own: the event bus keeps the position of each subscription. A subscriber handles the events of one key in order and expects repeats, gaps and old readings after new ones, as the part says.
-
-## Topic
 
 | Item | Value |
 |---|---|
@@ -18,6 +18,17 @@ A service subscribes to the topic on the event bus and receives one `reading-acc
 | key | the sensor id |
 
 A change that removes or renames a field, or changes a unit, leads to a topic `ingest.readings.v2`. `ingest` then publishes to both topics until the old one has no subscriber.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| key | the sensor id; all events of one sensor stick have the same key |
+| ordering | events with the same key reach a subscriber in the order in which `ingest` accepted the readings; readings of one batch are published in ascending order of sequence number; no order holds between different keys |
+| delivery | at least once; `ingest` publishes an event for every reading that `ingest-api` reports as `new`, before it reports it |
+| retention | an event stays on the topic for 7 days, consumed or not |
+| repeats | possible; a repeat has the same `id` and may carry a different envelope `time` |
+| values | all values in `values` are within their range; `data.time` is neither more than 24 hours after nor more than 90 days before the envelope `time`; two events with the same `id` describe the same reading |
 
 ## Parts
 
@@ -47,6 +58,9 @@ Kind: event
 }
 ```
 
+When: `ingest` accepts a reading of a batch as `new`; the event is published before the batch is answered.
+Delivery: at least once, in the order in which `ingest` accepted the readings, per sensor id as the key.
+
 | Field | Content |
 |---|---|
 | `id` | sensor id, a hyphen, the sequence number in decimal digits |
@@ -59,17 +73,6 @@ Kind: event
 | `data.values` | the measured values, named `soil_moisture`, `light` and `temperature`; a quantity that was not measured is absent |
 | `data.reading` | the uploaded reading as a JSON object, unchanged, including fields that `ingest` does not know |
 
-What the stream guarantees:
-
-| Aspect | Guarantee |
-|---|---|
-| key | the sensor id; all events of one sensor stick have the same key |
-| order | events with the same key reach a subscriber in the order in which `ingest` accepted the readings; readings of one batch are published in ascending order of sequence number; no order holds between different keys |
-| delivery | at least once; `ingest` publishes an event for every reading that `ingest-api` reports as `new`, before it reports it |
-| retention | an event stays on the topic for 7 days, consumed or not |
-| repeats | possible; a repeat has the same `id` |
-| values | all values in `values` are within their range; `data.time` is neither more than 24 hours after nor more than 90 days before the envelope `time`; two events with the same `id` describe the same reading |
-
 What a subscriber must expect:
 
 - **Repeats.** The same event can be published more than once: after a failure of `ingest`, and when the same reading is uploaded at two places at once. A repeat has the same `id`. It may carry a different envelope `time`.
@@ -80,14 +83,14 @@ What a subscriber must expect:
 
 Examples:
 
-| Case | What happens | Events on the topic, in order |
+| Case | Action | Emitted |
 |---|---|---|
-| one batch | readings 4713, 4711, 4712 of one sensor stick are accepted | `…-4711`, `…-4712`, `…-4713` |
-| repeated batch | the same batch is uploaded again | none |
+| one batch | readings 4713, 4711, 4712 of one sensor stick are accepted | `…-4711`, `…-4712`, `…-4713`, in this order |
+| repeated batch | the same batch is uploaded again | nothing |
 | late batch | readings 4800 to 4810 are accepted, then 4700 to 4710 | `…-4800` to `…-4810`, then `…-4700` to `…-4710` |
 | failure before the answer | `ingest` stops after publishing 4711 and before recording it; the batch is uploaded again | `…-4711` twice, with different envelope `time` |
 | not measured | a reading without light is accepted | one event whose `values` has no `light` |
-| rejected reading | a reading with `soil_moisture` 104.2 is uploaded | none |
+| rejected reading | a reading with `soil_moisture` 104.2 is uploaded | nothing |
 
 ## Fake
 

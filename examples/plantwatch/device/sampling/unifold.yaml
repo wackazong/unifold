@@ -1,9 +1,7 @@
 responsibility: Takes a calibrated reading at every sampling interval
-kind: library
+kind: stateful
+runs-as: library
 status: planned
-secret:
-  what: the calibration from raw values to percent, lux and degrees
-  decision: docs/decisions/0001-calibrate-per-probe-type-not-per-board.md
 not:
   - keeping readings; a reading that no subscriber keeps is gone
   - sending readings anywhere

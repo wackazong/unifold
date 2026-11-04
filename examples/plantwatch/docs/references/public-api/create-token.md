@@ -17,7 +17,7 @@ Result: `201` with a new token for the owner of the token in the request. The ol
 Errors: `401` `unauthenticated`; the [errors](error.md) that every operation can answer.
 Examples:
 
-| Case | Request | Response |
-|---|---|---|
-| Second phone | `POST /v1/tokens` with the token of the first phone | `201` with a new token; both tokens reach the same plants |
-| Expired token | `POST /v1/tokens` 366 days after the token was issued | `401` `unauthenticated` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| Second phone | | `POST /v1/tokens` with the token of the first phone | `201` with a new token; both tokens reach the same plants |
+| Expired token | the token was issued 366 days ago | `POST /v1/tokens` with that token | `401` `unauthenticated` |

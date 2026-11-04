@@ -33,7 +33,7 @@ Result: the state of the exchange with the server:
 Errors: none.
 Examples:
 
-| Case | Given | Expected |
-|---|---|---|
-| change confirmed | an offline change, then an exchange that succeeds | `changes-waiting` is 0 |
-| token not accepted | the server refuses the token at an exchange | `session` is `lost`, `last-failure` is `token not accepted` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| change confirmed | an offline change, then an exchange that succeeded | `exchange-state()` | `changes-waiting` is 0 |
+| token not accepted | the server refused the token at an exchange | `exchange-state()` | `session` is `lost`, `last-failure` is `token not accepted` |

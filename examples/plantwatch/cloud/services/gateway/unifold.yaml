@@ -1,9 +1,7 @@
 responsibility: Single entry point of the server side that authenticates callers and routes requests
-kind: service
+kind: adapter
+runs-as: process
 status: planned
-secret:
-  what: the form and the verification of tokens
-  decision: docs/decisions/0001-self-contained-signed-tokens.md
 not:
   - looking into, validating or changing a body
   - combining the answers of several providers into one response

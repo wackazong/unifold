@@ -20,7 +20,7 @@ Result: `201`; an owner is created, with a token that is valid for 365 days:
 Errors: `429` `rate_limited` beyond 10 per hour from one client address; the [errors](error.md) that every operation can answer.
 Examples:
 
-| Case | Request | Response |
-|---|---|---|
-| First start of a client | `POST /v1/owners` without token | `201` with `owner_id`, `token`, `expires_at` |
-| Repeated | `POST /v1/owners` twice | Two owners; a client that has lost the first response uses the second owner |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| First start of a client | | `POST /v1/owners` without token | `201` with `owner_id`, `token`, `expires_at` |
+| Repeated | a first `POST /v1/owners` was answered | `POST /v1/owners` again | `201` with another owner; a client that has lost the first response uses the second owner |

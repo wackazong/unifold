@@ -2,16 +2,20 @@
 
 Contract of `test-rig.test-report`: the file a run of the rig produces, and the exit status that goes with it. Readers are developers and the tools of a CI system that understand JUnit XML. The tests and the configurations are listed by [test-rig](../../test-rig/README.md). Notation: JUnit XML and the exit status of the run, as text.
 Sources: the JUnit XML format as CI tools read it; the test catalogue of `test-rig`.
+Binding: cli
+Version: 1
 
 ## Use
 
-A developer or a build server starts a run with its settings, waits for the exit status, and then reads the report file. Every run writes its own report, so one run does not depend on another: `run` may be called at any time.
+A developer or a build server starts a run with its settings, waits for the exit status, and then reads the report file. Every run writes its own report, so one run does not depend on another: `run` may be called at any time. A report says what the rig observed at the public interfaces; it does not say why a test failed inside the device under test or behind the API. A run in `real` covers fewer promises than a run in `simulated`; the skipped tests show which.
 
-## Stability
+## Qualities
 
-- The id at the start of a `testcase` name never changes and is never reused. Tools that track a test over time match on the id.
-- New properties and new tests may be added at any time. Readers ignore what they do not know.
-- No token, no owner's data other than the rig's own test plants, and no value of a setting other than those listed under `properties` appears in the file.
+| Aspect | Guarantee |
+|---|---|
+| stability | the id at the start of a `testcase` name never changes and is never reused; tools that track a test over time match on the id |
+| compatibility | new properties and new tests may be added at any time; readers ignore what they do not know |
+| security | no token, no owner's data other than the rig's own test plants, and no value of a setting other than those listed under `properties` appears in the file |
 
 ## Parts
 

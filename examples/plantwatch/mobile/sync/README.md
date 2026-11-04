@@ -4,7 +4,7 @@
 
 ## Why
 
-A phone is offline in cellars and stairwells and comes online at moments nobody controls. This library exists so that neither fact reaches a reader of the data. It owns the one store on the phone, and it alone speaks to the server. A reader asks the store; the exchange with the server runs behind the store, on its own schedule.
+What this unit hides is the local store and the exchange with the server ([0001](docs/decisions/0001-upload-in-batches-per-sensor-stick-and-retry-with-growing-pauses.md)). A phone is offline in cellars and stairwells and comes online at moments nobody controls. This library exists so that neither fact reaches a reader of the data. It owns the one store on the phone, and it alone speaks to the server. A reader asks the store; the exchange with the server runs behind the store, on its own schedule.
 
 The unit changes when the phone shall keep something new or keep it differently, or when `cloud-api` changes. A change of wording or of the radio does not reach it.
 
@@ -13,19 +13,6 @@ Readings and plant settings flow in opposite directions and are kept apart on pu
 The main trade-off: the phone holds a copy that can be days behind the server. `sync` does not hide this; it reports the age of what it holds.
 
 What must stay true: `sync` acknowledges a batch only after it is stored durably, and a reading in the store never changes.
-
-## Capabilities
-
-### `plant-data`
-
-- The exchange with the server runs by itself: after new readings, after a command, when a network connection appears, and when it is asked for.
-- Readings of a sensor stick that is attached to no plant wait on the phone and are not uploaded.
-
-## Needs
-
-### `cloud-api`
-
-`sync` counts a request without an answer after 20 seconds as "try again later".
 
 ## Read next
 

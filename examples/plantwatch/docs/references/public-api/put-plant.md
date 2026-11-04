@@ -14,12 +14,12 @@ Result: `200` with the plant. `PUT` creates the plant if the owner has none with
 Errors: `400` `invalid_request` when a threshold lies outside the range of its quantity or `min` is not below `max`; `409` `sensor_already_attached` when the `sensor_id` is attached to another plant; `409` `plant_limit_reached` when the request would create the 51st plant of the owner; `404` `not_found` for a plant id of another owner; and the [errors](error.md) every operation can answer.
 Examples: for an owner who has the plant P with sensor stick S attached.
 
-| Case | Request | Response |
-|---|---|---|
-| Create | `PUT` of a new id with `name` | `200` with the plant; `created_at` equals `updated_at` |
-| Replace without thresholds | `PUT` of P with `name` only | `200`; P has no `thresholds` and no `sensor_id`; its history stays |
-| Threshold out of range | `PUT` with `soil_moisture.min` 120.0 | `400` `invalid_request` |
-| `min` not below `max` | `PUT` with `temperature` `{"min": 30.0, "max": 30.0}` | `400` `invalid_request` |
-| Sensor stick in use | `PUT` of another plant with `sensor_id` S | `409` `sensor_already_attached` |
-| 51st plant | `PUT` of a new id while the owner has 50 plants | `409` `plant_limit_reached` |
-| Repeated request | The same `PUT /v1/plants/{plant_id}` twice | `200` twice, with equal bodies |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| Create | | `PUT` of a new id with `name` | `200` with the plant; `created_at` equals `updated_at` |
+| Replace without thresholds | | `PUT` of P with `name` only | `200`; P has no `thresholds` and no `sensor_id`; its history stays |
+| Threshold out of range | | `PUT` with `soil_moisture.min` 120.0 | `400` `invalid_request` |
+| `min` not below `max` | | `PUT` with `temperature` `{"min": 30.0, "max": 30.0}` | `400` `invalid_request` |
+| Sensor stick in use | | `PUT` of another plant with `sensor_id` S | `409` `sensor_already_attached` |
+| 51st plant | the owner has 50 plants | `PUT` of a new id | `409` `plant_limit_reached` |
+| Repeated request | the `PUT` of `Create` was answered | the same `PUT /v1/plants/{plant_id}` again | `200` with a body equal to the first |

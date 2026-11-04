@@ -1,13 +1,11 @@
 responsibility: Process that consumes readings, stores the alerts they lead to and answers queries about them
-kind: app
+kind: stateful
+runs-as: process
 status: planned
-secret:
-  what: the storage of alerts and the delivery of their notifications
-  decision: ../docs/decisions/0002-the-alert-row-is-the-outbox-of-its-notification.md
 not:
-  - comparing a value with a threshold: evaluation
+  - comparing a value with a threshold; the need `evaluation` judges
   - looking up plants or thresholds
-  - wording a notification or talking to a push service: notification
+  - wording a notification or talking to a push service; the need `notification` does that
   - changing an alert on request of a caller
 capabilities:
   alerts-api:
@@ -15,8 +13,6 @@ capabilities:
     contract: ../../../docs/references/alerts-api.md
 needs:
   reading-events:
-    summary: One event per accepted reading, at least once, in order of acceptance per sensor stick
-    contract: ../../../docs/references/reading-events.md
   evaluation:
     summary: Decides for a reading which alerts open and close, and returns what to remember
     contract: ../docs/references/evaluation.md
@@ -24,8 +20,4 @@ needs:
     summary: Tells the owner about an opened alert and may be called again for the same alert
     contract: ../docs/references/notification.md
   sql-db:
-    summary: A schema of its own in a relational database with transactions and row locks
-    contract: ../../../docs/references/sql-db.md
   event-bus:
-    summary: A durable subscription that keeps the order per key and delivers again what was not confirmed
-    contract: ../../../docs/references/event-bus.md

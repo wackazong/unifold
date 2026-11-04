@@ -1,7 +1,7 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Decisions of hal
 
-[README.md](../../README.md) · [AGENTS.md](../../AGENTS.md)
+[README.md](../../README.md)
 
 Accepted and derived decisions bind.
 

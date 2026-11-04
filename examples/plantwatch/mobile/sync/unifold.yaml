@@ -1,11 +1,9 @@
 responsibility: Keeps plants, history and alerts on the phone and in step with the server
-kind: library
+kind: stateful
+runs-as: library
 status: planned
-secret:
-  what: the local store and the exchange with the server
-  decision: docs/decisions/0001-upload-in-batches-per-sensor-stick-and-retry-with-growing-pauses.md
 not:
-  - talking to sensor sticks, and converting tick counts to times: sensor-readings
+  - talking to sensor sticks, and converting tick counts to times; the need `sensor-readings` provides readings with a time
   - deciding whether a plant needs attention; sync stores thresholds and alerts and compares nothing
   - showing anything, including notifications
   - history older than 90 days
@@ -18,5 +16,3 @@ needs:
     summary: Readings fetched from sensor sticks, to store and upload
     contract: ../docs/references/sensor-readings.md
   cloud-api:
-    summary: Stores readings and returns plants, history and alerts
-    contract: ../../docs/references/public-api/index.md

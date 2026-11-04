@@ -4,29 +4,13 @@
 
 ## Why
 
-A reading is made in exactly one place, and this is it. `sampling` changes when what is measured changes, or how a raw value becomes a quantity: a sensor part, a probe type, the housing, a new quantity.
+What this unit hides is the calibration from raw values to percent, lux and degrees ([0001](docs/decisions/0001-calibrate-per-probe-type-not-per-board.md)). A reading is made in exactly one place, and this is it. `sampling` changes when what is measured changes, or how a raw value becomes a quantity: a sensor part, a probe type, the housing, a new quantity.
 
 Before `sampling` there are only raw signals; after it, a reading is kept or passed on, never altered. Measuring, converting and numbering are one unit so that the rule "a reading is complete and final when it leaves" has one owner. `sampling` does not know where its readings go, and it does not know the board: it converts numbers into numbers, which makes the calibration testable with a table of values.
 
 The main tension is identity. A reading must carry its sequence number from the first moment, but this unit has no memory that survives a start. The number is therefore computed from the tick count (see [context](docs/explanation/context.md)). The price is a jump at every start.
 
 What must stay true: one reading per interval, whatever the sensors do. A reading with absent quantities says "alive, but could not measure", which a missing reading cannot say.
-
-## Capabilities
-
-### `readings`
-
-- **One reading per sampling interval.** The first is taken within 10 s after start, the following ones at whole multiples of the interval after the first; a measurement begins at most 1 s after its time. If no sensor answers, the reading has all three quantities absent; it is still taken.
-- **The interval** is 900 s unless the build sets another value between 300 s and 3600 s. It does not change after start.
-- **Absent, not wrong.** A quantity is absent when its raw value is unavailable or outside the plausible limits of the [calibration](docs/references/calibration.md).
-
-Limits: a board gives readings for 16 383 starts and for 262 143 readings per start; after that `sampling` takes no more. Soil moisture is calibrated for the type of probe, not for the single board, and is accurate to 5 percentage points.
-
-## Needs
-
-### `timer`
-
-`sampling` copes with seconds that are wrong by up to 100 ppm and with an alarm that comes up to 1 s late.
 
 ## Read next
 

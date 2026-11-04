@@ -12,8 +12,8 @@ Result: `200` with `{"items": [plant, ...]}`, every [plant](plant.md) of the own
 Errors: the [errors](error.md) that every operation can answer.
 Examples:
 
-| Case | Request | Response |
-|---|---|---|
-| No token | `GET /v1/plants` without `Authorization` | `401` `unauthenticated` |
-| Too many requests | The 121st request with one token within a minute | `429` `rate_limited` with `Retry-After` |
-| Two plants | An owner with "Monstera" and "Basil" | `200`; items "Basil", then "Monstera" |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| No token | | `GET /v1/plants` without `Authorization` | `401` `unauthenticated` |
+| Too many requests | 120 requests with one token within this minute | the 121st request, `GET /v1/plants` with that token | `429` `rate_limited` with `Retry-After` |
+| Two plants | the owner has "Monstera" and "Basil" | `GET /v1/plants` | `200`; items "Basil", then "Monstera" |

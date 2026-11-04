@@ -1,17 +1,17 @@
 <!-- unifold:generated - do not edit; run `unifold check --fix` -->
 # Component diagram: alerts
 
-[plantwatch](../../../../../docs/diagrams/component.md) / [cloud](../../../../docs/diagrams/component.md) / **alerts** · [README](../../README.md) · [context](context.md)
+[plantwatch](../../../../../docs/diagrams/component.md) / [cloud](../../../../docs/diagrams/component.md) / **alerts** · [README](../../README.md)
 
 The units directly inside `alerts` and how they are connected. An arrow points from the unit that needs something to the unit that provides it. Rounded nodes are capabilities of the framing unit, hexagons are its needs. A dashed arrow is an alternative provider; a dashed border marks a unit that is planned.
 
 ```mermaid
 flowchart LR
   subgraph u_cloud__services__alerts["alerts"]
-    u_cloud__services__alerts__notifier["notifier (adapter)"]
-    u_cloud__services__alerts__plant_dlookup["plant-lookup (adapter)"]
-    u_cloud__services__alerts__rules["rules (library)"]
-    u_cloud__services__alerts__server["server (app)"]
+    u_cloud__services__alerts__notifier["notifier (adapter, library)"]
+    u_cloud__services__alerts__plant_dlookup["plant-lookup (adapter, library)"]
+    u_cloud__services__alerts__rules["rules (stateful, library)"]
+    u_cloud__services__alerts__server["server (stateful, process)"]
   end
   n_cloud__services__alerts___push{{"push"}}
   n_cloud__services__alerts___plants_dapi{{"plants-api"}}
@@ -37,10 +37,10 @@ flowchart LR
 
 | Unit | Kind | Responsibility | Status |
 |---|---|---|---|
-| [notifier](../../notifier/README.md) | adapter | Turns an opened alert into one notification to the owner | **planned** |
-| [plant-lookup](../../plant-lookup/README.md) | adapter | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** |
-| [rules](../../rules/README.md) | library | Evaluates readings against the thresholds of a plant | **planned** |
-| [server](../../server/README.md) | app | Process that consumes readings, stores the alerts they lead to and answers queries about them | **planned** |
+| [notifier](../../notifier/README.md) | adapter, library | Turns an opened alert into one notification to the owner | **planned** |
+| [plant-lookup](../../plant-lookup/README.md) | adapter, library | Looks up the plant a sensor stick is attached to, with owner and thresholds, in the registry of plants | **planned** |
+| [rules](../../rules/README.md) | stateful, library | Evaluates readings against the thresholds of a plant | **planned** |
+| [server](../../server/README.md) | stateful, process | Process that consumes readings, stores the alerts they lead to and answers queries about them | **planned** |
 
 ### Connections
 

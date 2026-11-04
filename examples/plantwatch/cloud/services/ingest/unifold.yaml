@@ -1,9 +1,7 @@
 responsibility: Accepts uploaded readings and announces each accepted one as an event
-kind: service
+kind: stateful
+runs-as: process
 status: planned
-secret:
-  what: how a reading that was accepted before is recognised
-  decision: docs/decisions/0001-accepted-ranges-are-kept-on-the-event-bus.md
 not:
   - storing readings for queries
   - knowing which plant a sensor stick belongs to, or who owns it

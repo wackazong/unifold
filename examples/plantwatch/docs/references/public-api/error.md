@@ -19,7 +19,7 @@ An error response has the body `{"code": "...", "message": "..."}`. A client dec
 | 429 | `rate_limited` | Too many requests | Repeat after the seconds given in the `Retry-After` header |
 | 503 | `unavailable` | A part of the server cannot be reached | Repeat later, keep the data |
 
-| Case | Request | Response |
+| Case | Input | Expected |
 |---|---|---|
-| Expired token | Any request, 366 days after the token was issued | `401` `unauthenticated` |
-| Too many requests | The 121st request with one token within a minute | `429` `rate_limited` with `Retry-After` |
+| Expired token | any request, 366 days after the token was issued | `401` `unauthenticated` |
+| Too many requests | the 121st request with one token within a minute | `429` `rate_limited` with `Retry-After` |

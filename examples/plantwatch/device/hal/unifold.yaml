@@ -1,9 +1,7 @@
 responsibility: Hardware abstraction of the sensor stick board
 kind: adapter
+runs-as: library
 status: planned
-secret:
-  what: the board, its pins, its peripherals and the radio stack of its vendor
-  decision: ../docs/decisions/0002-only-one-part-touches-the-hardware.md
 not:
   - converting raw values to percent, lux or degrees
   - deciding when to measure, what to keep and what to send
@@ -28,5 +26,3 @@ needs:
     summary: Analogue voltage that falls as the soil gets wetter
     contract: ../../docs/references/soil-probe.md
   ambient-sensor:
-    summary: Light and temperature sensor on an I2C bus
-    contract: ../../docs/references/ambient-sensor.md

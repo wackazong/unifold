@@ -15,15 +15,15 @@ The result is a new version of a contract that parts built for the previous vers
 4. **Change the profile.** Add new bytes only at the end of a value. Take new op codes, result codes and UUID numbers from the unused ranges. Write what a side built for the previous version does when it meets the new element; if the tolerance rules do not already cover it, the change is not minor.
 5. **Update the procedures**, the failure tables and the examples in [fetch.md](../../references/ble-profile/fetch.md) and [confirm.md](../../references/ble-profile/confirm.md) if behaviour changes. Write the example of a new case before anything else: it is the first test of every implementation.
 6. **Raise the version** in the first paragraph and the section "Version" of each changed contract, and in the [Info layout](../../references/ble-profile/info.md) if the profile changed.
-7. **Recompute every byte example**: in the [schema](../../references/reading-schema.md#examples), the [Info](../../references/ble-profile/info.md) and [Status](../../references/ble-profile/status.md) values, the [advertising](../../references/ble-profile/advertising.md#examples), the [fetch](../../references/ble-profile/fetch.md) and the [confirm](../../references/ble-profile/confirm.md).
-8. **Check the shared ranges.** If a unit, range or identifier form changes, it must first change at its source, the [conventions](../../references/conventions.md). Then correct each `Says` that cites it (`unifold impact` on the file lists them).
+7. **Recompute every byte example**: in the [schema](../../references/reading-schema.md#examples), the [Info](../../references/ble-profile/info.md) and [Status](../../references/ble-profile/status.md) values, the [advertising](../../references/ble-profile/advertising.md), the [fetch](../../references/ble-profile/fetch.md) and the [confirm](../../references/ble-profile/confirm.md).
+8. **Check the shared ranges.** If a unit, range or identifier form changes, it must first change at its source, the [conventions](../../references/conventions.md). Then correct each context item that cites it (`unifold impact` on the file lists them).
 9. Run the unifold generator and checker and fix what they report.
 
 ## Checks
 
 - Walk through "fetch stored readings and confirm" twice: old central with new sensor stick, new central with old sensor stick. Every step has a defined outcome.
 - Decode the example record by hand with the old layout table. Every field the old version knows has its old value.
-- No file exceeds 200 lines. If a part of the profile does, split it and link the new part from the profile's index.
+- No file exceeds 1,500 words. If a part of the profile does, split it and link the new part from the profile's index.
 - The contracts name no implementation. Every unit whose manifest names a contract still conforms to it.
 
 ## Reference

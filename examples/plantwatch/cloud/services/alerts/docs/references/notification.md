@@ -2,10 +2,19 @@
 
 Contract of `notifier.notification`: the function `notify`, what it sends to whoever provides `push`, and the texts. What a notification is for a client of the product is cited in [context](../explanation/context.md). Notation: wit.
 Sources: the push service contract of plantwatch.
+Binding: in-process
 
 ## Use
 
-The caller calls `notify` for an opened alert and reads the outcome. Two calls with the same alert produce equal requests, so the caller may call again after `retry`. The connection has no state: `notify` may be called at any time.
+The caller calls `notify` for an opened alert and reads the outcome. Two calls with the same alert produce equal requests, so the caller may call again after `retry`. A repeat that reaches a phone after the owner has dismissed the first notification is shown again; a caller keeps repeats rare by not calling `notify` again after `sent`. Every data field of the request is at most 40 characters. The connection has no state: `notify` may be called at any time.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| timeout | the caller waits up to 10 seconds for an outcome; `notify` returns within 6 seconds; a push service that has not answered within 5 seconds counts as `retry` |
+| idempotency | two calls with the same `alert` produce requests that are equal in every part, with the alert id as the collapse identifier |
+| limits | the title is at most 60 characters, the body at most 120 characters after the numbers are filled in |
 
 ## Parts
 
@@ -18,7 +27,7 @@ notify: func(alert: opened-alert) -> outcome;
 ```
 
 Pre: none.
-Result: one request to the push service, and the answer within 6 seconds. Two calls with the same `alert` produce requests that are equal in every part. The request:
+Result: one request to the push service, and the answer. The request:
 
 | Part | Value |
 |---|---|
@@ -30,7 +39,7 @@ Result: one request to the push service, and the answer within 6 seconds. Two ca
 | data `alert_id`, `plant_id`, `opened_at` | from the alert |
 | data `quantity`, `bound` | from the alert |
 
-The title is the name of the plant. The body is chosen by quantity and bound; `{value}` and `{threshold}` are written with the number of decimals of the resolution of the quantity and a decimal point. A body is at most 120 characters long after the numbers are filled in. The texts are English; the data fields allow a receiver to word the message itself. The text does not say when the reading was taken; `opened_at` is in the data.
+The title is the name of the plant. The body is chosen by quantity and bound; `{value}` and `{threshold}` are written with the number of decimals of the resolution of the quantity and a decimal point. The texts are English; the data fields allow a receiver to word the message itself. The text does not say when the reading was taken; `opened_at` is in the data.
 
 | `quantity` | `bound` | Body |
 |---|---|---|
@@ -43,19 +52,19 @@ The title is the name of the plant. The body is chosen by quantity and bound; `{
 | any other | any | Needs attention. |
 
 Errors: none as a failure of the call; the outcome says what happened. `sent` when the push service took the request. `failed` when it refused the request as malformed or too large, or because nobody is registered for the addressee. `retry` when it refused for too many requests, on an error of the service itself, with no connection or no answer within 5 seconds, or on an answer `notifier` does not understand.
-Examples: the alert `7d2c1c1e-…` of the plant "Monstera in the hall".
+Examples: the alert `7d2c1c1e-…` of the plant "Monstera in the hall"; `Given` is the answer of the push service.
 
-| Case | Call and answer of the push service | Outcome and request |
-|---|---|---|
-| dry soil | `soil_moisture`/`min`, value 28.4, threshold 30.0; taken | `sent`; body "Needs water. Soil moisture is 28.4 %, below 30.0 %." |
-| dark | `light`/`min`, value 640, threshold 800; taken | `sent`; body "Needs more light. The brightest reading of the last day was 640 lux, below 800 lux." |
-| frost | `temperature`/`min`, value -3.5, threshold 5.0; taken | `sent`; body "Too cold. It is -3.5 °C, below 5.0 °C." |
-| called again | the first case once more | `sent`; a request equal to the first in every part, collapse identifier `7d2c1c1e-…` |
-| busy | any alert; refused with "too many requests" | `retry` |
-| silence | any alert; no answer within 5 seconds | `retry`, returned within 6 seconds |
-| nobody registered | any alert; refused, no phone for the owner | `failed` |
-| long name | a plant name of 80 characters; taken | `sent`; the title is its first 60 characters |
-| unknown quantity | `soil_ph`/`min`; taken | `sent`; body "Needs attention." |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| dry soil | the request is taken | `soil_moisture`/`min`, value 28.4, threshold 30.0 | `sent`; body "Needs water. Soil moisture is 28.4 %, below 30.0 %." |
+| dark | the request is taken | `light`/`min`, value 640, threshold 800 | `sent`; body "Needs more light. The brightest reading of the last day was 640 lux, below 800 lux." |
+| frost | the request is taken | `temperature`/`min`, value -3.5, threshold 5.0 | `sent`; body "Too cold. It is -3.5 °C, below 5.0 °C." |
+| called again | the request is taken | the alert of `dry soil` once more | `sent`; a request equal to the first in every part, collapse identifier `7d2c1c1e-…` |
+| busy | refused with "too many requests" | any alert | `retry` |
+| silence | no answer within 5 seconds | any alert | `retry`, returned within 6 seconds |
+| nobody registered | refused, no phone for the owner | any alert | `failed` |
+| long name | the request is taken | an alert of a plant whose name has 80 characters | `sent`; the title is the first 60 characters of the name |
+| unknown quantity | the request is taken | `soil_ph`/`min` | `sent`; body "Needs attention." |
 
 ### opened-alert
 

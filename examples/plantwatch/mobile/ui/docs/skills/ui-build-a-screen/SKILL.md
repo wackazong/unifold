@@ -18,7 +18,7 @@ A screen is finished when every state it can be in is described, built and check
    - no comparison of a reading with a threshold anywhere in the screen,
    - no loading state for data on the phone,
    - no state shown by colour alone.
-7. **Test with prepared data:** every case of the table "Examples" in [plant data](../../../../docs/references/plant-data/index.md#examples). If the screen has a state that no case reaches, add the case there first.
+7. **Test with prepared data:** every case of the table "Examples" in [plant data](../../../../docs/references/plant-data/index.md#use). If the screen has a state that no case reaches, add the case there first.
 8. **Test accessibility:** the largest text size of the system, the screen reader of each platform from the first to the last control, and a contrast check of every text.
 9. **Record a decision** in [decisions](../../decisions/index.md) with status `proposed` if the screen changes the navigation.
 10. **Finish.** Run the generator and the checker of the project and review the files you changed.
