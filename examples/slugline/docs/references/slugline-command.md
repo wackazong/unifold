@@ -2,6 +2,8 @@
 
 Contract of `cli.slugline-command`: the command `slugline`. Notation: usage text.
 Sources: the tests of `cli`
+Binding: cli
+Version: 1
 
 ## Use
 

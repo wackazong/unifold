@@ -2,10 +2,18 @@
 
 Contract of `core.slugify`: a function that turns one string into one slug, with or without a plug-in. What a slug is, is in [slug.md](slug.md). Notation: wit.
 Sources: the tests of `core`
+Binding: in-process
+Version: 1
 
 ## Use
 
-A program turns a string into a slug with `slugify`, or with `slugify-with` and a plug-in that replaces letters outside ASCII. Both parts are pure functions: they may be called at any time, also at the same time.
+A program turns a string into a slug with `slugify`, or with `slugify-with` and a plug-in that replaces letters outside ASCII. The connection has no state: any part may be called at any time.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| concurrency | both functions are pure: the result depends on the arguments alone, and they may be called at the same time |
 
 ## Parts
 
@@ -18,7 +26,7 @@ slugify: func(input: string, options: options) -> string;
 ```
 
 Pre: none.
-Result: a slug as [slug.md](slug.md) defines it. Letters and digits of ASCII are kept, in lower case. An apostrophe is dropped. Any other ASCII character ends a word. A character outside ASCII is dropped. Exactly one separator stands between two words, none at the start or the end, also after a cut at `max-len`. The result has at most `max-len` characters. A slug is its own slug.
+Result: a slug as [slug.md](slug.md) defines it. Letters and digits of ASCII are kept, in lower case. An apostrophe is dropped. Any other ASCII character ends a word. A character outside ASCII is dropped, unless it is white space, which ends a word. Exactly one separator stands between two words, none at the start or the end, also after a cut at `max-len`. The result has at most `max-len` characters. A slug is its own slug.
 Errors: none.
 Examples:
 
@@ -30,6 +38,7 @@ Examples:
 | own separator | `slugify("Hello, World!", {separator: "_"})` | `hello_world` |
 | cut at the limit | `slugify("Hello, World!", {max-len: 6})` | `hello` |
 | diacritics dropped | `slugify("Crème brûlée", default)` | `crme-brle` |
+| no-break space ends a word | `slugify("a\u{00a0}b", default)` | `a-b` |
 | a slug is its own slug | `slugify("hello-world", default)` | `hello-world` |
 
 ### slugify-with
@@ -45,12 +54,14 @@ Result: a slug like `slugify`, where every character outside ASCII is first give
 Errors: none.
 Examples:
 
-| Case | Input | Expected |
-|---|---|---|
-| letters replaced | `slugify-with("Crème brûlée", default, latin)` where latin answers `è`→`e`, `û`→`u`, `é`→`e` | `creme-brulee` |
-| one letter becomes two | `slugify-with("Straße", default, latin)` where latin answers `ß`→`ss` | `strasse` |
-| plug-in does not know | `slugify-with("naïve", default, latin)` where latin answers `ï`→`none` | `nave` |
-| empty answer | `slugify-with("a→b", default, latin)` where latin answers `→`→`""` | `ab` |
+| Case | Given | Input | Expected |
+|---|---|---|---|
+| letters replaced | latin answers `è`→`e`, `û`→`u`, `é`→`e` | `slugify-with("Crème brûlée", default, latin)` | `creme-brulee` |
+| one letter becomes two | latin answers `ß`→`ss` | `slugify-with("Straße", default, latin)` | `strasse` |
+| answer in upper case | latin answers `É`→`E` | `slugify-with("École", default, latin)` | `ecole` |
+| answer with a space | latin answers `→`→`" to "` | `slugify-with("A→B", default, latin)` | `a-to-b` |
+| empty answer | latin answers `™`→`""` | `slugify-with("Slug™", default, latin)` | `slug` |
+| plug-in does not know | latin answers `ï`→`none` | `slugify-with("naïve", default, latin)` | `nave` |
 
 ### options
 

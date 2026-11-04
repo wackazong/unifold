@@ -28,15 +28,24 @@ scenarios:
     summary: The command turns its arguments into one slug with the plug-in
     source: the README of the command
     hops:
-      - slugline-command -> cli.slugline(Crème brûlée): creme-brulee, exit 0
+      - slugline-command -> cli.slugline(Crème brûlée): = arguments-with-diacritics
+      - cli -> plugins/unicode.latin(): = the-plug-in
       - cli -> core.slugify-with("Crème brûlée", default, unicode): creme-brulee
-      - cli -> plugins/unicode.transliterate('è'): e
-      - plugins/unicode -> core.transliterate: ok
+      - core -> plugins/unicode.transliterate('è'): e
+      - core -> plugins/unicode.transliterate('û'): u
+      - core -> plugins/unicode.transliterate('é'): e
     expect: "`slugline Crème brûlée` prints `creme-brulee` and exits with 0"
   library-call:
     summary: A program calls the library with a plug-in of its own
     source: the tests of core
     hops:
-      - slugify -> core.slugify-with("Straße", default, plugin): strasse
-      - plugin-api -> core.transliterate('ß'): ss
+      - slugify -> core.slugify-with("Straße", default, plugin): = one-letter-becomes-two
+      - core -> plugin-api.transliterate('ß'): = several-letters
     expect: "`slugify_with(\"Straße\", &Options::default(), &plugin)` returns `strasse` when the plug-in answers `ss` for `ß`"
+  ascii-only:
+    summary: With --ascii the command drops letters outside ASCII instead of asking the plug-in
+    source: the README of the command
+    hops:
+      - slugline-command -> cli.slugline(--ascii Crème brûlée): = ascii-only
+      - cli -> core.slugify("Crème brûlée", default): = diacritics-dropped
+    expect: "`slugline --ascii Crème brûlée` prints `crme-brle` and exits with 0"

@@ -1,8 +1,9 @@
 responsibility: The slugline command
 kind: adapter
+runs-as: process
 not:
-  - the rules of a slug: slugify
-  - the character tables: transliteration
+  - the rules of a slug; the need `slugify` provides them
+  - the character tables; the need `transliteration` provides them
 capabilities:
   slugline-command:
     summary: Prints its arguments as one slug, or one slug for each line of standard input

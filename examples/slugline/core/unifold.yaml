@@ -1,8 +1,6 @@
 responsibility: Makes slugs and defines what a transliteration plug-in must provide
 kind: logic
-secret:
-  what: the rules that make a slug
-  decision: docs/decisions/0001-a-plug-in-is-passed-with-each-call.md
+runs-as: library
 not:
   - character tables; they are a plug-in behind the trait
   - unique slugs

@@ -2,12 +2,36 @@
 
 Contract of `unicode.transliteration`: a plug-in that replaces Latin letters with diacritics, and ligatures, by ASCII letters. It implements the trait of [plugin-api](plugin-api.md). Notation: wit.
 Sources: the Unicode blocks Latin-1 Supplement and Latin Extended-A
+Binding: in-process
 
 ## Use
 
-A consumer asks the plug-in about one character at a time. The plug-in has no state: `transliterate` may be called at any time, also at the same time.
+A consumer takes the plug-in with `latin` and passes it to `slugify-with` of [slugify](slugify.md), or asks it about one character at a time with `transliterate`. The connection has no state: any part may be called at any time.
+
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| concurrency | the plug-in is a table with no side effects; `transliterate` may be called at any time, also at the same time |
 
 ## Parts
+
+### latin
+
+Kind: query
+
+```wit
+latin: func() -> transliterate;
+```
+
+Pre: none.
+Result: the plug-in for Latin script, a `transliterate` of [plugin-api](plugin-api.md) whose answers are those of the part `transliterate` below. Every call returns the same table.
+Errors: none.
+Examples:
+
+| Case | Input | Expected |
+|---|---|---|
+| the plug-in | `latin()` | a plug-in with the answers of `transliterate` |
 
 ### transliterate
 
