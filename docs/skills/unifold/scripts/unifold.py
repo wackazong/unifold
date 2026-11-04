@@ -5038,7 +5038,7 @@ nav a:hover{background:var(--bg);color:var(--fg)}
 nav a.on{background:var(--accent-soft);border-left-color:var(--accent);color:var(--fg);font-weight:700}
 main{flex:1;min-width:0;padding:20px 32px 40px}
 a{color:var(--hi);text-underline-offset:.2em;text-decoration-thickness:.07em}a:hover{text-decoration-thickness:.13em}
-h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--slab);margin:1.8em 0 .5em}
+h1{font:400 60px/1.1 var(--slab);margin:.2em 0 .3em;overflow-wrap:anywhere}h2{font:400 44px/1.2 var(--slab);margin:1.2em 0 .4em}
 .mute{color:var(--mute)}.crumbs{font-size:14px}.crumbs a,.go{cursor:pointer}
 .badge{display:inline-block;font:600 12px/1.6 var(--sans);padding:0 8px;border-radius:3px;border:1px solid var(--line);color:var(--mute);vertical-align:middle}
 .badge.planned,.badge.deprecated,.badge.proposed{color:var(--warn);background:var(--warnbg);border-color:transparent}
@@ -5115,9 +5115,9 @@ tr.flash td{animation:flash 2.4s ease-out}#diagram text.messageText.step:hover{f
 .theme:hover{border-color:var(--fg)}.theme:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.theme[hidden],.theme[aria-pressed="true"] .sun,.theme:not([aria-pressed="true"]) .moon{display:none}
 /* a document: README.md on the page of its unit, every other Markdown file on a page of its own; set like the chapters of unifold.md */
 .prose{font-size:16px;line-height:1.65;overflow-wrap:break-word}.prose>*{max-width:46rem}.prose>:is(.table,pre,.figure){max-width:100%}.prose>:first-child{margin-top:.5em}
-.prose h2{font:400 22px/1.2 var(--slab);margin:1.9em 0 .5em}.prose h3{font:700 17px/1.3 var(--sans);margin:1.7em 0 .4em}
-.prose.contract h2:not(:first-child){margin-top:2.4em;padding-top:1em;border-top:1px solid var(--line)}   /* a contract: its sections ruled off, each part a bar one can find when scrolling */
-.prose.contract h3{font:600 16px/1.3 var(--mono);margin:2.4em 0 .8em;padding:.45em .8em;background:var(--code);border:1px solid var(--code-line);border-left:4px solid var(--accent);border-radius:4px}.prose :is(h4,h5,h6){font:700 15px/1.35 var(--sans);margin:1.5em 0 .3em}
+.prose h3{font:700 34px/1.2 var(--sans);margin:1.2em 0 .3em}
+.prose.contract h2:not(:first-child){margin-top:1.4em;padding-top:.6em;border-top:1px solid var(--line)}   /* a contract: its sections ruled off, each part named in code font */
+.prose.contract h3{font:600 32px/1.2 var(--mono);margin:1.4em 0 .4em}.prose :is(h4,h5,h6){font:700 15px/1.35 var(--sans);margin:1.5em 0 .3em}
 .prose :is(p,ul,ol,blockquote){margin:.85em 0}.prose :is(ul,ol){padding-left:1.6em}.prose li{margin:.3em 0}.prose li>:is(p,ul,ol){margin:.35em 0}
 .prose p.field{margin:.5em 0}.prose li.task{list-style:none}.prose li.task>input{margin:0 .45em 0 -1.4em;accent-color:var(--accent)}
 .prose pre{margin:1.1em 0;padding:12px 16px;background:var(--code);border-radius:4px;overflow-x:auto;font:13px/1.55 var(--mono);tab-size:2}.prose pre code{background:none;border:0;padding:0;font-size:inherit}
@@ -5127,10 +5127,11 @@ tr.flash td{animation:flash 2.4s ease-out}#diagram text.messageText.step:hover{f
 .figure{margin:1.2em 0;padding:16px;border:1.5px solid var(--frame);border-radius:4px;background:var(--paper);overflow-x:auto}.figure svg{display:block;max-width:100%;height:auto;margin:0 auto}
 :is(#diagram,.figure) .node circle.state-start{fill:var(--ink)!important}:is(#diagram,.figure) path.transition{stroke:var(--accent)!important;stroke-width:2px!important;fill:none!important}   /* a state diagram: its start, its steps */
 #info .wide>*{max-width:none}#info .wide>h2:first-child{margin-top:1.4em}#info .wide li{margin:.3em 0}#doc[hidden],#bar[hidden],#diagram[hidden]{display:none}
-#info h3{font:600 12px/1.4 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:1.4em 0 .2em}#info ul{margin:.3em 0;padding-left:1.4em}#info li{margin:.2em 0}#info li.on{font-weight:700}
+#info h3{font:600 24px/1.3 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:1.2em 0 .2em}#info ul{margin:.3em 0;padding-left:1.4em}#info li{margin:.2em 0}#info li.on{font-weight:700}
 @media(hover:none){.anchor{opacity:.45}}
 @media(max-width:800px){.theme{position:absolute;top:12px;right:12px;margin:0}body{display:block}nav{width:auto;max-height:none;position:static}main{padding:16px}th,td{padding:6px 8px}
-  nav .docs{display:none}.prose{font-size:15.5px}.prose pre{padding:10px 12px}.figure{padding:10px}}
+  nav .docs{display:none}.prose{font-size:15.5px}.prose pre{padding:10px 12px}.figure{padding:10px}
+  h1{font-size:38px}h2{font-size:30px}.prose h3{font-size:24px}.prose.contract h3{font-size:22px}#info h3{font-size:18px}}   /* the large headings would fill a phone */
 </style></head><body>
 <nav id="tree"></nav>
 <main>
