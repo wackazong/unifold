@@ -1702,6 +1702,14 @@ def scenario_views(runner: Runner, tmp: str):
     check_mermaid(full)
     check("rect rgba(" in full and "scenario a.inner" in full and "a -> b.do" not in full and "| 2 | `a` | `b` | `do` |" in full,
           f"expanded view: the included hops as a block with a translucent shade, for light and dark pages:\n{full}")
+    for count, mirrored in ((11, "false"), (12, "true")):   # a query is two rows, its arrow and its return, and the expectation one more: 23 and 25
+        hops = "".join("      - a -> b.do: ok\n" for _ in range(count))
+        folder = new_project(str(Path(tmp) / f"long-{count}"), project(
+            f"wiring:\n  a.x: b.x\nscenarios:\n  s1:\n    summary: s\n    hops:\n{hops}    expect: e\n",
+            {"a": NEEDS_X, "b": CAPABILITY_X}, contracts={"x": ["do"]}))
+        page = runner.run("scenario", str(folder), "s1").stdout
+        check_mermaid(page)
+        check(f"mirrorActors: {mirrored}" in page, f"{2 * count + 1} rows: mirrorActors {mirrored}:\n{page}")
 
 
 def scenario_include_inside_the_call(runner: Runner, tmp: str):

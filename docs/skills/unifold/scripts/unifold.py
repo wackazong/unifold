@@ -3390,6 +3390,12 @@ def lifelines_of(scenario: dict) -> dict:
     return about
 
 
+# A long picture repeats its boxes at the bottom: the top has scrolled away by then, and Mermaid draws a
+# lifeline only 2000 high unless it repeats them. A row, an arrow or a note, takes at most about 80.
+LONG_SEQUENCE = 24
+SEQUENCE_ROW = re.compile(r"^\s*(Note |\S+?(-->>|->>|-\))\S+:)")
+
+
 def scenario_sequence(scenario: dict) -> tuple:
     """The sequence diagram of a scenario, one lifeline per name as written: (Mermaid lines,
     {name: participant id}). A lifeline stands right after the ones introduced through the same
@@ -3434,7 +3440,7 @@ def scenario_sequence(scenario: dict) -> tuple:
         re.sub(r"^(↩ )?(\d+) · ", lambda m: f"{m[1] or ''}{m[2]}{NBSP}·{NBSP}", str(t)).replace(" → ", f" →{NBSP}").replace(" steps)", f"{NBSP}steps)").replace(" step)", f"{NBSP}step)"),
         STEP_WIDTH, break_long_words=False, break_on_hyphens=False))
     about = lifelines_of(scenario)
-    lines = ["---", "config:", "  sequence:", "    mirrorActors: false", "---", "sequenceDiagram"]   # the names stand on top only: a picture stays short
+    lines = ["---", "config:", "  sequence:", "    mirrorActors: false", "---", "sequenceDiagram"]   # the names stand on top only, unless the picture is long: see the end
     for n in names:
         kind = about.get(n, ("", ""))[0]              # what a lifeline does is in the table of the page: a narrow box leaves the picture wide enough to read
         lines.append(f'  participant {ids[n]} as {text(n)}' + (f"<br/>{text(f'«{kind}»')}" if kind else ""))
@@ -3544,6 +3550,8 @@ def scenario_sequence(scenario: dict) -> tuple:
     if expect and names and names[-1]:                # `wrap:` keeps a long expectation within the lifelines
         lines.append(f"  Note over {ids[names[0]]},{ids[names[-1]]}: wrap: Expect: {text(expect)}"
                      if len(names) > 1 else f"  Note over {ids[names[0]]}: wrap: Expect: {text(expect)}")
+    if sum(1 for line in lines if SEQUENCE_ROW.match(line)) > LONG_SEQUENCE:
+        lines[3] = "    mirrorActors: true"
     return lines, ids
 
 
@@ -5173,8 +5181,8 @@ function groups(u){                  // the documents of a unit by kind, in the 
   return Object.entries(KINDS).map(([k, label]) => [k, label, (of[k] || []).filter(p => docs[p])]).filter(g => g[2].length);}
 function anchors(box, route){        // the link beside a heading; the ids come with the document
   for (const h of box.querySelectorAll(":is(h2,h3,h4,h5,h6)[id^='md-']")) h.insertAdjacentHTML("beforeend", ` <a class="anchor" href="${esc(hashOf(route, h.id.slice(3)))}" aria-label="Link to this section">#</a>`);}
-function lifelines(box){             // Mermaid draws a lifeline 2000 high and corrects it only when it repeats the boxes at the bottom, which a scenario does not
-  const svg = box.querySelector("svg"); if (!svg) return; const v = svg.viewBox.baseVal;
+function lifelines(box){             // Mermaid draws a lifeline 2000 high and corrects it only when it repeats the boxes at the bottom, which a short scenario does not
+  const svg = box.querySelector("svg"); if (!svg || svg.querySelector(".actor-bottom")) return; const v = svg.viewBox.baseVal;
   for (const l of svg.querySelectorAll(".actor-line")) l.setAttribute("y2", v.y + v.height);}
 let figure = 0;
 async function figures(box){         // the Mermaid blocks of a document, drawn like the map; without Mermaid they stay source
