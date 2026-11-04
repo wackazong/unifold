@@ -5081,7 +5081,7 @@ h1{font:400 30px/1.15 var(--slab);margin:.2em 0 .3em}h2{font:400 21px/1.2 var(--
 #diagram.trace .edgePaths path:not(.lit){opacity:.3}
 #diagram.trace .node:not(.lit) :is(rect,polygon,path,circle,ellipse){stroke:var(--frame)!important;fill:var(--paper)!important;filter:none!important}
 #diagram.trace .node:not(.lit) :is(.nodeLabel,.nodeLabel *),#diagram.trace .edgeLabel:not(.lit) :is(p,span){color:var(--frame)!important}
-#strip{display:flex;gap:6px;margin:12px 0 -4px;overflow-x:auto;white-space:nowrap;font:14px/1.2 var(--sans);padding-bottom:4px}
+#strip{display:flex;gap:6px;margin:12px 0 -4px;overflow-x:auto;white-space:nowrap;font:14px/1.2 var(--sans);padding-bottom:4px;scrollbar-width:none}#strip::-webkit-scrollbar{display:none}   /* it still scrolls, and follows the run: a scrollbar would only flicker */
 #strip .chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border:1.5px solid var(--frame);border-radius:999px;color:var(--fg-2);cursor:pointer;flex:none}
 #strip .chip b{font-weight:700;color:var(--ink)}#strip .chip:hover{border-color:var(--fg)}#strip .chip.now{background:var(--amber-hl);border-color:var(--amber);color:var(--ink);transition:background .25s,border-color .25s}
 #diagram.trace .edgePaths path.lit{stroke:var(--accent)!important;stroke-width:2.5px!important}#diagram.trace .edgePaths path.now{stroke:var(--amber)!important;stroke-width:4px!important}
