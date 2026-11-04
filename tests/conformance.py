@@ -1340,6 +1340,8 @@ def scenario_explore(runner: Runner, tmp: str):
           "the page holds the model, its connections and status")
     dark = re.findall(r":root(?:\[data-theme=dark\]|:not\(\[data-theme=light\]\))\{(.*?)\}", html, re.S)
     check(len(dark) == 2 and dark[0] == dark[1], "the dark colours are the same for the button and for the system")
+    check('lifelines(el("diagram"))' in html and "lifelines(f)" in html and 'querySelectorAll(".actor-line")' in html,
+          "a lifeline reaches the end of a diagram taller than the 2000 that Mermaid draws without boxes at the bottom")
     fake = Path(tmp) / "mermaid.min.js"
     fake.write_text("window.mermaid = {initialize(){}, render: async () => ({svg: '<svg></svg>'})};\n")
     done = runner.run("explore", "--no-open", str(folder), "-o", str(out.parent), "--mermaid", str(fake))

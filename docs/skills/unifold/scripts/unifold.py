@@ -5171,12 +5171,15 @@ function groups(u){                  // the documents of a unit by kind, in the 
   return Object.entries(KINDS).map(([k, label]) => [k, label, (of[k] || []).filter(p => docs[p])]).filter(g => g[2].length);}
 function anchors(box, route){        // the link beside a heading; the ids come with the document
   for (const h of box.querySelectorAll(":is(h2,h3,h4,h5,h6)[id^='md-']")) h.insertAdjacentHTML("beforeend", ` <a class="anchor" href="${esc(hashOf(route, h.id.slice(3)))}" aria-label="Link to this section">#</a>`);}
+function lifelines(box){             // Mermaid draws a lifeline 2000 high and corrects it only when it repeats the boxes at the bottom, which a scenario does not
+  const svg = box.querySelector("svg"); if (!svg) return; const v = svg.viewBox.baseVal;
+  for (const l of svg.querySelectorAll(".actor-line")) l.setAttribute("y2", v.y + v.height);}
 let figure = 0;
 async function figures(box){         // the Mermaid blocks of a document, drawn like the map; without Mermaid they stay source
   if (!mermaid) return;
   for (const pre of [...box.querySelectorAll("pre.mermaid")]) {
     try { const {svg} = await mermaid.render("f" + ++figure, pre.textContent); if (!pre.isConnected) return;
-      const f = document.createElement("div"); f.className = "figure"; f.innerHTML = svg; pre.replaceWith(f);
+      const f = document.createElement("div"); f.className = "figure"; f.innerHTML = svg; lifelines(f); pre.replaceWith(f);
     } catch (err) { if (pre.isConnected) pre.title = "The diagram could not be drawn: " + err; }
   }
 }
@@ -5448,7 +5451,7 @@ async function draw(source, wire){   // Mermaid source into the diagram box; `wi
   try {
     const {svg} = await mermaid.render("g" + Date.now(), source);
     if (mine !== drawn) return;          // a newer page is on its way
-    el("diagram").innerHTML = svg; wire();
+    el("diagram").innerHTML = svg; lifelines(el("diagram")); wire();
   } catch (err) { el("diagram").innerHTML = "<p>The diagram could not be drawn: " + esc(err) + "</p><pre>" + esc(source) + "</pre>"; }
 }
 document.addEventListener("click", ev => {
