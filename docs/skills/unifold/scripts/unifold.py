@@ -4358,7 +4358,9 @@ tr.now td{background:var(--amber-hl)}
 .st{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:baseline;border:1.5px dashed currentColor;opacity:.75}
 .st.deprecated{border-style:solid;background:linear-gradient(to top right,transparent 44%,currentColor 44% 56%,transparent 56%)}
 nav .legend{margin:14px 6px 0;font-size:12px;color:var(--mute)}nav .legend .st{margin:0 4px 0 0}
-nav .navhead{margin:20px 8px 4px;font:600 12px/1.4 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}nav .holder{margin:8px 8px 0;font-size:12px;color:var(--mute)}
+/* the sections of the navigation (units, documents, scenarios, decisions): each under a ruled head in the text colour; the groups inside a section one step down, the decisions, which have no groups, flush like the scenarios */
+nav .navhead{margin:22px 0 6px;padding:12px 8px 0;border-top:1px solid var(--line);font:700 12px/1.4 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--fg)}
+nav>.navhead:first-child{margin-top:0;padding-top:0;border-top:0}nav .decisions>ul{padding-left:0}nav .holder{margin:10px 8px 2px;font:600 12px/1.4 var(--sans);color:var(--mute)}
 #facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:4px 0 18px;padding:12px 16px;background:var(--panel);border-left:3px solid var(--accent);border-radius:0 4px 4px 0}#facts[hidden]{display:none}
 .nw{white-space:nowrap}td.text{min-width:14em}#facts dt{font:600 12px/1.6 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute);padding-top:2px}#facts dd{margin:0}
 table{border-collapse:collapse;margin:10px 0;width:100%;font-size:14px;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
@@ -4472,10 +4474,13 @@ function tree(path){const u = byPath[path]; const kids = u.children.map(c => tre
   return `<li><a data-path="${esc(path)}" class="go${path === state.path && !state.scenario ? " on" : ""}">${esc(u.name)}${u.status !== "active" ? `<span class="st ${esc(u.status)}" title="${esc(u.status)}"></span>` : ""}</a>${kids ? "<ul>" + kids + "</ul>" : ""}</li>`;}
 const named = p => p === "." ? model.name : p;
 const pin = (p, t) => { const st = byPath[p].status; return `<span class="nw"><a class="go" data-path="${esc(p)}">${esc(t ?? named(p))}</a>` + (st !== "active" ? `<span class="st ${esc(st)}" title="${esc(st)}"></span>` : "") + "</span>"; };   // the status as in the tree
-function docTree(u){                 // the documents of the unit shown, beside the map
-  const g = groups(u); if (!g.length) return "";
-  return `<div class="docs"><p class="navhead">Documents of ${esc(u.name)}</p>` + g.map(([k, label, paths]) => `<p class="holder">${label}</p><ul>`
-    + paths.map(p => `<li><a href="${esc(href(p))}"${p === state.doc || (state.doc && docs[state.doc].contract === p) ? ' class="on"' : ""}>${title(p)}</a></li>`).join("") + "</ul>").join("") + "</div>";}
+const docList = paths => "<ul>" + paths.map(p => `<li><a href="${esc(href(p))}"${p === state.doc || (state.doc && docs[state.doc].contract === p) ? ' class="on"' : ""}>${title(p)}</a></li>`).join("") + "</ul>";
+function docTree(u){                 // the documents of the unit shown, beside the map; the decisions have a section of their own at the end
+  const g = groups(u).filter(([k]) => k !== "decisions"); if (!g.length) return "";
+  return `<div class="docs"><p class="navhead">Documents of ${esc(u.name)}</p>` + g.map(([k, label, paths]) => `<p class="holder">${label}</p>` + docList(paths)).join("") + "</div>";}
+function decisionTree(u){            // the decisions of the unit shown: last, after the scenarios, so their long titles push nothing down
+  const g = groups(u).find(([k]) => k === "decisions");
+  return g ? `<div class="docs decisions"><p class="navhead">Decisions of ${esc(u.name)}</p>` + docList(g[2]) + "</div>" : "";}
 function map(on){for (const id of ["bar", "diagram", "shared", "hint"]) el(id).hidden = !on;}
 const sceneLink = (s, t) => `<a class="go" data-path="${esc(s.unit)}" data-scenario="${esc(s.name)}">${t ?? esc(s.name)}</a>`;
 function sceneTree(){                // every scenario of the project, under the unit that holds it when there are several
@@ -4492,7 +4497,7 @@ async function render(){
   const u = byPath[state.path]; const kinds = Object.keys(u.diagrams);
   run++; el("play").hidden = true; el("strip").hidden = true;
   const kind = kinds.includes(state.kind) ? state.kind : (kinds.includes("component") ? "component" : kinds[0]);
-  el("tree").innerHTML = "<ul>" + tree(".") + "</ul>" + docTree(u) + sceneTree() + (legend ? `<p class="legend">${legend}</p>` : "");
+  el("tree").innerHTML = "<p class='navhead'>Units</p><ul>" + tree(".") + "</ul>" + docTree(u) + sceneTree() + decisionTree(u) + (legend ? `<p class="legend">${legend}</p>` : "");
   const chain = []; for (let p = u.parent; p; p = byPath[p.path].parent) chain.unshift(p.path);
   if (state.doc) return reading(state.doc, chain);
   map(true);
