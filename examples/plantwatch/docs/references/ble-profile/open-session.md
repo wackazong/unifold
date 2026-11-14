@@ -1,6 +1,6 @@
 # open-session
 
-Kind: command
+Kind: operation
 
 ```text
 1. connect to the advertising sensor stick

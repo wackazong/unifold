@@ -6,7 +6,7 @@ license: MIT OR Apache-2.0
 
 # unifold
 
-In a unifold project some folders are **units**: they contain a `unifold.yaml` that says what the folder is responsible for, what it provides, its **capabilities**, and what it **needs**. The nearest unit above connects each need to a provider in its `wiring`. Every connection has a **contract**, one document with the parts both sides use, their examples and the fake that tests use. A **scenario** in a manifest is a path through the software, told as hops across the map with the result of every step. A contract says how its connection is used and declares the **states** of the connection, and every scenario follows them. A tool checks that all of this is consistent and generates the diagrams; it does not read code. The standard has three pages, starting at <https://unifold.md/spec>.
+In a unifold project some folders are **units**: they contain a `unifold.yaml` that says what the folder is responsible for, what it provides, its **capabilities**, and what it **needs**. The nearest unit above connects each need to a provider in its `wiring`. Every connection has a **contract**, one document with the parts both sides use, their examples and the fake that tests use. A **scenario** in a manifest is a story through the software, told as hops across the map, one step after the other. A contract says how its connection is used, and where the connection has **states**, which ones a consumer can see. A tool checks that all of this is consistent and draws the diagrams; it does not read code. The standard starts at <https://unifold.md/spec>.
 
 `unifold` below means the tool: `uvx unifold`, or the copy in this skill, `uv run <folder of this skill>/scripts/unifold.py`. It finds the project root from any folder inside the project.
 
@@ -37,8 +37,8 @@ Every unit has a `README.md`, and its `docs/` follows the conventions used below
 | Change a capability or a need | The above; then `unifold capability` for that entry and `unifold impact` |
 | Change a value, a limit, a default | `unifold impact` on the unit; the row in `docs/references/constants.md` where one exists; then search the project for the old value in every notation (15 minutes, 900 s) |
 | Write or change a contract | The contract itself, part by part: <https://unifold.md/contracts>; `unifold capability` for every side that names it |
-| Tell a story of the system | The scenarios of the manifests on its path; `unifold scenario UNIT NAME` draws one |
-| Use or build one connection | Its contract: `## Use`, `## States`, then the parts; `unifold states UNIT CONTRACT` draws the states; the scenarios that pass over it |
+| Tell a story of the system | The scenarios of the manifests on its path; the explorer draws each |
+| Use or build one connection | Its contract: `## Use`, `## States`, then the parts; the explorer draws the states; the scenarios that pass over it |
 | Add a unit | The parent's `README.md` and manifest; for a repository without a map, the skill `unifold-convert` |
 | Understand why it is built this way | `README.md` `## Why`, then `docs/explanation/reasoning.md` and `docs/decisions/index.md` |
 | Find out what a term means | `docs/references/glossary.md` of the unit, then `docs/explanation/context.md`; a new term is a row there, from [glossary.template.md](assets/glossary.template.md) |
@@ -87,7 +87,6 @@ Report to the human:
 - **Up: start with `docs/explanation/context.md`.** It selects what applies from above and says what it means here. Follow a link upward when you need the source.
 - **Never sideways by guessing.** Do not open a sibling to learn what a need means; the need's text in your unit says what is expected. `show` tells you who provides it.
 - Do not link to a sibling; declare a need. Do not name siblings or users.
-- A document has at most 1,500 words ([writing](https://unifold.md/writing#markdown-style)).
 - Write as [write-a-document.md](procedures/write-a-document.md) says.
 
 ## What not to trust blindly

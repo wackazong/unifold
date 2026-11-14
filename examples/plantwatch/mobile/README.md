@@ -10,7 +10,7 @@ It does three jobs that run at different moments and fail for different reasons.
 
 The main trade-off: everything the owner sees comes from a store on the phone, never straight from the radio or the network ([0001](docs/decisions/0001-the-local-store-is-the-only-source-for-the-screens.md)). The screens are fast and work offline. The price is a second copy of the server's data, and rules for the case that the two copies differ.
 
-What must stay true: a reading is stored on the phone before the sensor stick is told to forget it, and it stays there until the server has it.
+What must stay true: a reading is stored on the phone before the sensor stick is told to forget it, and it stays there until the server has it, unless the phone leaves a lost session ([0006](docs/decisions/0006-leave-a-lost-session-without-uploading.md)).
 
 ## Read next
 
@@ -23,5 +23,4 @@ What must stay true: a reading is stored on the phone before the sensor stick is
 7. [app-ui.md of plantwatch](../docs/references/app-ui.md): what the owner can rely on
 8. [docs/references/glossary.md](docs/references/glossary.md): the app's own terms
 9. [docs/explanation/context.md](docs/explanation/context.md): what the app inherits from above
-10. [Component diagram](docs/diagrams/component.md)
-11. [Decisions](docs/decisions/index.md)
+10. [Decisions](docs/decisions/index.md)

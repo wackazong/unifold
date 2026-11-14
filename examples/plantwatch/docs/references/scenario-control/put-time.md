@@ -1,6 +1,6 @@
 # put-time
 
-Kind: command
+Kind: operation
 
 ```http
 PUT /time
@@ -20,4 +20,4 @@ Examples:
 | back in time | simulated time is 86 400 | `PUT /time` with `{"elapsed_s": 3600}` | `409` `time_in_the_past`; the state is unchanged |
 | across the restart | simulated time is 86 400 | `PUT /time` with `{"elapsed_s": 172800}` | `200`; `tick` is 2 / 0, `readings_taken` 193, `link.bonding_open` `true` |
 | unknown member | | `PUT /time` with `{"elapsed": 5}` | `400` `invalid_request` |
-| overflow | `drying-out` freshly loaded, no confirm | `PUT /time` with `{"elapsed_s": 2592000}` | `200`; `readings_taken` 2881, `stored` 2 880 from 2 to 2881, `overflow` `true`; `GET /readings?limit=1` then returns reading 1 with `state` `overwritten` |
+| overflow | `drying-out` freshly loaded, no confirm | `PUT /time` with `{"elapsed_s": 2592000}` | `200`; `readings_taken` 2881, `stored` 2 880 from 2 to 2881, `overflow` `true`; reading 1 is overwritten |

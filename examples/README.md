@@ -4,8 +4,8 @@ Three projects that use [unifold](https://unifold.md), for anyone who wants to s
 
 | Example | What it is | What it shows |
 |---|---|---|
-| [slugline](slugline/README.md) | A small Cargo workspace with code and tests: 3 crates, 4 units | The whole map in four manifests; a short README per unit, and in `core` a decision, an invariants file and a context item; a plug-in as a callback; tests named after the examples of the contracts, which `unifold trace` checks; the generated root `AGENTS.md`; what `check` prints when the map is wrong |
-| [serial-line](serial-line/README.md) | The design of a small program that opens a session over a serial line: 6 units, all `planned` | The three well-known kinds, a composite, a `not` per unit, six contracts with parts, examples, states and fakes, scenarios that include the scenarios of a child and repeat a polling step, decisions of status derived and proposed, a constants table. The example of the build method [maike](https://github.com/wackazong/maike) |
+| [slugline](slugline/README.md) | A small Cargo workspace with code and tests: 3 crates, 4 units | The whole map in four manifests; a short README per unit, and in `core` a decision, an invariants file and a context item; a plug-in that provides what `core` needs; tests named after the examples of the contracts, which `unifold trace` checks; the generated root `AGENTS.md`; what `check` prints when the map is wrong |
+| [serial-line](serial-line/README.md) | The design of a small program that opens a session over a serial line: 6 units, all `planned` | The three well-known kinds, a composite, a `not` per unit, six contracts with parts, examples, states and fakes, scenarios that include the scenarios of a child, and a polling step whose note says how often it repeats, decisions of status derived and proposed, a constants table |
 | [plantwatch](plantwatch/README.md) | The design of a product with firmware, a phone app and cloud services, written before any code: 22 units, all `planned` | Every document convention: the why in every README, explanation files (reasoning, invariants, runtime, deployment, risks, requirements), its decisions, context items, 27 contracts with parts, qualities, events and fakes, a story told once per level and composed by the tool, glossaries, skills, a tutorial for an end user; needs passed up as empty entries; alternatives. Much more than a unit should cost |
 
 ## Why
@@ -14,7 +14,7 @@ A standard is understood from an example faster than from its text, and every ru
 
 ## Why not more
 
-- A map of an existing open-source repository, such as the Rust workspace ripgrep, or Online Boutique, whose services in several languages call each other through needs. The map would lie beside code that this repository does not hold, and each release of that code could make it wrong. The skill `unifold-convert` writes such a map for a repository at hand.
+- A map of an existing open-source repository, such as the Rust workspace [ripgrep](https://github.com/BurntSushi/ripgrep), or [Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo), whose services in several languages call each other through needs. The map would lie beside code that this repository does not hold, and each release of that code could make it wrong. The skill `unifold-convert` writes such a map for a repository at hand.
 - Running code for plantwatch. It is a design; its units are `planned`.
 
 ## Commands
@@ -38,5 +38,5 @@ It needs [uv](https://docs.astral.sh/uv/), which installs Python and PyYAML.
 ## Read next
 
 1. [slugline](slugline/README.md), then its tutorials: the three commands, and what `check` prints when the map is broken.
-2. [serial-line](serial-line/README.md): one contract, one scenario (`unifold scenario serial-line open` draws it), one derived decision.
+2. [serial-line](serial-line/README.md): six contracts, scenarios across two levels, and decisions of status derived and proposed.
 3. [plantwatch](plantwatch/README.md), the front page of a product, and one leaf unit of it, such as the alert rules.

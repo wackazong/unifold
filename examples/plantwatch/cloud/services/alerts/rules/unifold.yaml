@@ -1,5 +1,4 @@
 responsibility: Evaluates readings against the thresholds of a plant
-kind: stateful
 runs-as: library
 status: planned
 not:

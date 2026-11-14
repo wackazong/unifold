@@ -1,6 +1,6 @@
 # get-plant
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/plants/{plant_id}

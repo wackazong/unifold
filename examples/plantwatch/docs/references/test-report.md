@@ -21,22 +21,22 @@ A developer or a build server starts a run with its settings, waits for the exit
 
 ### run
 
-Kind: command
+Kind: operation
 
 ```text
-run(settings: configuration, selected groups, report path) -> report file + exit status
+run(settings, selected groups, report path) -> report file + exit status
 ```
 
-Pre: the settings name a configuration and a report path; device and API exist before a run.
-Result: one report file per run, written always, also when the run could not start or was cut off by its time limit, at the report path of the settings; and an exit status: 0 when there is no failure, no error, and at least one test passed; 1 when there is at least one failure or error, or no test passed. Skipped tests do not change the exit status.
-Errors: exit status 2 when the settings are incomplete; no test was attempted, and the report contains every selected test as in error.
+Pre: the settings give the API address and the owner token; device and API exist before a run. The configuration follows from the settings, as [configurations.md](../../test-rig/docs/references/configurations.md) says.
+Result: one report file per run, written always, also when the run could not start or was cut off by its time limit, at the report path of the settings, by default `test-report.xml` in the working directory; and an exit status: 0 when there is no failure, no error, and at least one test passed; 1 when there is at least one failure or error, or no test passed. Skipped tests do not change the exit status.
+Errors: exit status 2 when the settings are incomplete, that is when the API address or the owner token is missing; no test was attempted, and the report contains every selected test as in error.
 Examples:
 
 | Case | Input | Expected |
 |---|---|---|
 | one failure | group `alert` in `real`: ALERT-01 is skipped, ALERT-04 fails | the report below; exit status 1 |
 | all pass | a group whose tests all pass | a report without `failure` and `error`; exit status 0 |
-| no settings | no report path given | exit status 2; the report lists every selected test as in error |
+| no settings | no owner token given | exit status 2; the report lists every selected test as in error |
 
 ### report
 

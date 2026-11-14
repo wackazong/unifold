@@ -1,4 +1,4 @@
-# Hooks for https://pre-commit.com; see docs/references/tool.md.
+# Hooks for https://pre-commit.com; see docs/references/tool-setup.md#hooks-and-continuous-integration.
 - id: unifold
   name: unifold check
   description: Check that the unifold map of the repository is consistent.

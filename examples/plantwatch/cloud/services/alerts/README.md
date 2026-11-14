@@ -16,4 +16,4 @@ What must stay true: an alert opens once, and an opened alert leads to one notif
 2. [alerts API](../../docs/references/alerts-api.md): how the API is served
 3. [docs/references/glossary.md](docs/references/glossary.md): the terms of this unit
 4. [docs/explanation/context.md](docs/explanation/context.md): what the unit inherits
-5. [Component diagram](docs/diagrams/component.md), [decisions](docs/decisions/index.md)
+5. [Decisions](docs/decisions/index.md)

@@ -1,8 +1,8 @@
 # Contracts
 
-A contract is the one document of a connection. Both sides of the connection name it, the tests of every consumer are written from it, and the stand-in that those tests use is defined in it. This chapter is the standard for its body: the sections, the parts, the fake and the folder form; [qualities.md](qualities.md) is the standard for `## Qualities`, and [scenarios.md](../explanation/scenarios.md#one-contract-three-readers) explains who reads a contract. [contract-example.md](contract-example.md) shows a contract written out in full.
+A contract is the one document of a connection. Both sides of the connection name it, the tests of every consumer are written from it, and the stand-in that those tests use is defined in it. This chapter is the standard for its body: the header, the sections and the fake. [contract-parts.md](contract-parts.md) is the standard for the parts, and [scenarios.md](../explanation/scenarios.md#one-contract-three-readers) explains who reads a contract. The contract [host](../../examples/serial-line/docs/references/host.md) of the example serial-line has every section, and `unifold check` reads it.
 
-A contract has these sections, in this order: the header, `## Use`, `## States` where the connection has state, `## Qualities` where the connection promises more than its parts say ([qualities.md](qualities.md)), `## Parts` and `## Fake`. What the checker reads of a contract is listed in [spec-conformance.md](spec-conformance.md#5-documents); it does not read the header or what `## Use` says. A contract that outgrows the word limit becomes a folder ([writing.md](writing.md#references-and-the-glossary)).
+A contract has these sections, in this order: the header, `## Use`, `## States` where the connection has state, `## Qualities` where the connection promises more than its parts say, `## Parts` and `## Fake`. It SHOULD have `## Use`, `## Parts` with at least one part, and `## Fake`. What the checker reads of a contract is listed in [spec-conformance.md](spec-conformance.md#5-documents); of the header it reads only `Carried by:`, and it reads nothing of what `## Use` and `## States` say. A contract that outgrows the word limit becomes a folder ([writing.md](writing.md#references-and-the-glossary)).
 
 ## The header
 
@@ -10,7 +10,7 @@ The `#` title is the name of the contract. Below it, the header says whose contr
 
 | Line | Required | Meaning |
 |---|---|---|
-| `Notation:` | yes | The notation of the signature blocks; `wit` by default. |
+| `Notation:` | no | The notation of the signature blocks. Default: `wit`. It may close the sentence that says whose contract it is. |
 | `Sources:` | yes | Where the facts come from, such as `proto §4`, or `none`. |
 | `Binding:` | no | How the connection travels: `in-process`, `http`, `message`, `cli`, `ble`, `file`, or another word. The diagrams show it. |
 | `Carried by:` | no | A link to the contract of the transport this connection rides on, such as an event stream on a message bus. A hop on this contract counts as a use of the carrier too, so the carrier's own parts appear in a scenario only where a unit uses them directly, such as a subscription or a commit. |
@@ -33,11 +33,10 @@ A consumer opens the session, sends frames while it is open, and closes it. One 
 - Where the order matters, such as for pairing or for a reconnect after a lost line, write it as a numbered list of the calls: the normal path first, then each failure that changes the state. A single call and its result stay a row of `Examples:`.
 - A connection without state says so: any part may be called at any time.
 - Where `## States` exists, the table holds the order of the calls and `## Use` says only what the table cannot: who may call at the same time, units and byte order, what a consumer does after a failure.
-- The checker reads only that the section exists. `## States` makes the order exact, and the scenarios in the manifests follow it ([spec-wiring.md](spec-wiring.md), section 4).
 
 ## States
 
-A connection with state declares its states. They are the states that a consumer can see or must respect; the states inside the provider stay in its `docs/explanation/runtime.md`.
+A connection with state says which states a consumer can see or must respect, and which parts move it from one to the next; the states inside the provider stay in its `docs/explanation/runtime.md`. Write them as a line `Start: <state>` and a table `State | Part | Result | Next`, one row per step that changes the state or that a state allows:
 
 ```markdown
 ## States
@@ -54,43 +53,32 @@ Start: closed.
 | open | `idle` | | closed |
 ```
 
-- `Start:` names the state of a new connection.
-- A row says that the part, in this state, with this result, leads to the next state. The result is empty for any result, `ok` for any result that is not an error, or an error case that `Errors:` of the part names in code font, such as `too-long` or `Pairing Not Supported`.
-- A part that a state does not list must not be called in that state. A failure that the table does not name leaves the state as it is. A success in a state that lists only failures of the part is not allowed.
-- Every row names a part. A deadline is an event that the provider raises when the time is up, such as `idle`, or the error of the next call.
+- A part that a state does not list must not be used in that state. A failure that the table does not name leaves the state as it is.
+- A deadline is an event that the provider raises when the time is up, such as `idle`, or the error of the next call.
 - The `Pre:` of a part does not repeat the state; the table says in which states the part is allowed.
 - A table that needs two machines that do not touch each other describes two connections, and becomes two contracts.
 
-The checker reads the table; `unifold states` and the explorer draw it.
+The table is for the people who implement and use the connection; no checker follows it, and a scenario does not track it. The explorer draws it as a state diagram below the table.
+
+## Qualities
+
+`## Qualities` holds what the connection promises beyond its parts. It SHOULD be a table `Aspect | Guarantee`, one row per aspect:
+
+```markdown
+## Qualities
+
+| Aspect | Guarantee |
+|---|---|
+| latency | an upload of 500 readings is answered within 200 ms |
+| concurrency | one call at a time per session |
+| delivery | at least once, in order per sensor id |
+```
+
+The aspects that most connections need a word on: latency, throughput, concurrency, ordering, delivery, idempotency, timeout, availability, limits and security. Any other aspect is allowed. The quality goals of a unit's `requirements.md` may link to its rows.
 
 ## Parts
 
-A part is one operation, event or type. The parts stand in the order in which a consumer uses them. The name of a part is the anchor of its `###` heading: the heading in lower case, with spaces as `-` and everything but letters, digits, `-` and `_` dropped; in a contract folder it is the file name without `.md`. The manifests of the units that use only some of the parts list those names under `parts`:
-
-```yaml
-needs:
-  frames:
-    summary: Frames for the line
-    contract:
-      path: ../docs/references/frames.md
-      parts:
-        - encode
-        - frame
-```
-
-| Kind | What it is | Has |
-|---|---|---|
-| `command` | A call that changes something | signature, `Pre:`, `Result:`, `Errors:`, `Examples:` |
-| `query` | A call that answers without changing anything | the same |
-| `event` | Something the provider emits and a consumer receives | signature, `When:` (what raises it), `Delivery:` (at-most-once, at-least-once or exactly-once, and the order key), `Examples:` with the columns `Case \| Action \| Emitted`, or with `Given` before `Action` |
-| `callback` | A call that the consumer implements and the provider makes, such as a plug-in hook or a handler | signature, `Pre:`, `Result:`, `Errors:`, `Examples:` |
-| `type` | A record, variant or resource the parts share | signature, a table of fields or cases where they need words |
-
-The signature is a fenced code block. The notation is named once in the header; the default is [WIT](https://component-model.bytecodealliance.org/design/wit.html), the interface language of the WebAssembly component model. WIT is plain text and language-neutral, and it has records, variants, enums, `result<T, E>`, `option<T>`, `list<T>` and resources with methods. Any other notation is allowed, for example an OpenAPI fragment, a `.proto` message or a signature in the project's own language. The checker verifies that the block exists and reads only its type names.
-
-The `Examples:` table of a command or query has the columns `Case | Input | Expected`, or `Case | Given | Input | Expected` where a row needs a state of the connection or of a fake first, and at least one row. `Input` is a call in the notation of the signature; `Expected` is its result: a value, `ok`, or an error case that `Errors:` names. The `Case` names the row, once within the part; where a source gives the vector, name it there too (`empty payload, proto §4.2`). The id of an example is `<contract>#<part>/<case-slug>`, for example `frames#encode/empty-payload-proto-42`, with the slug formed like the anchor of a heading; a test that proves the example names the id, and `unifold trace` lists the examples that no test names ([tool.md](tool.md#brief-and-trace)). Examples are the first tests of the provider and the whole behaviour of a replay fake. Boundaries on both sides of every `Pre:` and one row per error make the table complete enough that two people would write the same tests.
-
-A type is defined once within the subtree of the unit that holds the contract. A contract that uses a type of another contract links to its definition instead of repeating it. Remove a type no part names in its signature or links to.
+A part is one operation, event or type of the contract, a `###` heading under `## Parts`. [contract-parts.md](contract-parts.md) is the standard for the parts: their names, kinds, signatures, examples and types.
 
 ## The fake
 

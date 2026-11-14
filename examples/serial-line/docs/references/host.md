@@ -34,7 +34,7 @@ Start: closed.
 
 ### open
 
-Kind: command
+Kind: operation
 
 ```wit
 open: func() -> result<_, session-error>;
@@ -53,7 +53,7 @@ Examples:
 
 ### send
 
-Kind: command
+Kind: operation
 
 ```wit
 send: func(data: list<u8>) -> result<_, session-error>;
@@ -73,7 +73,7 @@ Examples:
 
 ### close
 
-Kind: command
+Kind: operation
 
 ```wit
 close: func() -> result<_, session-error>;

@@ -32,7 +32,7 @@ With 12.4 µA the cell lasts about 19 months. The reserve covers cold, ageing of
 |---|---|
 | Reading, 600 µC | Soil probe powered for 100 ms at 5 mA: 500 µC. Ambient sensor: 45 µC. Processor and converter: 40 µC. Writing the reading to memory, with the share of a block erase: 15 µC. |
 | Advertising event, 12 µC | Three packets at 0 dBm, one per advertising channel, and the listening time after each |
-| Connection, 9 mC | 3 s at an average of 3 mA: setting up, encryption, about 100 readings, confirm |
+| Connection, 9 mC | 3 s at an average of 3 mA: setting up, encryption, about 25 readings, confirm |
 
 ## How the figures move
 

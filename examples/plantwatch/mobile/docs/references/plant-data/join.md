@@ -1,6 +1,6 @@
 # join
 
-Kind: command
+Kind: operation
 
 ```wit
 join: func(token: string) -> result<_, command-failure>;

@@ -12,7 +12,7 @@ What a connection promises beyond its parts, such as latency, throughput, delive
 
 ## Decision
 
-- `## Qualities` of a contract is a table `Aspect | Guarantee`, one row per aspect: latency, throughput, concurrency, ordering, delivery, idempotency, timeout, availability, limits, security, or others. The checker reads the form of the table.
+- `## Qualities` of a contract is a table `Aspect | Guarantee`, one row per aspect: latency, throughput, concurrency, ordering, delivery, idempotency, timeout, availability, limits, security, or others. The checker reads the columns of the table.
 - An event has `When:` (what raises it) and `Delivery:` (at-most-once, at-least-once or exactly-once, and the order key), and examples with `Action` and `Emitted`.
 - The header of a contract may say `Binding:` (how the connection travels), `Carried by:` (a link to the contract of the transport an event stream rides on; a hop on the stream counts as a use of the carrier) and `Version:` (a contract of a capability or need of the root should have one; a breaking change of such a contract should be a decision).
 - The manifest key `runs-as` says what a unit runs as.

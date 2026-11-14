@@ -38,7 +38,7 @@ Start: <state>.
 
 ### <part-name>
 
-Kind: command
+Kind: operation
 
 ```wit
 <name>: func(<argument>: <type>) -> result<<type>, <error-type>>;
@@ -46,7 +46,7 @@ Kind: command
 
 Pre: <what must hold before the call: the state it needs, ranges by constant name>.
 Result: <what holds afterwards, or what is returned>.
-Errors: `<case>` when <condition>; or none.
+Errors: `<case>` when <condition, without code font>; or none.
 Examples:
 
 | Case | Input | Expected |

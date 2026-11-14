@@ -21,7 +21,7 @@ The caller asks `lookup` for the plant of a sensor stick and gets one of three a
 
 ### lookup
 
-Kind: query
+Kind: operation
 
 ```wit
 lookup: func(sensor-id: string) -> lookup-answer;

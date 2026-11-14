@@ -21,15 +21,16 @@ The result is a file `<name>.scenario.json` that the emulator plays, and a check
 5. **Leave out what the defaults cover.** Set `sensor_id` only when several scenarios run side by side or a fixed id matters. Set `bonding` to `always` only for work by hand, when a central shall bond later than 300 simulated seconds after a start.
 6. **Save** the file in the folder `scenarios/` of this unit, named after `name`.
 7. **Load it**: `PUT /scenario` with the file as body. A 422 response names the member that breaks a rule.
-8. **Play it**: `PUT /time` with the `elapsed_s` of the moment that matters, then `GET /readings`.
+8. **Play it**: `PUT /time` with the `elapsed_s` of the moment that matters; the state object in the answer says how many readings were taken. Then fetch the readings over the BLE profile, with the app or another central.
 
 ## Checks
 
-- The reading at the moment that matters has the value from step 1. Look at the reading itself, not at the track: sampling happens only at multiples of the sampling interval.
+- The reading at the moment that matters, as a central fetches it, has the value from step 1. Look at the reading itself, not at the track: sampling happens only at multiples of the sampling interval.
 - In a scenario without restarts, `readings_taken` in the state equals the elapsed time divided by the sampling interval, rounded down, plus one.
-- Loading the scenario a second time and playing it again gives the same answer from `GET /readings`.
+- Loading the scenario a second time and playing it again gives the same readings when a central fetches them.
 
 ## Reference
 
-- [Scenario format](../../../../docs/references/scenario-control/index.md): members, tracks, events, and the rules for rejection
+- [Scenario format](../../../../docs/references/scenario-format.md): members, tracks, events, and the rules for rejection
 - [scenario-control API](../../../../docs/references/scenario-control/index.md): the requests used in steps 7 and 8
+- [BLE profile](../../../../docs/references/ble-profile/index.md): how a central fetches the readings

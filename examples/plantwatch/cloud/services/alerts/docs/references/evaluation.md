@@ -21,7 +21,7 @@ The caller passes the readings of one sensor stick to `evaluate` one after the o
 
 ### evaluate
 
-Kind: query
+Kind: operation
 
 ```wit
 evaluate: func(reading: reading, state: option<state>) -> evaluation-result;

@@ -29,10 +29,10 @@ The data model defines the following, as far as `sync` implements it:
 - A reading has a sensor id, a sequence number, a tick count, the three quantities, a UTC time and an estimated flag. Nobody changes it on the phone.
 - A plant has an id chosen on the phone, a name of 1 to 60 characters, a lower and an upper limit per quantity, at most one sensor stick, and a change state `in step`, `waiting` or `refused`.
 - An alert comes from the server only. The app does not compare readings with thresholds.
-- In a session, the phone acts for one owner, known by a token. The server creates the owner at the first exchange; a further phone joins with a token from the first. The phone leaves only after the server has confirmed every reading on it.
+- In a session, the phone acts for one owner, known by a token. The server creates the owner at the first exchange; a further phone joins with a token from the first. The phone leaves an active session only after the server has confirmed every reading on it; leaving a lost session removes unconfirmed readings too.
 - There are two ages: the time since the newest reading of a plant, and the time since the last exchange that succeeded.
 
-The store holds these things, and `plant-data` returns them under these names. `sync` computes no alert, and "leave" waits for the upload.
+The store holds these things, and `plant-data` returns them under these names. `sync` computes no alert, and "leave" in an active session waits for the upload.
 
 ### [mobile: glossary](../../../docs/references/glossary.md)
 
@@ -56,7 +56,7 @@ Sensor id and sequence number identify a reading; it never changes. A receiver a
 
 A receiver accepts an item it already has and reports success. A sender deletes an item only after the receiver has confirmed it.
 
-`sync` acknowledges a batch it has seen before. It removes a reading only after the server has confirmed it.
+`sync` acknowledges a batch it has seen before. It removes a reading only after the server has confirmed it, or when the phone leaves a lost session ([0006](../../../docs/decisions/0006-leave-a-lost-session-without-uploading.md)).
 
 ### [plantwatch: conventions, HTTP ports](../../../../docs/references/conventions.md#http-ports)
 

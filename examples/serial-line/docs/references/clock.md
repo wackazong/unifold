@@ -13,7 +13,7 @@ A consumer reads the time whenever it needs it, to measure how long it has waite
 
 ### now
 
-Kind: query
+Kind: operation
 
 ```wit
 now: func() -> u64;

@@ -1,6 +1,6 @@
 # remove-plant
 
-Kind: command
+Kind: operation
 
 ```wit
 remove-plant: func(plant-id: string) -> result<_, command-failure>;

@@ -29,7 +29,7 @@ The bus speaks the Apache Kafka protocol, as clients of version 3.0 or newer spe
 
 ### publish
 
-Kind: command
+Kind: operation
 
 ```text
 publish(topic, message) -> acknowledged
@@ -48,7 +48,7 @@ Examples:
 
 ### subscribe
 
-Kind: command
+Kind: operation
 
 ```text
 subscribe(topic, subscription-name) -> stream of messages
@@ -78,7 +78,7 @@ Delivery: at least once, in stored order per partition; a message that was not c
 
 ### commit
 
-Kind: command
+Kind: operation
 
 ```text
 commit(subscription-name, partition, position)
@@ -95,7 +95,7 @@ Examples:
 
 ### read-from-beginning
 
-Kind: query
+Kind: operation
 
 ```text
 read-from-beginning(topic) -> every message the topic keeps, oldest first

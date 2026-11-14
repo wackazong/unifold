@@ -20,5 +20,4 @@ What must stay true: a reading is in durable memory before the board sleeps agai
 4. [docs/references/energy-budget.md](docs/references/energy-budget.md): where the 20 µA go
 5. [docs/references/glossary.md](docs/references/glossary.md): the terms only the firmware uses
 6. [docs/explanation/context.md](docs/explanation/context.md): what it inherits from above
-7. [Component diagram](docs/diagrams/component.md)
-8. [Decisions](docs/decisions/index.md)
+7. [Decisions](docs/decisions/index.md)

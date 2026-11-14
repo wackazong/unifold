@@ -1,6 +1,6 @@
 # refresh
 
-Kind: command
+Kind: operation
 
 ```wit
 refresh: func() -> exchange-state;

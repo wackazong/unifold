@@ -16,7 +16,7 @@ So `ingest` may publish an event again after a failure, with the same `id`. Its 
 
 ### [cloud: public API, uploads](../../../../../docs/references/public-api/upload-batch.md)
 
-The reference is the contract of `ingest-api`, which this unit implements:
+The page is part of the public API. The contract this unit implements is `ingest-api`, which serves it:
 
 - `POST /v1/sensors/{sensor_id}/batches` takes `{"readings": [...]}`, each element one reading in the form that the reading schema defines.
 - The answer is `200` with one result per reading, in the order of the request: `new`, `duplicate`, or `rejected` with a `code` and a `message`.

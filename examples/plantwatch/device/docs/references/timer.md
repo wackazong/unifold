@@ -21,7 +21,7 @@ The caller reads the tick count, sets an alarm for a second of this start, and r
 
 ### ticks
 
-Kind: query
+Kind: operation
 
 ```wit
 ticks: func() -> tick-count;
@@ -42,7 +42,7 @@ Examples:
 
 ### set-alarm
 
-Kind: command
+Kind: operation
 
 ```wit
 set-alarm: func(alarm: u8, at-second: u32);
@@ -59,23 +59,6 @@ Examples:
 | in the past | the seconds are at 250 | `set-alarm(0, 100)` | the call comes within 100 ms |
 | set again | `set-alarm(0, 900)` was called | `set-alarm(0, 1800)` | one call, at second 1800 |
 
-### cancel-alarm
-
-Kind: command
-
-```wit
-cancel-alarm: func(alarm: u8);
-```
-
-Pre: `alarm` is 0 to 3.
-Result: the alarm is not raised.
-Errors: none.
-Examples:
-
-| Case | Given | Input | Expected |
-|---|---|---|---|
-| cancelled | `set-alarm(0, 900)` was called | `cancel-alarm(0)` | no call at second 900 |
-
 ### alarm
 
 Kind: event
@@ -85,7 +68,7 @@ alarm: func(alarm: u8, now: tick-count);
 ```
 
 When: the second for which the alarm was set has come, or the alarm was set to a second in the past.
-Delivery: exactly once per `set-alarm` that is not replaced or cancelled, in the order of the alarm times.
+Delivery: exactly once per `set-alarm` that is not replaced, in the order of the alarm times.
 
 ### tick-count
 

@@ -21,7 +21,7 @@ The result is a new version of a contract that parts built for the previous vers
 
 ## Checks
 
-- Walk through "fetch stored readings and confirm" twice: old central with new sensor stick, new central with old sensor stick. Every step has a defined outcome.
+- Walk through steps 1 to 4 of `## Use` of the [BLE profile](../../references/ble-profile/index.md#use) twice: old central with new sensor stick, new central with old sensor stick. Every step has a defined outcome.
 - Decode the example record by hand with the old layout table. Every field the old version knows has its old value.
 - No file exceeds 1,500 words. If a part of the profile does, split it and link the new part from the profile's index.
 - The contracts name no implementation. Every unit whose manifest names a contract still conforms to it.

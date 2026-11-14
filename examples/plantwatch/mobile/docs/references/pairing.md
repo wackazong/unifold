@@ -1,6 +1,6 @@
 # pairing
 
-Contract of `ble-client.pairing`: the operations, data and guarantees of the capability through which a sensor stick is found and bound to this phone. The description is independent of a programming language. The fields of a paired sensor stick are those cited in [context.md](../explanation/context.md). The capability does not know plants; binding the sensor stick to a plant is up to the caller. It does not identify a sensor stick to the owner other than by signal strength: the nearest one is first in the list. Notation: wit.
+Contract of `ble-client.pairing`: the operations, data and guarantees of the capability through which a sensor stick is found and bound to this phone. The description is independent of a programming language. The fields of a paired sensor stick are those of the [data model](data-model.md#paired-sensor-stick). The capability does not know plants; binding the sensor stick to a plant is up to the caller. It does not identify a sensor stick to the owner other than by signal strength: the nearest one is first in the list. Notation: wit.
 Sources: the BLE profile of plantwatch, the product parameters, the platform limits of `mobile`.
 Binding: in-process
 
@@ -21,7 +21,7 @@ While the program is on the screen, the caller starts a search and shows the lis
 
 ### search
 
-Kind: query
+Kind: operation
 
 ```wit
 search: func(observer: found-list-observer) -> result<_, pairing-failure>;
@@ -40,7 +40,7 @@ Examples:
 
 ### cancel-search
 
-Kind: command
+Kind: operation
 
 ```wit
 cancel-search: func();
@@ -57,7 +57,7 @@ Examples:
 
 ### pair
 
-Kind: command
+Kind: operation
 
 ```wit
 pair: func(sensor-id: string) -> result<_, pairing-failure>;
@@ -76,24 +76,26 @@ Examples:
 
 ### list-paired
 
-Kind: query
+Kind: operation
 
 ```wit
 list-paired: func(observer: paired-list-observer);
+resource paired-list-observer { changed: func(paired: list<sensor-stick-status>); }
 ```
 
 Pre: none.
-Result: the paired sensor sticks, again whenever the list changes.
+Result: the paired sensor sticks, each with its status, again whenever the list or a status changes.
 Errors: none.
 Examples:
 
 | Case | Given | Input | Expected |
 |---|---|---|---|
 | after pairing | one sensor stick was paired | `list-paired(observer)` | a list with that sensor stick |
+| after a fetch | a fetch from the sensor stick ended as `fetched` | the next list the observer receives | the sensor stick has state `idle` and that time as last fetch |
 
 ### unpair
 
-Kind: command
+Kind: operation
 
 ```wit
 unpair: func(sensor-id: string);
@@ -121,6 +123,28 @@ record found-sensor-stick { sensor-id: string, signal-strength-dbm: s8, protocol
 | sensor-id | the sensor stick |
 | signal-strength-dbm | in dBm, averaged over the last second; larger means nearer |
 | protocol-version | the version of the radio protocol the sensor stick states |
+
+### sensor-stick-status
+
+Kind: type
+
+```wit
+record sensor-stick-status {
+  sensor-id: string,
+  state: string,
+  last-fetch: option<string>,
+  last-failure: option<tuple<string, string>>,
+  invalid-readings: u32,
+}
+```
+
+| Field | Content |
+|---|---|
+| sensor-id | the sensor stick |
+| state | `idle`, `connecting`, `fetching` or `failing` |
+| last-fetch | UTC time of the last fetch that ended as `fetched`, or none |
+| last-failure | reason and UTC time, or none; cleared by the next `fetched` |
+| invalid-readings | number of readings dropped since pairing because a value was outside its range |
 
 ### pairing-failure
 

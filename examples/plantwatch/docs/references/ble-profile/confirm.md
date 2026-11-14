@@ -1,6 +1,6 @@
 # confirm
 
-Kind: command
+Kind: operation
 
 ```text
 write Transfer control (0005):  02 <up_to: 4 bytes>                                  length 5

@@ -7,7 +7,6 @@ capabilities:
   transliteration:
     summary: Replaces Latin letters that have diacritics, and ligatures, by ASCII letters
     contract: ../../docs/references/transliteration.md
-needs:
   plugin-api:
-    summary: The trait a transliteration plug-in implements
+    summary: The trait of a transliteration plug-in, for Latin letters
     contract: ../../docs/references/plugin-api.md

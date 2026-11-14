@@ -1,9 +1,9 @@
 # plants
 
-Kind: query
+Kind: operation
 
 ```wit
-plants: func() -> list<plant-view>;
+plants: func() -> result<list<plant-view>, command-failure>;
 observe-plants: func(observer: plants-observer);
 ```
 

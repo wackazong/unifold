@@ -1,6 +1,6 @@
 # status
 
-Kind: query
+Kind: operation
 
 ```text
 read or notify Status (0003), 17 bytes:
@@ -13,7 +13,7 @@ read or notify Status (0003), 17 bytes:
 ```
 
 Pre: a connection; no encryption is required.
-Result: the state of the sensor stick at the moment it sends the value. "Stored" is used as the [glossary](../glossary.md) defines it. `overflow` is 1 when the sensor stick has discarded at least one stored reading to make room, since the last successful confirm or since its start; it discards the oldest stored readings first, and the central then expects a gap in the sequence numbers. A sensor stick notifies Status after it has taken a reading and after it has carried out a confirm.
+Result: the state of the sensor stick at the moment it sends the value. "Stored" is used as the [glossary](../glossary.md) defines it. `overflow` is 1 when the sensor stick has discarded at least one stored reading to make room, since the last successful confirm or since its start; it discards the oldest stored readings first, and the central then expects a gap in the sequence numbers. A sensor stick notifies Status after it has taken a reading and after it has carried out a confirm. A central that fetches takes its [time reference](time-reference.md) from this value.
 Errors: none; Status is readable by anyone in range.
 Examples:
 

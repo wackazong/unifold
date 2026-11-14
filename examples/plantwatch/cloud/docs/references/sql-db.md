@@ -25,7 +25,7 @@ A service connects with its role and runs its statements inside transactions on 
 
 ### connect
 
-Kind: command
+Kind: operation
 
 ```text
 connect(host sql-db, port 5432, database main, role, password) -> connection, search path: the schema of the role
@@ -42,7 +42,7 @@ Examples:
 
 ### transaction
 
-Kind: command
+Kind: operation
 
 ```text
 BEGIN [ISOLATION LEVEL READ COMMITTED | REPEATABLE READ | SERIALIZABLE]; ...; COMMIT
@@ -60,7 +60,7 @@ Examples:
 
 ### statement
 
-Kind: command
+Kind: operation
 
 ```text
 <any statement of the PostgreSQL 16 dialect, inside a transaction>

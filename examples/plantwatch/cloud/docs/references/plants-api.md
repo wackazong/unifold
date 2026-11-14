@@ -6,7 +6,7 @@ Binding: http
 
 ## Use
 
-A caller that acts for an owner reads and changes the owner's plants and reads their history, with `X-Owner-Id` in every request. A caller that acts for itself looks up the plant of a sensor stick with `lookup-by-sensor`, without `X-Owner-Id`. The container host and other services ask `healthz`. The connection has no state: any part may be called at any time.
+A caller that acts for an owner reads and changes the owner's plants and reads their history, with `X-Owner-Id` in every request. A caller that acts for itself looks up the plant of a sensor stick with `lookup-by-sensor`, without `X-Owner-Id`. The connection has no state: any part may be called at any time.
 
 Rules for the operations of an owner:
 
@@ -28,15 +28,16 @@ How the history is built from the events:
 | freshness | a reading is in the history within 5 seconds after its event reaches `plants` while `plants` and its database are healthy; a history request sees every reading whose event was handled before the request arrived; a lookup reflects every `PUT` and `DELETE` that was answered before the lookup arrived |
 | consistency | while `plants` is behind on the event stream, history is incomplete at its newest end and complete again once it has caught up; nothing is skipped |
 | concurrency | two `PUT` requests for the same plant at the same moment both succeed, and the later one wins as a whole; of two `PUT` requests that attach the same sensor stick to two plants at the same moment, one succeeds and the other gets `409` `sensor_already_attached` |
-| availability | while the database cannot be reached, every operation answers `503` `unavailable`; `healthz` does not depend on the event bus, so `plants` serves queries while it cannot consume events |
+| availability | while the database cannot be reached, every operation answers `503` `unavailable`; `plants` serves queries while it cannot consume events |
 | idempotency | every operation is safe to repeat, because the gateway repeats a failed call |
 | timeout | the gateway waits 5 seconds for an answer and then counts the call as failed |
+| health | `GET /healthz`, which [service-calls](service-calls.md) defines for the container host, answers `200` while the database is reachable, also while the event bus is not, and `503` otherwise |
 
 ## Parts
 
 ### list-plants
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/plants
@@ -55,7 +56,7 @@ Examples:
 
 ### put-plant
 
-Kind: command
+Kind: operation
 
 ```http
 PUT /v1/plants/{plant_id}
@@ -73,7 +74,7 @@ Examples: the plant P of owner A has the sensor stick `00a1b2c3d4e5f607` attache
 
 ### get-plant
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/plants/{plant_id}
@@ -91,7 +92,7 @@ Examples:
 
 ### delete-plant
 
-Kind: command
+Kind: operation
 
 ```http
 DELETE /v1/plants/{plant_id}
@@ -100,17 +101,18 @@ X-Owner-Id: <owner id>
 
 Pre: `X-Owner-Id` is present.
 Result: `204`; the plant, its raw readings and its aggregates are deleted and the sensor stick is detached, as the public API defines.
-Errors: `400` `invalid_request` without the owner header; `503` `unavailable`.
+Errors: `404` `not_found` for a plant of another owner; `400` `invalid_request` without the owner header; `503` `unavailable`.
 Examples:
 
 | Case | Given | Input | Expected |
 |---|---|---|---|
 | delete | | `DELETE /v1/plants/{P}` with `X-Owner-Id` A | `204` |
 | twice | P was deleted already | `DELETE /v1/plants/{P}` with `X-Owner-Id` A | `204` |
+| other owner | | `DELETE /v1/plants/{P}` with `X-Owner-Id` B | `404` `not_found` |
 
 ### get-history
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/plants/{plant_id}/history?from=&to=&resolution=&limit=&cursor=
@@ -130,7 +132,7 @@ Examples: the plant P of owner A has the sensor stick `00a1b2c3d4e5f607` attache
 
 ### lookup-by-sensor
 
-Kind: query
+Kind: operation
 
 ```http
 GET /internal/v1/sensors/{sensor_id}/plant
@@ -166,23 +168,6 @@ Examples: the plant P of owner A has the sensor stick `00a1b2c3d4e5f607` attache
 | lookup | | `GET /internal/v1/sensors/00a1b2c3d4e5f607/plant` | `200` with `plant_id` P and `owner_id` A |
 | after detaching | a `PUT` of P without `sensor_id` was answered | `GET /internal/v1/sensors/00a1b2c3d4e5f607/plant` | `404` `not_found` |
 | bad id | | `GET /internal/v1/sensors/00A1/plant` | `400` `invalid_request` |
-
-### healthz
-
-Kind: query
-
-```http
-GET /healthz
-```
-
-Pre: none.
-Result: `200` while the database is reachable.
-Errors: `503` otherwise.
-Examples:
-
-| Case | Given | Input | Expected |
-|---|---|---|---|
-| bus down, database up | the event bus cannot be reached and the database can | `GET /healthz` | `200` |
 
 ## Fake
 

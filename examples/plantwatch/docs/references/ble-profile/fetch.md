@@ -1,6 +1,6 @@
 # fetch
 
-Kind: command
+Kind: operation
 
 ```text
 write Transfer control (0005):  01 <first: 4 bytes> <limit: 2 bytes>                  length 7
@@ -15,7 +15,6 @@ Errors: the result codes of [transfer-result](transfer-result.md), and the ATT e
 | Event | Sensor stick | Central |
 |---|---|---|
 | Connection is lost during a fetch | Ends the fetch. Changes no stored reading. | Keeps the complete records it has received. Reconnects later and fetches from its last stored sequence number + 1, or from 0. |
-| Central writes `abort` | Stops sending and indicates a fetch result with the result code `aborted` and the true `sent` and `last` | May confirm what it has received |
 | Sensor stick cannot read its stored readings | Result `storage-failure`, changes nothing | Disconnects and retries later; does not confirm |
 | A record is longer than ATT MTU minus 3 | Result `mtu-too-small`, sends no record | Exchanges a larger MTU and fetches again |
 | Central receives a record it must reject | Nothing | Drops that record, keeps the others, and still confirms up to `last` |

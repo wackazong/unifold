@@ -1,6 +1,6 @@
 # Reasoning of mobile
 
-The long form of the why in [README.md](../../README.md). Which parts exist and how they are wired is shown in the [component diagram](../diagrams/component.md).
+The long form of the why in [README.md](../../README.md). Which parts exist and how they are wired is in the manifests; the explorer draws it.
 
 **Three rhythms, three parts.** Radio contact, network contact and the owner's attention come and go independently. A design in which one of them waits for another fails in daily use: a screen that waits for the radio freezes when the sensor stick is out of range, and a fetch that waits for the network loses its short background slot. Each rhythm therefore has a part of its own, and the parts meet only at a store on the phone ([0001](../decisions/0001-the-local-store-is-the-only-source-for-the-screens.md)).
 

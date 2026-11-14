@@ -15,10 +15,12 @@ Background fetching rests on rules the operating systems change every year. The 
    - the delay between the sensor stick appearing and the app being woken,
    - the run time the app gets after being woken,
    - whether the app is woken after a restart of the phone,
-   - whether the app is woken after the owner has removed it from the app switcher. Repeat each measurement five times and note the worst value.
+   - whether the app is woken after the owner has removed it from the app switcher.
+
+   Repeat each measurement five times and note the worst value.
 4. **Update the reference.** Change the rows that changed and raise "Designed for up to". If a value could not be determined, write that, with the date.
 5. **Judge the design budget.** If the run time per wake-up fell below the design budget, or the wake-up mechanism is deprecated, [0002](../../decisions/0002-fetch-when-the-system-reports-a-paired-sensor-stick.md) no longer holds as written. Write a new decision with status `proposed` that supersedes it. Do not edit the old one beyond its status.
-6. **Check the promises.** Read "What happens without the owner" in [app-ui.md](../../../../docs/references/app-ui.md). Change every promise the new version breaks, and tell the human.
+6. **Check the promises.** Read "What the app does without being asked" in `## Use` of [app-ui.md](../../../../docs/references/app-ui.md). Change every promise the new version breaks, and tell the human.
 7. **Decide on the oldest supported version.** Propose dropping a version only together with a human; it removes the app from phones in use.
 8. **Finish.** Run the generator and the checker of the project.
 

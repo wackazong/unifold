@@ -1,6 +1,6 @@
 # list-alerts
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/alerts?state=open&plant_id=...&opened_after=...&limit=...&cursor=...

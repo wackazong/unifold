@@ -21,7 +21,7 @@ The caller reads the summary and the stored readings in ascending order, and mar
 
 ### summary
 
-Kind: query
+Kind: operation
 
 ```wit
 summary: func() -> log-summary;
@@ -39,7 +39,7 @@ Examples:
 
 ### read
 
-Kind: query
+Kind: operation
 
 ```wit
 read: func(from: u32) -> result<option<reading>, log-error>;
@@ -58,7 +58,7 @@ Examples: the readings 3145729 to 3145824 are stored.
 
 ### mark-delivered
 
-Kind: command
+Kind: operation
 
 ```wit
 mark-delivered: func(up-to: u32) -> result<_, log-error>;

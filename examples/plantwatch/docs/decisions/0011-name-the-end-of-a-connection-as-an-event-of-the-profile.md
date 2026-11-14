@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: accepted
 date: 2026-11-03
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Name the end of a connection as an event of the profile

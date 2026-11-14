@@ -12,7 +12,7 @@ Every key of the manifest costs a rule, a test, a line in every unit and a conce
 
 ## Decision
 
-- The manifest has `responsibility`, `kind`, `runs-as`, `status`, `not`, `capabilities`, `needs`, `wiring`, `scenarios`, and at the root `unifold`, `name`, `ignore` and `diagrams`. Keys that start with `x-` belong to the project.
+- The manifest has `responsibility`, `kind`, `runs-as`, `status`, `not`, `capabilities`, `needs`, `wiring`, `scenarios`, and at the root `unifold`, `name` and `ignore`. Keys that start with `x-` belong to the project.
 - There is no `secret`: what a unit hides is the first sentence of its `## Why`, with the decision linked there.
 - `not` is a list of one-line texts.
 - An empty entry of `capabilities` or `needs` takes its summary and contract from the one wiring line that joins it to another entry.

@@ -1,6 +1,7 @@
 ---
-status: proposed
+status: accepted
 date: 2026-11-03
+decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 ---
 
 # Name the lost session as an event, and let `join` end it

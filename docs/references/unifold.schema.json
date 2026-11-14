@@ -84,8 +84,16 @@
             "$ref": "#/$defs/capability"
           },
           {
-            "type": "null",
-            "description": "Empty: the entry takes its summary and contract from the one wiring line that joins it to another entry."
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "maxProperties": 0
+              }
+            ],
+            "description": "Empty, with no value or `{}`: the entry takes its summary and contract from the one wiring line that joins it to another entry."
           }
         ]
       }
@@ -105,8 +113,16 @@
             "$ref": "#/$defs/need"
           },
           {
-            "type": "null",
-            "description": "Empty: the entry takes its summary and contract from the one wiring line that joins it to another entry."
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "maxProperties": 0
+              }
+            ],
+            "description": "Empty, with no value or `{}`: the entry takes its summary and contract from the one wiring line that joins it to another entry."
           }
         ]
       }
@@ -152,14 +168,6 @@
         "minLength": 1,
         "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?![/\\\\])(?!\\.\\.).+$"
       }
-    },
-    "diagrams": {
-      "description": "Root only. parents (default): a component diagram for every unit with children, and scenario and states diagrams wherever they apply. none: no diagram.",
-      "enum": [
-        "parents",
-        "none"
-      ],
-      "default": "parents"
     }
   },
   "$defs": {
@@ -309,28 +317,11 @@
         "given": {
           "type": "array",
           "items": {
-            "oneOf": [
-              {
-                "type": "string",
-                "minLength": 1,
-                "description": "A condition, as a sentence. No checker reads it."
-              },
-              {
-                "type": "object",
-                "minProperties": 1,
-                "maxProperties": 1,
-                "additionalProperties": {
-                  "type": [
-                    "string",
-                    "number"
-                  ],
-                  "minLength": 1
-                },
-                "description": "`unit.capability: state` or `need: state`: a connection whose contract has `## States`, and the state the path starts in."
-              }
-            ]
+            "type": "string",
+            "minLength": 1,
+            "description": "A condition, as a sentence. No checker reads it."
           },
-          "description": "The state the path starts in."
+          "description": "What holds before the story starts."
         },
         "hops": {
           "$ref": "#/$defs/hops"
@@ -349,10 +340,10 @@
         "oneOf": [
           {
             "type": "string",
-            "description": "A hop without a result (an event or callback), or `child.scenario`, which includes a scenario of a unit below.",
+            "description": "`caller -> target.part`, a hop in the direction of its part, or `unit.scenario` or `caller -> unit.scenario`, which includes a scenario of a unit below.",
             "anyOf": [
               {
-                "pattern": "^\\s*\\S.*\\s->\\s.*\\S\\.[A-Za-z0-9][A-Za-z0-9_-]*(\\(.*\\))?\\s*$"
+                "pattern": "^\\s*\\S+\\s*->\\s*[A-Za-z0-9][\\w./-]*\\.[A-Za-z0-9][A-Za-z0-9_-]*\\s*$"
               },
               {
                 "pattern": "^\\s*[A-Za-z0-9][\\w./-]*\\.[A-Za-z0-9][\\w-]*\\s*$"
@@ -364,57 +355,21 @@
             "minProperties": 1,
             "maxProperties": 1,
             "propertyNames": {
-              "pattern": "^\\s*\\S.*\\s->\\s.*\\S\\.[A-Za-z0-9][A-Za-z0-9_-]*(\\(.*\\))?\\s*$"
+              "pattern": "^\\s*\\S+\\s*->\\s*[A-Za-z0-9][\\w./-]*\\.[A-Za-z0-9][A-Za-z0-9_-]*\\s*$"
             },
             "additionalProperties": {
               "type": [
                 "string",
+                "number",
+                "boolean",
                 "null"
-              ],
-              "minLength": 1
+              ]
             },
-            "description": "`caller -> target.part(input): result`, in the direction of the call. The result is text; a command or query has one."
-          },
-          {
-            "type": "object",
-            "minProperties": 1,
-            "maxProperties": 1,
-            "properties": {
-              "parallel": {
-                "type": "array",
-                "minItems": 2,
-                "items": {
-                  "$ref": "#/$defs/hops"
-                },
-                "description": "Two or more lists of hops that run at the same time."
-              },
-              "repeat": {
-                "type": "object",
-                "required": [
-                  "hops"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "hops": {
-                    "$ref": "#/$defs/hops"
-                  },
-                  "until": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "times": {
-                    "type": "integer",
-                    "minimum": 1
-                  }
-                },
-                "description": "Hops that run again and again: until a result, or a number of times."
-              }
-            },
-            "additionalProperties": false
+            "description": "`caller -> target.part: note`. The note is free text that no checker reads."
           }
         ]
       },
-      "description": "The calls of the path in the order in which they start; `parallel`, `repeat` and `child.scenario` among them."
+      "description": "The steps of the story, in the order a reader follows them; an included scenario of a unit below among them."
     }
   }
 }

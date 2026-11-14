@@ -21,7 +21,7 @@ A phone registers for its owner once the owner has allowed notifications. It reg
 
 ### register
 
-Kind: command
+Kind: operation
 
 ```text
 register(owner id) -> this phone receives the notifications of that owner
@@ -39,7 +39,7 @@ Examples:
 
 ### end-registration
 
-Kind: command
+Kind: operation
 
 ```text
 end-registration(owner id) -> this phone receives nothing more for that owner
@@ -52,7 +52,7 @@ Examples:
 
 | Case | Given | Input | Expected |
 |---|---|---|---|
-| ended, then send | the phone is registered for the owner | `end-registration(owner)` | ok; a notification that the sender sends afterwards is `taken`, and nothing reaches the phone |
+| ended, then send | this phone and another phone are registered for the owner | `end-registration(owner)` | ok; a notification that the sender sends afterwards is `taken`, reaches the other phone, and nothing reaches this phone |
 
 ### deliver
 
@@ -74,7 +74,7 @@ Examples:
 
 ### send
 
-Kind: command
+Kind: operation
 
 ```text
 send(notification) -> taken | refused for good | failed for now

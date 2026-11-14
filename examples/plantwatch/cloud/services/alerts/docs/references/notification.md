@@ -20,7 +20,7 @@ The caller calls `notify` for an opened alert and reads the outcome. Two calls w
 
 ### notify
 
-Kind: command
+Kind: operation
 
 ```wit
 notify: func(alert: opened-alert) -> outcome;
@@ -63,7 +63,7 @@ Examples: the alert `7d2c1c1e-…` of the plant "Monstera in the hall"; `Given` 
 | busy | refused with "too many requests" | any alert | `retry` |
 | silence | no answer within 5 seconds | any alert | `retry`, returned within 6 seconds |
 | nobody registered | refused, no phone for the owner | any alert | `failed` |
-| long name | the request is taken | an alert of a plant whose name has 80 characters | `sent`; the title is the first 60 characters of the name |
+| long name | the request is taken | an alert of a plant whose name has 60 characters | `sent`; the title is the whole name |
 | unknown quantity | the request is taken | `soil_ph`/`min` | `sent`; body "Needs attention." |
 
 ### opened-alert

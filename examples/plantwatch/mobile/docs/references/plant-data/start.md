@@ -1,6 +1,6 @@
 # start
 
-Kind: command
+Kind: operation
 
 ```wit
 start: func() -> result<_, command-failure>;

@@ -1,6 +1,6 @@
 # info
 
-Kind: query
+Kind: operation
 
 ```text
 read Info (0002), 18 bytes:

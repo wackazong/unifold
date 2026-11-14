@@ -18,7 +18,7 @@ A consumer encodes a payload into the bytes of a frame, and decodes the frame at
 
 ### encode
 
-Kind: query
+Kind: operation
 
 ```wit
 encode: func(payload: list<u8>) -> result<list<u8>, encode-error>;
@@ -39,7 +39,7 @@ Examples:
 
 ### decode
 
-Kind: query
+Kind: operation
 
 ```wit
 decode: func(bytes: list<u8>) -> result<decoded, decode-error>;

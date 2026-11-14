@@ -6,7 +6,7 @@ not:
   - looking into, validating or changing a body
   - combining the answers of several providers into one response
   - storing anything; no sessions, no owners, no request log beyond the process log
-  - terminating TLS; whoever publishes the network port of gateway does that
+  - terminating TLS; the need `container-host` publishes the network port of gateway and does that
   - deciding what an owner may see; each provider limits its answers to the owner it is told
 capabilities:
   public-api:
@@ -22,3 +22,9 @@ needs:
   alerts-api:
     summary: Serves the operations on alerts as the public API defines them
     contract: ../../docs/references/alerts-api.md
+  container-host:
+    summary: Publishes the one network port of gateway to the outside and terminates TLS there
+    contract:
+      path: ../../../docs/references/container-host.md
+      parts:
+        - publish

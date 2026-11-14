@@ -1,9 +1,9 @@
 # history
 
-Kind: query
+Kind: operation
 
 ```wit
-history: func(plant-id: string, from: string, to: string, resolution: resolution) -> result<list<history-entry>, query-failure>;
+history: func(plant-id: string, from: string, to: string, resolution: resolution) -> result<list<history-entry>, command-failure>;
 enum resolution { raw, hourly, daily }
 ```
 

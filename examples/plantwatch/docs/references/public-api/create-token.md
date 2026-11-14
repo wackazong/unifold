@@ -1,6 +1,6 @@
 # create-token
 
-Kind: command
+Kind: operation
 
 ```http
 POST /v1/tokens

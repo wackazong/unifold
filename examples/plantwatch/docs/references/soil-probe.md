@@ -22,7 +22,7 @@ The firmware switches the supply on, waits at least 100 ms, measures the output 
 
 ### output
 
-Kind: query
+Kind: operation
 
 ```text
 supply on (2.0 V to 3.3 V), wait >= 100 ms, measure output -> share of the supply, 0.0 to 1.0

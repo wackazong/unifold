@@ -18,7 +18,7 @@ The decision that shapes everything else is that the sensor stick talks only to 
 
 **This is a design written before any code.** It is the example of [unifold](https://unifold.md) that shows every document convention of the standard, in all 22 units. That is much more than a unit should cost. Start with the small example, slugline, which is a folder beside this one in the unifold repository, and come back here to see how READMEs, contracts with their parts and fakes, explanation files, decisions, context items, scenarios and skills look when a team chooses to write them.
 
-Every unit has `status: planned`, and every decision in force is accepted: the documents are the design. The [component diagram](docs/diagrams/component.md) shows the parts and how they depend on each other; `unifold explore` opens the whole map as the explorer, a page in which every box can be clicked. Fourteen scenarios in the manifests of plantwatch, `device`, `mobile`, `cloud` and `cloud/services/alerts` tell the stories that cross units, from a reading in the pot to the notification on the phone; a scenario of a unit includes the scenarios of its children, and `unifold scenario` draws each as a sequence diagram. [runtime.md](docs/explanation/runtime.md) lists them.
+Every unit has `status: planned`, and every decision in force is accepted: the documents are the design. `unifold explore` opens the whole map as the explorer, a page in which every box can be clicked. Thirteen scenarios in the manifests of plantwatch, `device`, `mobile`, `cloud` and `cloud/services/alerts` tell the stories that cross units, from a reading in the pot to the notification on the phone; a scenario can include the scenarios of the children of its unit, and the explorer draws each as a sequence diagram. [runtime.md](docs/explanation/runtime.md) lists those on the path of a reading and says where the others are.
 
 ## Read next
 
@@ -29,7 +29,7 @@ Every unit has `status: planned`, and every decision in force is accepted: the d
 5. [docs/references/conventions.md](docs/references/conventions.md): units of measure, identifiers, time, delivery
 6. [docs/references/ble-profile/index.md](docs/references/ble-profile/index.md) and [docs/references/reading-schema.md](docs/references/reading-schema.md): the radio protocol and the reading format, which several parts implement
 7. [docs/references/product-parameters.md](docs/references/product-parameters.md): the numbers the product is designed for
-8. [Component diagram](docs/diagrams/component.md), [decisions](docs/decisions/index.md), [risks](docs/explanation/risks.md)
+8. [Decisions](docs/decisions/index.md), [risks](docs/explanation/risks.md)
 
 ## Contributing
 

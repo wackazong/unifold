@@ -1,6 +1,6 @@
 # put-plant
 
-Kind: command
+Kind: operation
 
 ```http
 PUT /v1/plants/{plant_id}

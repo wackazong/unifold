@@ -1,6 +1,6 @@
-//! Checks the contract `transliteration` (see ../../../docs/references/transliteration.md):
+//! Checks the contracts `plugin-api` and `transliteration` (see ../../../docs/references/):
 //! the table, and that it works as a plug-in. The first test names the ids of
-//! the examples it proves, `transliteration#transliterate/<case>`.
+//! the examples it proves, `plugin-api#transliterate/<case>`.
 
 use slugline_core::{slugify_with, Options, Transliterate};
 use slugline_unicode::Latin;
@@ -11,19 +11,19 @@ fn slug(input: &str) -> String {
 
 #[test]
 fn the_examples_of_the_contract() {
-    // transliteration#transliterate/acute-accent
+    // plugin-api#transliterate/acute-accent
     assert_eq!(Latin.transliterate('é'), Some("e"));
-    // transliteration#transliterate/stroke-upper-case
+    // plugin-api#transliterate/stroke-upper-case
     assert_eq!(Latin.transliterate('Ø'), Some("o"));
-    // transliteration#transliterate/stroke
+    // plugin-api#transliterate/stroke
     assert_eq!(Latin.transliterate('ł'), Some("l"));
-    // transliteration#transliterate/ligature-upper-case
+    // plugin-api#transliterate/ligature-upper-case
     assert_eq!(Latin.transliterate('Æ'), Some("ae"));
-    // transliteration#transliterate/sharp-s
+    // plugin-api#transliterate/sharp-s
     assert_eq!(Latin.transliterate('ß'), Some("ss"));
-    // transliteration#transliterate/an-arrow
+    // plugin-api#transliterate/an-arrow
     assert_eq!(Latin.transliterate('→'), None);
-    // transliteration#transliterate/cyrillic
+    // plugin-api#transliterate/cyrillic
     assert_eq!(Latin.transliterate('я'), None);
 }
 

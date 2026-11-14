@@ -13,9 +13,9 @@ The result is an event type that one service publishes and others may consume, d
 2. **Name it.** Choose the `type`, the `key` that orders the events, and what the `id` is derived from, by the rules in [events](../../references/events.md). Decide whether the type joins an existing topic of the publisher or starts a new one.
 3. **Record the choice** as a decision of `cloud` with status `proposed` if there were alternatives, for example between an event and a call.
 4. **Write the contract.** In `docs/references/` of `cloud`, add the type to the contract of the stream it joins, or write a new contract with the fields, the key, the order, the delivery and an example event.
-5. **Change the publisher.** In the publishing service, name that contract in its capability of kind `events`, or add such a capability. Use that unit's own skills.
+5. **Change the publisher.** In the publishing service, name that contract in the capability through which it publishes, or add such a capability. Use that unit's own skills.
 6. **Have the topic created**, if it is new, in [platform](../../../platform/README.md) with the skills of that unit.
-7. **Change each subscriber.** In every service that shall react, add a need of kind `events` that names the same contract and says what the subscriber relies on. Do not name the publisher there.
+7. **Change each subscriber.** In every service that shall react, add a need that names the same contract and says what the subscriber relies on. Do not name the publisher there.
 8. **Wire it.** In `wiring` of [unifold.yaml](../../../unifold.yaml), connect each new need to the publisher's capability. A subscriber also needs the event bus; add that line if it is missing.
 9. **Regenerate and check** with the generator and the checker of [unifold](https://unifold.md).
 

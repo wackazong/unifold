@@ -10,7 +10,7 @@ The client meets sensor sticks of every version that is in people's flower pots.
 ## Steps
 
 1. **Read the difference.** Read the new version of the BLE profile and list what changed: services, characteristics, fields of a reading, procedures, timings. Sort each change into "the client must act" or "the client may ignore".
-2. **Check the expectations.** Compare the list with the expectations under `sensor-link` in [README.md](../../../README.md). If an expectation no longer holds or a new one is needed, change the `README.md` first.
+2. **Check the expectations.** Compare the list with what the client relies on: the contract of its need `sensor-link` and the items of [context.md](../../explanation/context.md). If an item no longer holds or a new one is needed, change [context.md](../../explanation/context.md) first.
 3. **Decide per change how an old sensor stick is handled.** The client learns the version of a sensor stick in the state "Preparing" of the [fetch session](../../references/fetch-session.md). Everything version-specific branches there and nowhere else.
 4. **A new field of a reading.** If the provided capabilities shall carry it, that is a change to [sensor-readings](../../../../docs/references/sensor-readings.md): the field is absent for sensor sticks that do not send it. If the capabilities shall not carry it, the client ignores it.
 5. **A new major version.** The client refuses a major version it does not know with `unsupported version`. Supporting a second major version is a choice with alternatives: record a decision in [decisions](../../decisions/index.md) with status `proposed` before writing code.

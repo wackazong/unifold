@@ -8,7 +8,7 @@ Terms, units, ranges and identifier forms are inherited; see [context.md](../exp
 
 | Thing | Origin | Changed on the phone by | Kept on the phone |
 |---|---|---|---|
-| Reading | A sensor stick | Nobody | 90 days, and in any case until the server has confirmed it |
+| Reading | A sensor stick | Nobody | 90 days, and in any case until the server has confirmed it or the phone leaves a lost session |
 | Plant | The owner, on this phone or elsewhere | The owner | While it exists |
 | Alert | The server | Nobody | While open, and 90 days after it has closed |
 | Paired sensor stick | Pairing on this phone | Pairing and unpairing | While paired |
@@ -83,9 +83,11 @@ The phone learns of an alert only from the server.
 | Field | Content |
 |---|---|
 | Sensor id | The sensor stick |
-| Paired | UTC time of the pairing |
 | Last fetch | UTC time of the last fetch that ended with all readings confirmed, or none |
-| Protocol version | The version of the radio protocol the sensor stick states |
+| Last failure | Reason and UTC time of the last failed fetch, or none |
+| Invalid readings | Number of readings dropped since pairing because a value was outside its range |
+
+`ble-client` lists a paired sensor stick with these fields and its current state, as the type [sensor-stick-status](pairing.md#sensor-stick-status) defines them.
 
 ## Session
 
@@ -97,7 +99,7 @@ The phone learns of an alert only from the server.
 
 A phone acts for one owner at a time. After the first start the app lets the server create an owner at the first exchange. A further phone joins the same owner with a token that the first phone obtains for it and shows as a code. A phone that loses its token without another phone to join from can no longer reach the owner's data.
 
-Leaving an owner removes plants, readings and alerts from the phone and keeps the paired sensor sticks. The app leaves only after the server has confirmed every reading on the phone; without a network connection it waits. While the phone acts for no owner the app fetches nothing, so readings stay on their sensor sticks.
+Leaving an owner removes plants, readings and alerts from the phone and keeps the paired sensor sticks. In the session `active`, the app leaves only after the server has confirmed every reading on the phone; without a network connection it waits. Leaving a lost session removes the readings the server has not confirmed too ([0006](../decisions/0006-leave-a-lost-session-without-uploading.md)). While the phone acts for no owner the app fetches nothing, so readings stay on their sensor sticks.
 
 ## Age of data
 

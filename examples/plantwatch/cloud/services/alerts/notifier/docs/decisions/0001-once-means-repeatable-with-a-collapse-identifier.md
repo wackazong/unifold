@@ -8,7 +8,7 @@ decision-makers: ["Alexander Walter <alexander@wackazong.com>"]
 
 ## Context and Problem Statement
 
-The port `notification` promises that the owner is told about an opened alert exactly once. Everything around it delivers at least once: `notify` can be called again after a crash of its caller, and a request to the push service can succeed although its answer is lost. `notifier` has no storage. How can "once" hold on top of "at least once"?
+The port `notification` is meant to tell the owner once about an opened alert. Everything around it delivers at least once: `notify` can be called again after a crash of its caller, and a request to the push service can succeed although its answer is lost. `notifier` has no storage. How can "once" hold on top of "at least once"?
 
 ## Considered Options
 

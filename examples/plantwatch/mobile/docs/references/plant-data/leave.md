@@ -1,6 +1,6 @@
 # leave
 
-Kind: command
+Kind: operation
 
 ```wit
 leave: func() -> result<_, command-failure>;

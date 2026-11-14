@@ -17,6 +17,8 @@ Start: unsubscribed.
 | unsubscribed | `subscribe` | ok | subscribed |
 | unsubscribed | `subscribe` | `too-many` | unsubscribed |
 | unsubscribed | `sampling-interval` | | unsubscribed |
+| subscribed | `subscribe` | ok | subscribed |
+| subscribed | `subscribe` | `too-many` | subscribed |
 | subscribed | `new-reading` | | subscribed |
 | subscribed | `sampling-interval` | | subscribed |
 
@@ -34,7 +36,7 @@ Start: unsubscribed.
 
 ### subscribe
 
-Kind: command
+Kind: operation
 
 ```wit
 subscribe: func(subscriber: subscriber) -> result<_, subscribe-error>;
@@ -63,7 +65,7 @@ Delivery: exactly once per subscriber, in ascending order of sequence number.
 
 ### sampling-interval
 
-Kind: query
+Kind: operation
 
 ```wit
 sampling-interval: func() -> u16;

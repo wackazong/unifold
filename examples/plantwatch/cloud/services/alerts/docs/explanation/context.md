@@ -32,7 +32,7 @@ A public operation keeps its path and requires `X-Owner-Id`. A caller waits at m
 
 ### [cloud: public API, alerts](../../../../../docs/references/public-api/alert.md)
 
-The reference is the contract of `alerts-api`, and it describes the behaviour that this unit implements:
+The page is part of the public API. The contract this unit implements is `alerts-api`, which serves the behaviour the page describes:
 
 - An alert has `id`, `plant_id`, `quantity`, `bound` (`min` or `max`), `state`, `threshold`, `opened_at`, `opened_value`, the closing fields and `notification` (`pending`, `sent`, `failed`).
 - Soil moisture and temperature are judged per reading, light by the highest value of a day. A reading with an estimated time, or not newer than the last judged one of its sensor stick, is not judged.

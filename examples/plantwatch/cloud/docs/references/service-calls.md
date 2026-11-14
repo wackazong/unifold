@@ -19,7 +19,7 @@ Rules for HTTP calls from one service of `cloud` to another inside the private n
 |---|---|---|
 | Operation of the public API | The same method, path, parameters and bodies as the [public API](../../../docs/references/public-api/index.md) defines | A service that acts for a client and sends `X-Owner-Id` |
 | Internal operation | Starts with `/internal/v1/` | A service that acts for itself; no `X-Owner-Id` |
-| Health | `GET /healthz` | The container host and other services |
+| Health | `GET /healthz` | The container host |
 
 - A path that starts with `/internal/` is never served to a client.
 - `GET /healthz` answers `200` when the service can do its work and `503` when something it needs cannot be reached.

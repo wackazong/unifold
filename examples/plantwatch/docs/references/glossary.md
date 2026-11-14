@@ -18,7 +18,7 @@ The terms of plantwatch. Every unit uses them with this meaning.
 | Threshold | A limit for one measured quantity of a plant, below or above which the plant needs attention. |
 | Alert | The state "this plant needs attention for this reason". It opens once, stays open while the reason lasts, and closes. |
 | Notification | A message to the owner about an alert that has opened. One per alert. |
-| Scenario | A scripted course of sensor values over simulated time, used instead of real hardware. |
+| Scenario | A scripted course of sensor values over simulated time, used instead of real hardware. In a `unifold.yaml`, the word means something else: a story that follows the calls through the units, as the [unifold standard](https://unifold.md) defines it. |
 | Batch | A group of readings of one sensor stick that is transferred together. |
 | Record | The binary form of one reading, as it crosses the radio link. |
 | Holder | Anything that keeps or passes on a reading after it has left the sensor stick. |

@@ -55,7 +55,6 @@ Every request may be repeated, for example after a lost response. An upload repo
 | [delete-plant](delete-plant.md) | `DELETE /v1/plants/{plant_id}`: delete a plant and its history |
 | [get-history](get-history.md) | `GET /v1/plants/{plant_id}/history`: read the history of a plant |
 | [list-alerts](list-alerts.md) | `GET /v1/alerts`: list alerts of the owner |
-| [get-alert](get-alert.md) | `GET /v1/alerts/{alert_id}`: read an alert |
 | [plant](plant.md) | the plant |
 | [alert](alert.md) | the alert, what is judged, and its life |
 | [error](error.md) | the error response and its codes |

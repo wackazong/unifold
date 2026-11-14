@@ -6,7 +6,7 @@ Binding: http
 
 ## Use
 
-A caller that acts for an owner uploads a batch of readings of one sensor stick, with `X-Owner-Id`. The container host and other services ask `healthz`. The connection has no state: any part may be called at any time. A batch may be sent again after `503` or a lost response.
+A caller that acts for an owner uploads a batch of readings of one sensor stick, with `X-Owner-Id`. The connection has no state: any part may be called at any time. A batch may be sent again after `503` or a lost response.
 
 ## Qualities
 
@@ -18,12 +18,13 @@ A caller that acts for an owner uploads a batch of readings of one sensor stick,
 | timeout | the gateway waits 5 seconds for an answer and then counts the call as failed |
 | delivery | for every new reading of a batch, one event is published and acknowledged by the event bus before the batch is answered |
 | availability | `503` `unavailable` when the event bus has not acknowledged everything 3 seconds after the request arrived, or while the accepted ranges are not loaded yet after a start; `ingest` depends on nothing but the event bus and answers uploads with `200` while no subscriber of its events is running |
+| health | `GET /healthz`, which [service-calls](service-calls.md) defines for the container host, answers `200` while the event bus is reachable and the accepted ranges are loaded, and `503` otherwise |
 
 ## Parts
 
 ### upload-batch
 
-Kind: command
+Kind: operation
 
 ```http
 POST /v1/sensors/{sensor_id}/batches
@@ -66,24 +67,6 @@ Examples: cases beyond those of the public API; the accepted ranges of the senso
 | unknown field | | 4712 with a field `soil_ph` | `200`: `new`; the event 4712, whose `data.reading` contains `soil_ph` |
 | no owner header | | any batch without `X-Owner-Id` | `400` `invalid_request`; no event |
 | bus unreachable | the event bus cannot be reached | a batch with the reading 4712 | `503` `unavailable` within 4 seconds; no event, or the event 4712, which the repeated batch publishes again |
-
-### healthz
-
-Kind: query
-
-```http
-GET /healthz
-```
-
-Pre: none.
-Result: `200` while the event bus is reachable and the accepted ranges are loaded.
-Errors: `503` otherwise.
-Examples:
-
-| Case | Given | Input | Expected |
-|---|---|---|---|
-| healthy | the event bus is reachable and the ranges are loaded | `GET /healthz` | `200` |
-| ranges not loaded yet | `ingest` has just started | `GET /healthz` | `503` |
 
 ## Fake
 

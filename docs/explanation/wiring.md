@@ -17,14 +17,13 @@ Declare a need when another unit of the project provides the thing, when a stand
 
 Do not declare a need for what every unit of that sort has anyway: the language runtime, the standard library, the operating system, packages that the build tool fetches from a registry, logging.
 
-At the root, a capability is an interface that code outside the project is written against or that a person uses, such as a library API, an HTTP API, a command line or a UI, and a need is something outside that the project's code uses, such as a device, a service or the platform. A project that nobody programs against or uses directly, such as a controller that reads sensors and switches a relay, has needs and no capability. Its scenarios start where a unit reacts to a need, as the scenario `take-a-reading` of [plantwatch](../../examples/plantwatch/README.md) starts with `device/sampling -> device/hal.alarm`, and what it does is observed through the fakes of its needs.
+At the root, a capability is an interface that code outside the project is written against or that a person uses, such as a library API, an HTTP API, a command line or a UI, and a need is something outside that the project's code uses, such as a device, a service or the platform. A project that nobody programs against or uses directly, such as a controller that reads sensors and switches a relay, has needs and no capability. Its scenarios start where a unit reacts to a need, as the scenario `start-and-first-reading` of `device` in [plantwatch](../../examples/plantwatch/README.md) wakes its sampling with `hal -> sampling.alarm`, and what it does is observed through the fakes of its needs.
 
 ## Names
 
 - Name a need after what is needed, in the words of the unit that has it: `clock`, `cart-store`, `matcher`. Not after who provides it today.
 - Name a capability after what it provides, not after a technology.
 - A first map tends to name capabilities and needs after packages, because that is what the build files show. Rename them to roles as soon as you know better.
-- In YAML, write a summary that contains `:` or a comma inside `{...}` in quotes. The short form `name: summary text` on a line of its own avoids most of these cases.
 
 ## Passing a need up
 
@@ -77,27 +76,27 @@ When a need is met in another form than the one the unit expects, for example ov
 
 ## Kinds of units
 
-`kind` on a unit is optional free text. Three values carry rules, which [spec.md](../references/spec.md#2-the-manifest) states; this is what they mean:
+`kind` on a unit is optional free text. Three values carry rules, which the [standard](../references/spec-wiring.md#kinds-of-units) states; this is what they mean:
 
-| Kind | Meaning | Rule |
-|---|---|---|
-| `logic` | A pure calculation. No input or output, no memory between calls. Takes time and randomness as parameters. | Logic throughout: every child is a `logic` unit, the final provider of each need is a `logic` unit, and no need reaches a need of the root. |
-| `stateful` | Keeps state, such as a session or a state machine. | May need anything. |
-| `adapter` | The one unit that talks to one external system, a need of the root. | The final provider of none of its needs is an `adapter`. |
+| Kind | Meaning |
+|---|---|
+| `logic` | A pure calculation. No input or output, no memory between calls. Takes time and randomness as parameters. |
+| `stateful` | Keeps state, such as a session or a state machine. |
+| `adapter` | The one unit that talks to one external system, a need of the root. |
 
-A need of the root is finally reached only by adapters, unless it is marked `platform: true`. That mark is for a service of the host such as time or randomness, which is not an external system and whose contract describes a controllable fake, such as a clock that tests move forward. A unit that states no kind is not judged by this rule. A unit with children may carry a kind too; it says what the box is to its parent's wiring. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`.
+A unit that states no kind is not judged. The mark `platform: true` keeps a service of the host out of the rule for adapters: its fake is one that tests control, such as a clock that tests move forward. A unit with children may carry a kind too; it says what the box is to its parent's wiring. A `logic` composite has only `logic` children; a composite that holds state anywhere is `stateful`; one that exists to wrap one external system is an `adapter`.
 
-What the kinds give: a logic unit can be tested without any fake, so its tests are the cheapest and its examples the most trustworthy; an adapter is the only place where an external protocol lives, so an integration harness puts fakes at the needs of the root and nowhere else; a stateful unit is where state machines live, so its `runtime.md` is where a reviewer looks for them. Any other value is allowed; the checker says so once, as information, and applies no rule.
+What the kinds give: a logic unit can be tested without any fake, so its tests are the cheapest and its examples the most trustworthy; an adapter is the only place where an external protocol lives, so an integration harness puts fakes at the needs of the root and nowhere else; a stateful unit is where state machines live, so its `runtime.md` is where a reviewer looks for them.
 
 ## A unit with code of its own
 
-A unit with children MAY have code of its own, for example a main program that calls its libraries. What that code uses from a child is a need of the unit, wired in the unit's own wiring to the child's capability, `clock: platform.clock`; the standard shows the example. The unit above does not wire such a need, and at the root it is not a need of the project. A child's need of the same name still needs its own line, and it cannot be passed up to it.
+A unit with children may have code of its own, for example a main program that calls its libraries. What that code uses from a child is a need of the unit, wired in the unit's own wiring to the child's capability, `clock: platform.clock`; the standard gives the form, `own-need: child.capability`. The unit above does not wire such a need, and at the root it is not a need of the project. A child's need of the same name still needs its own line, and it cannot be passed up to it.
 
 The other direction is not modelled. When a child uses code of the unit above it, that code gets a folder with a manifest and a capability, and the child's need is wired to it like any other connection. A connection always joins two units; there is no line that names a folder.
 
 ## Optional needs
 
-A need behind a feature flag is `optional: true`. It MAY be wired anyway. What only tests use, such as a fake or a test helper, is no need: declare a need for what the unit's code requires when it runs.
+A need behind a feature flag is `optional: true`. It may be wired anyway. What only tests use, such as a fake or a test helper, is no need: declare a need for what the unit's code requires when it runs.
 
 ## Services and external systems
 
@@ -105,6 +104,6 @@ For a set of services in one repository:
 
 - Each service folder is a unit. A folder such as `src/` that only groups them stays plain.
 - A database or a queue with no folder of its own is either a need of the root (somebody outside operates it) or a capability of the unit whose files define it, such as a deployment folder. A stream of events that rides on the queue has a contract of its own, `Carried by:` the queue's contract.
-- Configuration is a need: its contract lists the settings as parts, with name, type, default and who sets each, and its fake is a table of values. `runs-as` in the manifest says which units are processes, jobs or libraries.
+- Configuration is a need, with the settings as the parts of its contract ([placement.md](../references/placement.md#what-belongs-where)). `runs-as` in the manifest says which units are processes, jobs or libraries.
 - A call from one service to another is a need of the caller, wired to a capability of the callee. The contract is the API both sides name.
 - With a flat set of services, all wiring is in one manifest, and every new call between two services changes it. That manifest is the map of the system; expect it to be the file with the most changes.

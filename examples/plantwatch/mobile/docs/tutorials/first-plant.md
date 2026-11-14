@@ -11,7 +11,7 @@ This lesson is for an owner who has a new sensor stick and the app installed on 
 7. Take the cell out of the sensor stick and put it back in. The sensor stick is now open for pairing for a few minutes.
 8. Tap "Search" and hold the phone close to the pot. Within a few seconds the sensor stick appears, marked "near".
 9. Pick it, and accept the dialog of the phone if one appears. You are back in the plant form, which now shows the sensor stick. If the screen says that the sensor stick is no longer open for pairing, repeat steps 7 to 9.
-10. Tap "Save". If the app asks whether it may send notifications, answer "Not now". The list of plants shows "Monstera".
+10. Tap "Save". When the app asks whether it may send notifications, answer "Allow", so that an alert reaches you also while the app is closed. The list of plants shows "Monstera".
 11. Wait up to a minute. The list shows the soil moisture with the age of the reading, for example "41 %, a minute ago".
 12. Tap the plant. Its screen shows all three quantities and the chart of the history, with one point so far.
 

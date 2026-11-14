@@ -12,13 +12,12 @@ Diagrams, indexes and pointer files are cheap to derive from declarations and ex
 
 ## Decision
 
-- Generated, and committed: `docs/diagrams/component.md` of every unit with children; `docs/decisions/index.md` of every unit with decisions; the root `AGENTS.md`, with the documents and skills of the root and the unifold block with the index of units; and the skill stubs where their folders exist. Every generated file starts with the comment `<!-- unifold:generated`; a stale or missing one is an error.
-- Drawn on demand, not committed: the sequence diagram of a scenario and the state diagram of a contract. `unifold scenario` prints a scenario with each included scenario as one step, and opens them with `--expand`; `unifold states` prints the states of a contract; each picture shows every row of the table beside it; the explorer shows both, with the context and architecture views of every unit.
+- Generated, and committed: `docs/decisions/index.md` of every unit with decisions; the root `AGENTS.md`, with the documents and skills of the root and the unifold block with the index of units; and the skill stubs where their folders exist. Every generated file starts with the comment `<!-- unifold:generated`; a stale or missing one is an error.
+- Drawn on demand, not committed: the component diagram of a unit with children, the sequence diagram of a scenario and the state diagram of a contract. The explorer, `unifold explore`, draws them all, with the context and architecture views of every unit and a folded view of a scenario, each include as one step; each picture has a table beside it with the same content.
 - Written by people: `README.md`, with the why; the contracts; the explanation files; the decisions. No hand-written file lists units, capabilities or connections, except the hops of a scenario, which are checked declarations.
-- A diagram is Markdown with a Mermaid chart and the same content as tables.
 
 ## Consequences
 
 - Good: no picture can disagree with the manifests, and a repository holds few generated files.
-- Good: a unit below the root has no generated file of its own; `unifold show` prints what one would hold.
-- Bad: a reader on the code host sees a scenario only through the tool or the explorer.
+- Good: a unit below the root has no generated `AGENTS.md` of its own; `unifold show` prints what one would hold.
+- Bad: a reader on the code host sees no diagram: the structure, the scenarios and the states only in the explorer.

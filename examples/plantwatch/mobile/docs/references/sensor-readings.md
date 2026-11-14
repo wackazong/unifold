@@ -1,12 +1,12 @@
 # sensor-readings
 
-Contract of `ble-client.sensor-readings`: the operations, data and guarantees of the capability through which the client hands fetched readings to its consumer. The fields of a reading and of a paired sensor stick are those cited in [context.md](../explanation/context.md). The consumer is the one receiver attached to the capability; it acknowledges a batch once it has stored it. An anchor is a time reference that the client keeps for one boot of a sensor stick. Notation: wit.
+Contract of `ble-client.sensor-readings`: the operations, data and guarantees of the capability through which the client hands fetched readings to its consumer. The fields of a reading and of a paired sensor stick are those of the [data model](data-model.md). The consumer is the one receiver attached to the capability; it acknowledges a batch once it has stored it. An anchor is a time reference that the client keeps for one boot of a sensor stick. Notation: wit.
 Sources: the BLE profile and the reading schema of plantwatch.
 Binding: in-process
 
 ## Use
 
-The consumer attaches when the program starts. From then on the client fetches from every paired sensor stick in range by itself and delivers the readings as batches. The consumer stores each batch durably and then acknowledges it, within 5 seconds; the client confirms the readings to the sensor stick only after that acknowledgement. The consumer recognises a reading by sensor id and sequence number and keeps the one it stored first. The client fetches by itself when the operating system reports a paired sensor stick, when the program comes onto the screen, and when the consumer asks with `fetch-now`. After `detach-consumer` the client stops fetching and connects to no sensor stick until a consumer attaches again. `fetch-now` asks for a fetch from one sensor stick at once; its readings arrive as batches, and every batch but the last has `more-to-come` set.
+The consumer attaches when the program starts and detaches when the phone leaves its owner. From then on the client fetches from every paired sensor stick in range by itself and delivers the readings as batches. The consumer stores each batch durably and then acknowledges it, within 5 seconds; the client confirms the readings to the sensor stick only after that acknowledgement. The consumer recognises a reading by sensor id and sequence number and keeps the one it stored first. The client fetches by itself when the operating system reports a paired sensor stick, when the program comes onto the screen, and when the consumer asks with `fetch-now`. After `detach-consumer` the client stops fetching and connects to no sensor stick until a consumer attaches again. `fetch-now` asks for a fetch from one sensor stick at once; its readings arrive as batches, and every batch but the last has `more-to-come` set.
 
 ## States
 
@@ -16,13 +16,11 @@ Start: detached.
 |---|---|---|---|
 | detached | `attach-consumer` | | attached |
 | detached | `detach-consumer` | | detached |
-| detached | `observe-status` | | detached |
 | attached | `attach-consumer` | | attached |
 | attached | `detach-consumer` | | detached |
 | attached | `fetch-now` | | attached |
 | attached | `batch` | | attached |
 | attached | `acknowledge` | | attached |
-| attached | `observe-status` | | attached |
 
 ## Qualities
 
@@ -41,7 +39,7 @@ Start: detached.
 
 ### attach-consumer
 
-Kind: command
+Kind: operation
 
 ```wit
 attach-consumer: func(receiver: batch-receiver);
@@ -59,7 +57,7 @@ Examples:
 
 ### detach-consumer
 
-Kind: command
+Kind: operation
 
 ```wit
 detach-consumer: func();
@@ -96,7 +94,7 @@ Delivery: at least once; in ascending sequence number within one sensor stick, a
 
 ### acknowledge
 
-Kind: command
+Kind: operation
 
 ```wit
 acknowledge: func(batch-id: string);
@@ -114,7 +112,7 @@ Examples:
 
 ### fetch-now
 
-Kind: command
+Kind: operation
 
 ```wit
 fetch-now: func(sensor-id: option<string>) -> list<tuple<string, fetch-outcome>>;
@@ -122,7 +120,7 @@ fetch-now: func(sensor-id: option<string>) -> list<tuple<string, fetch-outcome>>
 
 Pre: none.
 Result: the client starts to connect to the named, or to every, paired sensor stick, and returns one outcome per sensor stick: `fetched` when all unconfirmed readings were delivered and confirmed, with their number, which may be 0; `partly fetched` when some readings were confirmed and then the fetch ended, with their number and the reason; `not in range` when the sensor stick did not answer within the connect timeout; `failed` when nothing was confirmed, with a reason.
-Errors: none; a failure never surfaces as an error of an operation but as the reason of an outcome and as the last failure in the status. The reasons, and what the client then does:
+Errors: none; a failure never surfaces as an error of an operation but as the reason of an outcome and as the last failure that `list-paired` of [pairing](pairing.md) reports. The reasons, and what the client then does:
 
 | Reason | Meaning | The client then |
 |---|---|---|
@@ -141,49 +139,9 @@ Examples: each case is a `fetch-now` for one paired sensor stick S in range, wit
 | backlog | 450 unconfirmed readings | `fetch-now(S)` | batches of 200, 200 and 50; `more-to-come` yes, yes, no; outcome `fetched` with 450 |
 | nothing to fetch | no unconfirmed reading | `fetch-now(S)` | no batch; outcome `fetched` with 0 |
 | connection lost | 450 readings; the connection breaks for good during the second batch | `fetch-now(S)` | first batch confirmed; outcome `partly fetched` with 200 and `connection lost`; the next fetch starts with reading 201 |
-| invalid value | 10 readings, the fourth with a soil moisture of 120 percent | `fetch-now(S)` | one batch of 9 readings; `invalid readings` rises by 1; all 10 confirmed to the sensor stick |
+| invalid value | 10 readings, the fourth with a soil moisture of 120 percent | `fetch-now(S)` | one batch of 9 readings; the `invalid-readings` that `list-paired` of pairing reports rises by 1; all 10 confirmed to the sensor stick |
 | unknown boot | 4 readings of a boot the client holds no anchor for, then 4 of the current boot | `fetch-now(S)` | 8 readings in ascending sequence number; the first 4 flagged as estimated, the last 4 not |
 | newer major version | the sensor stick states protocol version 2.0 | `fetch-now(S)` | no batch; outcome `failed` with `unsupported version`; nothing written to the sensor stick |
-
-### observe-status
-
-Kind: query
-
-```wit
-observe-status: func(observer: status-observer);
-resource status-observer { changed: func(status: list<sensor-stick-status>); }
-```
-
-Pre: none.
-Result: the status of every paired sensor stick, again whenever one changes.
-Errors: none.
-Examples:
-
-| Case | Given | Input | Expected |
-|---|---|---|---|
-| after a fetch | a fetch ended as `fetched` | `observe-status(observer)` | the status of the sensor stick has state `idle` and that time as last fetch |
-
-### sensor-stick-status
-
-Kind: type
-
-```wit
-record sensor-stick-status {
-  sensor-id: string,
-  state: string,
-  last-fetch: option<string>,
-  last-failure: option<tuple<string, string>>,
-  invalid-readings: u32,
-}
-```
-
-| Field | Content |
-|---|---|
-| sensor-id | the sensor stick |
-| state | `idle`, `connecting`, `fetching` or `failing` |
-| last-fetch | UTC time of the last fetch that ended as `fetched`, or none |
-| last-failure | reason and UTC time, or none; cleared by the next `fetched` |
-| invalid-readings | number of readings dropped since pairing because a value was outside its range |
 
 ### fetch-outcome
 

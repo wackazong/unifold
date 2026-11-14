@@ -46,6 +46,7 @@ CONVERT_SKILL = ROOT / "docs" / "skills" / "unifold-convert" / "SKILL.md"
 OUT = SITE / "_out"
 DIAGRAMS = SITE / "diagrams"      # pre-rendered Mermaid, committed, keyed by content hash
 STATIC = SITE / "static"          # copied as it is: the heading font with its licence, og.png
+SCHEMAS = SITE / "schemas"        # <version>/unifold.schema.json of every earlier version: a published schema stays
 
 EXPL = ROOT / "docs" / "explanation"
 TUT = ROOT / "docs" / "tutorials"
@@ -53,15 +54,15 @@ TUT = ROOT / "docs" / "tutorials"
 # slug (the URL), source file, name in the navigation, one line for indexes, kind
 CHAPTERS = [
     ("spec", REF / "spec.md", "The standard", "The first page of the standard: the terms and the manifest.", "Standard"),
-    ("spec-wiring", REF / "spec-wiring.md", "Wiring and scenarios", "The second page of the standard: wiring, and scenarios as hops across the map.", "Standard"),
-    ("spec-conformance", REF / "spec-conformance.md", "Checks and conformance", "The third page of the standard: documents, what a checker guarantees, generated files, nested projects, conformance.", "Standard"),
+    ("spec-wiring", REF / "spec-wiring.md", "Wiring", "The second page of the standard: wiring, and the kinds of units.", "Standard"),
+    ("spec-scenarios", REF / "spec-scenarios.md", "Scenarios", "The third page of the standard: scenarios as hops across the map.", "Standard"),
+    ("spec-conformance", REF / "spec-conformance.md", "Checks and conformance", "The fourth page of the standard: documents, what a checker guarantees, generated files, nested projects, conformance.", "Standard"),
     ("documents", REF / "documents.md", "Documents", "The files of a unit, the four kinds of knowledge, README.md, the generated AGENTS.md, the explanation files, the references.", "Reference"),
     ("placement", REF / "placement.md", "Where things go", "The one rule for links, what belongs where, and the documents beside what a repository already has.", "Reference"),
     ("writing", REF / "writing.md", "Writing", "How each document is written: explanation files, references, skills, tutorials, the review checklist, the style.", "Reference"),
     ("decision-records", REF / "decision-records.md", "Decisions", "How a decision record and a context item are written.", "Reference"),
-    ("contracts", REF / "contracts.md", "Contracts", "The one document of a connection and how it is written: the header, use, states, parts with signatures and examples, the fake, folders.", "Reference"),
-    ("qualities", REF / "qualities.md", "Qualities", "What a connection promises beyond its parts: the ## Qualities table and its aspects.", "Reference"),
-    ("contract-example", REF / "contract-example.md", "A contract written out", "A whole contract, from the header to the fake.", "Reference"),
+    ("contracts", REF / "contracts.md", "Contracts", "The one document of a connection and how it is written: the header, use, states, qualities and the fake.", "Reference"),
+    ("contract-parts", REF / "contract-parts.md", "Parts of a contract", "The parts of a contract: names, kinds, signatures, examples and types.", "Reference"),
     ("agents", REF / "agents.md", "Agents", "How coding agents find and use unifold, per agent.", "Reference"),
     ("tool", REF / "tool.md", "Tool", "The reference tool: commands, check, init, hooks, continuous integration.", "Reference"),
     ("tool-setup", REF / "tool-setup.md", "Setting up the tool", "init, hooks, continuous integration, and testing another implementation.", "Reference"),
@@ -126,9 +127,6 @@ def sync_rules_page(check_only: bool) -> None:
         STALE.append(f"{RULES_PAGE.relative_to(ROOT)} differs from the rule table of the tool; run `uv run site/build.py`")
     else:
         RULES_PAGE.write_text(page, encoding="utf-8")
-
-# old addresses that still get a page
-REDIRECTS = {"guide": "/", "adopting": "/first-map/", "design": "/reasoning/"}
 
 MERMAID_CONFIG = '{"theme":"neutral","htmlLabels":false,"flowchart":{"htmlLabels":false},"fontFamily":"system-ui, sans-serif"}'
 
@@ -756,8 +754,8 @@ def how_it_works(body: str, version: str) -> tuple[str, str]:
         elif kind == "md":
             (after if figures else before).append(f'<div class="text">{inline_md(text, version)}</div>')
     if diagram:
-        figures.append(f'<figure class="diagram-card"><figcaption><code>docs/diagrams/component.md</code>'
-                       f'<span class="role generated">generated</span></figcaption>{diagram}</figure>')
+        figures.append(f'<figure class="diagram-card"><figcaption><code>unifold explore</code>'
+                       f'<span class="role generated">drawn</span></figcaption>{diagram}</figure>')
     sheet_html = f'<div class="sheet" role="group" aria-label="The manifests">{"".join(panels)}</div>' if panels else ""
     rest = [*before, f'<div class="duo">{"".join(figures)}</div>' if figures else "", *after]
     return sheet_html, "".join(rest)
@@ -837,7 +835,7 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
                 else:
                     items.append(inline_md(p, version))
             blocks.append(band(sid, heading, f'<div class="faq">{"".join(items)}</div>', n, "questions"))
-        elif (low == "capabilities" or low.startswith("what this")) and subsections(body):
+        elif low.startswith("what this") and subsections(body):
             intro_md = re.split(r"(?m)^### ", body, maxsplit=1)[0].strip()
             cols = []
             for h, b in subsections(body):
@@ -848,13 +846,6 @@ def landing(readme: str, explorers: list[tuple[str, str]], css_href: str, versio
             inner = (f'<p class="section-lede">{strip_p(inline_md(intro_md, version))}</p>' if intro_md else "") + \
                 f'<div class="cols three">{"".join(cols)}</div>'
             blocks.append(band(sid, heading, inner, n, "capabilities dark"))
-        elif low == "needs" and nxt and nxt[0].lower() == "commands":
-            needs = "".join(f'<p><strong>{esc(h)}.</strong> {strip_p(inline_md(b, version))}</p>'
-                            for h, b in subsections(body)) or inline_md(body, version)
-            cmd = render_md(nxt[1], ROOT, version, permalinks=False)[0]
-            blocks.append(band(slug(nxt[0]), nxt[0], f'<div class="run">{cmd}<div class="needs">{needs}</div></div>',
-                               n, "commands"))
-            i += 1
         elif low == "read next" and table_rows(body):
             cards = []
             for row in table_rows(body):
@@ -941,13 +932,6 @@ def build() -> None:
         (OUT / slug).mkdir()
         (OUT / slug / "index.html").write_text(chapter_page(slug, src, text, css_href, version), encoding="utf-8")
         (OUT / f"{slug}.md").write_text(text, encoding="utf-8")
-    for old, new in REDIRECTS.items():
-        (OUT / old).mkdir()
-        (OUT / old / "index.html").write_text(
-            f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Moved</title>'
-            f'<meta http-equiv="refresh" content="0; url={new}"><link rel="canonical" href="{SITE_URL}{new}">'
-            f'</head><body><p>This page moved to <a href="{new}">{SITE_URL}{new}</a>.</p></body></html>\n',
-            encoding="utf-8")
 
     (OUT / "index.html").write_text(
         landing((ROOT / "README.md").read_text(encoding="utf-8"), explorers, css_href, version), encoding="utf-8")
@@ -962,6 +946,19 @@ def build() -> None:
     # machine-readable files
     (OUT / version).mkdir()
     shutil.copyfile(schema, OUT / version / "unifold.schema.json")
+    # the schemas of the earlier versions stay at their addresses: the upload replaces the web root,
+    # so a schema that is not written here is gone, and the manifests that name it lose their validation
+    for old in sorted(p for p in SCHEMAS.iterdir() if p.is_dir()) if SCHEMAS.exists() else []:
+        if old.name == version:
+            die(f"site/schemas/{old.name}/ is the current version; the schema of {version} is "
+                f"{schema.relative_to(ROOT)}. Archive a schema only when the standard moves on.")
+        if json.loads((old / "unifold.schema.json").read_text(encoding="utf-8")).get("$id") \
+                != f"{SITE_URL}/{old.name}/unifold.schema.json":
+            die(f"site/schemas/{old.name}/unifold.schema.json does not have the $id of version {old.name}.")
+        (OUT / old.name).mkdir()
+        shutil.copyfile(old / "unifold.schema.json", OUT / old.name / "unifold.schema.json")
+    if json.loads(schema.read_text(encoding="utf-8")).get("$id") != f"{SITE_URL}/{version}/unifold.schema.json":
+        die(f"{schema.relative_to(ROOT)} does not have the $id of version {version}.")
     # the skills as they are in the repository, with their templates and scripts: the unifold skill
     # at /skill/, the address that README.md and llms.txt give, and every folder of docs/skills/
     # at /skill/<name>/, so that a relative link from one skill into another resolves too
@@ -980,7 +977,7 @@ def build() -> None:
         f"> unifold {version} is an open standard for writing down how the parts of a repository depend on "
         "each other. A folder becomes a unit by getting a `unifold.yaml` that lists what it provides and what it "
         "needs; the unit above connects each need to a provider; a checker keeps this consistent and "
-        "generates the diagrams.", "",
+        "draws the diagrams.", "",
         "All pages below are plain Markdown. The same pages exist as HTML without the `.md` ending.", "",
         "## Standard", "",
         *[f"- [{n}]({SITE_URL}/{s}.md): {d}" for s, _, n, d, k in CHAPTERS if k == "Standard"],
@@ -1013,7 +1010,7 @@ def build() -> None:
         for f in STATIC.iterdir():
             if f.is_file():
                 shutil.copyfile(f, OUT / f.name)
-    nf = f"""<main id="main" class="wrap prose notfound">
+    nf = """<main id="main" class="wrap prose notfound">
 <h1>This page does not exist</h1>
 <p>The address may be mistyped, or the page has moved.</p>
 <ul><li><a href="/">Start page</a></li><li><a href="/spec/">The standard</a></li><li><a href="/first-map/">Get Started</a></li></ul>

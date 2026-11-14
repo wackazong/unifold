@@ -1,6 +1,6 @@
 # Reasoning of alerts
 
-The long form of the why in [README.md](../../README.md). Which children exist and how they are wired is shown in the [component diagram](../diagrams/component.md).
+The long form of the why in [README.md](../../README.md). Which children exist and how they are wired is in the manifests; the explorer draws it.
 
 **Judging is pure.** Whether a reading opens or closes an alert depends on the reading, the thresholds and what was judged before. It does not depend on a database, a clock or a network. Kept as a library with no state of its own, the judging can be tested with tables of readings and changed without touching storage.
 

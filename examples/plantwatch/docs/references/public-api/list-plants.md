@@ -1,6 +1,6 @@
 # list-plants
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/plants

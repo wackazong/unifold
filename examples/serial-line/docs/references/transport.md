@@ -20,7 +20,7 @@ The consumer sends a payload as one frame, and receives the payload of the next 
 
 ### send
 
-Kind: command
+Kind: operation
 
 ```wit
 send: func(payload: list<u8>) -> result<_, transport-error>;
@@ -40,7 +40,7 @@ Examples:
 
 ### receive
 
-Kind: query
+Kind: operation
 
 ```wit
 receive: func(deadline-ms: u32) -> result<list<u8>, transport-error>;

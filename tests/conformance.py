@@ -33,6 +33,7 @@ site build generates from the reference tool, with the tool under test
 """
 from __future__ import annotations
 
+import html
 import json
 import os
 import re
@@ -68,16 +69,16 @@ FENCE = "```"
 
 
 def contract_text(name: str, parts=None) -> str:
-    """A contract with a complete body: one query per part (default: one type named after the contract)."""
+    """A contract with a complete body: one operation per part (default: one type named after the contract)."""
     out = [f"# {name}", "", f"Contract of `{name}`. Notation: wit.", "Sources: none", "",
            "## Use", "", "Call any part at any time.", "", "## Parts", ""]
     for part in (parts or [(name, "type")]):
-        part, kind = part if isinstance(part, tuple) else (part, "query")
+        part, kind = part if isinstance(part, tuple) else (part, "operation")
         out += [f"### {part}", "", f"Kind: {kind}", "", FENCE + "wit", f"{part}: func() -> u32;" if kind != "type"
                 else f"record {part} {{ v: u32 }}", FENCE, ""]
         if kind == "event":
             out += ["When: the work is done.", "Delivery: at least once, in order per key.", ""]
-        if kind in ("command", "query", "callback"):
+        if kind == "operation":
             out += ["Pre: none.", "Result: a number.", "Errors: none.", "Examples:", "",
                     "| Case | Input | Expected |", "|---|---|---|", f"| one | `{part}()` | 1 |", ""]
     out += ["## Fake", "", "Replays the examples.", ""]
@@ -135,7 +136,7 @@ def stateful_text(rows=None, start="closed", use=True) -> str:
     out += ["| State | Part | Result | Next |", "|---|---|---|---|", *(STATE_ROWS if rows is None else rows), ""]
     out += ["## Parts", ""]
     for part, error in (("open", "refused"), ("send", "lost")):
-        out += [f"### {part}", "", "Kind: command", "", FENCE + "wit", f"{part}: func();", FENCE, "", "Pre: none.",
+        out += [f"### {part}", "", "Kind: operation", "", FENCE + "wit", f"{part}: func();", FENCE, "", "Pre: none.",
                 "Result: done.", f"Errors: `{error}` when it fails" + ("; `line gone` when the line is cut." if part == "send"
                                                                        else "."), "Examples:", "", "| Case | Input | Expected |",
                 "|---|---|---|", f"| one | `{part}()` | ok |", ""]
@@ -143,8 +144,8 @@ def stateful_text(rows=None, start="closed", use=True) -> str:
     return "\n".join(out)
 
 
-STATE_HOPS = ("      - api -> a.serve: ok\n      - a -> b.open(): ok\n      - a -> b.send([1]): lost\n"
-              "      - a -> b.open(): ok\n      - a -> b.send([1]): ok\n")
+STATE_HOPS = ("      - api -> a.serve\n      - a -> b.open\n      - a -> b.send: the line is lost\n"
+              "      - a -> b.open\n      - a -> b.send: one byte\n")
 
 
 def state_project(hops=STATE_HOPS, given="", **contract) -> dict:
@@ -166,13 +167,13 @@ TWO_TYPES = ("do", ("thing", "type"), ("other", "type"))
 RETURNS_THING = ("do: func() -> u32;", "do: func() -> thing;")
 UNUSED_TYPE = ["warn C10 docs/references/x.md"]
 FOLDER_INDEX = "# x\n\nContract of x. Notation: wit.\n\n## Use\n\nAny order.\n\n## Parts\n\n- [do](do.md)\n- [thing](thing.md)\n\n## Fake\n\nReplays.\n"
-FOLDER_DO = ("# do\n\nKind: query\n\n" + FENCE + "wit\n%s\n" + FENCE + "\n\nPre: none.\nResult: a number.\nErrors: none.\nExamples:\n\n"
+FOLDER_DO = ("# do\n\nKind: operation\n\n" + FENCE + "wit\n%s\n" + FENCE + "\n\nPre: none.\nResult: a number.\nErrors: none.\nExamples:\n\n"
              "| Case | Input | Expected |\n|---|---|---|\n| one | `do()` | 1 |\n")
 FOLDER_THING = "# thing\n\nKind: type\n\n" + FENCE + "wit\nrecord thing { v: u32 }\n" + FENCE + "\n"
 
 
 def folder_project(signature: str) -> dict:
-    """Two wired units whose contract x is a folder with a query `do` and a type `thing`."""
+    """Two wired units whose contract x is a folder with an operation `do` and a type `thing`."""
     return project(WIRED, {"a": "needs:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n",
                            "b": "capabilities:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n"}, {
         "docs/references/x/index.md": FOLDER_INDEX, "docs/references/x/do.md": FOLDER_DO % signature,
@@ -254,13 +255,12 @@ CASES = [
     ("clean-contract-folder", project(WIRED, {"a": "needs:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n",
                                               "b": "capabilities:\n  x: {summary: s, contract: ../docs/references/x/index.md}\n"}, {
         "docs/references/x/index.md": "# x\n\nContract of x. Notation: wit.\n\n## Use\n\nAny order.\n\n## Parts\n\n- [do](do.md)\n\n## Fake\n\nReplays.\n",
-        "docs/references/x/do.md": "# do\n\nKind: query\n\n```wit\ndo: func() -> u32;\n```\n\nPre: none.\nResult: r.\nErrors: none.\nExamples:\n\n| Case | Input | Expected |\n|---|---|---|\n| one | `do()` | 1 |\n"}), []),
+        "docs/references/x/do.md": "# do\n\nKind: operation\n\n```wit\ndo: func() -> u32;\n```\n\nPre: none.\nResult: r.\nErrors: none.\nExamples:\n\n| Case | Input | Expected |\n|---|---|---|\n| one | `do()` | 1 |\n"}), []),
     ("M2-contract-with-a-fragment", project(WIRED, {
         "a": "needs:\n  x: {summary: s, contract: ../docs/references/x.md#part}\n",
         "b": "capabilities:\n  x: {summary: s, contract: ../docs/references/x.md}\n"},
         {"docs/references/x.md": contract_text("x")}), ["error M2 a/unifold.yaml"]),
     ("clean-extension-keys", project("x-team: red\n", {"a": "x-anything: {a: 1}\n"}), []),
-    ("clean-diagrams-none", project("diagrams: none\n" + WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}), []),
     ("clean-with-documents", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
         "README.md": "# demo\n\n[a](a/README.md) and [b](b/)\n\n## Why\n\nBecause.\n",
         "a/README.md": "# a\n\nWhat a is for.\n\n## Needs\n\n### `x`\n\nText. See [the map](docs/explanation/context.md).\n\n## Why\n\nBecause.\n",
@@ -322,11 +322,7 @@ CASES = [
         "", {"a": "wiring: [\n", "a/deep": NEEDS_X}), ["error M1 a/unifold.yaml"]),
     ("M2-summary-on-a-unit", project("", {"a": ""}, {"a/unifold.yaml": "summary: A part\n"}),
      ["error M2 a/unifold.yaml", "error M2 a/unifold.yaml"]),
-    ("M2-verified-by-removed", project("capabilities:\n  x: {summary: s, contract: ref:x, verified-by: tests}\n"),
-     ["error M2 unifold.yaml"]),
     ("M2-owner-is-no-key", project("owner: the team\n"), ["error M2 unifold.yaml"]),
-    ("M2-diagram-links-is-no-key", project("diagram-links: relative\n"), ["error M2 unifold.yaml"]),
-    ("M2-diagrams-all", project("diagrams: all\n"), ["error M2 unifold.yaml"]),
     ("M2-kind-on-a-capability", project("capabilities:\n  x: {summary: s, kind: http}\n"), ["error M2 unifold.yaml"]),
     ("M2-platform-on-a-need-of-a-child", project("", {"a": "needs:\n  clock: {summary: s, optional: true, platform: true}\n"}),
      ["error M2 a/unifold.yaml"]),
@@ -357,7 +353,6 @@ CASES = [
     ("M2-placeholder-in-not", project("not:\n  - <nothing>\n"), ["error M2 unifold.yaml"]),
     ("M2-placeholder-in-expect", project(SCENARIO_ROOT.replace("expect: e", "expect: <expect>"), SCENARIO_UNITS,
                                          contracts=SCENARIO_CONTRACTS), ["error M2 unifold.yaml"]),
-    ("M2-max-lines", project("max-lines: none\n"), ["error M2 unifold.yaml"]),
     ("M2-capability-name-with-dot", project("capabilities:\n  v1.api: s\n"), ["error M2 unifold.yaml"]),
     ("M2-capability-name-starts-with-underscore", project("capabilities:\n  _api: s\n"), ["error M2 unifold.yaml"]),
     ("M2-placeholder-summary-of-a-need", project("needs:\n  x: <what is needed>\n"),
@@ -499,7 +494,6 @@ CASES = [
      ["warn K4 unifold.yaml"]),
     ("K4-silent-for-another-kind", project(NEEDS_X + "wiring:\n  a.x: x\n", {"a": "kind: service\n" + NEEDS_X}),
      ["info K1 a/unifold.yaml"]),
-    ("M2-secret-is-gone", project("", {"a": "secret:\n  what: w\n"}), ["error M2 a/unifold.yaml"]),
     ("K6-not-item-mapped-to-a-need", project("", {"a": "not:\n  - parsing: codec\n"}), ["error K6 a/unifold.yaml"]),
     ("K6-not-as-text", project("", {"a": "not: parsing\n"}), ["error K6 a/unifold.yaml"]),
     # ------------------------------------------------ N: scenarios
@@ -532,16 +526,22 @@ CASES = [
      ["info N4 docs/references/x.md", "warn C10 docs/references/x.md"]),
     ("N4-silent-without-a-scenario", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, contracts={"x": ["do", "undo"]}), []),
     ("clean-path-through-states", state_project(), []),
-    ("clean-given-sets-the-state", state_project("      - api -> a.serve: ok\n      - a -> b.send([1]): lost\n"
-                                                 "      - a -> b.open(): ok\n",
-                                                 "    given:\n      - b.x: open\n      - the line is quiet\n"), []),
-    ("N2-hop-without-a-result", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do"), SCENARIO_UNITS,
-                                        contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
-    ("N2-result-read-as-true", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do: yes"), SCENARIO_UNITS,
-                                       contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
-    ("N5-given-names-no-state", state_project(given="    given:\n      - b.x: nowhere\n"), ["error N5 unifold.yaml"]),
-    ("N5-given-names-a-contract-without-states", project(SCENARIO_ROOT.replace("    hops:", "    given:\n      - b.x: open\n    hops:"),
-                                                         SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), ["error N5 unifold.yaml"]),
+    ("clean-states-are-not-followed", state_project("      - api -> a.serve\n      - a -> b.send: before the session is open\n"),
+     ["info N4 docs/references/x.md"]),
+    ("clean-hop-without-a-note", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do"), SCENARIO_UNITS,
+                                         contracts=SCENARIO_CONTRACTS), []),
+    ("clean-note-read-as-a-number", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do: 1000"), SCENARIO_UNITS,
+                                            contracts=SCENARIO_CONTRACTS), []),
+    ("clean-note-with-a-colon", project(SCENARIO_ROOT.replace("a -> b.do: ok", "'a -> b.do': 'the value {k: 1}'"), SCENARIO_UNITS,
+                                        contracts=SCENARIO_CONTRACTS), []),
+    ("N2-hop-with-a-call", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do(1): ok"), SCENARIO_UNITS,
+                                   contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
+    ("N2-given-as-a-state", project(SCENARIO_ROOT.replace("    hops:", "    given:\n      - b.x: open\n    hops:"),
+                                    SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
+    ("clean-given-as-sentences", project(SCENARIO_ROOT.replace("    hops:", "    given:\n      - the line is quiet\n    hops:"),
+                                         SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), []),
+    ("N2-scenario-named-like-a-part", project(SCENARIO_ROOT.replace("  s1:\n", "  serve:\n"), SCENARIO_UNITS,
+                                              contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
     ("C2-examples-table-with-other-columns", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
         "docs/references/x.md": contract_text("x", ["do"]).replace("| Case | Input | Expected |", "| Case | Request | Answer |")}),
      ["warn C2 docs/references/x.md"]),
@@ -557,21 +557,8 @@ CASES = [
                                                    contracts={"api": ["serve"], "x": ["do", ("done", "event")]}), []),
     ("clean-event-without-a-result", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - a -> b.do: ok\n      - b -> a.done\n"), SCENARIO_UNITS,
                                              contracts={"api": ["serve"], "x": ["do", ("done", "event")]}), []),
-    ("clean-callback-called-by-the-provider", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - a -> b.do: ok\n      - b -> a.notify(1): ok\n"), SCENARIO_UNITS,
-                                                      contracts={"api": ["serve"], "x": ["do", ("notify", "callback")]}), []),
-    ("N1-callback-called-by-the-consumer", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.notify(1): ok"), SCENARIO_UNITS,
-                                                   contracts={"api": ["serve"], "x": ["do", ("notify", "callback")]}), ["error N1 unifold.yaml"]),
-    ("N2-command-without-a-result", project(SCENARIO_ROOT.replace("      - a -> b.do: ok", "      - a -> b.do"), SCENARIO_UNITS,
-                                            contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
-    ("clean-parallel-hops", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - parallel:\n          - - a -> b.do: ok\n          - - a -> b.ask: ok\n"),
-                                    SCENARIO_UNITS, contracts={"api": ["serve"], "x": ["do", "ask"]}), []),
-    ("N2-parallel-with-one-branch", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - parallel:\n          - - a -> b.do: ok\n"),
+    ("N2-parallel-is-no-item", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - parallel:\n          - - a -> b.do: ok\n          - - a -> b.do: ok\n"),
                                             SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
-     ["error N2 unifold.yaml", "info N4 docs/references/x.md", "warn N3 unifold.yaml"]),
-    ("clean-repeated-hops", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - repeat:\n          until: done\n          hops:\n            - a -> b.do: ok\n"),
-                                    SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), []),
-    ("N2-repeat-without-until-or-times", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - repeat:\n          hops:\n            - a -> b.do: ok\n"),
-                                                 SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
      ["error N2 unifold.yaml", "info N4 docs/references/x.md", "warn N3 unifold.yaml"]),
     ("clean-included-scenario", project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", "      - a.inner\n"),
                                         {"a": SCENARIO_UNITS["a"] + "scenarios:\n  inner:\n    summary: s\n    hops:\n      - api -> x.do: ok\n    expect: e\n",
@@ -625,18 +612,6 @@ CASES = [
         contracts={"api": ["serve"], "bus": ["publish"]}), ["info N4 docs/references/bus.md"]),
     ("N1-hop-to-a-type", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.thing: ok"), SCENARIO_UNITS,
                                 contracts={"api": ["serve"], "x": ["do", ("thing", "type")]}), ["error N1 unifold.yaml", "warn C10 docs/references/x.md"]),
-    ("N2-result-read-as-a-number", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do: 1000"), SCENARIO_UNITS,
-                                           contracts=SCENARIO_CONTRACTS), ["error N2 unifold.yaml"]),
-    ("N7-result-contradicts-the-example", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do(do()): \"2\""),
-                                                  SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), ["error N7 unifold.yaml"]),
-    ("N7-no-such-example", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do: = two"), SCENARIO_UNITS,
-                                   contracts=SCENARIO_CONTRACTS), ["error N7 unifold.yaml"]),
-    ("clean-result-from-an-example", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do: = one"), SCENARIO_UNITS,
-                                             contracts=SCENARIO_CONTRACTS), []),
-    ("clean-result-equals-the-example", project(SCENARIO_ROOT.replace("a -> b.do: ok", "a -> b.do(do()): \"1\""), SCENARIO_UNITS,
-                                                contracts=SCENARIO_CONTRACTS), []),
-    ("N8-result-almost-an-error-case", state_project("      - api -> a.serve: ok\n      - a -> b.open(): ok\n      - a -> b.send([1]): Lost\n"),
-     ["warn N8 unifold.yaml"]),
     ("N1-two-connections-share-the-part", project(
         "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.p1: b.c1\n  a.p2: b.c2\n"
         "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve: ok\n      - a -> b.do: ok\n    expect: e\n",
@@ -649,31 +624,27 @@ CASES = [
         {"a": "capabilities:\n  api: {summary: s, contract: ref:api}\nneeds:\n  p1: {summary: s, contract: ref:x}\n  p2: {summary: s, contract: ref:x}\n",
          "b": "capabilities:\n  c1: {summary: s, contract: ref:x}\n  c2: {summary: s, contract: ref:x}\n"},
         contracts=SCENARIO_CONTRACTS), []),
-    ("N6-path-the-states-forbid", state_project("      - api -> a.serve: ok\n      - a -> b.send([1]): ok\n"),
-     ["error N6 unifold.yaml", "info N4 docs/references/x.md"]),
-    ("N6-success-that-only-a-failure-row-allows", state_project(rows=STATE_ROWS + ["| open | `open` | `refused` | open |"],
-                                                                hops=STATE_HOPS + "      - a -> b.open(): ok\n"),
-     ["error N6 unifold.yaml"]),
+    ("clean-event-hop-names-the-capability-of-its-caller", project(
+        "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.p1: b.c1\n  a.p2: b.c2\n"
+        "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a -> b.c1.do\n      - a -> b.c2.do\n"
+        "      - b -> a.c1.done\n      - b -> a.c2.done\n    expect: e\n",
+        {"a": "capabilities:\n  api: {summary: s, contract: ref:api}\nneeds:\n  p1: {summary: s, contract: ref:x}\n  p2: {summary: s, contract: ref:x}\n",
+         "b": "capabilities:\n  c1: {summary: s, contract: ref:x}\n  c2: {summary: s, contract: ref:x}\n"},
+        contracts={"api": ["serve"], "x": ["do", ("done", "event")]}), []),
+    ("clean-need-met-inside-is-used-by-the-unit", project(
+        SCENARIO_ROOT.replace("  a.x: b.x\n", "  a.x: b.x\n  y: b.x\n") .replace("capabilities:\n  api:", "needs:\n  y: {summary: s, contract: ref:x}\ncapabilities:\n  api:", 1),
+        SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS), []),
     # ------------------------------------------------ C: contracts
     ("C1-contract-without-parts", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
                                           {"docs/references/x.md": "# x\n\n## Use\n\nAny order.\n\n## Fake\n\nReplays.\n"}), ["warn C1 docs/references/x.md"]),
-    ("clean-error-name-with-spaces", state_project(
-        "      - api -> a.serve: ok\n      - a -> b.open(): ok\n      - a -> b.send([1]): line gone\n      - a -> b.open(): ok\n",
-        rows=STATE_ROWS + ["| open | `send` | `line gone` | closed |"]), []),
     ("C6-contract-without-use", state_project(use=False), ["warn C6 docs/references/x.md"]),
-    ("C7-row-of-no-part", state_project(rows=STATE_ROWS + ["| open | `close` | ok | closed |"]), ["error C7 docs/references/x.md"]),
-    ("C7-result-that-is-no-error-case", state_project(rows=STATE_ROWS + ["| open | `send` | `busy` | open |"]),
-     ["error C7 docs/references/x.md"]),
-    ("C7-no-start-state", state_project(start=None), ["error C7 docs/references/x.md"]),
-    ("C7-two-rows-for-one-step", state_project(rows=STATE_ROWS + ["| open | `send` | ok | closed |"]),
-     ["error C7 docs/references/x.md"]),
     ("C1-part-with-unknown-kind", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
                                           {"docs/references/x.md": contract_text("x", [("do", "call")])}), ["warn C1 docs/references/x.md"]),
-    ("C2-query-without-examples", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+    ("C2-operation-without-examples", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
                                           {"docs/references/x.md": contract_text("x", ["do"]).replace("| one | `do()` | 1 |\n", "")}),
      ["warn C2 docs/references/x.md"]),
-    ("C2-command-without-pre", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
-                                       {"docs/references/x.md": contract_text("x", [("do", "command")]).replace("Pre: none.\n", "")}),
+    ("C2-operation-without-pre", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
+                                       {"docs/references/x.md": contract_text("x", [("do", "operation")]).replace("Pre: none.\n", "")}),
      ["warn C2 docs/references/x.md"]),
     ("C3-part-without-a-signature", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X},
                                             {"docs/references/x.md": contract_text("x").replace(FENCE + "wit\nrecord x { v: u32 }\n" + FENCE + "\n", "")}),
@@ -769,45 +740,34 @@ CASES = [
      ["warn T4 README.md"]),
     ("T4-why-of-250-words", project(files={"README.md": WHY.format(name="demo", lines="why\n\n" * 250)}), []),
     # ------------------------------------------------------ G: generated files
-    ("G1-generated-file-missing", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"fix": False}),
-    ("G1-generated-file-out-of-date", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
-        "docs/diagrams/component.md": MARK + "\n# Old\n"}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"fix": False}),
-    ("G1-leftover-generated-file", project(files={"docs/diagrams/component.md": MARK + "\n# Old\n"}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"], {"fix": False}),
+    ("G1-generated-file-out-of-date", project(files={**with_decision(), "docs/decisions/index.md": MARK + "\n# Old\n"}),
+     ["error G1 AGENTS.md", "error G1 docs/decisions/index.md"], {"fix": False}),
+    ("G1-leftover-generated-file", project(files={"docs/decisions/index.md": MARK + "\n# Old\n"}),
+     ["error G1 AGENTS.md", "error G1 docs/decisions/index.md"], {"fix": False}),
     ("G1-leftover-in-a-folder-that-is-no-longer-a-unit", project(files={
-        "old/AGENTS.md": MARK + "\n# AGENTS.md: old\n", "old/docs/diagrams/context.md": MARK + "\n# Old\n",
+        "old/AGENTS.md": MARK + "\n# AGENTS.md: old\n", "old/docs/decisions/index.md": MARK + "\n# Old\n",
         "old/notes/AGENTS.md": "# Hand-written\n"}),
-     ["error G1 AGENTS.md", "error G1 old/AGENTS.md", "error G1 old/docs/diagrams/context.md"], {"fix": False}),
-    ("G1-hand-written-file-at-generated-path", project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
-        "docs/diagrams/component.md": "# Mine\n"}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"fix": False}),
-    ("G1-hand-written-file-among-diagrams", project(files={"docs/diagrams/mine.md": "# Mine\n"}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/mine.md"], {"fix": False}),
+     ["error G1 AGENTS.md", "error G1 old/AGENTS.md", "error G1 old/docs/decisions/index.md"], {"fix": False}),
+    ("G1-hand-written-file-at-generated-path", project(files={**with_decision(), "docs/decisions/index.md": "# Mine\n"}),
+     ["error G1 AGENTS.md", "error G1 docs/decisions/index.md"], {"fix": False}),
+    ("G1-generated-diagram-of-an-earlier-version", project(files={"docs/diagrams/component.md": MARK + "\n# Old\n"}),
+     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md", "info S12 docs/diagrams"], {"fix": False}),
+    ("S12-diagrams-is-no-folder-of-docs", project(files={"docs/diagrams/notes.md": "# Mine\n"}),
+     ["error G1 AGENTS.md", "info S12 docs/diagrams"], {"fix": False}),
     ("G1-decision-index-missing", project(files=with_decision()),
      ["error G1 AGENTS.md", "error G1 docs/decisions/index.md"], {"fix": False}),
     ("G1-agents-file-missing", project("", {"a": ""}),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"],
-     {"fix": False}),
+     ["error G1 AGENTS.md"], {"fix": False}),
     ("G1-leftover-agents-file-of-a-unit", project("", {"a": ""}, {"a/AGENTS.md": MARK + "\n# AGENTS.md: a\n"}),
-     ["error G1 AGENTS.md", "error G1 a/AGENTS.md", "error G1 docs/diagrams/component.md"],
+     ["error G1 AGENTS.md", "error G1 a/AGENTS.md"],
      {"fix": False}),
     ("G1-hand-written-agents-file-of-a-unit-is-not-ours", project("", {"a": ""}, {"a/AGENTS.md": AGENTS.format(name="a")}), []),
     ("G1-agents-file-without-marker", project(files={"AGENTS.md": AGENTS.format(name="demo")}),
      ["error G1 AGENTS.md"]),
     ("G1-agents-file-out-of-date", project(files={"AGENTS.md": MARK + "\n# AGENTS.md: old\n"}),
      ["error G1 AGENTS.md"], {"fix": False}),
-    ("G1-scenario-diagram-missing", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
-     ["error G1 AGENTS.md", "error G1 docs/diagrams/component.md"], {"fix": False}),
-    ("G1-component-diagrams-only", project("", {"a": "kind: stateful\n", "a/deep": ""}, {
-        "a/docs/diagrams/context.md": MARK + "\n# Old\n", "docs/diagrams/architecture.md": MARK + "\n# Old\n"}),
-     ["error G1 AGENTS.md", "error G1 a/docs/diagrams/component.md", "error G1 a/docs/diagrams/context.md",
-      "error G1 docs/diagrams/architecture.md", "error G1 docs/diagrams/component.md"],
-     {"fix": False}),
+    ("G1-no-diagram-is-a-file", project(SCENARIO_ROOT, SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS),
+     ["error G1 AGENTS.md"], {"fix": False}),
 ]
 
 
@@ -906,13 +866,16 @@ def scenario_json_on_failure(runner: Runner, tmp: str):
     data, done = runner.json("check", "--json", str(empty))
     check(done.returncode == 2 and data["ok"] is False and data["findings"] == []
           and data["error"]["code"] == "no-project", f"no project: {done.returncode} {data}")
-    for command in (["show"], ["tree"], ["capability", str(empty), "x"], ["impact"], ["skills"]):
+    for command in (["show"], ["tree"], ["capability", str(empty), "x"], ["impact"]):
         args = command if len(command) > 1 else [*command, str(empty)]
         data, done = runner.json(*args[:1], "--json", *args[1:])
         check(done.returncode == 2 and data["ok"] is False and "message" in data["error"],
               f"{command[0]} --json outside a project: {data}")
     data, done = runner.json("check", "--json", str(empty / "missing"))
     check(done.returncode == 2 and data["ok"] is False, "check on a missing path")
+    (empty / "file.txt").write_text("x\n")
+    data, done = runner.json("init", "--json", str(empty / "file.txt"))
+    check(done.returncode == 2 and data["error"]["code"] == "not-a-folder", f"init on a file: {data}")
     broken = new_project(tmp, {"unifold.yaml": ROOT + "responsibility: twice\n", "a/unifold.yaml": UNIT})
     data, done = runner.json("check", "--json", str(broken / "a"))
     check(done.returncode == 1 and not data["ok"] and data["findings"][0]["rule"] == "M1"
@@ -920,6 +883,10 @@ def scenario_json_on_failure(runner: Runner, tmp: str):
           f"a broken root manifest is still the root: {data}")
     data, done = runner.json("show", "--json", str(broken))
     check(done.returncode == 2 and data["error"]["code"] == "bad-root", "show with a broken root")
+    data, done = runner.json("check", "--json", "--rule", "ZZ9", str(broken))
+    check(done.returncode == 2 and data["error"]["code"] == "unknown-rule", f"check --rule with an unknown id: {data}")
+    data, done = runner.json("check", "--json", str(broken / "missing"))
+    check(done.returncode == 2 and data["error"]["code"] == "no-such-path", f"check on a missing path inside a project: {data}")
 
 
 def scenario_finding_shape(runner: Runner, tmp: str):
@@ -940,6 +907,9 @@ def scenario_finding_shape(runner: Runner, tmp: str):
     github = runner.run("check", "--format", "github", str(folder), cwd=str(folder.parent)).stdout
     check("::error file=demo/unifold.yaml,line=4,title=unifold W1::" in github
           and "::warning file=demo/unifold.yaml" in github, f"github output: {github}")
+    quiet = runner.run("check", "--format", "github", "--quiet", str(folder), cwd=str(folder.parent)).stdout
+    check("::error file=demo/unifold.yaml" in quiet and " Fix: " not in quiet and "::notice" not in quiet,
+          f"github output with --quiet: no fix hints, no info: {quiet}")
     strict = project("", {"b": CAPABILITY_X})
     folder2 = Path(tmp) / "strict"
     write_files(folder2, strict)
@@ -948,14 +918,6 @@ def scenario_finding_shape(runner: Runner, tmp: str):
     check(runner.run("check", "--strict", str(folder2)).returncode == 1, "--strict: exit 1")
     only = runner.findings(folder, "--rule", "W3")
     check(only == ["warn W3 unifold.yaml"], f"--rule: {only}")
-    data, done = runner.json("check", "--json", "--strict", "--ignore", "W3", str(folder2))
-    check(done.returncode == 0 and data["ok"] and data["findings"] == [] and data["summary"]["ignored"] == {"W3": 1}
-          and data["summary"]["warn"] == 0, f"--ignore drops the finding and counts it: {data['summary']}")
-    text = runner.run("check", "--strict", "--ignore", "W3", str(folder2)).stdout
-    check("W3×1 ignored" in text, f"the summary line names the ignored rule: {text}")
-    data, done = runner.json("check", "--json", "--ignore", "W1", str(folder))
-    check(done.returncode == 1 and data["summary"]["ignored"] == {"W1": 1} and data["summary"]["error"] == 1,
-          f"--ignore drops an error too, whatever the severity: {data['summary']}")
 
 
 def scenario_generate_is_idempotent(runner: Runner, tmp: str):
@@ -978,22 +940,22 @@ def scenario_generate_is_idempotent(runner: Runner, tmp: str):
     data, _ = runner.json("check", "--fix", "--json", str(folder))
     fixed = data["summary"]["fixed"]
     check(fixed["written"] == [] and fixed["removed"] == [], f"a second check --fix wrote: {fixed}")
-    for path in list(folder.rglob("docs/diagrams/*.md")) + list(folder.rglob("AGENTS.md")) \
+    for path in list(folder.rglob("AGENTS.md")) \
             + [folder / "docs/decisions/index.md"]:
         path.unlink()
     runner.run("check", "--fix", str(folder), env={"PYTHONHASHSEED": "12345"})
     check(snapshot() == before, "regenerated from nothing: not byte-identical")
     check(runner.findings(folder) == [], f"clean after check --fix: {runner.findings(folder)}")
-    component = before["docs/diagrams/component.md"]
-    check("Shared connections, not drawn" in component
-          and "- need `a.log`, `b.log`, `deep.log` → need `log` of `demo`, passed up" in component
+    chart = next(u for u in explored(runner, folder)["units"] if u["path"] == ".")["diagrams"]["component"]
+    component = chart["source"]
+    check("- need `a.log`, `b.log`, `deep.log` → need `log` of `demo`, passed up" in chart["shared"]
           and "|\"log\"|" not in component,
-          f"a need that three children pass up is listed, not drawn: {component}")
-    check("my%20plugins/deep" in component, "generated links are URL-encoded")
+          f"a need that three children pass up is listed, not drawn: {chart}")
     check("-.->" in component, "an alternative is a dashed arrow")
-    check("**planned**" in component, "status is marked in the unit table")
-    check(sorted(p for p in before if "/diagrams/" in p) == ["c/docs/diagrams/component.md", "docs/diagrams/component.md"],
-          f"a component diagram for every unit with children, and no other diagram: {sorted(before)}")
+    check(re.search(r"^  class \S+ planned$", component, re.M), "a planned unit is marked")
+    check(not any("/diagrams/" in p for p in before), f"no diagram is a file: {sorted(before)}")
+    check("component" not in next(u for u in explored(runner, folder)["units"] if u["path"] == "a")["diagrams"],
+          "a unit without children has no component diagram")
     check("proposed" in before["docs/decisions/index.md"], "decision index")
     check(before["AGENTS.md"].startswith(MARK) and "<!-- unifold:end -->" in before["AGENTS.md"]
           and "| a | `a` | A part |" in before["AGENTS.md"], "the root AGENTS.md carries the unit index")
@@ -1074,13 +1036,12 @@ def scenario_own_needs(runner: Runner, tmp: str):
           f"impact names the parent: {data['dependents']}")
     text = runner.run("show", str(folder / "platform")).stdout
     check("used by the root as need 'clock'" in text, f"show names the root: {text}")
-    component = (folder / "docs/diagrams/component.md").read_text()
-    check("n_root___clock --> u_platform" in component
-          and "| need `clock` of `demo` | `platform.clock` |" in component,
+    component = next(u for u in explored(runner, folder)["units"] if u["path"] == ".")["diagrams"]["component"]["source"]
+    check("n_root___clock --> u_platform" in component,
           f"the component diagram draws the need of the parent: {component}")
     manifest = folder / "unifold.yaml"
     manifest.write_text(manifest.read_text().replace("  billing.clock: platform.clock\n", ""))
-    check(runner.findings(folder) == ["error G1 docs/diagrams/component.md", "error W2 unifold.yaml"],
+    check(runner.findings(folder) == ["error W2 unifold.yaml"],
           f"the need of the parent does not meet the need of a child: {runner.findings(folder)}")
 
 
@@ -1122,17 +1083,17 @@ def scenario_row_anchor(runner: Runner, tmp: str):
 
 def scenario_check_fix(runner: Runner, tmp: str):
     folder = new_project(tmp, project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, {
-        "a/docs/diagrams/context.md": MARK + "\n# Left over\n"}))
-    check(runner.findings(folder) == ["error G1 AGENTS.md", "error G1 a/docs/diagrams/context.md",
-                                      "error G1 docs/diagrams/component.md"], "before --fix")
+        **with_decision(), "a/docs/decisions/index.md": MARK + "\n# Left over\n"}))
+    check(runner.findings(folder) == ["error G1 AGENTS.md", "error G1 a/docs/decisions/index.md",
+                                      "error G1 docs/decisions/index.md"], "before --fix")
     data, done = runner.json("check", "--fix", "--json", str(folder))
     check(done.returncode == 0 and data["ok"] and sorted(data["summary"]["fixed"]["written"]) ==
-          ["AGENTS.md", "docs/diagrams/component.md"]
-          and data["summary"]["fixed"]["removed"] == ["a/docs/diagrams/context.md"],
+          ["AGENTS.md", "docs/decisions/index.md"]
+          and data["summary"]["fixed"]["removed"] == ["a/docs/decisions/index.md"],
           f"--fix: {data['summary']}")
-    (folder / "docs/diagrams/component.md").write_text("# Mine\n")
+    (folder / "docs/decisions/index.md").write_text("# Mine\n")
     done = runner.run("check", "--fix", str(folder))
-    check(done.returncode == 1 and (folder / "docs/diagrams/component.md").read_text() == "# Mine\n",
+    check(done.returncode == 1 and (folder / "docs/decisions/index.md").read_text() == "# Mine\n",
           "check --fix does not overwrite a file without the marker")
 
 
@@ -1175,8 +1136,8 @@ def scenario_agents_generated(runner: Runner, tmp: str):
         "a/docs/explanation/context.md": "# Context of a\n\n### [demo](../../../README.md)\n\nx, so y.\n",
         "a/docs/decisions/0001-x.md": DECISION.format(status="proposed", date="2026-10-07", more="")}))
     found = runner.findings(folder)
-    check(found == ["error G1 AGENTS.md", "error G1 a/docs/decisions/index.md", "error G1 docs/decisions/index.md",
-                    "error G1 docs/diagrams/component.md"], f"before --fix: {found}")
+    check(found == ["error G1 AGENTS.md", "error G1 a/docs/decisions/index.md", "error G1 docs/decisions/index.md"],
+          f"before --fix: {found}")
     data, done = runner.json("check", "--fix", "--json", str(folder))
     check(done.returncode == 0 and data["ok"] and "AGENTS.md" in data["summary"]["fixed"]["written"]
           and not (folder / "a/AGENTS.md").exists() and not (folder / "b/AGENTS.md").exists(),
@@ -1292,14 +1253,14 @@ def scenario_agents(runner: Runner, tmp: str):
         "---\nname: release\ndescription: Release a, carefully.\n---\n# Release\n")
     found = runner.findings(folder)
     check(found == ["error G1 .agents/skills/a-release/SKILL.md",
-                    "error G1 .claude/skills/a-release/SKILL.md", "error G1 AGENTS.md",
-                    "error G1 docs/diagrams/component.md"], f"stale stubs and unit index: {found}")
+                    "error G1 .claude/skills/a-release/SKILL.md", "error G1 AGENTS.md"],
+          f"stale stubs and unit index: {found}")
     data, _ = runner.json("check", "--fix", "--json", str(folder))
     check(len([p for p in data["summary"]["fixed"]["written"] if "a-release" in p]) == 2,
           f"check --fix writes the stubs: {data['summary']}")
     check(runner.findings(folder) == [], "clean after check --fix")
-    rows, _ = runner.json("skills", "--json", str(folder))
-    check({r["name"] for r in rows} == {"unifold", "unifold-convert", "release"}, f"skills: {rows}")
+    names = {s["name"] for path in (folder, folder / "a") for s in runner.json("show", "--json", str(path))[0]["skills"]}
+    check(names == {"unifold", "unifold-convert", "release"}, f"show lists the skills of a unit: {names}")
 
 
 def scenario_stub_names(runner: Runner, tmp: str):
@@ -1363,24 +1324,18 @@ def scenario_explore(runner: Runner, tmp: str):
 
 
 def scenario_explore_scenarios(runner: Runner, tmp: str):
-    # b, outside the open calls, raises done into a, which is busy with serve: the event lands on the bar of serve; a calls b.do
-    # (command, nothing inside: no bar, the result on the arrow); a asks b.ask (query); b raises done from inside ask: ask has
-    # returned, and so has serve, which waited for it and does nothing more; the event then reaches an idle a and draws no bar,
-    # because nothing follows inside it
-    hops = "      - b -> a.done: ok\n      - a -> b.do: ok\n      - a -> b.ask: ok\n      - b -> a.done: ok\n"
+    # every step is one arrow in order: an operation with a solid head, an event with an open one, a note after the part
+    hops = "      - b -> a.done\n      - a -> b.do: the first thing\n      - a -> b.ask\n      - b -> a.done: done\n"
     folder = new_project(tmp, project(SCENARIO_ROOT.replace("expect: e", "expect: one; two").replace("      - a -> b.do: ok\n", hops),
-                                      SCENARIO_UNITS, contracts={"api": ["serve"], "x": [("do", "command"), ("done", "event"), "ask"]}))
+                                      SCENARIO_UNITS, contracts={"api": ["serve"], "x": [("do", "operation"), ("done", "event"), "ask"]}))
     runner.run("check", "--fix", str(folder))
-    page = runner.run("scenario", str(folder), "s1").stdout
+    page = drawn(runner, folder)
     check("Expect: one#59; two" in page and "wrap:" in page, "a `;` in a sequence diagram is written #59;")
-    check("  papi->>pa: 1 · serve\n  activate pa\n  pb-)pa: 2 · done → ok\n  pa->>pb: 3 · do → ok\n"
-          "  pa->>pb: 4 · ask\n  pb-->>pa: ↩ 4 · ok\n  pa-->>papi: ↩ 1 · ok\n  deactivate pa\n"
-          "  pb-)pa: 5 · done → ok\n  Note over" in page,
-          f"an event from outside lands on the open bar, an event ends the call its raiser handled, a query answers, "
-          f"a bare command carries its result, a call with steps inside returns with a dashed arrow:\n{page}")
+    check("  papi->>pa: 1 · serve: ok\n  pb-)pa: 2 · done\n  pa->>pb: 3 · do: the first thing\n"
+          "  pa->>pb: 4 · ask\n  pb-)pa: 5 · done: done\n  Note over" in page
+          and "activate" not in page and "-->>" not in page,
+          f"one arrow per step, in order, with no bars and no returns:\n{page}")
     check_mermaid(page)
-    check("| # | Caller | Target | Call | Kind | Result | State | Contract |" in page
-          and "| 2 | `b` | `a` | `done` | event | ok |" in page, "the table has the kind and the result of the part")
     out = Path(tmp) / "map.html"
     done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
     check(done.returncode == 0, f"explore: {done.stderr}")
@@ -1391,7 +1346,6 @@ def scenario_explore_scenarios(runner: Runner, tmp: str):
           and "\nsequenceDiagram\n" in "\n" + scenario["diagram"]["source"], "the page holds every scenario")
     check(re.search(r"^  participant \S+ as a$", scenario["diagram"]["source"], re.M) is not None
           and "mirrorActors: false" in scenario["diagram"]["source"], "a lifeline shows its name and kind, once")
-    check("| Lifeline | Kind | What it does |" in page and "| `a` |  | A part |" in page, f"the page says what a lifeline does:\n{page}")
     check({"name": "api", "unit": ".", "side": "capability", "entry": "api"} in lifelines.values()
           and {"name": "b", "unit": "b"} in lifelines.values(), "a lifeline names its unit, or the side of the holder")
 
@@ -1403,6 +1357,20 @@ const units = model.units, byPath = Object.fromEntries(units.map(u => [u.path, u
 const frameOf = new Function("byPath", html.match(/\nfunction frameOf\(s\)\{.*?\n\}\n/s)[0] + "\nreturn frameOf;")(byPath);
 for (const s of model.scenarios.concat(JSON.parse(process.argv[3] || "[]"))) console.log(s.name + "\t" + frameOf(s));
 """
+
+
+def explored(runner: Runner, folder: Path) -> dict:
+    """The model inside the explorer of a project."""
+    out = folder.parent / (folder.name + "-explorer.html")
+    done = runner.run("explore", "--no-open", str(folder), "-o", str(out))
+    check(done.returncode == 0, f"explore: {done.stderr}")
+    return json.loads(re.search(r"const model = (.*?);\nconst MERMAID", out.read_text(), re.S).group(1))
+
+
+def drawn(runner: Runner, folder: Path, name: str = "s1") -> str:
+    """The sequence diagram that the explorer draws of a scenario, as a Mermaid block."""
+    scenario = next(s for s in explored(runner, folder)["scenarios"] if s["name"] == name)
+    return "```mermaid\n" + scenario["diagram"]["source"] + "\n```\n"
 
 
 def frames_of(tmp: str, page: Path, extra: list | None = None) -> dict:
@@ -1455,17 +1423,17 @@ def scenario_explore_documents(runner: Runner, tmp: str):
     notes = "\n".join([
         "# Notes", "", "Text with *em*, **strong**, `a <b> code` and <script>alert(1)</script> <img src=x onerror=alert(1)>.",
         "A [bad](javascript:alert(1)) link, [x](../../b/README.md#why), [up](#table), [file](../../logo.png), "
-        "[web](https://example.com/a?b=1&c=2) and [map](../diagrams/component.md).", "",
+        "and [web](https://example.com/a?b=1&c=2).", "",
         "## Table", "", "| A | B \\| C |", "|---|--:|", "| `x` | [x](x.md) |", "",
         "- one", "  - nested", "- [x] done", "", "1. first", "2. second", "",
         "> quoted", "", "---", "", FENCE + "yaml", "a: <b>&</b>", FENCE, "", FENCE + "mermaid", "flowchart LR", "  a --> b", FENCE, "",
-        "Kind: query", "Pre: none.", "Result: one.", ""])
+        "Kind: operation", "Pre: none.", "Result: one.", ""])
     folder = new_project(tmp, project(WIRED, {"a": NEEDS_X, "b": CAPABILITY_X}, files={
         "README.md": "# demo\n\nWhat it is for, see [notes](docs/references/notes.md).\n\nMore.\n\n## Why\n\nBecause *so*.\n\n- one\n\n## Other\n\nRest.\n",
         "b/README.md": "# Not b\n\n- a list first\n\nThe [first](#other) paragraph.\n",
         "docs/references/notes.md": notes,
         "docs/references/api/index.md": "# API\n\n## Parts\n\n- [get](get.md)\n",
-        "docs/references/api/get.md": "# get\n\nKind: query\n",
+        "docs/references/api/get.md": "# get\n\nKind: operation\n",
         "docs/skills/do-it/SKILL.md": SKILL + "\nSteps.\n",
         **with_decision("proposed", "decision-makers: [Ann]\n")}))
     runner.run("check", "--fix", str(folder))
@@ -1483,16 +1451,14 @@ def scenario_explore_documents(runner: Runner, tmp: str):
           f"the first paragraph of a README need not come first; a README without Why has none: {b}")
     source = next(u for u in model["units"] if u["path"] == "b")["diagrams"]["context"]["source"]
     check("<span class='note'>A part</span>" in source, f"a box of the map shows the responsibility of its unit: {source}")
-    check("note" not in (folder / "docs" / "diagrams" / "component.md").read_text(), "the generated diagrams do not")
     html = page.get("html", "")
     check(page.get("unit") == "." and page.get("kind") == "references" and page.get("title") == "Notes", f"a document has its unit, kind and title: {page}")
     check("<script" not in html and "<img" not in html and "&lt;script&gt;alert(1)&lt;/script&gt;" in html
           and "<code>a &lt;b&gt; code</code>" in html and "javascript:" not in html and "<em>em</em>" in html
           and "<strong>strong</strong>" in html, "all HTML of a document is escaped; a javascript: link is text")
     check('<a href="#b#why">x</a>' in html and '<a href="#.@doc:docs/references/notes.md#table">up</a>' in html
-          and 'logo.png">file</a>' in html and 'href="https://example.com/a?b=1&amp;c=2"' in html
-          and '<a href="#.@component">map</a>' in html,
-          "links open the unit, the document and its heading, the diagram tab, the file, or the web")
+          and 'logo.png">file</a>' in html and 'href="https://example.com/a?b=1&amp;c=2"' in html,
+          "links open the unit, the document and its heading, the file, or the web")
     check('<h2 id="md-table">Table</h2>' in html and '<th class="r">B | C</th>' in html
           and '<td><code>x</code></td>' in html, f"a table, with alignment and an escaped pipe: {html[:2000]}")
     check("<ul><li>one\n<ul><li>nested</li></ul></li><li class=task><input type=\"checkbox\" disabled checked> done</li></ul>" in html
@@ -1500,7 +1466,7 @@ def scenario_explore_documents(runner: Runner, tmp: str):
           "lists, nested and with tasks, a quote and a rule")
     check('<pre><code class="language-yaml">a: &lt;b&gt;&amp;&lt;/b&gt;</code></pre>' in html
           and '<pre class="mermaid">flowchart LR\n  a --&gt; b</pre>' in html, "fenced code is escaped; a Mermaid block is kept for drawing")
-    check('<p class=field><strong>Kind:</strong> query</p>' in html and '<p class=field><strong>Result:</strong> one.</p>' in html,
+    check('<p class=field><strong>Kind:</strong> operation</p>' in html and '<p class=field><strong>Result:</strong> one.</p>' in html,
           "the fields of a part are one to a line")
     index, part = docs.get("docs/references/api/index.md", {}), docs.get("docs/references/api/get.md", {})
     check(index.get("parts") == ["docs/references/api/get.md"] and part.get("contract") == "docs/references/api/index.md"
@@ -1512,8 +1478,7 @@ def scenario_explore_documents(runner: Runner, tmp: str):
           f"a decision has its status and its front matter as fields: {decision}")
     check(skill.get("summary") == "Does it." and ["name", "do-it"] in skill.get("facts", []) and skill.get("title") == "Do it",
           f"a skill: its description and its front matter: {skill}")
-    check("docs/diagrams/component.md" not in docs and "docs/decisions/index.md" in docs and "AGENTS.md" in docs,
-          "generated diagrams are drawn by the page, not shown as documents")
+    check("docs/decisions/index.md" in docs and "AGENTS.md" in docs, "generated indexes are shown as documents")
     shown, _ = runner.json("show", "--json", str(folder))
     check("docs" not in shown and "html" not in json.dumps(shown), "`show --json` has no rendered documents")
 
@@ -1527,7 +1492,7 @@ def scenario_lifeline_order(runner: Runner, tmp: str):
              "c": "capabilities:\n  y: {summary: s, contract: ref:y}\n", "d": "capabilities:\n  z: {summary: s, contract: ref:z}\n"}
     folder = new_project(tmp, project(root, units, contracts={"api": ["serve"], "x": ["do"], "y": ["go"], "z": ["run"]}))
     runner.run("check", "--fix", str(folder))
-    page = runner.run("scenario", str(folder), "s1").stdout
+    page = drawn(runner, folder)
     check_mermaid(page)
     order = re.findall(r"^  participant (\S+)", page, re.M)
     check(order == ["papi", "pa", "pb", "pd", "pc"], f"lifelines by first partner, depth first: {order}")
@@ -1542,13 +1507,13 @@ def scenario_unit_labels(runner: Runner, tmp: str):
              "c": "kind: logic\ncapabilities:\n  y: {summary: s, contract: ref:y}\n", "d": "capabilities:\n  z: {summary: s, contract: ref:z}\n"}
     folder = new_project(tmp, project(root, units, contracts={"api": ["serve"], "x": ["do"], "y": ["go"], "z": ["run"]}))
     runner.run("check", "--fix", str(folder))
-    page = runner.run("scenario", str(folder), "s1").stdout
+    page = drawn(runner, folder)
     check_mermaid(page)
     boxes = dict(re.findall(r"^  participant p(\S+) as (.+)$", page, re.M))
     check(boxes == {"api": "api", "a": "a<br/>«stateful, process»", "b": "b<br/>«job»", "c": "c<br/>«logic»", "d": "d"},
           f"the lifelines of a scenario: {boxes}")
-    component = (folder / "docs" / "diagrams" / "component.md").read_text(encoding="utf-8")
-    for box in ('"a (stateful, process)"', '"b (job)"', '"c (logic)"', '"d"'):
+    component = next(u for u in explored(runner, folder)["units"] if u["path"] == ".")["diagrams"]["component"]["source"]
+    for box in ('"a (stateful, process)<br/>', '"b (job)<br/>', '"c (logic)<br/>', '"d<br/>'):
         check(box in component, f"the component diagram has the box {box}")
 
 
@@ -1612,44 +1577,33 @@ def scenario_gitignore(runner: Runner, tmp: str):
     check("error L1 a/docs/references/generated.md" in found and "error G1 AGENTS.md" in found
           and "build/x" in [r["path"] for r in rows] and "info S12 docs/scratch.md" in found,
           f"without .gitignore everything is seen: {found} {rows}")
-    (folder / ".gitignore").write_text("build/\na/docs/references/generated.md\nscratch.md\ndocs/diagrams/\n")
+    (folder / ".gitignore").write_text("build/\na/docs/references/generated.md\nscratch.md\nAGENTS.md\n")
     runner.run("check", "--fix", str(folder))
     found = runner.findings(folder)
-    check(found == ["error G1 docs/diagrams/component.md"], f"an ignored generated file is reported: {found}")
+    check(found == ["error G1 AGENTS.md"], f"an ignored generated file is reported: {found}")
 
 
 def scenario_states(runner: Runner, tmp: str):
     folder = new_project(tmp, state_project())
     runner.run("check", "--fix", str(folder))
     check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
-    page = runner.run("states", str(folder), "x").stdout
-    check(page.startswith("# States: x") and "stateDiagram-v2" in page and "[*] --> sclosed" in page
+    page = html.unescape(explored(runner, folder)["docs"]["docs/references/x.md"]["html"])
+    check('<pre class="mermaid">stateDiagram-v2' in page and "[*] --> sclosed" in page
           and "sopen --> sclosed: send · lost" in page,
-          f"a contract with states gets a state diagram:\n{page}")
+          f"the page of a contract with states has a state diagram:\n{page}")
     check("  sopen --> sclosed: send · lost" in page and "  sclosed: open · refused" in page and "  sopen: send · ok" in page
           and "  sclosed --> sopen: open · ok" in page,
           f"every row of the table is in the diagram: a move on an arrow, a stay in the box of the state:\n{page}")
-    scenario = runner.run("scenario", str(folder), "s1").stdout
+    scenario = drawn(runner, folder)
     check_mermaid(scenario)
-    check("  Note over pb: x: closed\n  pa->>pb: 2 · open() → ok" in scenario and "  Note over pb: x: open\n" in scenario
-          and "| 3 | `a` | `b` | `send([1])` | command | lost | closed |" in scenario,
-          f"a hop shows its call and result, and a note the state:\n{scenario}")
+    check("  pa->>pb: 3 · send: the line is lost\n" in scenario and "Note over pb: x:" not in scenario,
+          f"a scenario does not track the states of a contract:\n{scenario}")
     data, _ = runner.json("model", "--json", str(folder))
     hop = data["units"][0]["scenarios"][0]["hops"][2]
-    check(hop["input"] == "[1]" and hop["result"] == "lost" and hop["state-before"] == "open" and hop["state"] == "closed",
-          f"the model has input, result and states: {hop}")
+    check(hop["note"] == "the line is lost" and "state" not in hop and "result" not in hop, f"the model has the note of a hop: {hop}")
     need = next(n for u in data["units"] if u["path"] == "a" for n in u["needs"] if n["name"] == "x")
     check(need["contract-states"]["start"] == "closed" and "contract-scenarios" not in need,
           f"the model has the states of a contract: {need['contract-states']}")
-    loop = "      - api -> a.serve: ok\n      - repeat:\n          times: 2\n          hops:\n            - a -> b.open(): ok\n            - a -> b.send([1]): {}\n"
-    folder = new_project(tmp, state_project(hops=loop.format("ok")))
-    runner.run("check", "--fix", str(folder))
-    found = runner.findings(folder)
-    check(any(f.startswith("error N6") for f in found) and any("when the repeat runs again" in f for f in runner.run("check", str(folder)).stdout.splitlines()),
-          f"the second round of a repeat opens an open line: {found}")
-    folder = new_project(tmp, state_project(hops=loop.format("lost")))
-    runner.run("check", "--fix", str(folder))
-    check(runner.findings(folder) == [], f"a round that closes the line can follow itself: {runner.findings(folder)}")
 
 
 def scenario_brief_and_trace(runner: Runner, tmp: str):
@@ -1680,63 +1634,57 @@ def scenario_brief_and_trace(runner: Runner, tmp: str):
     check(done.returncode == 0 and data["summary"]["untested"] == 1 and data["findings"][0]["rule"] == "X1", f"untested: {data}")
     done = runner.run("trace", "--strict", "--tests", "tests/*", str(folder / "b"))
     check(done.returncode == 1 and "none x#do/one" in done.stdout, f"trace --strict: {done.stdout}")
+    data, done = runner.json("trace", "--json", "--active", "--strict", "--tests", "tests/*", str(folder))
+    check(done.returncode == 1 and [u["unit"] for u in data["units"]] == [".", "a", "b"]
+          and data["summary"] == {"examples": 1, "tested": 0, "untested": 1, "unknown": 0}
+          and [f["rule"] for f in data["findings"]] == ["X1"], f"trace --active: {data}")
+    manifest = folder / "b/unifold.yaml"
+    manifest.write_text("status: planned\n" + manifest.read_text())
+    data, done = runner.json("trace", "--json", "--active", "--strict", "--tests", "tests/*", str(folder))
+    check(done.returncode == 0 and [u["unit"] for u in data["units"]] == [".", "a"] and data["findings"] == [],
+          f"trace --active skips a planned unit: {data}")
 
 
 def scenario_views(runner: Runner, tmp: str):
-    """`scenario` folds an included scenario into one step; `--expand` opens it; both are well formed."""
+    """The explorer draws an included scenario as a shaded block, and folded as one step; both are well formed."""
     folder = new_project(tmp, project(
         "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n  a.z: c.z\n"
-        "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve: ok\n      - a.inner\n      - parallel:\n          - - a -> b.do: ok\n          - - a -> c.go: ok\n    expect: e\n",
+        "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve\n      - a.inner\n      - a -> b.do\n      - a -> c.go\n    expect: e\n",
         {"a": "needs:\n  x: {summary: s, contract: ref:x}\n  z: {summary: s, contract: ref:z}\ncapabilities:\n  api: {summary: s, contract: ref:api}\n"
               "scenarios:\n  inner:\n    summary: s\n    hops:\n      - api -> x.do: ok\n      - api -> z.go: ok\n    expect: e\n",
          "b": SCENARIO_UNITS["b"], "c": "capabilities:\n  z: {summary: s, contract: ref:z}\n"},
         contracts={**SCENARIO_CONTRACTS, "z": ["go"]}))
     runner.run("check", "--fix", str(folder))
     check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
-    short = runner.run("scenario", str(folder), "s1").stdout
-    check_mermaid(short)
-    check("  Note over pa: 2 · scenario a.inner (2 steps)\n" in short and "| 2 |  | `a` | scenario `a.inner` | include | 2 steps |" in short
-          and "  par\n" in short and "  and\n" in short and short.count("\n  end\n") == 1 and "end\n  and" not in short,
-          f"collapsed view: an include without a caller is a note, one end per par:\n{short}")
-    full = runner.run("scenario", "--expand", str(folder), "s1").stdout
+    full = drawn(runner, folder)
     check_mermaid(full)
-    check("rect rgba(" in full and "scenario a.inner" in full and "a -> b.do" not in full and "| 2 | `a` | `b` | `do` |" in full,
-          f"expanded view: the included hops as a block with a translucent shade, for light and dark pages:\n{full}")
-    for count, mirrored in ((11, "false"), (12, "true")):   # a query is two rows, its arrow and its return, and the expectation one more: 23 and 25
+    scenario = next(s for s in explored(runner, folder)["scenarios"] if s["name"] == "s1")
+    folded = "```mermaid\n" + scenario["folded"]["source"] + "\n```\n"
+    check_mermaid(folded)
+    check("  Note over pa: 2–3 · scenario a.inner (2 steps)\n" in folded and "4 · do" in folded and "rect" not in folded
+          and set(scenario["folded"]["lifelines"]) <= set(scenario["diagram"]["lifelines"]) | {"pa"},
+          f"folded: an include without a caller is a note with the numbers of its steps:\n{folded}")
+    check("rect rgba(" in full and "scenario a.inner" in full and full.count("\n  end\n") == 1 and "a -> b.do" not in full,
+          f"the included hops as a block with a translucent shade, for light and dark pages:\n{full}")
+    for count, mirrored in ((23, "false"), (24, "true")):   # each step is one row, and the expectation one more: 24 and 25
         hops = "".join("      - a -> b.do: ok\n" for _ in range(count))
         folder = new_project(str(Path(tmp) / f"long-{count}"), project(
             f"wiring:\n  a.x: b.x\nscenarios:\n  s1:\n    summary: s\n    hops:\n{hops}    expect: e\n",
             {"a": NEEDS_X, "b": CAPABILITY_X}, contracts={"x": ["do"]}))
-        page = runner.run("scenario", str(folder), "s1").stdout
+        page = drawn(runner, folder)
         check_mermaid(page)
         check(f"mirrorActors: {mirrored}" in page, f"{2 * count + 1} rows: mirrorActors {mirrored}:\n{page}")
-
-
-def scenario_include_inside_the_call(runner: Runner, tmp: str):
-    """A collapsed include is an arrow from the caller of its first step, inside the call that is open."""
-    folder = new_project(tmp, project(
-        "capabilities:\n  api: {summary: s, contract: ref:api}\nwiring:\n  api: a.api\n  a.x: b.x\n"
-        "scenarios:\n  s1:\n    summary: s\n    hops:\n      - api -> a.serve: ok\n      - b.inner\n    expect: e\n",
-        {"a": SCENARIO_UNITS["a"], "b": "capabilities:\n  x: {summary: s, contract: ref:x}\nwiring:\n  x: c.x\n"
-              "scenarios:\n  inner:\n    summary: s\n    hops:\n      - x -> c.do: ok\n    expect: e\n", "b/c": CAPABILITY_X},
-        contracts=SCENARIO_CONTRACTS))
-    runner.run("check", "--fix", str(folder))
-    check(runner.findings(folder) == [], f"clean: {runner.findings(folder)}")
-    page = runner.run("scenario", str(folder), "s1").stdout
-    check_mermaid(page)
-    check("  papi->>pa: 1 · serve\n  activate pa\n  pa->>pb: 2 · scenario b.inner (1 step)\n  pa-->>papi: ↩ 1 · ok\n  deactivate pa\n" in page
-          and "| 2 | `a` | `b` | scenario `b.inner` | include | 1 step |" in page, f"the include runs inside the call:\n{page}")
 
 
 def scenario_long_steps_wrap(runner: Runner, tmp: str):
     """A step wider than a line is wrapped at a space, never inside a word with a hyphen."""
     long = "the-first-word and a long text that goes on for a good while"
-    folder = new_project(tmp, project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", f"      - a -> b.do({long}): ok\n"), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS))
+    folder = new_project(tmp, project(SCENARIO_ROOT.replace("      - a -> b.do: ok\n", f"      - a -> b.do: {long}\n"), SCENARIO_UNITS, contracts=SCENARIO_CONTRACTS))
     runner.run("check", "--fix", str(folder))
-    page = runner.run("scenario", str(folder), "s1").stdout
+    page = drawn(runner, folder)
     check_mermaid(page)
-    drawn = next(line for line in page.splitlines() if "2 · do(" in line and "->>" in line)
-    check("<br/>" in drawn and "the-first-word" in drawn and all(len(p) <= 60 for p in drawn.split("<br/>")[1:]), f"wrapped: {drawn}")
+    step = next(line for line in page.splitlines() if "2 · do:" in line and "->>" in line)
+    check("<br/>" in step and "the-first-word" in step and all(len(p) <= 60 for p in step.split("<br/>")[1:]), f"wrapped: {step}")
 
 
 def scenario_model(runner: Runner, tmp: str):
@@ -1746,7 +1694,7 @@ def scenario_model(runner: Runner, tmp: str):
                                    .replace("      - a -> b.do: ok\n", "      - a -> b.do: ok\n      - a -> clock.now: ok\n"),
                     {"a": NEEDS_X + "  clock: {summary: s, contract: ref:clock}\n"
                           "capabilities:\n  api: {summary: s, contract: ref:api}\n"
-                                              "not:\n  - y\nx-maike-group: g\n",
+                                              "not:\n  - y\nx-team-group: g\n",
                                               "b": "kind: logic\n" + CAPABILITY_X},
                     {"a/docs/decisions/0001-x.md": DECISION.format(status="proposed", date="2026-10-07", more=""),
                      "docs/decisions/0001-q.md": DECISION.format(status="proposed", date="2026-10-07", more="") + "\n## Answer\n\n"},
@@ -1759,11 +1707,11 @@ def scenario_model(runner: Runner, tmp: str):
     units = {u["path"]: u for u in data["units"]}
     check([u["path"] for u in data["units"]] == [".", "a", "b"], "units in order, the root first")
     a = units["a"]
-    check("secret" not in a and a["not"] == ["y"]
-          and a["x"] == {"x-maike-group": "g"} and a["kind"] is None, f"unit fields: {a['not']} {a['x']}")
+    check(a["not"] == ["y"]
+          and a["x"] == {"x-team-group": "g"} and a["kind"] is None, f"unit fields: {a['not']} {a['x']}")
     x = next(n for n in a["needs"] if n["name"] == "x")
     check(x["final-providers"] == [{"unit": "b", "capability": "x", "config": None}]
-          and x["contract-parts"] == [{"name": "do", "kind": "query"}] and x["parts"] is None
+          and x["contract-parts"] == [{"name": "do", "kind": "operation"}] and x["parts"] is None
           and x["fake"] == "described", f"need: {x}")
     clock = next(n for n in a["needs"] if n["name"] == "clock")
     check(clock["final-providers"] == [{"outside": True, "root-need": "clock", "config": None}], f"outside: {clock}")
@@ -1774,11 +1722,10 @@ def scenario_model(runner: Runner, tmp: str):
     check(forms == ["connection", "implemented-by", "passed-up"], f"wiring forms: {forms}")
     scenario = root["scenarios"][0]
     check(scenario["name"] == "s1" and scenario["hops"][0]["via"] == [{"unit": ".", "key": "api"}]
-          and scenario["hops"][1] == {"caller": "a", "target": "b", "part": "do", "input": None, "result": "ok",
-                                      "example": None, "direction": "call", "caller-side": "unit", "target-side": "unit",
-                                      "part-kind": "query", "contract": "docs/references/x.md", "caller-unit": "a",
-                                      "target-unit": "b", "via": [{"unit": ".", "key": "a.x"}],
-                                      "state-before": None, "state": None, "groups": []}
+          and scenario["hops"][1] == {"caller": "a", "target": "b", "part": "do", "note": "ok",
+                                      "direction": "call", "caller-side": "unit", "target-side": "unit",
+                                      "part-kind": "operation", "contract": "docs/references/x.md", "caller-unit": "a",
+                                      "target-unit": "b", "via": [{"unit": ".", "key": "a.x"}], "groups": []}
           and scenario["given"] == []
           and scenario["hops"][2]["via"] == [{"unit": ".", "key": "a.clock"}], f"hops: {scenario['hops']}")
     check(data["root-needs"] == [{"name": "clock", "platform": True, "reached-by": ["a"]}], f"root needs: {data['root-needs']}")
@@ -1786,16 +1733,11 @@ def scenario_model(runner: Runner, tmp: str):
     check(question["answer"] == {"empty": True} and question["status"] == "proposed" and question["derived-from"] is None,
           f"decision: {question}")
     check(a["decisions"][0]["answer"] is None, "a decision without an Answer section")
-    scenario_md = runner.run("scenario", str(folder), "s1").stdout
-    check(scenario_md.startswith("# Scenario: s1") and "sequenceDiagram" in scenario_md and "| 2 | `a` | `b` | `do` |" in scenario_md
-          and not (folder / "docs/diagrams/scenario-s1.md").exists(), f"scenario diagram: {scenario_md}")
-    done = runner.run("scenario", str(folder), "nope")
-    check(done.returncode == 2, "an unknown scenario fails")
     data, _ = runner.json("show", "--json", str(folder / "b"))
     check(data["responsibility"] == "A part" and data["kind"] == "logic" and data["scenarios"] == [
         {"unit": ".", "name": "s1", "summary": "s"}], f"show lists the scenarios through a unit: {data['scenarios']}")
     text = runner.run("show", str(folder / "a")).stdout
-    check("secret" not in text and "not       y" in text and "scenario  s1" in text, f"show text: {text}")
+    check("not       y" in text and "scenario  s1" in text, f"show text: {text}")
     folder2 = new_project(tmp + "/inherit", project(NEEDS_X + "wiring:\n  a.x: x\n", {"a": "needs:\n  x:\n"}))
     runner.run("check", "--fix", str(folder2))
     data, _ = runner.json("show", "--json", str(folder2 / "a"))
@@ -1818,7 +1760,6 @@ SCENARIOS = [
     ("scenario-citations-and-impact", scenario_citations),
     ("scenario-brief-and-trace", scenario_brief_and_trace),
     ("scenario-views", scenario_views),
-    ("scenario-include-inside-the-call", scenario_include_inside_the_call),
     ("scenario-long-steps-wrap", scenario_long_steps_wrap),
     ("scenario-row-anchor", scenario_row_anchor),
     ("scenario-check-fix", scenario_check_fix),

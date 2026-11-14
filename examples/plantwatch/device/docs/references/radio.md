@@ -6,7 +6,7 @@ Binding: in-process
 
 ## Use
 
-The caller configures the radio once at start, before advertising, then sets the advertising data and opens bonding when it needs to. While a central is connected, the caller answers every `read` and `write` event with `answer`. It sends notifications and indications only where the central has switched them on. `send` and `disconnect` need a connected central. Every radio event carries a tick count; the caller takes all time from these tick counts and has no other source of time.
+The caller configures the radio once at start, before advertising, then sets the advertising data and opens bonding when it needs to. While a central is connected, the caller answers every `read` and `write` event with `answer`. It sends notifications and indications only where the central has switched them on. `send` needs a connected central. Every radio event carries a tick count; the caller takes all time from these tick counts and has no other source of time.
 
 ## Qualities
 
@@ -23,7 +23,7 @@ The caller configures the radio once at start, before advertising, then sets the
 
 ### configure
 
-Kind: command
+Kind: operation
 
 ```wit
 configure: func(characteristics: list<characteristic>, preferred: connection-preference, limits: connection-limits);
@@ -40,7 +40,7 @@ Examples:
 
 ### set-advertising
 
-Kind: command
+Kind: operation
 
 ```wit
 set-advertising: func(data: list<u8>, scan-response: list<u8>, on: bool, interval-ms: u16);
@@ -57,7 +57,7 @@ Examples:
 
 ### open-bonding
 
-Kind: command
+Kind: operation
 
 ```wit
 open-bonding: func(duration-s: u16);
@@ -73,26 +73,9 @@ Examples:
 | a fifth central | 4 bonds are kept and bonding is open | a fifth central bonds | its bond replaces the one used longest ago |
 | too late | the duration ended 10 s ago | a central without a bond starts pairing | rejected with `Pairing Not Supported` |
 
-### disconnect
-
-Kind: command
-
-```wit
-disconnect: func();
-```
-
-Pre: a central is connected.
-Result: the connection is closed at once and `disconnected` is reported.
-Errors: none.
-Examples:
-
-| Case | Input | Expected |
-|---|---|---|
-| close | `disconnect()` while connected | `disconnected`; advertising resumes within 1 s |
-
 ### send
 
-Kind: command
+Kind: operation
 
 ```wit
 send: func(characteristic: u8, value: list<u8>, indicate: bool) -> result<_, no-room>;
@@ -109,7 +92,7 @@ Examples:
 
 ### answer
 
-Kind: command
+Kind: operation
 
 ```wit
 answer: func(request: u16, outcome: answer-outcome);
@@ -126,7 +109,7 @@ Examples:
 
 ### identity
 
-Kind: query
+Kind: operation
 
 ```wit
 identity: func() -> list<u8>;

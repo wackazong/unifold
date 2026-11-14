@@ -27,8 +27,8 @@ Chosen option: "references of plantwatch", because the parts that implement the 
 
 ### Consequences
 
-- Good: a change to the profile is a change to the root, and `unifold capability . ble-link` lists every implementer.
-- Good: the component diagram shows the data paths and nothing else.
+- Good: a change to the profile is a change to the root, and `unifold capability device ble-link` and `unifold capability emulator ble-link` list every user of the profile.
+- Good: the map in the explorer shows the data paths and nothing else.
 - Bad: the definition that the firmware implements lives above the firmware. A reader of `device` reaches it through the manifest.
 - Bad: the reading format has no connection that names it, so drift between a writer and a reader of readings is found by the stamps in the context files, not by the checker.
 

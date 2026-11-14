@@ -1,6 +1,6 @@
 # Runtime of device
 
-The scenarios that cross several parts and that no single part can tell: the order of a start, and the states of the whole firmware over time. The parts appear as the [component diagram](../diagrams/component.md) shows them.
+The scenarios that cross several parts and that no single part can tell: the order of a start, and the states of the whole firmware over time.
 
 ## Start
 
@@ -10,6 +10,8 @@ The start-up code creates the parts in this order, because each step relies on t
 2. The memory for readings. It recovers its state.
 3. Measuring. The first reading is due within 10 s.
 4. The BLE profile. It starts advertising last, so that a central never meets a sensor stick that cannot answer.
+
+The scenario `start-and-first-reading` follows a start call by call, up to the first reading.
 
 ## The sleep and wake cycle
 

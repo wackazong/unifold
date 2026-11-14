@@ -6,7 +6,7 @@ Binding: http
 
 ## Use
 
-A caller that acts for an owner lists the owner's alerts and reads single alerts, with `X-Owner-Id` in every request. The container host and other services ask `healthz`. The connection has no state: any part may be called at any time, and every request may be repeated.
+A caller that acts for an owner lists the owner's alerts, with `X-Owner-Id` in every request. The connection has no state: any part may be called at any time, and every request may be repeated.
 
 - Every request to `/v1/alerts` carries `X-Owner-Id`. Without it `alerts` answers `400` with `invalid_request`.
 - `alerts` does not verify who the caller is. It limits every answer to the alerts of the owner in the header.
@@ -26,12 +26,13 @@ A caller that acts for an owner lists the owner's alerts and reads single alerts
 | idempotency | every request may be repeated, because the gateway repeats a failed call; every notification for the same alert carries the same collapse identifier, so a repetition replaces the earlier notification on a phone |
 | timeout | the gateway waits 5 seconds for an answer and then counts the call as failed |
 | concurrency | at most one alert is open per plant, quantity and bound, also when events repeat or several instances run |
+| health | `GET /healthz`, which [service-calls](service-calls.md) defines for the container host, answers `200` while the database is reachable, and `503` otherwise |
 
 ## Parts
 
 ### list-alerts
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/alerts?state=&plant_id=&opened_after=&limit=&cursor=
@@ -51,43 +52,6 @@ Examples: owner A has the plant P with one closed alert X and one open alert Y.
 | unknown plant | | `GET /v1/alerts?plant_id=<unknown>` with `X-Owner-Id` A | `200`, no items |
 | event of a reading that opens an alert | the event arrived at 09:00:00 | `GET /v1/alerts` with `X-Owner-Id` A at 09:00:30 | `200`, items contain the new alert |
 | the same event again | the same event arrived a second time | `GET /v1/alerts?state=all` with `X-Owner-Id` A | `200`, no new alert; no second notification was sent |
-
-### get-alert
-
-Kind: query
-
-```http
-GET /v1/alerts/{alert_id}
-X-Owner-Id: <owner id>
-```
-
-Pre: `X-Owner-Id` is present.
-Result: `200` with the alert, in the form the public API defines.
-Errors: `404` `not_found` for an alert of another owner; `400` `invalid_request` without the owner header; `503` `unavailable` while the database cannot be reached.
-Examples: as for `list-alerts`.
-
-| Case | Given | Input | Expected |
-|---|---|---|---|
-| other owner | | `GET /v1/alerts/{X}` with `X-Owner-Id` B | `404` `not_found` |
-| P was deleted | the plant P was deleted | `GET /v1/alerts/{Y}` with `X-Owner-Id` A | `200`; Y stays open until it expires |
-
-### healthz
-
-Kind: query
-
-```http
-GET /healthz
-```
-
-Pre: none.
-Result: `200` while the database is reachable.
-Errors: `503` otherwise.
-Examples:
-
-| Case | Given | Input | Expected |
-|---|---|---|---|
-| healthy | the database is reachable | `GET /healthz` | `200` |
-| database down | the database cannot be reached | `GET /healthz` | `503` |
 
 ## Fake
 

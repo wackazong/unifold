@@ -1,6 +1,6 @@
 # dismiss-refusal
 
-Kind: command
+Kind: operation
 
 ```wit
 dismiss-refusal: func(plant-id: string) -> result<_, command-failure>;

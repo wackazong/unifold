@@ -1,6 +1,6 @@
 # create-owner
 
-Kind: command
+Kind: operation
 
 ```http
 POST /v1/owners

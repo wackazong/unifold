@@ -1,6 +1,6 @@
 # create-plant
 
-Kind: command
+Kind: operation
 
 ```wit
 create-plant: func(name: string, lower-limits: limits, sensor-id: option<string>) -> result<string, command-failure>;

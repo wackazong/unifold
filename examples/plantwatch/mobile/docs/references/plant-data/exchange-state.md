@@ -1,6 +1,6 @@
 # exchange-state
 
-Kind: query
+Kind: operation
 
 ```wit
 exchange-state: func() -> exchange-state;

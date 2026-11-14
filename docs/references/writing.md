@@ -1,18 +1,18 @@
 # Writing the documents
 
-[documents.md](documents.md) says which files a unit has. This chapter says how each is written, what a reviewer checks, and the style they share. [decision-records.md](decision-records.md) says how a decision and a context item are written, and [contracts.md](contracts.md) how a contract is written. What each explanation file holds is in [documents.md](documents.md).
+[documents.md](documents.md) says which files a unit has and what each holds. This chapter says how each is written, what a reviewer checks, and the style they share. [decision-records.md](decision-records.md) says how a decision and a context item are written, and [contracts.md](contracts.md) how a contract is written.
 
 ## References and the glossary
 
-A reference is `docs/references/<topic>.md`: facts as they are now, for example a contract ([contracts.md](contracts.md)), a part of one, or a convention that several contracts share. It gives no reasons; where a decision settled a fact, it may link that decision. Procedures go to skills. Notes about the work stay with the process that does the work. A reference that would exceed the word limit becomes a folder with an `index.md` that links to every part. For a contract, `docs/references/<topic>/index.md` holds every section, with `## Parts` as a list of links in the order of use, and every part is a file `<topic>/<part>.md` with the body of a `###` section; the manifests name `index.md`, and a part name resolves to a heading in the file or to a file in the folder. API reference that a tool produces from code is not written by hand. `docs/references/glossary.md` holds the terms that have one fixed meaning inside the unit, one table row per term, so that each can be cited alone. A term is defined in the lowest unit that covers its uses.
+A reference is `docs/references/<topic>.md`: a contract ([contracts.md](contracts.md)), a part of one, or a convention that several contracts share. Procedures go to skills. A reference that would exceed the word limit becomes a folder with an `index.md` that links to every part. For a contract, `docs/references/<topic>/index.md` holds every section, with `## Parts` as a list of links in the order of use, and every part is a file `<topic>/<part>.md` with the body of a `###` section; the manifests name `index.md`, and a part name resolves to a heading in the file or to a file in the folder. API reference that a tool produces from code is not written by hand. In `docs/references/glossary.md` every term is one table row, so that each can be cited alone. A term is defined in the lowest unit that covers its uses.
 
-`docs/references/constants.md` holds the fixed values a unit and the units below it use: a table whose first columns are `Name` and `Value`, one row per value, named everywhere else and written out only there, such as `MAX_PAYLOAD`. A column `Source` MAY say where a value comes from, such as `proto §4.2`.
+`docs/references/constants.md` is a table whose first columns are `Name` and `Value`, one row per value, named everywhere else and written out only there, such as `MAX_PAYLOAD`. A column `Source` MAY say where a value comes from, such as `proto §4.2`.
 
 ## Skills
 
 A skill is a how-to guide for a recurring task in the unit, in the [Agent Skills](https://agentskills.io/specification) format: `docs/skills/<name>/SKILL.md`, with a front matter that has `name`, equal to the folder name, and `description`. The description says for whom the procedure is, when it is written for an end user.
 
-- A skill belongs to the lowest unit in which the whole procedure happens. `unifold show` lists the skills of a unit, and `unifold skills` those of the project.
+- A skill belongs to the lowest unit in which the whole procedure happens. `unifold show` lists the skills of a unit.
 - `unifold check --fix` writes a generated stub for each skill where agents search for skills ([agents.md](agents.md)). The source stays here.
 - A person reviews a skill that an agent wrote before others rely on it.
 

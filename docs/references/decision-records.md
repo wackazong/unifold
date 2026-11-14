@@ -21,7 +21,6 @@ decision-makers: [name]   # once the status is accepted
 - An accepted decision is not edited, except for its status and for links to files that moved. To change it, write a new decision and set the old one to `superseded by NNNN`.
 - The change that a decision makes rewrites the documents it touches to the new state, in the same change.
 - A unit below that depends on a decision takes it into its `context.md`, and its documents state the result. A decision of another unit may also be named by the unit and the number: `transport/0002`.
-- `docs/decisions/index.md` is generated for each unit that has decisions.
 
 ## Context items
 

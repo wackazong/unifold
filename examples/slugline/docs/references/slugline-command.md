@@ -13,19 +13,23 @@ A person or a script runs `slugline` with words as arguments, or with lines on s
 
 ### slugline
 
-Kind: command
+Kind: operation
 
 ```text
-slugline [OPTIONS] [TEXT]...
-  -s, --separator CHAR   one ASCII symbol between words; default -
-  -m, --max-len N        cut the slug after N characters
-      --ascii            drop letters with diacritics instead of replacing them
-  -h, --help             print the usage and exit with 0
-  --                     everything after it is text
+Usage: slugline [OPTIONS] [TEXT]...
+
+Prints TEXT as one URL slug. Without TEXT, prints one slug for each line of
+standard input.
+
+Options:
+  -s, --separator CHAR  put CHAR between words (default: -)
+  -m, --max-len N       cut the slug after N characters
+      --ascii           drop letters with diacritics instead of replacing them
+  -h, --help            print this help
 ```
 
 Pre: none.
-Result: with `TEXT`, the arguments joined by one space as one slug, then a newline, on standard output. Without `TEXT`, one slug for each line of standard input, in the order of the lines. Exit code 0 when a slug was printed for every input.
+Result: with `TEXT`, the arguments joined by one space as one slug, then a newline, on standard output. Without `TEXT`, one slug for each line of standard input, in the order of the lines. Exit code 0 when a slug was printed for every input. `-h` or `--help` prints the usage and exits with 0. The separator is one ASCII symbol. Everything after `--` is text.
 Errors: exit 1 when standard input or output failed, with a message that starts with `slugline:`; exit 2 when an option is unknown or has no valid value, with the usage after the message.
 Examples:
 

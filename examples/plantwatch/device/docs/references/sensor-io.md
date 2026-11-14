@@ -19,7 +19,7 @@ The caller asks for one measurement at a time with `measure` and gets three raw 
 
 ### measure
 
-Kind: query
+Kind: operation
 
 ```wit
 measure: func() -> result<raw-values, sensor-error>;

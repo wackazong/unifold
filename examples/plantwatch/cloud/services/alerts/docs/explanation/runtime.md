@@ -1,6 +1,6 @@
 # Runtime of alerts
 
-Scenarios that cross the children of this unit and that no single child can tell. Which children exist is in the [component diagram](../diagrams/component.md).
+Scenarios that cross the children of this unit and that no single child can tell.
 
 ## The life of an alert
 
@@ -36,6 +36,6 @@ The first diagram is the state of the alert, the second the state of its notific
 
 ## Handling one reading
 
-The scenario `handle-a-reading`, which `unifold scenario cloud/services/alerts handle-a-reading` draws, follows one reading event through the direct children of `alerts` and its needs: `server` reads the evaluation state, `rules` judges the reading with the thresholds that `plant-lookup` fetches, `server` stores the alerts and the new state in one transaction and confirms the event, and `notifier` hands the notification of an opened alert to the push service.
+The scenario `handle-a-reading` follows one reading event through the direct children of `alerts` and its needs: `server` reads the evaluation state, `rules` judges the reading with the thresholds that `plant-lookup` fetches, `server` stores the alerts and the new state in one transaction and confirms the event, and `notifier` hands the notification of an opened alert to the push service.
 
 The last step, notifying, is not tied to the event. It runs for every stored alert whose notification is pending, also after a restart.

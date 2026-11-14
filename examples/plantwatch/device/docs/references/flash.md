@@ -23,7 +23,7 @@ A write only changes bits from 1 to 0, so a caller that writes a word again eras
 
 ### read
 
-Kind: query
+Kind: operation
 
 ```wit
 read: func(block: u8, offset: u16, length: u16) -> result<list<u8>, flash-error>;
@@ -42,7 +42,7 @@ Examples:
 
 ### write
 
-Kind: command
+Kind: operation
 
 ```wit
 write: func(block: u8, offset: u16, words: list<u8>) -> result<_, flash-error>;
@@ -64,7 +64,7 @@ Examples:
 
 ### erase
 
-Kind: command
+Kind: operation
 
 ```wit
 erase: func(block: u8) -> result<_, flash-error>;

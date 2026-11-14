@@ -24,37 +24,56 @@ wiring:
   hal.ambient-sensor: ambient-sensor
   hal.soil-probe: soil-probe
 scenarios:
-  take-a-reading:
-    summary: The sensor stick wakes at the sampling time, takes a reading, stores it and sleeps again
-    source: runtime of device, the sleep and wake cycle
+  start-and-first-reading:
+    summary: The cell is put in, the sensor stick starts, takes its first reading, stores it and sleeps
+    source: runtime of device, start and the sleep and wake cycle
     given:
-      - sampling.readings: subscribed
+      - the cell was taken out at second 86 405 of boot 12, while `store` erased block 7 for reading 3145825; the log holds the 96 readings 3145729 to 3145824
     hops:
+      - store -> hal.read: the header of each of the 20 blocks, one block after the other
+      - store -> hal.erase: block 7, whose header is neither erased nor valid
+      - sampling -> hal.ticks: 13 / 0
+      - sampling -> hal.set-alarm: the sampling alarm, at second 5
+      - store -> sampling.subscribe: the subscriber of store
+      - link -> sampling.subscribe: the subscriber of link
+      - link -> sampling.sampling-interval: "900"
+      - link -> hal.identity: 00 A1 B2 C3 D4 E5 F6 07
+      - link -> store.summary: stored 96, oldest 3145729, newest 3145824, capacity 3468
+      - link -> hal.configure: the five characteristics of the Reading service, an interval of 30 to 50 ms, limits of 30 s without requests and 10 min in total
+      - link -> hal.open-bonding: 300 s
+      - link -> hal.set-advertising: the data with has-readings, bonding-open and newest 3145824, on, 1285 ms
       - hal -> sampling.alarm
-      - sampling -> hal.ticks(): 12 / 86405
-      - sampling -> hal.measure(): three raw values
-      - hal -> soil-probe.output(): a share of the supply
-      - hal -> ambient-sensor.read(): both values within 150 ms
-      - sampling -> store.new-reading(reading 3145825)
-      - store -> hal.write(the slot of 3145825): ok
-      - sampling -> link.new-reading(reading 3145825)
-      - link -> hal.send(Live reading, the record of 3145825): ok
-      - link -> hal.send(Status, the counters with 3145825 as the newest reading): ok
-      - sampling -> hal.set-alarm(at second 87305): ok
-    expect: one reading with the next sequence number and the tick count of the measurement is in the log and survives power loss; a connected central is notified of it as Live reading and of the new Status; the board sleeps until the next alarm
+      - sampling -> hal.ticks: 13 / 5
+      - sampling -> hal.measure: three raw values
+      - hal -> soil-probe.output: a share of the supply
+      - hal -> ambient-sensor.read: both values within 150 ms
+      - sampling -> store.new-reading: reading 3407873
+      - store -> hal.write: the slot of 3407873
+      - sampling -> link.new-reading: reading 3407873
+      - link -> hal.set-advertising: the data with newest 3407873, on, 1285 ms
+      - sampling -> hal.set-alarm: the sampling alarm, at second 905
+    expect: the parts start in the order hardware, memory, measuring, profile, and advertising goes on last; the 96 readings of the boot before are still in the log, and a new bond is accepted for 5 minutes; within 10 s after the start the first reading of boot 13 is in the log, where it survives power loss, and the advertising data names it as the newest; the board sleeps until the next alarm
   serve-a-fetch:
     summary: A central opens a session, fetches the 96 stored readings and confirms them
-    source: BLE profile, fetch stored readings and confirm
+    source: steps 1 to 4 of `## Use` of the BLE profile
+    given:
+      - sampling.readings is subscribed
+      - the bytes are those of the examples of the BLE profile, so the 96 stored readings of boot 12 carry the sequence numbers 4711 to 4806 of those examples in place of 3145729 to 3145824, which decision 0003 gives them
     hops:
-      - ble-link -> link.open-session(): ok
-      - link -> hal.answer(7, value(18 bytes)): ok
-      - ble-link -> link.status(): 0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
-      - ble-link -> link.fetch(01 00 00 00 00 C8 00): 96 records, then 80 01 00 60 00 C6 12 00 00 00
-      - repeat:
-          times: 96
-          hops:
-            - link -> store.read(the number after the last record sent, 0 first): the next stored reading, 4711 first
-            - link -> hal.send(Transfer data, the record): ok
-      - ble-link -> link.confirm(02 C6 12 00 00): 80 02 00 00 00 00 00 00 00
-      - link -> store.mark-delivered(4806): ok
-    expect: the central receives the readings 4711 to 4806 in ascending order, exactly as the log holds them; the confirm result goes out only after the mark is durable, and the readings up to 4806 are no longer stored
+      - ble-link -> link.open-session
+      - hal -> link.radio-event: connected
+      - hal -> link.radio-event: read of Info, request 7
+      - link -> hal.answer: 7, value(18 bytes)
+      - hal -> link.radio-event: subscription-changed, indications of Transfer control and notifications of Transfer data on
+      - ble-link -> link.status: 0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
+      - link -> store.summary: stored 96, oldest 4711, newest 4806
+      - ble-link -> link.fetch: 01 00 00 00 00 C8 00 → 96 records, then 80 01 00 60 00 C6 12 00 00 00
+      - link -> store.read: the next stored reading, 4711 first, then each one after the other
+      - link -> hal.send: Transfer data, one record for each of the 96 readings
+      - ble-link -> link.confirm: 02 C6 12 00 00 → 80 02 00 00 00 00 00 00 00
+      - link -> store.mark-delivered: "4806"
+      - store -> hal.write: the mark 4806 in the journal
+      - link -> hal.set-advertising: the data without has-readings, on, 1285 ms
+      - hal -> link.radio-event: disconnected
+      - link -> ble-link.disconnected
+    expect: the central receives the readings 4711 to 4806 in ascending order, exactly as the log holds them; the confirm result goes out only after the mark is durable, and the readings up to 4806 are no longer stored; after the central has disconnected, the sensor stick advertises again, without has-readings

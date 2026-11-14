@@ -46,26 +46,32 @@ scenarios:
     summary: The phone uploads readings, the server opens an alert and the owner is notified once
     source: requirements of plantwatch, the public API, consistency
     given:
-      - mobile/sync.plant-data: active
+      - the owner is registered on the phone, so the plant data of the app is active
     hops:
       - mobile -> cloud.upload-leads-to-alert
       - mobile.an-alert-arrives
     expect: within 1 minute after the upload response the alert is open on the server and its notification is handed to the push service; the phone shows one notification, a tap opens "Monstera", and the plant is first in the list with "needs water"
-  end-to-end-alert-test:
-    summary: The rig drives the simulated sensor stick through a dry spell and sees one alert
-    source: test catalogue of test-rig, ALERT-01
+  an-interrupted-fetch-loses-nothing:
+    summary: The rig cuts a fetch from the simulated sensor stick, fetches again and finds every reading in the history once
+    source: test catalogue of test-rig, LINK-04 and RELAY-01
     hops:
-      - test-report -> test-rig.run(simulated, group alert): ALERT-01 passed, exit status 0
-      - test-rig -> emulator.put-scenario(the scenario of ALERT-01): 200 with the state object, elapsed_s 0, readings_taken 1
-      - test-rig -> cloud.put-plant(lower limit of 30 percent for soil moisture): 200 with the plant
-      - repeat:
-          times: 3
-          hops:
-            - test-rig -> emulator.put-time(elapsed_s 2700, then 7200, then 10800): 200 with the state object
-            - test-rig -> emulator.open-session(): ok
-            - test-rig -> emulator.fetch(everything from the oldest unconfirmed reading): the stored readings, then a fetch result with success
-            - test-rig -> emulator.confirm(up to the last reading of the fetch): 80 02 00 00 00 00 00 00 00
-            - emulator -> test-rig.disconnected
-            - test-rig -> cloud.upload-batch(the fetched readings): 200, every reading is new
-            - test-rig -> cloud.list-alerts(plant_id of the test plant): no alert after the first upload, one open alert after the second and the third
-    expect: no alert 60 seconds after the first upload; within 60 seconds after the second, one open alert for the plant with soil moisture below the limit and its notification reported as handed on; after the third, the same alert and no other; the report has ALERT-01 passed and the exit status is 0
+      - test-report -> test-rig.run: simulated, the groups link and relay → LINK-04 and RELAY-01 passed, exit status 0
+      - test-rig -> emulator.put-scenario: a scenario with a reading every 900 s → 200 with the state object, elapsed_s 0, readings_taken 1, bonding open
+      - test-rig -> emulator.open-session: the rig bonds while bonding is open
+      - test-rig -> emulator.status: count 1, bonding-open set
+      - emulator -> test-rig.disconnected: the rig has its bond and disconnects
+      - test-rig -> emulator.put-time: elapsed_s 7200 → 200 with the state object, readings_taken 9
+      - test-rig -> emulator.put-link: drop_fetch_after 1 → 200 with the state object
+      - test-rig -> emulator.open-session: bonded, encryption with the kept bond
+      - test-rig -> emulator.status: the time reference, count 9
+      - test-rig -> emulator.fetch: everything from the oldest stored reading → 1 record and no fetch result
+      - emulator -> test-rig.disconnected
+      - test-rig -> emulator.open-session: bonded, encryption with the kept bond
+      - test-rig -> emulator.status: the time reference, count 9
+      - test-rig -> emulator.fetch: everything from the oldest stored reading → 9 records, then a fetch result with success
+      - test-rig -> cloud.put-plant: a test plant with the simulated sensor stick → 200 with the plant
+      - test-rig -> cloud.upload-batch: the 9 fetched readings → 200, every reading is new
+      - test-rig -> emulator.confirm: up to the last reading of the fetch → 80 02 00 00 00 00 00 00 00
+      - emulator -> test-rig.disconnected
+      - test-rig -> cloud.get-history: the test plant, raw → 200 with the 9 readings
+    expect: the cut fetch delivers one record and confirms nothing; the second fetch delivers every reading the simulated sensor stick took, with the same values and tick counts as the first attempt; within 10 seconds after the upload each of the 9 readings is in the history once; the report has LINK-04 and RELAY-01 passed and the exit status is 0

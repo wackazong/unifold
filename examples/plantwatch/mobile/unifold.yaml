@@ -30,68 +30,100 @@ wiring:
   sync.cloud-api: cloud-api
   ui.push-service: push-service
 scenarios:
-  fetch-readings:
-    summary: A paired sensor stick comes into range and the app fetches, stores and confirms its readings
-    source: BLE profile, fetch stored readings and confirm
-    given:
-      - ble-client.sensor-readings: attached
-    hops:
-      - ble-client -> sensor-link.open-session(): ok
-      - ble-client -> sensor-link.status(): 0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
-      - ble-client -> sensor-link.fetch(01 00 00 00 00 C8 00): 96 records, then 80 01 00 60 00 C6 12 00 00 00
-      - ble-client -> sync.batch(96 readings, more-to-come no)
-      - sync -> ble-client.acknowledge(the batch id): ok
-      - ble-client -> sensor-link.confirm(02 C6 12 00 00): 80 02 00 00 00 00 00 00 00
-      - sensor-link -> ble-client.disconnected
-    expect: the 96 readings 4711 to 4806 are stored on the phone with a UTC time each and are marked delivered on the sensor stick; the phone disconnects and the readings wait for the next upload
   first-plant:
-    summary: An owner starts the app, adds a plant, pairs a sensor stick and binds it to the plant
+    summary: An owner starts the app, pairs a sensor stick and adds a plant with it
     source: tutorial first-plant
     hops:
-      - app-ui -> ui.owner(): the app works and asks for no name and no password
-      - ui -> sync.start(): ok
-      - app-ui -> ui.edit-plant(Monstera, a preset): the plant is added
-      - ui -> sync.create-plant(Monstera, the lower limits of the preset, none): the plant id
-      - app-ui -> ui.pair(Monstera): the sensor stick is paired and bound to the plant
-      - ui -> ble-client.search(an observer): ok
-      - sensor-link -> ble-client.advertising(flags 03, has-readings and bonding-open)
-      - ui -> ble-client.pair(00a1b2c3d4e5f607): paired
-      - ble-client -> sensor-link.open-session(): ok
-      - ble-client -> sensor-link.info(): 01 00 00 A1 B2 C3 D4 E5 F6 07 07 84 03 40 0B 01 00 00
-      - ui -> sync.change-plant(Monstera, sensor id 00a1b2c3d4e5f607): ok
-      - app-ui -> ui.plants(): Monstera with its sensor stick, marked "not yet sent"
-      - sync -> cloud-api.create-owner(): 201 with owner_id, token and expires_at
-      - sync -> cloud-api.put-plant(Monstera with the sensor stick): 200 with the plant
-      - ui -> push-service.register(the owner id): ok
+      - sync -> ble-client.attach-consumer: the receiver of sync
+      - app-ui -> ui.owner: the app works and asks for no name and no password
+      - ui -> sync.start
+      - app-ui -> ui.edit-plant: Monstera, a preset, saved once the sensor stick is picked → the plant is added
+      - app-ui -> ui.pair: Monstera → the sensor stick is paired and bound to the plant
+      - ui -> ble-client.search: an observer
+      - sensor-link -> ble-client.advertising: flags 03, has-readings and bonding-open
+      - ui -> ble-client.pair: 00a1b2c3d4e5f607 → paired
+      - ble-client -> sensor-link.open-session
+      - ble-client -> sensor-link.info: 01 00 00 A1 B2 C3 D4 E5 F6 07 07 84 03 40 0B 01 00 00
+      - ui -> ble-client.cancel-search
+      - ui -> sync.create-plant: Monstera, the lower limits of the preset, sensor id 00a1b2c3d4e5f607 → the plant id
+      - app-ui -> ui.plants: Monstera with its sensor stick, marked "not yet sent"
+      - ui -> sync.plants: Monstera, `waiting`, without a reading
+      - sync -> cloud-api.create-owner: 201 with owner_id, token and expires_at
+      - sync -> cloud-api.put-plant: Monstera with the sensor stick → 200 with the plant
+      - ui -> push-service.register: the owner id
     expect: the sensor stick is bonded and listed as paired, "Monstera" exists on the phone and on the server with the sensor stick attached, and the phone is registered for the notifications of the new owner
+  fetch-and-upload:
+    summary: A paired sensor stick comes into range; the app fetches, stores and confirms its readings and passes them on to the server
+    source: steps 1 to 4 of `## Use` of the BLE profile; decision 0001 of plantwatch
+    given:
+      - the owner is registered on this phone, so the plant data is active
+      - the app does not run; the operating system starts it when the sensor stick advertises nearby
+    hops:
+      - sensor-link -> ble-client.advertising: flags 01, has-readings
+      - sync -> ble-client.attach-consumer: the receiver of sync, once the system has started the app
+      - ble-client -> sensor-link.open-session
+      - ble-client -> sensor-link.status: 0C 00 09 55 01 00 67 12 00 00 C6 12 00 00 60 00 00
+      - ble-client -> sensor-link.fetch: 01 00 00 00 00 C8 00 → 96 records, then 80 01 00 60 00 C6 12 00 00 00
+      - ble-client -> sync.batch: 96 readings, more-to-come no
+      - sync -> ble-client.acknowledge: the batch id
+      - ble-client -> sensor-link.confirm: 02 C6 12 00 00 → 80 02 00 00 00 00 00 00 00
+      - sensor-link -> ble-client.disconnected
+      - sync -> cloud-api.upload-batch: 00a1b2c3d4e5f607, the 96 readings → 200, every reading is new
+    expect: the 96 readings 4711 to 4806 are stored on the phone with a UTC time each, which the client computes from the Status value, before they are marked delivered on the sensor stick; the phone disconnects, and the server has the readings; a fetch or an upload that the system ends early loses nothing, because the sensor stick and the phone each keep what the next place has not confirmed
   an-alert-arrives:
-    summary: A notification about an alert reaches the phone, the owner taps it and sees the plant first in the list
+    summary: A notification about an alert reaches the phone; the owner taps it, the app brings the alert from the server and shows the plant
     source: requirements of plantwatch, the screens of ui
     given:
-      - sync.plant-data: active
+      - the owner is registered on this phone, so the plant data is active
     hops:
-      - push-service -> ui.deliver(the notification of the alert)
-      - app-ui -> ui.notification-tap(the notification about Monstera): the app opens the screen of "Monstera"
-      - ui -> sync.plant(Monstera): Monstera with its open alert
-      - app-ui -> ui.plants(): the plant is first in the list with "needs water"
-    expect: the phone shows one notification; a tap opens "Monstera" with its open alert, which the last exchange with the server brought to the phone, and the plant is first in the list with "needs water"
-  change-a-threshold-offline:
-    summary: The owner changes a threshold without a network connection, and the phone keeps the change until it can send it
+      - push-service -> ui.deliver: the notification of the alert
+      - app-ui -> ui.notification-tap: the notification about Monstera → the app opens the screen of "Monstera"
+      - sync -> cloud-api.list-plants: 200 with Monstera and its latest reading
+      - sync -> cloud-api.list-alerts: 200 with the open alert
+      - app-ui -> ui.plant: Monstera → the latest reading of 28 %, the open alert and the history
+      - ui -> sync.plant: Monstera → Monstera with its open alert
+      - ui -> sync.alerts: Monstera → the open alert, soil moisture below 30
+      - ui -> sync.history: Monstera, the last day, raw → the readings, the newest with 28.4
+      - app-ui -> ui.plants: the plant is first in the list with "needs water"
+      - ui -> sync.plants: Monstera with its open alert
+    expect: the phone shows one notification; the tap brings the app onto the screen, which starts an exchange, so that "Monstera" opens with its open alert also when the notification came before the phone knew of the alert; the plant is first in the list with "needs water"
+  changes-made-offline-reach-the-server:
+    summary: Without a network connection the owner changes a threshold and removes a plant; the phone keeps both changes and sends them when the owner asks for fresh data
     source: decision 0001 of mobile
     given:
-      - sync.plant-data: active
+      - the owner is registered on this phone, so the plant data is active
+      - the app takes the readings of the sensor sticks
+      - the owner has the plants Monstera and Basil, and the phone has no network connection until the owner pulls the list down
     hops:
-      - app-ui -> ui.edit-plant(Monstera, lower limit of 25 % for soil moisture): 25 % within 1 second, marked "not yet sent"
-      - ui -> sync.change-plant(Monstera, soil moisture 25): ok
-      - ui -> sync.plant(Monstera): 25 and `waiting`
-    expect: the screen shows the new value within 1 second, marked "not yet sent"; until the server has the new threshold, alerts follow the old one
-  the-change-reaches-the-server:
-    summary: The next exchange with the server carries the changed threshold, and the mark on the plant goes
-    source: decision 0001 of mobile
+      - app-ui -> ui.edit-plant: Monstera, lower limit of 25 % for soil moisture → 25 % within 1 second, marked "not yet sent"
+      - ui -> sync.change-plant: Monstera, soil moisture 25
+      - ui -> sync.plant: Monstera → 25 and `waiting`
+      - app-ui -> ui.edit-plant: remove Basil → Basil is gone from the list
+      - ui -> sync.remove-plant: Basil
+      - ui -> sync.exchange-state: changes-waiting 2, last-failure `no network`
+      - app-ui -> ui.plants: the owner pulls the list down → Monstera with 25 % and no mark
+      - ui -> sync.refresh: the exchange state with changes-waiting 0 and no failure
+      - sync -> ble-client.fetch-now: every paired sensor stick → not in range
+      - sync -> cloud-api.get-plant: Monstera → 200 with the plant
+      - sync -> cloud-api.put-plant: Monstera with the lower limit 25 → 200 with the plant
+      - sync -> cloud-api.delete-plant: Basil → 204
+      - ui -> sync.plants: Monstera with 25, `in step`
+    expect: each change shows on the screen within 1 second and survives a restart of the app; until the server has the new threshold, alerts follow the old one, and the mark "not yet sent" says so; the changes reach the server in the order in which they were made, and after the exchange the plant is `in step` and Basil is gone on the server too
+  move-to-a-new-phone:
+    summary: The owner shows the code for a new phone and, when the new phone has joined, leaves the owner on this one
+    source: the screens of ui, settings and the code for another phone
     given:
-      - sync.plant-data: active
+      - the owner is registered on this phone, so the plant data is active
+      - the app takes the readings of the sensor sticks
     hops:
-      - sync -> cloud-api.put-plant(Monstera with the lower limit 25): 200 with the plant
-      - app-ui -> ui.plants(): Monstera with 25 % and no mark
-      - ui -> sync.plant(Monstera): 25 and `in step`
-    expect: after the exchange the plant is `in step` and the mark "not yet sent" is gone; from then on alerts follow the new threshold
+      - app-ui -> ui.owner: open the settings and show the code for another phone → a code that carries a token
+      - ui -> ble-client.list-paired: an observer → the sensor stick of Monstera, idle, with the time of its last fetch
+      - ui -> sync.exchange-state: the time of the last exchange, readings-waiting 3, changes-waiting 0
+      - ui -> sync.token-for-another-phone: a token of the same owner
+      - sync -> cloud-api.create-token: 201 with a new token
+      - app-ui -> ui.owner: leave the owner → the app shows the welcome screen and holds no plant
+      - ui -> sync.leave
+      - sync -> cloud-api.upload-batch: 00a1b2c3d4e5f607, the 3 waiting readings → 200, every reading is new
+      - sync -> ble-client.detach-consumer
+      - ui -> push-service.end-registration: the owner id
+    expect: the new phone joins the owner with the token of the code and shows the same plants, history and alerts; what waited on this phone has reached the server before its data is removed; afterwards this phone holds no plant, no reading and no token, fetches from no sensor stick and receives no notification of the owner

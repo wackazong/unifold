@@ -29,7 +29,7 @@ Chosen option: "one list of plants, alerts shown on the plants", because an aler
 The settings are reached from the list and are not a peer of it. A tap on a notification opens the plant directly; "back" leads to the list.
 
 The screens and the ways between them are in
-[app-ui.md](../references/screens.md).
+[screens.md](../references/screens.md).
 
 ### Consequences
 

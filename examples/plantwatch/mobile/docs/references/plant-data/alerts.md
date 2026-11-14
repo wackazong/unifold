@@ -1,9 +1,9 @@
 # alerts
 
-Kind: query
+Kind: operation
 
 ```wit
-alerts: func(plant-id: option<string>) -> list<alert>;
+alerts: func(plant-id: option<string>) -> result<list<alert>, command-failure>;
 observe-alerts: func(plant-id: option<string>, observer: alerts-observer);
 ```
 

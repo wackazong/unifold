@@ -1,6 +1,6 @@
 # put-link
 
-Kind: command
+Kind: operation
 
 ```http
 PUT /link

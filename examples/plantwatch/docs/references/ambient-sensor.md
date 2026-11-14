@@ -22,7 +22,7 @@ The firmware sends a request and waits up to 150 ms for both values. The sensor 
 
 ### read
 
-Kind: query
+Kind: operation
 
 ```text
 I2C request at 100 kHz -> light (lux) and temperature (°C), both within 150 ms

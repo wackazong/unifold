@@ -19,7 +19,7 @@ The store on a phone holds readings that exist nowhere else until the server has
    - computes new fields from existing data or leaves them absent; it does not ask the server.
 5. **Test the migration chain.** For every layout version that was ever released, start from a store of that version, filled to the upper bound and containing `fetched` readings and waiting changes, and migrate to the new version. Compare the number of `fetched` readings and waiting changes before and after.
 6. **Test the time.** Measure the migration of a full store on the slowest supported phone. A migration runs before the first query is answered and also when the program was started in the background; if it takes longer than a few seconds, split the work so that the store answers queries while the rest follows.
-7. **Change the exchange if needed.** If the new field travels to or from the server, update [exchange.md](../../references/exchange.md) and check the expectations under `cloud-api` in [README.md](../../../README.md).
+7. **Change the exchange if needed.** If the new field travels to or from the server, update [exchange.md](../../references/exchange.md) and check that the contract of the need `cloud-api`, the [public API](../../../../../docs/references/public-api/index.md), covers it.
 8. **Record a decision** in [decisions](../../decisions/index.md) with status `proposed` if the change had an alternative, for example a different retention.
 9. **Finish.** Run the generator and the checker of the project and review the files you changed.
 

@@ -16,13 +16,13 @@ The server side asks the host for its volumes, runs each container with its name
 | clock | the clock of every container stays within 10 seconds of UTC |
 | availability | a container that stops runs again within a minute |
 | durability | a volume survives restart and replacement of its container; two volumes can be placed on separate storage devices |
-| security | the containers are on a private network in which they find each other by name; nothing in it is reachable from outside except the one published port, whose publisher terminates TLS |
+| security | the containers are on a private network in which they find each other by name; nothing in it is reachable from outside except the one published port, on which the host terminates TLS |
 
 ## Parts
 
 ### run
 
-Kind: command
+Kind: operation
 
 ```text
 run(container image, name, volumes) -> the container runs on the private network
@@ -40,7 +40,7 @@ Examples:
 
 ### volume
 
-Kind: command
+Kind: operation
 
 ```text
 volume(name, [separate storage device]) -> a volume that survives restart and replacement
@@ -57,20 +57,20 @@ Examples:
 
 ### publish
 
-Kind: command
+Kind: operation
 
 ```text
-publish(container, port) -> the one port reachable from outside, with TLS terminated by the publisher
+publish(container, port) -> the one port reachable from outside, with TLS terminated by the host
 ```
 
 Pre: no other port is published.
-Result: exactly one network port is reachable from outside the private network. Whoever publishes it terminates TLS.
+Result: exactly one network port is reachable from outside the private network. The host terminates TLS on it.
 Errors: none that plantwatch relies on.
 Examples:
 
 | Case | Input | Expected |
 |---|---|---|
-| one port | `publish(gateway, 443)` | the port is reachable from the internet with TLS terminated by the publisher; a request from the internet to any other service gets no connection |
+| one port | `publish(gateway, 443)` | the port is reachable from the internet with TLS terminated by the host; a request from the internet to any other service gets no connection |
 
 ## Fake
 

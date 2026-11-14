@@ -7,7 +7,7 @@ Version: 1
 
 ## Use
 
-A client loads a scenario with `put-scenario`, which resets the simulated sensor stick. Then it moves simulated time forward with `put-time`, sets radio range and transfer faults with `put-link`, and reads the state and the readings. Every request states a target state, not a step, so it may be repeated. The only order the API enforces is that simulated time never goes back: a `put-time` below the current time fails.
+A client loads a scenario with `put-scenario`, which resets the simulated sensor stick. Then it moves simulated time forward with `put-time`, and sets radio range and transfer faults with `put-link`. Every answer is the state object; the readings themselves are fetched over the [BLE profile](../ble-profile/index.md), as a central fetches them. Every request states a target state, not a step, so it may be repeated. The only order the API enforces is that simulated time never goes back: a `put-time` below the current time fails.
 
 At start the program loads the built-in scenario `steady` (constant mid-range values, sampling interval 900 s) and runs simulated time at rate 1; loading a scenario replaces `steady`. One process simulates one sensor stick. The same scenario and the same sequence of control requests give the same readings, sequence numbers and tick counts. Advertising, connections and the bonding handshake run in real time; sampling, the tick count and the time in which bonding is open follow simulated time.
 
@@ -28,11 +28,9 @@ The examples of the parts use the scenario `drying-out` from the [scenario forma
 
 | Part | What it is |
 |---|---|
-| [get-state](get-state.md) | returns the state object |
 | [put-scenario](put-scenario.md) | loads the scenario in the body and resets the simulated sensor stick |
 | [put-time](put-time.md) | moves simulated time forward to a given value, or sets the rate |
 | [put-link](put-link.md) | sets radio range and transfer faults |
-| [get-readings](get-readings.md) | returns the readings taken since the scenario was loaded |
 | [state](emulator-state.md) | the state object |
 | [error](control-error.md) | the error response |
 

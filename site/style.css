@@ -300,12 +300,6 @@ td:first-child:empty, th:first-child:empty { min-width: 0; }
 .faq .answer { padding: 0 0 1.25rem; color: var(--ink-2); font-size: 1.0625rem; }
 .faq .answer p { margin: 0; }
 
-.run { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1rem 2.5rem; align-items: start; }
-.run pre { margin: 0; background: var(--dark); color: var(--dark-ink); padding: 1.1rem 1.25rem; }
-.run pre code { color: var(--dark-ink); }
-.run pre .c { color: var(--dark-muted); }
-.needs p { margin: 0; font-size: 1.0625rem; color: var(--ink-2); }
-
 .index-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.5rem 3rem; }
 .index { border-top: 4px solid var(--c); padding-top: 1rem; }
 .index:nth-child(5n+1) { --c: var(--teal); }
@@ -345,7 +339,6 @@ mark { background: var(--teal-hl); color: inherit; border-radius: 2px; padding: 
   .hero-grid { grid-template-columns: 1fr; }
   .sheet { grid-template-columns: 1fr; }
   .panel + .panel { border-left: 0; border-top: 2px dashed var(--line-2); }
-  .run { grid-template-columns: 1fr; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cols.three, .index-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

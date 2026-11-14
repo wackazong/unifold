@@ -1,6 +1,6 @@
 # Your first map
 
-For a developer who has a repository with a few folders, Python 3.9 or newer and [uv](https://docs.astral.sh/uv/). In about fifteen minutes you give the repository a root manifest, describe two folders as units, connect them, and see the first generated diagram. The example is a repository `shop` with a folder `billing/` that uses a folder `platform/`; use your own folders in their place.
+For a developer who has a repository with a few folders, Python 3.9 or newer and [uv](https://docs.astral.sh/uv/). In about fifteen minutes you give the repository a root manifest, describe two folders as units, connect them, and see the first diagram. The example is a repository `shop` with a folder `billing/` that uses a folder `platform/`; use your own folders in their place.
 
 Install the tool with `uv tool install unifold`, or write `uvx unifold` wherever the steps write `unifold`.
 
@@ -38,7 +38,7 @@ Shared runtime services for the other parts of the shop.
 Every part needs the same few services; one implementation keeps them alike.
 ```
 
-Save the second file as `platform/README.md`; every unit has one. Run `unifold check --fix`. It writes `docs/diagrams/component.md` in the root, with one box, and adds `platform` to the index of units in the root `AGENTS.md`. One warning remains: `'platform.clock' is provided but nothing uses it`.
+Save the second file as `platform/README.md`; every unit has one. Run `unifold check --fix`. It adds `platform` to the index of units in the root `AGENTS.md`. One warning remains: `'platform.clock' is provided but nothing uses it`.
 
 ## 3. Declare what the second folder needs
 
@@ -99,7 +99,7 @@ A consumer asks for the time whenever it needs it. The clock has no state: `now`
 
 ### now
 
-Kind: query
+Kind: operation
 
 ```wit
 now: func() -> u64;
@@ -134,7 +134,7 @@ needs:
     contract: ../docs/references/clock.md
 ```
 
-Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s), 0 info`. The component diagram now shows two boxes and an arrow from `billing` to `platform`, labelled `clock`. The check does not read your code: keeping the code and the map in step is part of every change, and of its review.
+Run `unifold check --fix`. It reports `3 unit(s): 0 error(s), 0 warning(s), 0 info`. The check does not read your code: keeping the code and the map in step is part of every change, and of its review.
 
 ## 6. See the map in the browser
 

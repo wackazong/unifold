@@ -49,6 +49,12 @@ These are the two things `gateway` deals with. The form of a token is its own bu
 
 ## From plantwatch
 
+### [plantwatch: container host, publish](../../../../../docs/references/container-host.md#publish)
+
+The host publishes exactly one network port to the outside, and whoever publishes it terminates TLS.
+
+That port is the one of `gateway`, which is the need `container-host` of this unit. `gateway` itself listens without TLS on port 8080 of its container.
+
 ### [plantwatch: conventions, identifiers](../../../../../docs/references/conventions.md#identifiers)
 
 An owner has a UUID in lower-case text form. This is the form of the owner id in a token and in `X-Owner-Id`.

@@ -32,6 +32,7 @@ jobs:
           uv run docs/skills/unifold/scripts/unifold.py check --strict examples/slugline
           uv run docs/skills/unifold/scripts/unifold.py check --strict examples/serial-line
           uv run docs/skills/unifold/scripts/unifold.py check --strict examples/plantwatch
+          uv run docs/skills/unifold/scripts/unifold.py trace --active --strict examples/slugline
 
   action:
     name: the GitHub Action on an example

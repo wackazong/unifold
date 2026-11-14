@@ -8,7 +8,7 @@ license: MIT OR Apache-2.0
 
 The result is a map that a person can accept: a few well-chosen units, wired by the unit above, and a clean `check`. Each unit has a `unifold.yaml` that says what the folder provides and what it needs. No script writes this map. A build file knows packages and their dependencies. It does not know which folders are parts of the architecture, what a part provides, or what it needs from others. You read the repository and decide; the tool checks that what you wrote is consistent. It does not read code, so you compare the map with the code.
 
-`unifold` below means the tool: `uvx unifold`, or the copy that `unifold init --agents` installs, `uv run docs/skills/unifold/scripts/unifold.py`. The standard has three pages, starting at <https://unifold.md/spec>. How to work in a converted project: the skill `unifold`.
+`unifold` below means the tool: `uvx unifold`, or the copy that `unifold init --agents` installs, `uv run docs/skills/unifold/scripts/unifold.py`. The standard starts at <https://unifold.md/spec>. How to work in a converted project: the skill `unifold`.
 
 ## 0. Before you start
 
@@ -38,7 +38,7 @@ Write each manifest from the template [unifold.template.yaml](../unifold/assets/
 1. `responsibility`: what the unit is responsible for, in one sentence. The README and the package description help; write `TODO` only when you cannot say it.
 2. `capabilities`: what the unit provides to others. Name each after what it provides, not after the package or the technology: `matcher`, not `grep-regex`. Declare one capability per thing that others depend on separately; a package with one public interface has one. The `contract` comes with the wiring, below.
 3. `needs`: what the unit needs from outside, in its own words, never who provides it: `clock`, `cart-store`, `api-definition`. Do not declare the language runtime, the standard library, registry packages or logging. Declare one need per thing; two packages that give the same thing are one need.
-4. `status: planned` where the code does not exist yet; `kind` where it says something (`logic`, `stateful`, `adapter`, or a word of the project such as `service`).
+4. `status: planned` where the code does not exist yet; `kind` where it says something (`logic`, `stateful`, `adapter`, or a word of the project such as `service`); a `logic` unit needs nothing that is finally a `stateful` or `adapter` unit, so leave `kind` out where that does not hold.
 5. A need of the project itself is a need of the root: a database, a cloud API, a cluster. What code outside is written against or a person uses, such as an API, a command line or a UI, is a capability of the root; a project that nobody uses that way, such as a controller that reads sensors and switches a relay, has none.
 6. Every unit needs a `README.md`. Keep one that exists. Where there is none, write a short one from the template ([README.template.md](../unifold/assets/README.template.md)): the heading, one paragraph on what the unit is for, and a `## Why` of a few lines.
 

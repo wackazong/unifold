@@ -35,9 +35,9 @@ A loop takes alerts with `notification` = `pending` whose next attempt is due, o
 
 | Answer of `notification` | Change |
 |---|---|
-| done | `notification` = `sent` |
-| failed for good | `notification` = `failed` |
-| try again later, or no answer within 10 seconds | Next attempt after the next waiting time |
+| `sent` | `notification` = `sent` |
+| `failed` | `notification` = `failed` |
+| `retry`, or no answer within 10 seconds | Next attempt after the next waiting time |
 
 | Attempt | Waiting time before it |
 |---|---|

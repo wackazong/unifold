@@ -1,6 +1,6 @@
 # delete-plant
 
-Kind: command
+Kind: operation
 
 ```http
 DELETE /v1/plants/{plant_id}

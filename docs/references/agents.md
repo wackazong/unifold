@@ -6,11 +6,11 @@ How a coding agent learns that a repository uses unifold, what it reads, and wha
 
 | Way | What it is | When the agent sees it |
 |---|---|---|
-| `AGENTS.md` | A generated file at the root: a pointer to `README.md`, the documents and skills of the root by kind, and the unifold block: what unifold is, the commands `show`, `capability` and `check`, and an index of the units below the root (name, path, responsibility, and the status when it is not `active`) when there are at most 40 of them, otherwise a pointer to `unifold tree` | Always, where the agent loads `AGENTS.md` |
+| `AGENTS.md` | A generated file at the root ([documents.md](documents.md#agentsmd-generated-at-the-root)). Its unifold block says what unifold is and holds the commands `show`, `capability` and `check`, and an index of the units below the root (name, path, responsibility, and the status when it is not `active`) when there are at most 40 of them, otherwise a pointer to `unifold tree` | Always, where the agent loads `AGENTS.md` |
 | The skills | `unifold-convert`, the procedure that brings a repository into the format, and `unifold`, the procedures for reading and changing a unifold project | When the agent decides that the task calls for it |
-| The tool | `unifold show`, `capability`, `impact`, `brief`, `trace`, `scenario` and `check`, each with `--json` | When the agent runs it |
+| The tool | `unifold show`, `capability`, `impact`, `brief`, `trace` and `check`, each with `--json` | When the agent runs it |
 
-`unifold init --agents` sets up all three: it installs the skills and the tool in `docs/skills/` of the root, writes the stubs described below, and points the block in the root `AGENTS.md` at them ([tool.md](tool-setup.md#init)). Why there are three ways and not one: [reasoning](../explanation/reasoning.md#why-three-ways-in-for-agents).
+`unifold init --agents` sets up all three: it installs the skills and the tool in `docs/skills/` of the root, writes the stubs described below, and points the block in the root `AGENTS.md` at them ([tool-setup.md](tool-setup.md#init)). Why there are three ways and not one: [reasoning](../explanation/reasoning.md#why-three-ways-in-for-agents).
 
 ## Where skills are found
 
@@ -39,8 +39,4 @@ Every agent with a shell can run the tool, so the tool is the one way in that wo
 
 ## What an agent must not take as fact
 
-The `unifold` skill lists the signs in its table [What not to trust blindly](../skills/unifold/SKILL.md#what-not-to-trust-blindly): a planned unit, a proposed or derived decision, a `TODO`, and a clean check, which says nothing about the code. `show` prints the status of every unit it mentions and marks planned units and proposed decisions.
-
-## Hooks
-
-An agent runs `unifold check` when it stops, not after every edit: a unit that is being added is broken for a moment. The hook for Claude Code, a pre-commit hook and a CI job are in [tool.md](tool-setup.md#hooks-and-continuous-integration).
+The `unifold` skill lists the signs in its table [What not to trust blindly](../skills/unifold/SKILL.md#what-not-to-trust-blindly): a planned unit, a proposed or derived decision, a `TODO`, and a clean check, which says nothing about the code. `show` prints the status of every unit it mentions and marks planned units and proposed decisions. A hook that runs `unifold check` when the agent stops is in [tool-setup.md](tool-setup.md#hooks-and-continuous-integration).

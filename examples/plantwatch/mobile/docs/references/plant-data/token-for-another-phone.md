@@ -1,6 +1,6 @@
 # token-for-another-phone
 
-Kind: command
+Kind: operation
 
 ```wit
 token-for-another-phone: func() -> result<string, command-failure>;

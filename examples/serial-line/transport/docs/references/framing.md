@@ -12,7 +12,7 @@ The consumer keeps the bytes that `feed` returns as `rest` and passes them back 
 
 ### feed
 
-Kind: query
+Kind: operation
 
 ```wit
 feed: func(buffer: list<u8>, incoming: list<u8>) -> fed;

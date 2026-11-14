@@ -19,7 +19,7 @@ A program turns a string into a slug with `slugify`, or with `slugify-with` and 
 
 ### slugify
 
-Kind: query
+Kind: operation
 
 ```wit
 slugify: func(input: string, options: options) -> string;
@@ -43,7 +43,7 @@ Examples:
 
 ### slugify-with
 
-Kind: query
+Kind: operation
 
 ```wit
 slugify-with: func(input: string, options: options, plugin: borrow<transliterate>) -> string;
@@ -52,16 +52,16 @@ slugify-with: func(input: string, options: options, plugin: borrow<transliterate
 Pre: none.
 Result: a slug like `slugify`, where every character outside ASCII is first given to the plug-in; its answer goes through the slug rules like typed text, and `none` drops the character.
 Errors: none.
-Examples:
+Examples: `sample` is a plug-in that gives the answers in `Given`.
 
 | Case | Given | Input | Expected |
 |---|---|---|---|
-| letters replaced | latin answers `è`→`e`, `û`→`u`, `é`→`e` | `slugify-with("Crème brûlée", default, latin)` | `creme-brulee` |
-| one letter becomes two | latin answers `ß`→`ss` | `slugify-with("Straße", default, latin)` | `strasse` |
-| answer in upper case | latin answers `É`→`E` | `slugify-with("École", default, latin)` | `ecole` |
-| answer with a space | latin answers `→`→`" to "` | `slugify-with("A→B", default, latin)` | `a-to-b` |
-| empty answer | latin answers `™`→`""` | `slugify-with("Slug™", default, latin)` | `slug` |
-| plug-in does not know | latin answers `ï`→`none` | `slugify-with("naïve", default, latin)` | `nave` |
+| letters replaced | the plug-in answers `è`→`e`, `û`→`u`, `é`→`e` | `slugify-with("Crème brûlée", default, sample)` | `creme-brulee` |
+| one letter becomes two | the plug-in answers `ß`→`ss` | `slugify-with("Straße", default, sample)` | `strasse` |
+| answer in upper case | the plug-in answers `É`→`E` | `slugify-with("École", default, sample)` | `ecole` |
+| answer with a space | the plug-in answers `→`→`" to "` | `slugify-with("A→B", default, sample)` | `a-to-b` |
+| empty answer | the plug-in answers `™`→`""` | `slugify-with("Slug™", default, sample)` | `slug` |
+| plug-in does not know | the plug-in answers `ï`→`none` | `slugify-with("naïve", default, sample)` | `nave` |
 
 ### options
 

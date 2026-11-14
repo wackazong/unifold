@@ -1,10 +1,10 @@
-//! Checks the contract `plugin-api` (see ../../docs/references/plugin-api.md)
-//! and the part `slugify-with` of the contract `slugify`. Each test names the
-//! ids of the examples it proves.
+//! Checks the part `slugify-with` of the contract `slugify` with a sample
+//! plug-in, a fake of the need `plugin-api`. Each test names the ids of the
+//! examples it proves.
 
 use slugline_core::{slugify_with, Options, Transliterate};
 
-/// A plug-in that knows four characters: the `latin` of the examples.
+/// A plug-in that knows four characters: the `sample` of the examples.
 struct Sample;
 
 impl Transliterate for Sample {
@@ -44,7 +44,6 @@ fn every_letter_outside_ascii_is_replaced() {
 
 #[test]
 fn a_replacement_may_be_longer_than_one_letter() {
-    // plugin-api#transliterate/several-letters
     assert_eq!(Sample.transliterate('ß'), Some("ss"));
     // slugify#slugify-with/one-letter-becomes-two
     assert_eq!(with_sample("Straße"), "strasse");
@@ -52,17 +51,12 @@ fn a_replacement_may_be_longer_than_one_letter() {
 
 #[test]
 fn a_replacement_is_treated_like_typed_text() {
-    // plugin-api#transliterate/one-letter
     assert_eq!(Sample.transliterate('É'), Some("E"));
     // slugify#slugify-with/answer-in-upper-case
     assert_eq!(with_sample("École"), "ecole");
-
-    // plugin-api#transliterate/text-with-a-space
     assert_eq!(Sample.transliterate('→'), Some(" to "));
     // slugify#slugify-with/answer-with-a-space
     assert_eq!(with_sample("A→B"), "a-to-b");
-
-    // plugin-api#transliterate/empty-answer
     assert_eq!(Sample.transliterate('™'), Some(""));
     // slugify#slugify-with/empty-answer
     assert_eq!(with_sample("Slug™"), "slug");
@@ -70,7 +64,6 @@ fn a_replacement_is_treated_like_typed_text() {
 
 #[test]
 fn a_character_the_plugin_does_not_know_is_dropped() {
-    // plugin-api#transliterate/unknown-character
     assert_eq!(Sample.transliterate('ï'), None);
     // slugify#slugify-with/plug-in-does-not-know
     assert_eq!(with_sample("naïve"), "nave");

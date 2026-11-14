@@ -7,7 +7,13 @@ Version: 1
 
 ## Use
 
-The owner starts the app without an account, adds plants, and puts a sensor stick to each plant. From then on the app fetches, uploads and registers for notifications without being asked, and the owner sees the plants, their history and their alerts. The app has no state that limits what the owner may do: every part may be used at any time, also without a network connection. Pairing and fetching need Bluetooth.
+The owner starts the app without an account, adds plants, and puts a sensor stick to each plant. From then on the owner sees the plants, their history and their alerts. The app has no state that limits what the owner may do: every part may be used at any time, also without a network connection, except showing the code for a second phone and leaving the owner, which need one (part `owner`). Pairing and fetching need Bluetooth.
+
+What the app does without being asked:
+
+- It fetches the stored readings when the phone comes near a paired sensor stick, as far as the operating system lets it run, and when the owner opens the app near one. A fetch that is cut off is taken up again at the next opportunity, and a reading that reaches the phone twice is kept once.
+- It uploads the readings on the phone whenever a network connection exists. Without one they stay on the phone and are visible in the history. The server reports a reading it already has as a duplicate, so nothing is stored twice.
+- It registers the phone through `push-service` once the owner has allowed notifications and the server has created the owner, and again whenever the platform changes the phone's address. When the phone leaves its owner, the app ends that registration.
 
 The app does not promise:
 
@@ -37,14 +43,14 @@ Each example starts from a phone with one plant, "Monstera", whose sensor stick 
 
 ### plants
 
-Kind: query
+Kind: operation
 
 ```text
-the owner opens the app -> a list of all plants
+the owner opens the app, or pulls the list down -> a list of all plants
 ```
 
 Pre: none; works without a network connection.
-Result: a list of all plants. Plants with an open alert come first, with the reason. The age of the plant's readings and the age of server data are shown on every screen that shows either.
+Result: a list of all plants. Plants with an open alert come first, with the reason. The age of the plant's readings and the age of server data are shown on every screen that shows either. Pulling the list down asks for a fetch from the sensor sticks in range and an exchange with the server now.
 Errors: none.
 Examples:
 
@@ -52,10 +58,11 @@ Examples:
 |---|---|---|---|
 | offline view | flight mode; newest reading 2 days old | the owner opens the app | the plant with that reading and "2 days ago"; no error, no loading state |
 | alert arrives | after the upload the server reports an open alert | the owner opens the app | the plant is first in the list with "needs water" |
+| no notifications | the owner has not allowed notifications; the server has raised an alert | the owner opens the app | the plant is first in the list with "needs water"; the phone is not registered |
 
 ### plant
 
-Kind: query
+Kind: operation
 
 ```text
 the owner opens a plant -> the latest reading and the history of the last 90 days
@@ -69,10 +76,11 @@ Examples:
 | Case | Given | Input | Expected |
 |---|---|---|---|
 | low value, no alert yet | a fetched reading of 23 %, not uploaded | the owner opens the plant | 23 % in the history; the plant is not marked "needs water" |
+| fetch on opening | the sensor stick in range holds 96 unconfirmed readings; no network | the owner opens the app, then the plant | a fetch starts within 5 seconds; afterwards the history holds the 96 readings |
 
 ### edit-plant
 
-Kind: command
+Kind: operation
 
 ```text
 add, change or remove a plant: name, thresholds or a preset, optionally a sensor stick
@@ -89,7 +97,7 @@ Examples:
 
 ### pair
 
-Kind: command
+Kind: operation
 
 ```text
 put a sensor stick to a plant: pairing with a sensor stick in range, then binding it to one plant
@@ -106,7 +114,7 @@ Examples:
 
 ### notification-tap
 
-Kind: command
+Kind: operation
 
 ```text
 the owner taps a notification -> the app opens the plant the notification is about
@@ -123,65 +131,21 @@ Examples:
 
 ### owner
 
-Kind: command
+Kind: operation
 
 ```text
-start without an account; use the app on a second phone by scanning a code shown on the first
+start without an account; show a code that a second phone scans to join the owner; leave the owner
 ```
 
-Pre: none.
-Result: the app asks for no name and no password and works from the first start, also without a network connection; the server creates the owner at the first exchange. On a second phone the owner scans a code the first phone shows; from then on it shows the same plants, history and alerts.
+Pre: none; showing the code and leaving need a network connection.
+Result: the app asks for no name and no password and works from the first start, also without a network connection; the server creates the owner at the first exchange. On a second phone the owner scans a code the first phone shows; from then on it shows the same plants, history and alerts. A phone that leaves its owner uploads what is waiting and then holds nothing of the owner.
 Errors: none.
 Examples:
 
 | Case | Given | Input | Expected |
 |---|---|---|---|
 | first start | a new phone in flight mode | the owner starts the app | the app works and asks for no name and no password |
-
-### fetch
-
-Kind: event
-
-```text
-the phone comes near a paired sensor stick -> the app fetches its stored readings
-```
-
-When: the phone comes near a paired sensor stick, or the owner opens the app near one. With the app not open, the app fetches the stored readings as far as the operating system lets it run. When the owner opens the app near a paired sensor stick, a fetch starts within 5 seconds and runs to the end while the app stays open.
-Delivery: at least once; a fetch that is cut off is taken up again at the next opportunity, and a reading that reaches the phone twice is kept once.
-
-Examples:
-
-| Case | Given | Action | Emitted |
-|---|---|---|---|
-| fetch on opening | sensor stick in range holds 96 unconfirmed readings; no network | the owner opens the app | a fetch starts within 5 seconds; afterwards the history holds the 96 readings |
-
-### upload
-
-Kind: event
-
-```text
-readings are on the phone and a network connection exists -> the app uploads them without being asked
-```
-
-When: readings are on the phone and a network connection exists. Without a network connection the readings stay on the phone and are visible in the history.
-Delivery: at least once; the server reports a reading it already has as a duplicate, so nothing is stored twice.
-
-### registration
-
-Kind: event
-
-```text
-the owner has allowed notifications and the server has created the owner -> the app registers the phone through push-service for its owner
-```
-
-When: the owner has allowed notifications and the server has created the owner, and again whenever the platform changes the phone's address. When the phone leaves its owner, the app ends that registration.
-Delivery: at least once per address of the phone; no order.
-
-Examples:
-
-| Case | Given | Action | Emitted |
-|---|---|---|---|
-| no notifications | the owner has not allowed notifications | the server raises an alert | no registration; the alert shows in the app |
+| move to a new phone | a second phone has joined with the code of the first | the first phone leaves the owner | the first phone shows the welcome screen and holds no plant; the second shows the plants |
 
 ## Fake
 

@@ -38,7 +38,7 @@ Appending in a ring spreads erases evenly by construction: every ring block is e
 - Good: 2 880 readings fit whatever the pattern of marks.
 - Bad: 2 of 20 blocks hold no readings.
 - Bad: room is regained only block by block. Overflow discards up to 204 readings at once, not one.
-- Bad: at start, `store` has to scan the newest ring block and both journal blocks to find its state.
+- Bad: at start, `store` has to read every block header and scan the newest ring block and both journal blocks to find its state.
 - Bad: a mark is one number. `store` cannot mark single readings.
 
 ## Pros and Cons of the Options

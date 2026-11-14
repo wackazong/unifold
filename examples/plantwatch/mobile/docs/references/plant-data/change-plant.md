@@ -1,6 +1,6 @@
 # change-plant
 
-Kind: command
+Kind: operation
 
 ```wit
 change-plant: func(plant-id: string, name: option<string>, lower-limits: option<limits>, sensor-id: option<option<string>>) -> result<_, command-failure>;

@@ -1,6 +1,6 @@
 # upload-batch
 
-Kind: command
+Kind: operation
 
 ```http
 POST /v1/sensors/{sensor_id}/batches
@@ -27,7 +27,7 @@ Result: `200` with one result per uploaded reading, in the same order, also when
 | Field | Content |
 |---|---|
 | `sequence_number` | The sequence number of the reading. Absent if it cannot be read. |
-| `status` | `new`: the reading is accepted now; the client may delete its copy. `duplicate`: a reading of this sensor stick with this sequence number was accepted earlier; the client may delete its copy. `rejected`: the reading is not accepted and will not be accepted when sent again; the client does not send it again. |
+| `status` | `new`: the reading is accepted now; the client may delete its copy. `duplicate`: a reading of this sensor stick with this sequence number was accepted earlier; the client may delete its copy. `rejected`: the reading is not accepted. Except after `time_in_future`, which can pass, it will not be accepted when sent again, and the client does not send it again. |
 | `code`, `message` | Only with `rejected`: the reason |
 
 | `code` of a rejection | Reason |

@@ -1,6 +1,6 @@
 # get-history
 
-Kind: query
+Kind: operation
 
 ```http
 GET /v1/plants/{plant_id}/history?from=...&to=...&resolution=hour&limit=...&cursor=...

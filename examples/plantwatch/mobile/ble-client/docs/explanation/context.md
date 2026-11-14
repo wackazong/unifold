@@ -26,9 +26,9 @@ The sizes, timeouts and triggers in [fetch-session.md](../references/fetch-sessi
 
 ### [mobile: data model](../../../docs/references/data-model.md)
 
-A reading has sensor id, sequence number, tick count, soil moisture, light, temperature, a UTC time and an estimated flag. A paired sensor stick has sensor id, time of pairing, time of the last complete fetch and the protocol version it states.
+A reading has sensor id, sequence number, tick count, soil moisture, light, temperature, a UTC time and an estimated flag. A paired sensor stick has sensor id, time of the last complete fetch, the last failure and the number of invalid readings dropped since pairing.
 
-The client delivers readings and lists paired sensor sticks with exactly these fields.
+The client delivers readings with exactly these fields, and lists paired sensor sticks with these fields and the current state of each.
 
 ### [mobile: glossary](../../../docs/references/glossary.md)
 

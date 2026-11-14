@@ -36,12 +36,12 @@ These rules define the two groups of operations of `plants-api`, and its health 
 
 ### [cloud: public API, plants](../../../../../docs/references/public-api/plant.md)
 
-The reference is the contract that this unit implements:
+The page is part of the public API. The contract this unit implements is `plants-api`, which serves it:
 
 - A plant has `id`, `name` (1 to 60 characters), an optional `sensor_id`, optional `thresholds` with `min`, `max` or both per quantity, and the server fields `latest_reading`, `created_at` and `updated_at`.
 - A sensor stick is attached to at most one plant across all owners.
 
-`plants` stores and returns the plant in this form; `list-plants` and `get-plant` of the same contract return it as it is.
+`plants` stores and returns the plant in this form; `list-plants` and `get-plant` of the public API return it as it is.
 
 ### [cloud: public API, put a plant](../../../../../docs/references/public-api/put-plant.md)
 
@@ -61,7 +61,7 @@ This is what `plants` stores and for how long; [data model](../references/data-m
 
 ### [cloud: public API, general rules](../../../../../docs/references/public-api/index.md)
 
-As part of the same contract, a change to a plant is visible to the next request. An owner has at most 50 plants; a page has at most 1 000 items.
+As part of the public API, a change to a plant is visible to the next request. An owner has at most 50 plants; a page has at most 1 000 items.
 
 These rules set the limits and the consistency of `plants-api`.
 

@@ -30,70 +30,67 @@ scenarios:
     summary: The OPEN payload goes out as one frame
     source: proto §4.2, §5.1
     hops:
-      - transport -> serial.send([01]): = OPEN, proto §4.2
-      - serial -> frames.encode([01]): = OPEN, proto §4.2
-      - serial -> uart.write([1F, 01, 01, 12]): = a frame
+      - transport -> serial.send: the payload 01, OPEN
+      - serial -> frames.encode: 01 becomes 1F 01 01 12
+      - serial -> uart.write: 1F 01 01 12
     expect: one frame `1F 01 01 12` on the line
   send-data:
     summary: A DATA payload goes out as one frame
     source: proto §4.2, §5.3
     hops:
-      - transport -> serial.send([03, 68, 69]): ok
-      - serial -> frames.encode([03, 68, 69]): = DATA hi, proto §4.2
-      - serial -> uart.write([1F, 03, 03, 68, 69, C2]): ok
+      - transport -> serial.send: the payload 03 68 69, DATA
+      - serial -> frames.encode: 03 68 69 becomes 1F 03 03 68 69 C2
+      - serial -> uart.write: 1F 03 03 68 69 C2
     expect: one frame `1F 03 03 68 69 C2` on the line
   send-close:
     summary: The CLOSE payload goes out as one frame
     source: proto §5.2
     hops:
-      - transport -> serial.send([02]): ok
-      - serial -> frames.encode([02]): 1F 01 02 1B
-      - serial -> uart.write([1F, 01, 02, 1B]): ok
+      - transport -> serial.send: the payload 02, CLOSE
+      - serial -> frames.encode: 02 becomes 1F 01 02 1B
+      - serial -> uart.write: 1F 01 02 1B
     expect: one frame `1F 01 02 1B` on the line
   receive-ack:
     summary: The ACK of OPEN arrives and its payload is returned
     source: proto §4.2, §5.1
     hops:
-      - transport -> serial.receive(OPEN_TIMEOUT_MS): = ACK arrives, proto §4.2
-      - serial -> uart.read(64, 50): = bytes waiting
-      - serial -> framing.feed([], [1F, 01, 81, 9B]): = one frame, proto §4.2
-      - framing -> frames.decode([1F, 01, 81, 9B]): = ACK, proto §4.2
+      - transport -> serial.receive: within OPEN_TIMEOUT_MS
+      - serial -> uart.read: 1F 01 81 9B
+      - serial -> framing.feed: 1F 01 81 9B, one whole frame
+      - framing -> frames.decode: 1F 01 81 9B becomes the payload 81, ACK
     expect: receive returns the payload `81` of the frame `1F 01 81 9B`
   receive-close-ack:
     summary: The ACK of CLOSE arrives and its payload is returned
     source: proto §5.2
     hops:
-      - transport -> serial.receive(CLOSE_TIMEOUT_MS): "[82]"
-      - serial -> uart.read(64, 50): "[1F, 01, 82, 92]"
-      - serial -> framing.feed([], [1F, 01, 82, 92]): frames [[82]], rest [], dropped 0
-      - framing -> frames.decode([1F, 01, 82, 92]): payload [82], used 4
+      - transport -> serial.receive: within CLOSE_TIMEOUT_MS
+      - serial -> uart.read: 1F 01 82 92
+      - serial -> framing.feed: 1F 01 82 92, one whole frame
+      - framing -> frames.decode: 1F 01 82 92 becomes the payload 82
     expect: receive returns the payload `82` of the frame `1F 01 82 92`
   receive-times-out:
     summary: Nothing arrives before the deadline
     source: proto §5.1
     hops:
-      - transport -> serial.receive(OPEN_TIMEOUT_MS): = silence
-      - repeat:
-          until: timeout
-          hops:
-            - serial -> uart.read(64, 50): = silence
+      - transport -> serial.receive: within OPEN_TIMEOUT_MS
+      - serial -> uart.read: nothing, again every READ_POLL_MS until the deadline
     expect: the port is read every `READ_POLL_MS` until `OPEN_TIMEOUT_MS` have passed, then receive fails with `timeout`
   reassemble:
     summary: Two frames arrive in one read
     source: proto §4.3
     hops:
-      - transport -> serial.receive(OPEN_TIMEOUT_MS): = two frames in one read
-      - serial -> uart.read(64, 50): "[1F, 01, 81, 9B, 1F, 00, 00]"
-      - serial -> framing.feed([], [1F, 01, 81, 9B, 1F, 00, 00]): = two frames
-      - framing -> frames.decode([1F, 01, 81, 9B]): = ACK, proto §4.2
-      - framing -> frames.decode([1F, 00, 00]): payload [], used 3
+      - transport -> serial.receive: within OPEN_TIMEOUT_MS
+      - serial -> uart.read: 1F 01 81 9B 1F 00 00
+      - serial -> framing.feed: two whole frames
+      - framing -> frames.decode: 1F 01 81 9B becomes the payload 81, ACK
+      - framing -> frames.decode: 1F 00 00 becomes an empty payload
     expect: receive returns the first payload; the second frame waits in the buffer for the next call
   garbage-before-frame:
     summary: Bytes that are not part of a frame arrive before the ACK
     source: proto §4.3
     hops:
-      - transport -> serial.receive(OPEN_TIMEOUT_MS): = garbage first, proto §4.3
-      - serial -> uart.read(64, 50): "[00, FF, 1E, 1F, 01, 81, 9B]"
-      - serial -> framing.feed([], [00, FF, 1E, 1F, 01, 81, 9B]): = garbage first, proto §4.3
-      - framing -> frames.decode([1F, 01, 81, 9B]): = ACK, proto §4.2
+      - transport -> serial.receive: within OPEN_TIMEOUT_MS
+      - serial -> uart.read: 00 FF 1E 1F 01 81 9B
+      - serial -> framing.feed: three bytes before the frame are dropped
+      - framing -> frames.decode: 1F 01 81 9B becomes the payload 81, ACK
     expect: the bytes `00 FF 1E` before the frame `1F 01 81 9B` are dropped and receive returns the payload `81`

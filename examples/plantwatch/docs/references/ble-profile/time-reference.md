@@ -1,6 +1,6 @@
 # time-reference
 
-Kind: query
+Kind: type
 
 ```text
 taken_at(T, B, S, reading) ->
@@ -9,12 +9,13 @@ taken_at(T, B, S, reading) ->
   otherwise: an estimate that keeps the order of the readings; time_estimated true
 ```
 
-Pre: the central has read Status in the same connection, before the fetch, and noted its own UTC time `T` at the moment the response arrived; `B` is `boot_counter` and `S` is `seconds_since_boot` of that Status value. A sensor stick has no clock; a reading carries a tick count, and the central turns it into a UTC time.
-Result: for a reading with `boot_counter` equal to `B`: `taken_at` = `T` − (`S` − `seconds_since_boot` of the reading), rounded to whole seconds, and `time_estimated` is `false`. For a reading with another `boot_counter`, the central uses a time reference it has kept for that boot counter and this sensor stick, if it has one; `time_estimated` is then `false`. Otherwise the central estimates `taken_at` and sets `time_estimated` to `true`; the estimate keeps the order of the readings and is not later than the start of the next boot that the central has a reference for. The central keeps the newest reference per sensor stick and boot counter.
-Errors: none.
-Examples: `Given` is the Status value read at `T`.
+The rule by which a central gives a reading its time; nothing travels over the radio link for it. A sensor stick has no clock; a reading carries a tick count, and the central turns it into a UTC time. The central has read Status in the same connection, before the fetch, and noted its own UTC time `T` at the moment the response arrived; `B` is `boot_counter` and `S` is `seconds_since_boot` of that Status value.
 
-| Case | Given | Input | Expected |
+For a reading with `boot_counter` equal to `B`: `taken_at` = `T` − (`S` − `seconds_since_boot` of the reading), rounded to whole seconds, and `time_estimated` is `false`. For a reading with another `boot_counter`, the central uses a time reference it has kept for that boot counter and this sensor stick, if it has one; `time_estimated` is then `false`. Otherwise the central estimates `taken_at` and sets `time_estimated` to `true`; the estimate keeps the order of the readings and is not later than the start of the next boot that the central has a reference for. The central keeps the newest reference per sensor stick and boot counter.
+
+The cases; the Status value was read at `T`:
+
+| Case | Status and references | Reading | Time |
 |---|---|---|---|
 | Same boot | `T` 2026-10-06T07:30:05Z, `B` 12, `S` 87 305 | a reading with tick count 12 / 86 400 | `taken_at` 2026-10-06T07:15:00Z, `time_estimated` `false` |
 | Earlier boot, reference kept | as above, and a reference for boot 11 exists | a reading with tick count 11 / 500 | `taken_at` computed from that reference, `time_estimated` `false` |

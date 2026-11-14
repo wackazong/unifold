@@ -8,6 +8,8 @@ capabilities:
   slugify:
     summary: Turn a string into a slug with a chosen separator and length, with or without a plug-in
     contract: ../docs/references/slugify.md
+needs:
   plugin-api:
-    summary: The trait a transliteration plug-in implements
+    summary: A transliteration plug-in, asked about each character outside ASCII
     contract: ../docs/references/plugin-api.md
+    optional: true

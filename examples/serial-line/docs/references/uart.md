@@ -21,7 +21,7 @@ The consumer writes bytes to the port and reads the bytes that arrived. The port
 
 ### write
 
-Kind: command
+Kind: operation
 
 ```wit
 write: func(bytes: list<u8>) -> result<_, uart-error>;
@@ -39,7 +39,7 @@ Examples:
 
 ### read
 
-Kind: query
+Kind: operation
 
 ```wit
 read: func(max: u16, timeout-ms: u32) -> result<list<u8>, uart-error>;

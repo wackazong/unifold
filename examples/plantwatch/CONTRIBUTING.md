@@ -26,6 +26,6 @@ A new choice with alternatives is recorded in `docs/decisions/` of the unit it c
 
 - A file has at most 1,500 words.
 - A unit does not name or link to its siblings or its users. What it wants from them is a need in its `unifold.yaml`.
-- Files in `docs/diagrams/`, `docs/decisions/index.md` and the root `AGENTS.md` are generated. Do not edit them.
+- Every `docs/decisions/index.md` and the root `AGENTS.md` are generated. Do not edit them.
 
 The rules are explained at <https://unifold.md/rules>.

@@ -1,6 +1,6 @@
 # Reasoning of plantwatch
 
-The long form of the why in [README.md](../../README.md). Which parts exist and how they are wired is shown in the [component diagram](../diagrams/component.md).
+The long form of the why in [README.md](../../README.md). Which parts exist and how they are wired is in the manifests; the explorer draws it.
 
 **Battery life decides the radio.** A sensor stick runs for a year on a coin cell only if it sleeps almost always. That rules out Wi-Fi and leaves Bluetooth Low Energy. BLE reaches a phone, not the internet, so a phone has to carry the readings onward ([0001](../decisions/0001-the-phone-relays-between-sensor-and-server.md)).
 

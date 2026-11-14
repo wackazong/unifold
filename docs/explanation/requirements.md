@@ -4,7 +4,7 @@ What the standard must achieve, for whom, and which qualities win when they conf
 
 ## Goals
 
-1. **Explainable in one minute.** A reader who knows what a folder and a dependency are understands the idea from the first page: a manifest per folder, needs that do not name their provider, wiring by the parent, a check, generated diagrams.
+1. **Explainable in one minute.** A reader who knows what a folder and a dependency are understands the idea from the first page: a manifest per folder, needs that do not name their provider, wiring by the parent, a check, diagrams drawn from the files.
 2. **Adoptable in five.** A repository gets a root manifest and a green check in minutes, and every further unit is one small file. Nothing is restructured and nothing is copied in.
 3. **One set of documents for people and agents.** Whoever opens a folder, a newcomer, a maintainer, an end user or a coding agent, finds the same files in the same places and reads the same text. Nothing is written twice for a second audience, and nothing is kept outside the tree.
 4. **Checked, not promised.** Everything the standard asks for is either checked by a tool or stated as a question for a reviewer. A clean check means that the files agree with each other. Whether the code follows them is for tests and review; `unifold trace` shows which examples of a contract a test names.
@@ -14,7 +14,7 @@ What the standard must achieve, for whom, and which qualities win when they conf
 
 | Rank | Quality | Observed as |
 |---|---|---|
-| 1 | Small normative surface | Everything normative about manifests, wiring and generated files fits three pages, [spec.md](../references/spec.md), [spec-wiring.md](../references/spec-wiring.md) and [spec-conformance.md](../references/spec-conformance.md). |
+| 1 | Small normative surface | Everything normative about manifests, wiring and generated files fits four pages, [spec.md](../references/spec.md), [spec-wiring.md](../references/spec-wiring.md), [spec-scenarios.md](../references/spec-scenarios.md) and [spec-conformance.md](../references/spec-conformance.md). |
 | 2 | Checkable | Every finding of the tool has an id, a test case and a fix text. |
 | 3 | Incremental | One folder can be a unit while the rest of the repository is untouched and the check stays green. |
 | 4 | Independent | No rule depends on a programming language, a build system or a code host. Nothing reads code. |
@@ -28,8 +28,8 @@ What the standard must achieve, for whom, and which qualities win when they conf
 | Services in one repository | Good. Each service is a unit, and its calls to other services are needs ([wiring](wiring.md)). |
 | Firmware or a product of several components | Good: drivers, emulators and applications have real interfaces and stand-ins. |
 | Application with feature folders, modular mobile app | Fits with one unit per feature or module. |
-| Framework application organised by layer (`models/`, `views/`) | Not on the layer folders. Units belong on the level of features: Django apps, Rails engines. |
-| Infrastructure modules (Terraform) | Partly. Modules map to units; environments have no place. |
+| Framework application organised by layer (`models/`, `views/`) | Not on the layer folders. Units belong on the level of features: [Django apps](https://docs.djangoproject.com/en/stable/ref/applications/), [Rails engines](https://guides.rubyonrails.org/engines.html). |
+| Infrastructure modules ([Terraform](https://developer.hashicorp.com/terraform/language/modules)) | Partly. Modules map to units; environments have no place. |
 | Single package or library | Good. A unit is a folder, not a package, so the package is one unit or one per module folder. With one unit the map is one box; the value is the root's `README.md` and `docs/`, which hold everything a reader needs in fixed places. |
 | Data pipelines, notebooks | No. The parts are files, and the pipeline tool already has the graph. |
 | System spread over several repositories | Each repository is a project of its own. The map across repositories is not produced. |

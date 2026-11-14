@@ -1,6 +1,6 @@
 # put-scenario
 
-Kind: command
+Kind: operation
 
 ```http
 PUT /scenario

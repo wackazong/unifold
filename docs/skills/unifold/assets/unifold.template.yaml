@@ -36,20 +36,17 @@ wiring:                      # only in a unit that has child units; every connec
   <child>.<need>:                     # named alternatives; the first is the default
     <name>: <child>.<capability>
     <other-name>: <other-child>.<capability>
-scenarios:                   # a feature: one story as the chain of calls it causes
+scenarios:                   # a feature: one story as the steps between units, in order
   <scenario-name>:
     summary: <what happens, in one line>
     source: <where the story comes from, free text>
-    given:                     # optional: the state the path starts in
-      - <child>.<capability>: <a state of its contract's ## States>
+    given:                     # optional: what holds before the story starts, as sentences
       - <a condition, as a sentence>
-    hops:                      # caller -> target.part(input): result, in the direction of the call
-      - <own-capability> -> <child>.<part>(<input>): <result>        # the entry: implemented by a child
-      - <child> -> <other-child>.<part>(<input>): <result>           # a command or query: the consumer calls
-      - <other-child> -> <child>.<event>(<input>)                    # an event or callback: the provider calls; no result needed
-      - <child>/<grandchild> -> <own-need>.<part>(<input>): <result> # a need passed up to a need of this unit
+    hops:                      # caller -> target.part, or caller -> target.part: note
+      - <own-capability> -> <child>.<operation>: <note>              # the entry: implemented by a child
+      - <child> -> <other-child>.<operation>: <note>                 # an operation: the consumer calls the provider
+      - <other-child> -> <child>.<event>                             # an event: the provider raises it, the consumer receives it
+      - <child>/<grandchild> -> <own-need>.<operation>               # a need passed up to a need of this unit
       - <child>.<scenario>                                           # include a scenario of a child
       - <other-child> -> <child>.<scenario>                          # the same, naming who calls into the child
-      - repeat: {until: <result>, hops: [<hop>]}                     # or times: <n>
-      - parallel: [[<hop>], [<hop>]]                                 # two or more lists that run at the same time
     expect: <the observable outcome, exact where the source gives it>

@@ -1,6 +1,6 @@
 # Reasoning of device
 
-The long form of the why in [README.md](../../README.md). Which parts exist and how they are wired is shown in the [component diagram](../diagrams/component.md).
+The long form of the why in [README.md](../../README.md). Which parts exist and how they are wired is in the manifests; the explorer draws it.
 
 **Energy decides the control flow.** The [energy budget](../references/energy-budget.md) allows 19.4 µA on average, and a running processor draws 200 times that. The firmware is therefore a set of reactions to two sources of events, a timer and the radio. Between events the board sleeps ([0001](../decisions/0001-sleep-between-events-and-advertise-all-the-time.md)).
 
